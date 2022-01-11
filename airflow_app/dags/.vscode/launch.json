@@ -1,0 +1,41 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: Current File",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "Airflow Extract Only",
+            "type": "python",
+            "request": "launch",
+            "program": "/home/airflow/.local/bin/airflow",
+            "console": "integratedTerminal",
+            "args": [
+                "dags",
+                "test",
+                "Extract_only",
+                "2020-01-23"
+            ]
+        },
+        {
+            "name": "Process_All_Except_Import",
+            "type": "python",
+            "request": "launch",
+            "program": "/home/airflow/.local/bin/airflow",
+            "console": "integratedTerminal",
+            "args": [
+                "dags",
+                "test",
+                "Process_All_Except_Import", 
+                "2020-01-19"
+            ]
+        }
+    ]
+}

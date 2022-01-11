@@ -1,0 +1,8 @@
+{% extends "appbuilder/general/model/add.html" %}
+{% import 'appbuilder/general/lib.html' as lib %}
+
+{% block add_form %}
+    {{ dropzone.create(action='/uploadview/fotos') }}
+    {{ dropzone.config() }}
+    {{ lib.lnk_back() }}
+{% endblock %}

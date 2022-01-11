@@ -1,0 +1,18 @@
+.ipynb_checkpoints
+
+# inhoud van data directory gaat niet naat Github, behalve de directories zelf
+data/input/*
+!data/input/.gitkeep 
+data/output/*
+!data/output/.gitkeep 
+data/images/*
+!data/images/.gitkeep 
+app/app/static/uploads/*
+!app/app/static/uploads/.gitkeep 
+
+# Geen .env bestanden in Github, zitten vaak wachtwoorden in 
+*.env
+*.pyc
+*.pot~
+
+*.DS_Store

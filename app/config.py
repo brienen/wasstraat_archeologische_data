@@ -1,0 +1,112 @@
+import os
+import logging
+
+logger = logging.getLogger()
+basedir = os.path.abspath(os.path.dirname(__file__))
+
+try:  
+   POSTGRES_DB= os.environ["POSTGRES_DB"]
+   POSTGRES_USER= os.environ["POSTGRES_USER"]
+   POSTGRES_PASSWORD= os.environ["POSTGRES_PASSWORD"]
+
+   MONGO_SERVER = os.getenv("MONGO_SERVER")
+   MONGO_INITDB_ROOT_USERNAME = os.getenv("MONGO_INITDB_ROOT_USERNAME")
+   MONGO_INITDB_ROOT_PASSWORD = os.getenv("MONGO_INITDB_ROOT_PASSWORD")
+   DB_STAGING = os.getenv("DB_STAGING")
+   DB_FILES = os.getenv("DB_FILES")
+   DB_ANALYSE = os.getenv("DB_ANALYSE")
+   MONGO_URI = (
+      f"mongodb://{MONGO_INITDB_ROOT_USERNAME}:{MONGO_INITDB_ROOT_PASSWORD}@{MONGO_SERVER}/"
+   )
+   MONGO_STAGING_URI = (
+      f"mongodb://{MONGO_INITDB_ROOT_USERNAME}:{MONGO_INITDB_ROOT_PASSWORD}@{MONGO_SERVER}/{DB_STAGING}"
+   )
+   MONGO_FILES_URI = (
+      f"mongodb://{MONGO_INITDB_ROOT_USERNAME}:{MONGO_INITDB_ROOT_PASSWORD}@{MONGO_SERVER}/{DB_FILES}"
+   )
+   MONGO_ANALYSE_URI = (
+      f"mongodb://{MONGO_INITDB_ROOT_USERNAME}:{MONGO_INITDB_ROOT_PASSWORD}@{MONGO_SERVER}/{DB_ANALYSE}"
+   )
+
+   COLL_ANALYSE = os.getenv("COLL_ANALYSE")
+   COLL_ANALYSE_CLEAN = os.getenv("COLL_ANALYSE_CLEAN") 
+   COLL_PLAATJES = os.getenv("COLL_PLAATJES")
+
+   COLL_STAGING_METAINFO = os.getenv("COLL_STAGING_METAINFO")
+   COLL_STAGING_OUD = os.getenv("COLL_STAGING_OUD")
+   COLL_STAGING_NIEUW = os.getenv("COLL_STAGING_NIEUW")
+   COLL_STAGING_MAGAZIJNLIJST = os.getenv("COLL_STAGING_MAGAZIJNLIJST")
+   COLL_STAGING_DELFIT = os.getenv("COLL_STAGING_DELFIT")
+   COLL_STAGING_DIGIFOTOS = os.getenv("COLL_STAGING_DIGIFOTOS")
+   COLL_ANALYSE_FOTO = os.getenv("COLL_ANALYSE_FOTO")
+   COLL_ANALYSE_ARTEFACT = os.getenv("COLL_ANALYSE_ARTEFACT")
+   COLL_ANALYSE_PROJECT = os.getenv("COLL_ANALYSE_PROJECT")
+   COLL_ANALYSE_VONDST = os.getenv("COLL_ANALYSE_VONDST")
+   COLL_ANALYSE_SPOOR = os.getenv("COLL_ANALYSE_SPOOR")
+   COLL_ANALYSE_VLAK = os.getenv("COLL_ANALYSE_VLAK")
+   COLL_ANALYSE_PUT = os.getenv("COLL_ANALYSE_PUT")
+   COLL_ANALYSE_DOOS = os.getenv("COLL_ANALYSE_DOOS")
+   COLL_ANALYSE_MAGAZIJNLOCATIE = os.getenv("COLL_ANALYSE_MAGAZIJNLOCATIE")
+   COLL_ANALYSE_STELLING = os.getenv("COLL_ANALYSE_STELLING")
+   COLL_ANALYSE_PLAATSING = os.getenv("COLL_ANALYSE_PLAATSING")
+   COLL_ANALYSE_VINDPLAATS = os.getenv("COLL_ANALYSE_VINDPLAATS")
+
+   FLASK_PGPASSWORD = os.getenv("FLASK_PGPASSWORD")
+   FLASK_PGUSER = os.getenv("FLASK_PGUSER")
+   FLASK_PGDATABASE = os.getenv("FLASK_PGDATABASE")
+
+except KeyError: 
+   logger.error("Cannot read environment variables (ie. POSTGRES_DB, POSTGRES_USER, POSTGRES_PASSWORD) needed to connect to the database. Add them to your .env files")
+
+
+
+CSRF_ENABLED = True
+SECRET_KEY = os.getenv("SECRET_KEY")
+
+# SQLALCHEMY_DATABASE_URI = "sqlite:///" + os.path.join(basedir, "app.db")
+# SQLALCHEMY_DATABASE_URI = f'mysql://{MYSQL_USER}:{MYSQL_PASSWORD}@db/{MYSQL_DATABASE}'
+# SQLALCHEMY_DATABASE_URI = 'mysql://myapp@localhost/myapp'
+SQLALCHEMY_DATABASE_URI = f'postgresql://{FLASK_PGUSER}:{FLASK_PGPASSWORD}@postgres/{FLASK_PGDATABASE}'
+SQLALCHEMY_TRACK_MODIFICATIONS = False
+# SQLALCHEMY_ECHO = True
+
+ADDON_MANAGERS = ['fab_addon_geoalchemy.manager.GeoAlchemyManager']
+
+BABEL_DEFAULT_LOCALE = "en"
+
+LANGUAGES = {
+    "en": {"flag": "gb", "name": "English"},
+    "pt": {"flag": "pt", "name": "Portuguese"},
+    "es": {"flag": "es", "name": "Spanish"},
+    "de": {"flag": "de", "name": "German"},
+    "zh": {"flag": "cn", "name": "Chinese"},
+    "ru": {"flag": "ru", "name": "Russian"},
+}
+
+# ------------------------------
+# GLOBALS FOR GENERAL APP's
+# ------------------------------
+UPLOAD_FOLDER = basedir + "/app/static/uploads/"
+IMG_UPLOAD_FOLDER = basedir + "/app/static/uploads/"
+IMG_UPLOAD_URL = "/static/uploads/"
+IMG_SIZE = (300, 200, True)
+IMAGE_BIG_SIZE = (5000, 5000)
+IMAGE_THUMB_SIZE = (300, 200)
+IMAGE_MIDDLE_SIZE = (500, 500)
+IMAGE_SIZE_ORIGINAL = (5000, 5000)
+AUTH_TYPE = 1
+AUTH_ROLE_ADMIN = "Admin"
+AUTH_ROLE_PUBLIC = "Public"
+APP_NAME = "Wasstraat Archeologie!"
+APP_THEME = ""  # default
+#APP_THEME = "cerulean.css"      # COOL
+# APP_THEME = "amelia.css"
+# APP_THEME = "cosmo.css"
+# APP_THEME = "cyborg.css"       # COOL
+# APP_THEME = "flatly.css"
+# APP_THEME = "journal.css"
+# APP_THEME = "readable.css"
+# APP_THEME = "simplex.css"
+# APP_THEME = "slate.css"          # COOL
+# APP_THEME = "spacelab.css"      # NICE
+# APP_THEME = "united.css"

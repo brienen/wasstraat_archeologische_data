@@ -1,0 +1,7 @@
+[submodule "app/lib/Flask-ImageManager"]
+	path = app/lib/Flask-ImageManager
+	url = https://github.com/brienen/Flask-ImageManager
+
+[submodule "app/fab_addon_geoalchemy"]
+	path = app/fab_addon_geoalchemy
+	url = https://github.com/dolfandringa/fab_addon_geoalchemy.git
