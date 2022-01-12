@@ -1,6 +1,6 @@
 # Import the os module, for the os.walk function
 import pymongo
-from pymongo import UpdateOne
+from pymongo import UpdateOne, WriteConcern
 import re
 import pandas as pd
 import numpy as np
@@ -54,7 +54,7 @@ def setReferenceKeys(pipeline, soort, col='analyse'):
             df[['datum']] = df[['datum']].astype(object).where(df[['datum']].notnull(), None)
         
         if not df.empty:
-            collectionClean.insert_many(df.to_dict('records'))
+            collectionClean.with_options(write_concern=WriteConcern(w=0)).insert_many(df.to_dict('records'))
         else:
             logger.warning(f"trying to insert empty dataframe of soort: {soort} into collection {col}.")
         

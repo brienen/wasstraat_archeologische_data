@@ -126,16 +126,9 @@ def loadAll():
             logger.info("Deleting all data from " + str(lst_tables))
             connection.execute('TRUNCATE ' + ','.join(lst) + ';')
 
-            # Load table to avoid relational integrity issues
-            transferToDB('Def_Project', 'Project', 'Def_Project', connection)
-            transferToDB('Def_Put', 'Put', 'Def_Put', connection)
-            transferToDB('Def_Stelling', 'Stelling', 'Def_Stelling', connection)
-            transferToDB('Def_Doos', 'Doos', 'Def_Doos', connection)
-            lst_tables.remove('Def_Project')
-            lst_tables.remove('Def_Put')
-            lst_tables.remove('Def_Stelling')
-            lst_tables.remove('Def_Doos')
-
+            # Set table_lst to avoid relational integrity issues
+            lst_tables = ['Def_Project', 'Def_Put', 'Def_Vondst', 'Def_Spoor', 'Def_Stelling', 'Def_Doos', 'Def_Magazijnlocatie', 'Def_Plaatsing', 'Def_Vlak', 'Def_Vindplaats', 'Def_Artefact', 'Def_Foto']
+            # ['Def_Magazijnlocatie', 'Def_Plaatsing', 'Def_Vlak', 'Def_Vindplaats', 'Def_Project', 'Def_Doos', 'Def_Stelling', 'Def_Put', 'Def_Spoor', 'Def_Foto', 'Def_Artefact', 'Def_Vondst']
             # Then load new data
             for table in lst_tables:            
                 if table.startswith('Def_'):
