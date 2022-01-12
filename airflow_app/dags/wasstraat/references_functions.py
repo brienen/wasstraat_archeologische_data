@@ -34,10 +34,7 @@ def createIndex(collection, index_name, uniqueValue=False):
         collection.create_index(index_name, unique=uniqueValue)
 
 
-
-
-
-def extractGeneric(pipeline, soort, col='analyse'):   
+def setReferenceKeys(pipeline, soort, col='analyse'):   
     try:
         # First remove all dozen from Clean Collection
         collectionClean = getAnalyseCleanCollection()
@@ -124,56 +121,12 @@ def setArtefactnrUnique():
         logger.error(f'Severe rrror while determining whether artefactnr are unique with message: {str(exp1)} ')
 
 
-def extractImagedataFromFileNames():
-    try:        
-        col = getAnalyseCollection()
-        dirs = pd.DataFrame(list(col.find({'soort': 'Foto'}, projection={'directory':1}))).dropna()['directory'].unique()
-        projs = pd.DataFrame(list(col.find({'soort': 'project'}, projection={'projectcd':1}))).dropna()['projectcd'].unique()
 
-        # Build dict with dirs as entry to projectcd, materiaal and fototype
-        file_dict = {}
-        for dr in dirs:    
-            dr_dict = {}
-            for proj in projs:
-                if proj in re.split('/| ', dr):
-                    dr_dict.update({'projectcd': proj})
-            
-            if 'Object' in dr:
-                dr_dict.update({'fototype': 'H'})
-                dr_dict.update({'materiaal': dr.split('/')[-1]})
-            elif 'Opgravingsfoto' in dr:
-                dr_dict.update({'fototype': 'G'})
-            elif 'Sfeerfoto' in dr:
-                dr_dict.update({'fototype': 'F'})
-            else:
-                dr_dict.update({'fototype': 'N'})
-
-            file_dict.update({dr: dr_dict})
-          
-        # Set missing values in foto's       
-        lst_foto = list(col.find({'soort': 'Foto'}))            
-        for foto in lst_foto:
-            try:
-                if not foto.get('projectcd'):
-                    foto['projectcd'] = file_dict.get(foto.get('directory')).get('projectcd')
-                if not foto.get('fototype'):
-                    foto['fototype'] = file_dict.get(foto.get('directory')).get('fototype')
-
-                foto['materiaal'] = file_dict.get(foto.get('directory')).get('materiaal')                
-                col.replace_one({'_id': foto['_id']}, foto)
-
-            except expression as exp2:
-                filename = foto['fileName']
-                logger.error(f'Error while setting missing values in foto {filename} with message: {str(exp2)} ')
-    except expression as exp1:
-        msg = f'Severe error while while setting missing values on fotos: {str(exp1)} '
-        logger.error(msg)
-        raise Exception(msg) from exp1
 
 
 
     # Doos is a combination of doosnr, magazijnlijst and artefacts
-def extractDozen():   
+def setReferenceKeysDozen():   
     #Find Doos in magazijnlijst
     try:
         # First remove all dozen from Clean Collection
@@ -183,13 +136,13 @@ def extractDozen():
         # First all Dozen in a separate collection
         collection = getAnalyseCollection()
         # Find and merge doos from artefacts
-        collection.aggregate(meta.getExtractPipelines('Doos')[0])
+        collection.aggregate(meta.getReferenceKeysPipelines('Doos')[0])
         createIndex(collection.database[config.COLL_ANALYSE_DOOS], 'key', uniqueValue=True)
 
-        collection.aggregate(meta.getExtractPipelines('Doos')[1])
+        collection.aggregate(meta.getReferenceKeysPipelines('Doos')[1])
 
         # Find and merge doos from Doos
-        collection.aggregate(meta.getExtractPipelines('Doos')[2])
+        collection.aggregate(meta.getReferenceKeysPipelines('Doos')[2])
 
         doosCollection = getAnalyseDoosCollection()
         for doc in doosCollection.find({'stelling': {'$exists': True}}):
@@ -197,7 +150,7 @@ def extractDozen():
             doosCollection.update_one({'_id': doc['_id']}, {'$set': doc})
 
         # Set Primary key and read data from dooscollection
-        extractGeneric([{ '$match': {'soort': "Doos"}}], 'Doos', 'doos')
+        setReferenceKeys([{ '$match': {'soort': "Doos"}}], 'Doos', 'doos')
 
     except Exception as err:
         msg = "Onbekende fout bij het aanroepen van een aggregation met melding: " + str(err)

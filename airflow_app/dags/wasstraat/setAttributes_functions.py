@@ -1,23 +1,31 @@
 # Import the os module, for the os.walk function
 import pymongo
-import json
 import re
 import pandas as pd
 import numpy as np
-import roman
 from wasstraat.rijksdriehoek import rd_to_wgs
 import wasstraat.archutils as ut
 import wasstraat.mongoUtils as mongoUtil
 
- 
-import logging
-logger = logging.getLogger("airflow.task")
-
 # Import app code
 # Absolute imports for Hydrogen (Jupyter Kernel) compatibility
 import config
+import logging
+logger = logging.getLogger("airflow.task")
 
-def clean():   
+def getAnalyseCollection():   
+    myclient = pymongo.MongoClient(str(config.MONGO_URI))
+    analyseDb = myclient[str(config.DB_ANALYSE)]
+    return analyseDb[config.COLL_ANALYSE]
+
+def getAnalyseCleanCollection():   
+    myclient = pymongo.MongoClient(str(config.MONGO_URI))
+    analyseDb = myclient[str(config.DB_ANALYSE)]
+    return analyseDb[config.COLL_ANALYSE_CLEAN]
+
+
+
+def enhanceAllAttributes():   
     try: 
         myclient = pymongo.MongoClient(str(config.MONGO_URI))
         filesdb = myclient[str(config.DB_FILES)]
@@ -115,3 +123,48 @@ def clean():
         myclient.close()
         
 
+def extractImagedataFromFileNames():
+    try:        
+        col = getAnalyseCollection()
+        dirs = pd.DataFrame(list(col.find({'soort': 'Foto'}, projection={'directory':1}))).dropna()['directory'].unique()
+        projs = pd.DataFrame(list(col.find({'soort': 'project'}, projection={'projectcd':1}))).dropna()['projectcd'].unique()
+
+        # Build dict with dirs as entry to projectcd, materiaal and fototype
+        file_dict = {}
+        for dr in dirs:    
+            dr_dict = {}
+            for proj in projs:
+                if proj in re.split('/| ', dr):
+                    dr_dict.update({'projectcd': proj})
+            
+            if 'Object' in dr:
+                dr_dict.update({'fototype': 'H'})
+                dr_dict.update({'materiaal': dr.split('/')[-1]})
+            elif 'Opgravingsfoto' in dr:
+                dr_dict.update({'fototype': 'G'})
+            elif 'Sfeerfoto' in dr:
+                dr_dict.update({'fototype': 'F'})
+            else:
+                dr_dict.update({'fototype': 'N'})
+
+            file_dict.update({dr: dr_dict})
+          
+        # Set missing values in foto's       
+        lst_foto = list(col.find({'soort': 'Foto'}))            
+        for foto in lst_foto:
+            try:
+                if not foto.get('projectcd'):
+                    foto['projectcd'] = file_dict.get(foto.get('directory')).get('projectcd')
+                if not foto.get('fototype'):
+                    foto['fototype'] = file_dict.get(foto.get('directory')).get('fototype')
+
+                foto['materiaal'] = file_dict.get(foto.get('directory')).get('materiaal')                
+                col.replace_one({'_id': foto['_id']}, foto)
+
+            except expression as exp2:
+                filename = foto['fileName']
+                logger.error(f'Error while setting missing values in foto {filename} with message: {str(exp2)} ')
+    except expression as exp1:
+        msg = f'Severe error while while setting missing values on fotos: {str(exp1)} '
+        logger.error(msg)
+        raise Exception(msg) from exp1

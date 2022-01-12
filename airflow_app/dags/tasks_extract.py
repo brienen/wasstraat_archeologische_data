@@ -8,87 +8,52 @@ from airflow.operators.python import PythonOperator
 
 import config
 import wasstraat.mongoUtils as mongoUtils
-import wasstraat.extract_functions as extract_functions
-import wasstraat.meta as meta
+from wasstraat.image_import import importImages
+
+
+
+rootDir = str(config.AIRFLOW_INPUTDIR)
+tmpDir = str(config.AIRFLOW_TEMPDIR)
 
 
 def getExtractTaskGroup():
 
     tg1 = TaskGroup(group_id='Extract_Group')
     with tg1:
-        Extract_Stellingen = PythonOperator(
-            task_id='Extract_Stellingen',
-            python_callable=extract_functions.extractGeneric,
-            op_kwargs={'pipeline': meta.getExtractPipeline('Stelling'), 'soort': 'Stelling'}
+        # [START howto_operator_bash]
+        Extract_Data_From_old = BashOperator(
+            task_id='Extract_Data_From_Oude_Projecten',
+            bash_command="${AIRFLOW_HOME}/scripts/importMDB.sh %s %s " % (rootDir + "/projectdatabase/oud", config.COLL_STAGING_OUD)
         )
-        Extract_Magazijnlijst = PythonOperator(
-            task_id='Extract_Magazijnlijst',
-            python_callable=extract_functions.extractGeneric,
-            op_kwargs={'pipeline': meta.getExtractPipeline('Magazijnlocatie'), 'soort': 'Magazijnlocatie'}
+        # [START howto_operator_bash]
+        Extract_Data_From_new = BashOperator(
+            task_id='Extract_Data_From_Nieuwe_Projecten',
+            bash_command="${AIRFLOW_HOME}/scripts/importMDB.sh %s %s " % (rootDir + "/projectdatabase/nieuw", config.COLL_STAGING_NIEUW)
         )
-        Extract_Plaatsing = PythonOperator(
-            task_id='Extract_Plaatsing',
-            python_callable=extract_functions.extractGeneric,
-            op_kwargs={'pipeline': meta.getExtractPipeline('Plaatsing'), 'soort': 'Plaatsing'}
+        # [START howto_operator_bash]
+        Extract_Data_From_DelfIT = BashOperator(
+            task_id='Extract_Data_From_DelfIT',
+            bash_command="${AIRFLOW_HOME}/scripts/importMDB.sh %s %s " % (rootDir + "/projectdatabase/Delf-IT", config.COLL_STAGING_DELFIT)
         )
-        Extract_Dozen = PythonOperator(
-            task_id='Extract_Dozen',
-            python_callable=extract_functions.extractDozen,
+        # [START howto_operator_bash]
+        Extract_Data_From_Magazijnlijst = BashOperator(
+            task_id='Extract_Data_From_Magazijnlijst',
+            bash_command="${AIRFLOW_HOME}/scripts/importMDB.sh %s %s " % (rootDir + "/projectdatabase/magazijnlijst", config.COLL_STAGING_MAGAZIJNLIJST)
         )
-        Extract_Putten = PythonOperator(
-            task_id='Extract_Putten',
-            python_callable=extract_functions.extractGeneric,
-            op_kwargs={'pipeline': meta.getExtractPipeline('Put'), 'soort': 'Put'}
+        # [START howto_operator_bash]
+        Extract_Data_From_DigiFotolijst = BashOperator(
+            task_id='Extract_Data_From_DigiFotolijst',
+            bash_command="${AIRFLOW_HOME}/scripts/importMDB.sh %s %s " % (rootDir + "/projectdatabase/digifotos", config.COLL_STAGING_DIGIFOTOS)
         )
-        Extract_Vlakken = PythonOperator(
-            task_id='Extract_Vlakken',
-            python_callable=extract_functions.extractGeneric,
-            op_kwargs={'pipeline': meta.getExtractPipeline('Vlak'), 'soort': 'Vlak'}
+        #def importImages(rootDir, mongo_uri, db_files, db_staging):   
+        Extract_Data_From_Fotos = PythonOperator(
+            task_id='Extract_Data_From_Fotos',
+            python_callable=importImages,
+            op_kwargs={'rootDir': rootDir + "/fotos", 'mongo_uri': config.MONGO_URI, 'db_files': config.DB_FILES, 'db_staging': config.DB_STAGING}
         )
-        Extract_Sporen = PythonOperator(
-            task_id='Extract_Sporen',
-            python_callable=extract_functions.extractGeneric,
-            op_kwargs={'pipeline': meta.getExtractPipeline('Spoor'), 'soort': 'Spoor'}
-        )
-        Extract_Vondsten = PythonOperator(
-            task_id='Extract_Vondsten',
-            python_callable=extract_functions.extractGeneric,
-            op_kwargs={'pipeline': meta.getExtractPipeline('Vondst'), 'soort': 'Vondst'}
-        )
-        Extract_Projecten = PythonOperator(
-            task_id='Extract_Projecten',
-            python_callable=extract_functions.extractGeneric,
-            op_kwargs={'pipeline': meta.getExtractPipeline('Project'), 'soort': 'Project'}
-        )
-        Extract_Vindplaatsen = PythonOperator(
-            task_id='Extract_Vindplaatsen',
-            python_callable=extract_functions.extractGeneric,
-            op_kwargs={'pipeline': meta.getExtractPipeline('Vindplaats'), 'soort': 'Vindplaats'}
-        )
-        Extract_Artefacts = PythonOperator(
-            task_id='Extract_Artefacts',
-            python_callable=extract_functions.extractGeneric,
-            op_kwargs={'pipeline': meta.getExtractPipeline('Artefact'), 'soort': 'Artefact'}
-        )
-        Extract_Fotos = PythonOperator(
-            task_id='Extract_Fotos',
-            python_callable=extract_functions.extractGeneric,
-            op_kwargs={'pipeline': meta.getExtractPipeline('Foto'), 'soort': 'Foto'}
-        )
-        Extract_Imagedata_FromFile_Names = PythonOperator(
-            task_id='Extract_Imagedata_FromFile_Names',
-            python_callable=extract_functions.extractImagedataFromFileNames,
-        )
-        Set_Artefactnr_Unique = PythonOperator(
-            task_id='Set_Artefactnr_Unique',
-            python_callable=extract_functions.setArtefactnrUnique,
-        )
-        Set_AllReferences = PythonOperator(
-            task_id='Set_AllReferences',
-            python_callable=extract_functions.setAllReferences,
-        )
-
         
-        Extract_Imagedata_FromFile_Names >> Set_Artefactnr_Unique >> [Extract_Stellingen, Extract_Magazijnlijst, Extract_Plaatsing, Extract_Dozen, Extract_Putten, Extract_Vlakken, Extract_Sporen, Extract_Vondsten, Extract_Projecten, Extract_Vindplaatsen, Extract_Artefacts, Extract_Fotos] >> Set_AllReferences 
+        
+
+        [Extract_Data_From_old, Extract_Data_From_new, Extract_Data_From_DelfIT, Extract_Data_From_Magazijnlijst, Extract_Data_From_DigiFotolijst, Extract_Data_From_Fotos]
         
     return tg1

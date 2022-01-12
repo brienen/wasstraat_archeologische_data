@@ -26,41 +26,50 @@ from airflow.operators.dummy import DummyOperator
 from airflow.operators.python import PythonOperator
 
 import config
-import tasks_import
 import tasks_extract
-import tasks_collect
+import tasks_transform3_references
+import tasks_transform1_harmonize
+import tasks_transform2_attributes
 import wasstraat.mongoUtils as mongoUtils
-import wasstraat.clean_functions as clean
-import wasstraat.dbloader_functions as dbloader
+import wasstraat.setAttributes_functions as setAttributes_functions
+import wasstraat.loadToDatabase_functions as loadToDatabase
 
 
 rootDir = str(config.AIRFLOW_INPUTDIR)
 tmpDir = str(config.AIRFLOW_TEMPDIR)
 
 with DAG(
-    dag_id='Extract_only',
+    dag_id='Extract_Transform_Load_Full_Cycle',
     start_date=datetime(2021, 1, 1),
     catchup=False,
     dagrun_timeout=timedelta(minutes=60),
     template_searchpath="/opt/airflow"
 ) as dag:
-    start_extract = DummyOperator(
-        task_id='start_extract',
+    Start_ETL_full_cycle = DummyOperator(
+        task_id='Start_ETL_full_cycle',
     )
 
     #def importImages(rootDir, mongo_uri, db_files, db_staging):   
-    Drop_Single_Store_Clean = PythonOperator(
-        task_id='Drop_Single_Store_Clean',
-        python_callable=mongoUtils.dropSingleStoreClean,
+    Drop_All_Databases = PythonOperator(
+        task_id='Drop_All_Databases',
+        python_callable=mongoUtils.dropAll,
         op_kwargs={}
     )
     #def importImages(rootDir, mongo_uri, db_files, db_staging):   
+    LoadToDatabase_postgres = PythonOperator(
+        task_id='LoadToDatabase_postgres',
+        python_callable=loadToDatabase.loadAll,
+        op_kwargs={}
+    )
 
-    end_extract = DummyOperator(
-        task_id='end_extract',
+    End_ETL_full_cycle = DummyOperator(
+        task_id='End_ETL_full_cycle',
     )
     
-    tg_extract = tasks_extract.getExtractTaskGroup()
+    tg_import = tasks_extract.getExtractTaskGroup()
+    tg_harmonize = tasks_transform1_harmonize.getHarmonizeTaskGroup()
+    tg_enhanceAttrs = tasks_transform2_attributes.getEnhanceAttributesGroup()
+    tg_references = tasks_transform3_references.getSetReferencesTaskGroup()
 
 
-    start_extract >> Drop_Single_Store_Clean >> tg_extract >> end_extract 
+    Start_ETL_full_cycle >> Drop_All_Databases >> tg_import >> tg_harmonize >> tg_enhanceAttrs >> tg_references >> LoadToDatabase_postgres >> End_ETL_full_cycle 

@@ -7,6 +7,8 @@ data/output/*
 !data/output/.gitkeep 
 data/images/*
 !data/images/.gitkeep 
+data/postgres/*
+!data/postgres/.gitkeep 
 app/app/static/uploads/*
 !app/app/static/uploads/.gitkeep 
 

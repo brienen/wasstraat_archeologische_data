@@ -287,13 +287,13 @@ def getCollectPipelines(soort):
     else:
         raise Exception(f'Fout bij het opvragen van metadata. {soort} is een onbekend metadatasoort.')
 
-def getExtractPipeline(soort):
+def getReferenceKeysPipeline(soort):
     if soort in wasstraat_model.keys():
         return wasstraat_model[soort][EXTRACT_PIPELINES][0]
     else:
         raise Exception(f'Fout bij het opvragen van metadata. {soort} is een onbekend metadatasoort.')
 
-def getExtractPipelines(soort):
+def getReferenceKeysPipelines(soort):
     if soort in wasstraat_model.keys():
         return wasstraat_model[soort][EXTRACT_PIPELINES]
     else:
