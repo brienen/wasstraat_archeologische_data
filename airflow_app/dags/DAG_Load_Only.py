@@ -17,8 +17,6 @@
 # under the License.
 
 """Data Importeren"""
-import os
-
 from datetime import datetime, timedelta
 
 from airflow import DAG
@@ -26,12 +24,6 @@ from airflow.operators.dummy import DummyOperator
 from airflow.operators.python import PythonOperator
 
 import config
-import tasks_extract
-import tasks_transform3_references
-import tasks_transform1_harmonize
-import tasks_transform2_attributes
-import wasstraat.mongoUtils as mongoUtils
-import wasstraat.setAttributes_functions as setAttributes_functions
 import wasstraat.loadToDatabase_functions as loadToDatabase
 
 

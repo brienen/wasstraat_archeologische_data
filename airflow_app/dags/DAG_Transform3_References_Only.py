@@ -21,20 +21,16 @@ from datetime import datetime, timedelta
 
 from airflow import DAG
 from airflow.operators.dummy import DummyOperator
-from airflow.operators.python import PythonOperator
 
 import config
 import tasks_transform3_references
-import tasks_transform1_harmonize
-import tasks_transform2_attributes
-import wasstraat.mongoUtils as mongoUtils
 
 
 rootDir = str(config.AIRFLOW_INPUTDIR)
 tmpDir = str(config.AIRFLOW_TEMPDIR)
 
 with DAG(
-    dag_id='DAG_Transform_Only',
+    dag_id='DAG_Transform3_References_Only',
     start_date=datetime(2021, 1, 1),
     catchup=False,
     dagrun_timeout=timedelta(minutes=60),
@@ -43,20 +39,9 @@ with DAG(
     Start_cycle = DummyOperator(
         task_id='Start_cycle',
     )
-
-    #def importImages(rootDir, mongo_uri, db_files, db_staging):   
-    Drop_Analyse_Database = PythonOperator(
-        task_id='Drop_Analyse_Database',
-        python_callable=mongoUtils.dropAnalyse
-    )
-
     End_cycle = DummyOperator(
         task_id='End_cycle',
     )
-    
-    tg_harmonize = tasks_transform1_harmonize.getHarmonizeTaskGroup()
-    tg_enhanceAttrs = tasks_transform2_attributes.getEnhanceAttributesGroup()
     tg_references = tasks_transform3_references.getSetReferencesTaskGroup()
 
-
-    Start_cycle >> Drop_Analyse_Database >> tg_harmonize >> tg_enhanceAttrs >> tg_references >> End_cycle 
+    Start_cycle >> tg_references >> End_cycle 
