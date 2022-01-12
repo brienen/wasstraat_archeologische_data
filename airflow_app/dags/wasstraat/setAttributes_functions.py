@@ -119,6 +119,8 @@ def enhanceAllAttributes():
                 except Exception as e:
                     msg = "Onbekende gestapelde fout: kon document niet bewaren van doc met _id:" + str(doc['_id']) + " Met melding: " + str(e)
                     logger.error(msg)
+                    raise Exception(msg) from e
+
     finally:
         myclient.close()
         

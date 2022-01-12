@@ -8,9 +8,9 @@ RUN pip install Flask-WTF==0.14.3
 # For development, Jupyter remote kernel, Hydrogen
 # Using inside the container:
 # jupyter notebook --ip=0.0.0.0 --allow-root
-ARG env=prod
-RUN bash -c "if [ $env == 'dev' ] ; then pip install jupyter plotly jupyter-tabnine; jupyter nbextension install --py jupyter_tabnine; jupyter nbextension enable --py jupyter_tabnine; jupyter serverextension enable --py jupyter_tabnine; fi"
-EXPOSE 8888
+#ARG env=prod
+#RUN bash -c "if [ $env == 'dev' ] ; then pip install jupyter plotly jupyter-tabnine; jupyter nbextension install --py jupyter_tabnine; jupyter nbextension enable --py jupyter_tabnine; jupyter serverextension enable --py jupyter_tabnine; fi"
+#EXPOSE 8888
 
 WORKDIR /app/
 COPY ./app /app

@@ -103,6 +103,7 @@ def importImages(rootDir, mongo_uri, db_files, db_staging):
     except Exception as err:
         msg = "Onbekende fout bij het laden van images: " + str(err)
         logger.error(msg)    
+        raise Exception(msg) from err
 
     finally:
         myclient.close()

@@ -18,3 +18,4 @@ app/app/static/uploads/*
 *.pot~
 
 *.DS_Store
+.entry_point.lock

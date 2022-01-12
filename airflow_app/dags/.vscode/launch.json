@@ -5,14 +5,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python: Current File",
-            "type": "python",
-            "request": "launch",
-            "program": "${file}",
-            "console": "integratedTerminal"
-        },
-        {
-            "name": "Airflow Extract Only",
+            "name": "Airflow Load Only",
             "type": "python",
             "request": "launch",
             "program": "/home/airflow/.local/bin/airflow",
@@ -20,22 +13,9 @@
             "args": [
                 "dags",
                 "test",
-                "Extract_only",
-                "2020-01-23"
+                "DAG_Load_Only",
+                "2020-01-26"
             ]
         },
-        {
-            "name": "Process_All_Except_Import",
-            "type": "python",
-            "request": "launch",
-            "program": "/home/airflow/.local/bin/airflow",
-            "console": "integratedTerminal",
-            "args": [
-                "dags",
-                "test",
-                "Process_All_Except_Import", 
-                "2020-01-19"
-            ]
-        }
     ]
 }

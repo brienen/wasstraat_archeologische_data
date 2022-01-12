@@ -65,6 +65,23 @@ services:
       - mongo_volume:/data/db
       - ./backup:/backup
 
+  jupyter:
+    container_name: wasstraat_jupyter
+    build: 
+      dockerfile: ./services/jupyter/Dockerfile
+      context: .
+    ports:
+      - "8888:8888"
+    volumes:
+      - ./notebooks:/home/jovyan/
+    environment:
+      JUPYTER_ENABLE_LAB: "yes"
+    command: "start-notebook.sh --NotebookApp.token='' --NotebookApp.password=''"
+    env_file:
+       - ./config/airflow.env
+       - ./config/airflow_db.env
+       - ./config/mongo.env
+       - ./config/postgres.env
 
 volumes:
     postgres_volume:

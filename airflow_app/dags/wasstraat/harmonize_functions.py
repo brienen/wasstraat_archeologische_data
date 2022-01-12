@@ -27,6 +27,7 @@ def callAggregation(collection, pipeline):
     except Exception as err:
         msg = "Onbekende fout bij het aanroepen van een aggregation met melding: " + str(err)
         logger.error(msg)    
+        raise Exception(msg) from err
     finally:
         myclient.close()
 
@@ -90,7 +91,7 @@ def collectImageInfo():
             except Exception as err:
                 msg = "Unknown error while collecting image info with message: " + str(err)
                 logger.error(msg)    
-
+    
     finally:
         myclient.close()
 

@@ -61,6 +61,8 @@ def setReferenceKeys(pipeline, soort, col='analyse'):
     except Exception as err:
         msg = "Onbekende fout bij het aanroepen van een aggregation met melding: " + str(err)
         logger.error(msg)    
+        raise Exception(msg) from err
+
     finally:
         collection.database.client.close()
         collectionClean.database.client.close()
@@ -95,7 +97,9 @@ def setReferences(soort):
         
     except Exception as err:
         msg = "Onbekende fout bij het aanroepen van een aggregation met melding: " + str(err)
-        logger.error(msg)    
+        logger.error(msg)   
+        raise Exception(msg) from err
+ 
     finally:
         col.database.client.close()
 

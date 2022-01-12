@@ -91,7 +91,8 @@ def transferToDB(objecttype, soort, table, connection):
     except Exception as err:
         msg = "Onbekende fout bij laden van soort: "+soort+" in tabel "+table+" van database met melding: " + str(err)
         logger.error(msg)
-        #raise
+        raise Exception(msg) from err
+
 
 
 
@@ -102,33 +103,44 @@ def loadAll():
     logger.info("Connecting to " + config.SQLALCHEMY_DATABASE_URI)
 
     with engine.connect() as connection:
-        metadata = db.MetaData(bind=engine)
-        db.MetaData.reflect(metadata)
+        connection = connection.execution_options( 
+            isolation_level="SERIALIZABLE",
+            postgresql_deferrable=True # Does not seem to work. Work imn progress 
+        )
+        with connection.begin():
+            connection.execute('SET CONSTRAINTS ALL DEFERRED') # Does not seem to work. Work in progress https://stackoverflow.com/questions/48038807/sqlalchemy-orm-deferring-constraint-checking 
+            #  ... work with transaction
+            metadata = db.MetaData(bind=engine)
+            db.MetaData.reflect(metadata)
 
-        #get the table list
-        dict_tables = metadata.tables.keys()
-        lst_tables = [x for x in list(dict_tables) if x.startswith('Def_')]
-        logger.info("Loading all data for " + str(lst_tables))
-        
-        # To make a comma separated string with substrings between double quotes
-        f = lambda x: "\""+str(x)+"\""
-        lst = map(f,lst_tables)
+            #get the table list
+            dict_tables = metadata.tables.keys()
+            lst_tables = [x for x in list(dict_tables) if x.startswith('Def_')]
+            logger.info("Loading all data for " + str(lst_tables))
+            
+            # To make a comma separated string with substrings between double quotes
+            f = lambda x: "\""+str(x)+"\""
+            lst = map(f,lst_tables)
 
-        # Truncate all tables
-        logger.info("Deleting all data from " + str(lst_tables))
-        connection.execute('TRUNCATE ' + ','.join(lst) + ';')
+            # Truncate all tables
+            logger.info("Deleting all data from " + str(lst_tables))
+            connection.execute('TRUNCATE ' + ','.join(lst) + ';')
 
-        # Load table to avoid relational integrity issues
-        transferToDB('Def_Project', 'Project', 'Def_Project', connection)
-        transferToDB('Def_Put', 'Put', 'Def_Put', connection)
-        lst_tables.remove('Def_Project')
-        lst_tables.remove('Def_Put')
+            # Load table to avoid relational integrity issues
+            transferToDB('Def_Project', 'Project', 'Def_Project', connection)
+            transferToDB('Def_Put', 'Put', 'Def_Put', connection)
+            transferToDB('Def_Stelling', 'Stelling', 'Def_Stelling', connection)
+            transferToDB('Def_Doos', 'Doos', 'Def_Doos', connection)
+            lst_tables.remove('Def_Project')
+            lst_tables.remove('Def_Put')
+            lst_tables.remove('Def_Stelling')
+            lst_tables.remove('Def_Doos')
 
-        # Then load new data
-        for table in lst_tables:            
-            if table.startswith('Def_'):
-                soort = table[4:] # Remove Def_ 
-                tablename = table
-                logger.info("Transfering: " + soort)
-                transferToDB(table, soort, tablename, connection)
+            # Then load new data
+            for table in lst_tables:            
+                if table.startswith('Def_'):
+                    soort = table[4:] # Remove Def_ 
+                    tablename = table
+                    logger.info("Transfering: " + soort)
+                    transferToDB(table, soort, tablename, connection)
         
