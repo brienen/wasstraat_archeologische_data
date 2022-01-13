@@ -20,6 +20,7 @@ echo Loading "$FILES" to collection "$Collection" in database "$DATABASE" and lo
 # Setting logging to log files, including error log
 #exec 1>$LOG 
 #exec 2>&1
+exec &> >(tee "$LOG")
 echo Loading "$FILES" to collection "$Collection" in database "$DATABASE" and logging to "$LOG" 
 
 
@@ -41,6 +42,7 @@ do
 	    echo Reading "$TABLE" into "$CSV" and loading into Mongo database "$DATABASE" collection "$Collection"
 	    mdb-export "$mdbfile" "$CSV" "$TABLE" > "$CSV"  		
 		LENGTE=`wc -l < $CSV`
+		let LENGTE=$LENGTE-1
 		echo Length of tabel $CSV in file $mdbfile is: $LENGTE
 		if [ $LENGTE -lt 2 ]; then # on empty CSV stop loop and continue to nect cycle
 			rm "$CSV"
@@ -59,7 +61,7 @@ do
 		echo Reading metainfo
 		# Removing lines with GUID and everythimng bnetween ColumnWidth  and ColumnHidden to overcome encoding problem
 		# mdb-prop "$mdbfile" "$TABLE" | sed '/GUID/d' | sed '/ColumnWidth/,/ColumnHidden/{//!d}' | sed '/NameMap/,/Orientation/{//!d}' | sed -r 's/\\/\\\\/g ' | sed -r 's/\"/\\\"/g '  | sed -r '/name/a table: '"$TABLE"'' | sed -r '/name/a project: '"$PROJECT"'' | sed -r 's/^[\t]*([a-zA-Z0-9]+): (.*)/\"\1\": \"\2\",/' | sed -r 's/^$/}/' | tac | sed '/}/ {n; s/,$//}' | tac | sed -r 's/^\"name/{\"name/'  > "$WORKDIR"/"$TABLE".meta.json
-		mdb-prop "$mdbfile" "$TABLE" | sed '/GUID/d' | sed '/ColumnWidth/,/ColumnHidden/{//!d}' | sed -r 's/\\/\\\\/g ' | sed -r 's/\"/\\\"/g '  | sed -r '/name/a table: '"$TABLE"'' | sed -r '/name/a project: '"$PROJECT"'' | sed -r 's/^[\t]*([a-zA-Z0-9]+): (.*)/\"\1\": \"\2\",/' | sed -r 's/^$/}/' | tac | sed '/}/ {n; s/,$//}' | tac | sed -r 's/^\"name/{\"name/'  > "$WORKDIR"/"$TABLE".meta.json
+		mdb-prop "$mdbfile" "$TABLE" | sed '/GUID/d' | sed '/ColumnWidth/,/ColumnHidden/{//!d}' | sed -r 's/\\/\\\\/g ' | sed -r 's/\"/\\\"/g '  | sed -r '/name/a table: '"$TABLE"'' | sed -r '/name/a project: '"$PROJECT"'' | sed -r '/name/a count: '"$LENGTE"'' | sed -r 's/^[\t]*([a-zA-Z0-9]+): (.*)/\"\1\": \"\2\",/' | sed -r 's/^$/}/' | tac | sed '/}/ {n; s/,$//}' | tac | sed -r 's/^\"name/{\"name/'  > "$WORKDIR"/"$TABLE".meta.json
 		#mongoimport --uri "$DB_STAGING_URI" -d "$DATABASE" -c Kolominformatie --mode upsert --file "$WORKDIR"/"$TABLE".meta.json	
 		# Remove UTF8 Files
 		# iconv -f utf8 -t utf8 -c "$WORKDIR"/"$TABLE".meta.json > "$WORKDIR"/"$TABLE".metaclean.json
