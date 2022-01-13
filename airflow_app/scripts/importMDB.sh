@@ -18,9 +18,7 @@ LOG=${AIRFLOW_LOGDIR}/${Collection}.log
 echo Loading "$FILES" to collection "$Collection" in database "$DATABASE" and logging to "$LOG" 
 
 # Setting logging to log files, including error log
-#exec 1>$LOG 
-#exec 2>&1
-exec &> >(tee "$LOG")
+exec &> >(tee "$LOG") 2>&1
 echo Loading "$FILES" to collection "$Collection" in database "$DATABASE" and logging to "$LOG" 
 
 
