@@ -2,7 +2,7 @@ FROM apache/airflow:2.2.3-python3.7
 
 USER root
 # INSTALL TOOLS
-RUN apt update && apt -y upgrade && apt -y install software-properties-common mdbtools vim curl gnupg wget libmagic-dev
+RUN apt update && apt -y upgrade && apt -y install software-properties-common mdbtools vim curl gnupg wget libmagic-dev file
 RUN wget -qO - https://www.mongodb.org/static/pgp/server-4.2.asc | apt-key add -
 #RUN wget -qO - https://www.mongodb.org/static/pgp/server-4.4.asc | apt-key add -
 RUN echo "deb [ arch=amd64 ] https://repo.mongodb.org/apt/ubuntu bionic/mongodb-org/4.2 multiverse" | tee /etc/apt/sources.list.d/mongodb-org-4.2.list

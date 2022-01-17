@@ -40,7 +40,7 @@ do
 	    echo Reading "$TABLE" into "$CSV" and loading into Mongo database "$DATABASE" collection "$Collection"
 	    mdb-export "$mdbfile" "$CSV" "$TABLE" > "$CSV"  		
 		LENGTE=`wc -l < $CSV`
-		let LENGTE=$LENGTE-1
+		let LENGTE=$LENGTE-1 # To correct for the header 
 		echo Length of tabel $CSV in file $mdbfile is: $LENGTE
 		if [ $LENGTE -lt 2 ]; then # on empty CSV stop loop and continue to nect cycle
 			rm "$CSV"
@@ -54,16 +54,19 @@ do
 		# Remove Duplicate Columns https://stackoverflow.com/questions/15854720/deleting-duplicate-columns-from-csv-file
 		#awk -F, 'NR==1{for(i=1;i<=NF;i++)if(!($i in v)){ v[$i];t[i]}}{s=""; for(i=1;i<=NF;i++)if(i in t)s=s sprintf("%s,",$i);if(s){sub(/,$/,"",s);print s}} ' "$CSV"
 		# Import CSV into Mongo
-		mongoimport --host "$MONGO_SERVER" --password "$MONGO_INITDB_ROOT_PASSWORD" --username "$MONGO_INITDB_ROOT_USERNAME" --authenticationDatabase admin --db "$DATABASE" --collection "$Collection" --type csv --headerline --ignoreBlanks --mode upsert --file "$CSV"   
+		mongoimport --host "$MONGO_SERVER" --password "$MONGO_INITDB_ROOT_PASSWORD" --username "$MONGO_INITDB_ROOT_USERNAME" --authenticationDatabase admin --db "$DATABASE" --collection "$Collection" --type csv --headerline --ignoreBlanks --mode upsert --file "$CSV"
 		
 		echo Reading metainfo
+		METAINFO="$WORKDIR"/"$PROJECT"."$TABLE".meta.json
 		# Removing lines with GUID and everythimng bnetween ColumnWidth  and ColumnHidden to overcome encoding problem
-		# mdb-prop "$mdbfile" "$TABLE" | sed '/GUID/d' | sed '/ColumnWidth/,/ColumnHidden/{//!d}' | sed '/NameMap/,/Orientation/{//!d}' | sed -r 's/\\/\\\\/g ' | sed -r 's/\"/\\\"/g '  | sed -r '/name/a table: '"$TABLE"'' | sed -r '/name/a project: '"$PROJECT"'' | sed -r 's/^[\t]*([a-zA-Z0-9]+): (.*)/\"\1\": \"\2\",/' | sed -r 's/^$/}/' | tac | sed '/}/ {n; s/,$//}' | tac | sed -r 's/^\"name/{\"name/'  > "$WORKDIR"/"$TABLE".meta.json
-		mdb-prop "$mdbfile" "$TABLE" | sed '/GUID/d' | sed '/ColumnWidth/,/ColumnHidden/{//!d}' | sed -r 's/\\/\\\\/g ' | sed -r 's/\"/\\\"/g '  | sed -r '/name/a table: '"$TABLE"'' | sed -r '/name/a project: '"$PROJECT"'' | sed -r '/name/a count: '"$LENGTE"'' | sed -r 's/^[\t]*([a-zA-Z0-9]+): (.*)/\"\1\": \"\2\",/' | sed -r 's/^$/}/' | tac | sed '/}/ {n; s/,$//}' | tac | sed -r 's/^\"name/{\"name/'  > "$WORKDIR"/"$TABLE".meta.json
-		#mongoimport --uri "$DB_STAGING_URI" -d "$DATABASE" -c Kolominformatie --mode upsert --file "$WORKDIR"/"$TABLE".meta.json	
-		# Remove UTF8 Files
-		# iconv -f utf8 -t utf8 -c "$WORKDIR"/"$TABLE".meta.json > "$WORKDIR"/"$TABLE".metaclean.json
-		mongoimport --host "$MONGO_SERVER" --password "$MONGO_INITDB_ROOT_PASSWORD" --username "$MONGO_INITDB_ROOT_USERNAME" --authenticationDatabase admin --db "$DATABASE"  --collection Kolominformatie --mode upsert --file "$WORKDIR"/"$TABLE".meta.json  
+		mdb-prop "$mdbfile" "$TABLE" | sed '/GUID:/d' | sed '/DatasheetFontItalic/,+1d' | sed '/ColumnWidth/,/ColumnHidden/{//!d}' | sed -r 's/\\/\\\\/g ' | sed -r 's/\"/\\\"/g '  | sed -r '/name/a table: '"$TABLE"'' | sed -r '/name/a project: '"$PROJECT"'' | sed -r '/name/a teller: '"$LENGTE"'' | sed -r 's/^[\t]*([a-zA-Z0-9]+): (.*)/\"\1\": \"\2\",/' | sed -r 's/^$/}/' | tac | sed '/}/ {n; s/,$//}' | tac | sed -r 's/^\"name/{\"name/' | sed '/\":\|}/!d' > "$METAINFO"
+		#ENCODING=`file -bi "$METAINFO" | awk -F'=' '{print $2 }'`
+		#echo Encoding is "$ENCODING" for file "$METAINFO"
+		#Setting encoding does not seem to ix errors
+		#iconv -f "$ENCODING" -t utf-8 -c < "$METAINFO" > "$METAINFO"Encoded
+		# Might use | sed '/\":\|}/!d' to fix unreadable chars
+
+		mongoimport --host "$MONGO_SERVER" --password "$MONGO_INITDB_ROOT_PASSWORD" --username "$MONGO_INITDB_ROOT_USERNAME" --authenticationDatabase admin --db "$DATABASE"  --collection "$COLL_STAGING_METAINFO" --mode upsert --file "$METAINFO"
 
 		# rm "$CSV"
 	    # rm "$WORKDIR"/"$TABLE".meta.json
