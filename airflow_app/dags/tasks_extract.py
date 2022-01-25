@@ -28,7 +28,7 @@ def getExtractTaskGroup():
         # [START howto_operator_bash]
         Extract_Data_From_new = BashOperator(
             task_id='Extract_Data_From_Nieuwe_Projecten',
-            bash_command="${AIRFLOW_HOME}/scripts/importMDB.sh %s %s " % (rootDir + "/projectdatabase/nieuw", config.COLL_STAGING_NIEUW)
+            bash_command="${AIRFLOW_HOME}/scripts/importMDB.sh %s %s " % (rootDir + "/projectdatabase/nieuw", config.COLL_STAGING_OUD)
         )
         # [START howto_operator_bash]
         Extract_Data_From_DelfIT = BashOperator(

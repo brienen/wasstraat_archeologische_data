@@ -5,6 +5,32 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Airflow Harmonize Only",
+            "type": "python",
+            "request": "launch",
+            "program": "/home/airflow/.local/bin/airflow",
+            "console": "integratedTerminal",
+            "args": [
+                "dags",
+                "test",
+                "DAG_Transform1_Harmonize_Only",
+                "2020-01-26"
+            ]
+        },
+        {
+            "name": "Airflow SetReferences Only",
+            "type": "python",
+            "request": "launch",
+            "program": "/home/airflow/.local/bin/airflow",
+            "console": "integratedTerminal",
+            "args": [
+                "dags",
+                "test",
+                "DAG_Transform3_References_Only",
+                "2020-01-27"
+            ]
+        },
+        {
             "name": "Airflow Load Only",
             "type": "python",
             "request": "launch",

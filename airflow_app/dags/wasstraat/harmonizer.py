@@ -1,0 +1,118 @@
+import config
+import numpy as np
+import pandas as pd
+import json
+import re
+import copy
+import ast
+
+import logging
+logger = logging.getLogger("airflow.task")
+
+
+AIRFLOW_WASSTRAAT_CONFIG = config.AIRFLOW_WASSTRAAT_CONFIG
+HARMONIZE_AGGR = [
+    {'$match': {"table": {"$in" : ["XXX","YYY"]}}},
+    {"$match": {"table": {"$in" : ["XXX","YYY"]}}},
+    {"$replaceRoot" : {"newRoot" : {"_id" : "$_id", "brondata" : "$$ROOT"}}},
+    {"$addFields" : { 
+        "projectcd" : "$brondata.project"}}
+    ,{ "$merge": { "into": { "db": config.DB_ANALYSE, "coll": config.COLL_ANALYSE }, "on": "_id",  "whenMatched": "replace", "whenNotMatched": "insert"}}
+]
+HARMONIZER = None
+
+
+def getAggrTables(root, tabellen, include): 
+    lst_tabellen = ast.literal_eval(tabellen)
+    if len(lst_tabellen) == 0:
+        root["table"] = {"$in" : []} if include else {"$not": {"$in" : []}}
+    elif len(lst_tabellen) == 1:
+        root["table"] = {'$regex': lst_tabellen[0], '$options': 'i'} if include else {"$not": {'$regex': lst_tabellen[0], '$options': 'i'}}
+    else:
+        or_lst = []
+        for tabel in lst_tabellen:
+            or_lst.append({"table": {'$regex': tabel, '$options': 'i'}} if include else {"table": {"$not": {'$regex': tabel, '$options': 'i'}}})
+        root = {"$or": or_lst} if include else {"$and": or_lst}
+    return root
+
+
+def getKolomValues(kolommen):
+    if len(kolommen) == 0:
+        return None
+    elif len(kolommen) == 1:
+        return "$brondata." + kolommen[0]
+    else:
+        val = kolommen.pop(0)
+        return {'$ifNull': ["$brondata." + val, getKolomValues(kolommen)]}
+
+    
+def getAttributes(root, df_attributes):
+    for index, row in df_attributes.iterrows():        
+        kolommen = row['Kolommen']
+        if re.match(r"\[.*\]", str(kolommen)):
+            kolommen = ast.literal_eval(kolommen)
+            root[row['Attribute']] = getKolomValues(kolommen)
+        else:
+            root[row['Attribute']] = kolommen
+        
+    return root
+
+
+# initialize all attributes so that they can be used for inheritenace
+def initAttributes(xl):
+    aggr = copy.deepcopy(HARMONIZE_AGGR)
+    lst_objecten = xl['Objecten']['Object'].unique()
+    aggr = aggr[3]['$addFields']
+    return { obj:getAttributes(copy.deepcopy(aggr), xl[obj]) for obj in lst_objecten if obj in xl.keys() }
+
+
+def createAggr(soort, tabellen, tabellen_Ignore, xl, attrs):
+    aggr = copy.deepcopy(HARMONIZE_AGGR)
+
+    idx_addfields = 3
+    # Fase Negative match
+    aggr[0]["$match"] = getAggrTables(aggr[0]["$match"], tabellen_Ignore, False)
+    # Fase Positive match
+    aggr[1]["$match"] = getAggrTables(aggr[1]["$match"], tabellen, True)
+    # Fase create addFields from inherited Class
+    overerven_van = xl['Objecten'][xl['Objecten']['Object'] == soort]['Overerven'].values[0]
+
+    # Fase create inherited fields
+    if overerven_van != "" and pd.notna(overerven_van):
+        idx_addfields += 1
+        aggr_flds = copy.deepcopy(aggr[3])
+        aggr_flds['$addFields'] = attrs[overerven_van]
+        aggr.insert(idx_addfields-1, aggr_flds)
+
+    # Fase create addFields
+    if soort in xl.keys():
+        aggr[idx_addfields]['$addFields'] = attrs[soort]
+    aggr[idx_addfields]['$addFields']['soort'] = soort
+
+    return aggr
+   
+    
+def loadHarmonizer():
+    xl = pd.read_excel(AIRFLOW_WASSTRAAT_CONFIG, sheet_name=None)
+    attrs = initAttributes(xl)
+    
+    df = xl['Objecten']    
+    df['Object'] = df['Object'].apply(lambda x: x.strip())
+    df['aggr'] = df.apply(lambda x: createAggr(x['Object'], x['Tabellen'], df[df.Object == 'Ignore']['Tabellen'].values[0], xl, attrs), axis=1)   
+    
+    HARMONIZER = df    
+    return HARMONIZER
+  
+    
+def getHarmonizeAggr(soort, reload=False):
+    global HARMONIZER
+    
+    if not isinstance(HARMONIZER, type(pd.DataFrame))  or reload:
+        HARMONIZER = loadHarmonizer()
+      
+    if not soort in HARMONIZER['Object'].unique():
+        msg = 'Error while loading harmonizer, ' + soort + ' does not exist in Excel.'
+        logger.error(msg) 
+        raise Exception(msg)
+    return HARMONIZER[HARMONIZER.Object == soort]['aggr'].values[0]
+        

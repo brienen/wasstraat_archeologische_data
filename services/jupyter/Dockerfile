@@ -2,6 +2,7 @@ FROM jupyter/datascience-notebook
 
 RUN pip install --upgrade setuptools
 RUN pip install python-magic vega_datasets altair vincent geopandas folium mongoengine psycopg2-binary pymongo sqlacodegen
+RUN pip install xeus-python notebook
 
 # For development, Jupyter remote kernel, Hydrogen
 # Using inside the container:

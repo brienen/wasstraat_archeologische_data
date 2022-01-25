@@ -28,6 +28,7 @@ services:
        - ./data/input/basefiles:/input
        - ./airflow_app/dags:/opt/airflow/dags
        - ./airflow_app/scripts:/opt/airflow/scripts
+       - ./data/wasstraat_config:/opt/airflow/config
     build: 
       dockerfile: ./services/airflow/Dockerfile
       context: .
@@ -74,6 +75,7 @@ services:
       - "8888:8888"
     volumes:
       - ./notebooks:/home/jovyan/
+      - ./data/wasstraat_config:/home/jovyan/wasstraat_config/
     environment:
       JUPYTER_ENABLE_LAB: "yes"
     command: "start-notebook.sh --NotebookApp.token='' --NotebookApp.password=''"

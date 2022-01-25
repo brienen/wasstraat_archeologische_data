@@ -15,7 +15,7 @@ RUN mkdir extra
 USER airflow
 RUN pip install --upgrade pip
 #RUN pip install matplotlib altair shapely geopandas psycopg2 flask_appbuilder fab-addon-geoalchemy psycopg2-binary==2.7.7 raven celery[redis] SQLAlchemy==1.3.0 passlib[bcrypt]==1.7.1 tenacity==5.0.3 pymongo Pillow Flask python-magic roman pandas opentelemetry-api
-RUN pip install matplotlib altair shapely geopandas fab-addon-geoalchemy raven passlib[bcrypt] tenacity pymongo Pillow python-magic roman pandas opentelemetry-api
+RUN pip install matplotlib altair shapely geopandas fab-addon-geoalchemy raven passlib[bcrypt] tenacity pymongo Pillow python-magic roman pandas opentelemetry-api openpyxl
 RUN mkdir tmp
 # COPY SQL SCRIPT
 COPY scripts/airflow/check_init.sql ./extra/check_init.sql
