@@ -3,12 +3,14 @@ import wasstraat.harmonizer as harmonizer
 
 HARMONIZE_PIPELINES = "HARMONIZE_PIPELINES"
 SET_REFERENCES_PIPELINES = "SET_REFERENCES_PIPELINES"
+STAGING_COLLECTION = "STAGING_COLLECTION"
 EXTRA_FIELDS = 'extra_fields'
 
 
 
 wasstraat_model = {
   "Put": {
+        STAGING_COLLECTION: config.COLL_STAGING_OUD,
         HARMONIZE_PIPELINES: [harmonizer.getHarmonizeAggr('Put')],
         SET_REFERENCES_PIPELINES: [[ 
             #{ '$match': { '$and': [{'putnr': { '$exists': True }}, {'projectcd': { '$exists': True }}]}},
@@ -22,6 +24,7 @@ wasstraat_model = {
         ]]
   },
   "Vlak": {
+        STAGING_COLLECTION: config.COLL_STAGING_OUD,
         HARMONIZE_PIPELINES: [harmonizer.getHarmonizeAggr('Vlak')],
         SET_REFERENCES_PIPELINES: [[ 
             #{ '$match': {'vlaknr': { '$exists': True }}},
@@ -35,6 +38,7 @@ wasstraat_model = {
         ]]
   },
   "Spoor": {
+        STAGING_COLLECTION: config.COLL_STAGING_OUD,
         HARMONIZE_PIPELINES: [harmonizer.getHarmonizeAggr('Spoor')],
         SET_REFERENCES_PIPELINES: [[ 
             #{'$match': {'spoornr': { '$exists': True }}},
@@ -53,6 +57,7 @@ wasstraat_model = {
         ]]
   },
   "Stelling": {
+        STAGING_COLLECTION: config.COLL_STAGING_MAGAZIJNLIJST,
         HARMONIZE_PIPELINES: [
             [{ "$match": {"table": "stellingen"}},
             { "$replaceRoot": {"newRoot": {"_id": "$_id", "brondata": "$$ROOT"}}},
@@ -65,11 +70,13 @@ wasstraat_model = {
         ]]
   },
   "Aardewerk": {
-      HARMONIZE_PIPELINES: [harmonizer.getHarmonizeAggr('Aardewerk')],
-      SET_REFERENCES_PIPELINES: [[]]
+        STAGING_COLLECTION: config.COLL_STAGING_OUD,
+        HARMONIZE_PIPELINES: [harmonizer.getHarmonizeAggr('Aardewerk')],
+        SET_REFERENCES_PIPELINES: [[]]
   },
   "Artefact": {
-      HARMONIZE_PIPELINES: [harmonizer.getHarmonizeAggr('Artefact')],
+        STAGING_COLLECTION: config.COLL_STAGING_OUD,
+        HARMONIZE_PIPELINES: [harmonizer.getHarmonizeAggr('Artefact')],
           #[ 
           #  {'$match': { '$or': [
           #  {'table': {'$regex':'.*steen.*', '$options': 'i'}},
@@ -132,6 +139,7 @@ wasstraat_model = {
     ]]
   },
   "Magazijnlocatie": {
+      STAGING_COLLECTION: config.COLL_STAGING_MAGAZIJNLIJST,
       HARMONIZE_PIPELINES: [[
         { "$match": { "$or": [{"table": "magazijnlijst"}, {"table": "doosnr"}]}},
         { "$replaceRoot": {"newRoot": {"_id": "$_id", "brondata": "$$ROOT"}}},
@@ -149,6 +157,7 @@ wasstraat_model = {
     ]]
   },
   "Project": {
+        STAGING_COLLECTION: config.COLL_STAGING_DELFIT,
         HARMONIZE_PIPELINES: [[ 
             { '$match': { 'table': "OPGRAVINGEN" } },
             { '$replaceRoot': {'newRoot': {'_id': "$_id", 'brondata': "$$ROOT"}}},
@@ -163,6 +172,7 @@ wasstraat_model = {
         ]]
   },
   "Vindplaats": {
+        STAGING_COLLECTION: config.COLL_STAGING_DELFIT,
         HARMONIZE_PIPELINES: [[ 
             { '$match': { 'table': "VINDPLAATSEN" } },
             { '$replaceRoot': {'newRoot': {'_id': "$_id", 'brondata': "$$ROOT"}}},
@@ -178,6 +188,7 @@ wasstraat_model = {
         ]]
   },
   "Vondst": {
+        STAGING_COLLECTION: config.COLL_STAGING_OUD,
         HARMONIZE_PIPELINES: [harmonizer.getHarmonizeAggr('Vondst')],
             #[ 
             #{ '$match': {'table': "VONDSTENLIJST"}},
@@ -226,6 +237,7 @@ wasstraat_model = {
         EXTRA_FIELDS: ['projectcd', 'putnr', 'vondstnr', 'artefactnr', 'fotonr', 'fototype', 'soort']
   },
   "Plaatsing": {
+        STAGING_COLLECTION: config.COLL_STAGING_MAGAZIJNLIJST,
         HARMONIZE_PIPELINES: [[]],
         SET_REFERENCES_PIPELINES: [[ 
             { '$match': {'table': "magazijnlijst"}},	
@@ -241,6 +253,7 @@ wasstraat_model = {
         ]]
   },
   "Doos": {
+        STAGING_COLLECTION: config.COLL_STAGING_MAGAZIJNLIJST,
         HARMONIZE_PIPELINES: [[]],
         SET_REFERENCES_PIPELINES: [[ 
                 { '$match': { '$and': [{'doosnr': { '$exists': True }}, {'soort': "artefact"}]}},
@@ -275,6 +288,12 @@ wasstraat_model["Doos"][HARMONIZE_PIPELINES] = [wasstraat_model['Magazijnlocatie
 wasstraat_model["Aardewerk"][SET_REFERENCES_PIPELINES] = wasstraat_model['Artefact']['SET_REFERENCES_PIPELINES']
 
 
+
+def getHarmonizeStagingCollection(soort):
+    if soort in wasstraat_model.keys():
+        return wasstraat_model[soort][STAGING_COLLECTION]
+    else:
+        raise Exception(f'Fout bij het opvragen van collection van metadata. {soort} is een onbekend metadatasoort.')
 
 def getHarmonizePipeline(soort):
     if soort in wasstraat_model.keys():
@@ -332,9 +351,9 @@ def getKeys(fase):
     if not fase in [HARMONIZE_PIPELINES, SET_REFERENCES_PIPELINES]:
         raise Exception(f'Fout bij het opvragen van metadata. {fase} is een onbekend fase.')
 
-    all_keys = meta.wasstraat_model.keys()
+    all_keys = wasstraat_model.keys()
     keys = []
     for k in all_keys:
-        if meta.wasstraat_model[k][fase] != [[]]:
+        if wasstraat_model[k][fase] != [[]]:
             keys.append(k)
     return keys

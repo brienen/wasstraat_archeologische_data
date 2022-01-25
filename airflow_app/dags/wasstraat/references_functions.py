@@ -93,7 +93,7 @@ def setReferences(soort):
         updates=[ UpdateOne({'_id':x['_id']}, {'$set':x}) for x in df_merge.to_dict('records')]
         result = col.bulk_write(updates)
 
-        return result
+        return result.bulk_api_result
         
     except Exception as err:
         msg = "Onbekende fout bij het aanroepen van een aggregation met melding: " + str(err)
