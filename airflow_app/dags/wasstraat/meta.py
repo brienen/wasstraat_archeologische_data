@@ -94,18 +94,18 @@ wasstraat_model = {
                 "V", {'$toString': "$vondstnr"}] }}}
     ]]
   },
-  "Magazijnlocatie": {
+  "Standplaats": {
       STAGING_COLLECTION: config.COLL_STAGING_MAGAZIJNLIJST,
       HARMONIZE_PIPELINES: [[
         { "$match": { "$or": [{"table": "magazijnlijst"}, {"table": "doosnr"}]}},
         { "$replaceRoot": {"newRoot": {"_id": "$_id", "brondata": "$$ROOT"}}},
         { "$addFields": {"projectcd": "$brondata.CODE", "projectnaam": "$brondata.PROJECT", "stelling": "$brondata.STELLING", "vaknr": "$brondata.VAKNO", "volgletter": "$brondata.VOLGLETTER", "inhoud":"$brondata.INHOUD", "doosnr": "$brondata.DOOSNO", 
-            "uitgeleend": "$brondata.UIT", "table": "$brondata.table", "soort": "Magazijnlocatie"}},
+            "uitgeleend": "$brondata.UIT", "table": "$brondata.table", "soort": "Standplaats"}},
         { "$merge": { "into": { "db": config.DB_ANALYSE, "coll": config.COLL_ANALYSE }, "on": "_id",  "whenMatched": "replace", "whenNotMatched": "insert" } }
       ]],
       SET_REFERENCES_PIPELINES: [[ 
-        { '$match': {'soort': "Magazijnlocatie"}},
-        { '$addFields': {'herkomst': ["magazijnlijst"], 'soort': 'Magazijnlocatie'}},  	
+        { '$match': {'soort': "Standplaats"}},
+        { '$addFields': {'herkomst': ["magazijnlijst"], 'soort': 'Standplaats'}},  	
         { '$addFields': {'key': { '$concat': [ "S", "$stelling", { '$ifNull': [ {'$concat': ["V", {'$toString': "$vaknr"}]}, ""]}, { '$ifNull': [ {'$concat': ["L", "$volgletter"]}, "" ] }] }}},  	
         #{ '$addFields': {'soort':  { '$concat': [ "S", "$stelling"]}}},
         { '$addFields': {'key_stelling': { '$concat': [ "S", "$stelling"]}}}
@@ -236,8 +236,8 @@ wasstraat_model = {
         EXTRA_FIELDS: ['key_stelling']
   }
 }
-wasstraat_model["Plaatsing"][HARMONIZE_PIPELINES] = wasstraat_model['Magazijnlocatie']['HARMONIZE_PIPELINES']
-wasstraat_model["Doos"][HARMONIZE_PIPELINES] = [wasstraat_model['Magazijnlocatie']['HARMONIZE_PIPELINES'][0]]
+wasstraat_model["Plaatsing"][HARMONIZE_PIPELINES] = wasstraat_model['Standplaats']['HARMONIZE_PIPELINES']
+wasstraat_model["Doos"][HARMONIZE_PIPELINES] = [wasstraat_model['Standplaats']['HARMONIZE_PIPELINES'][0]]
 wasstraat_model["Aardewerk"][SET_REFERENCES_PIPELINES] = wasstraat_model['Artefact']['SET_REFERENCES_PIPELINES']
 
 

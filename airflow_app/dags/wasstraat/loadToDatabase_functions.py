@@ -127,8 +127,8 @@ def loadAll():
             connection.execute('TRUNCATE ' + ','.join(lst) + ';')
 
             # Set table_lst to avoid relational integrity issues
-            lst_tables = ['Def_Project', 'Def_Put', 'Def_Vondst', 'Def_Spoor', 'Def_Stelling', 'Def_Doos', 'Def_Magazijnlocatie', 'Def_Plaatsing', 'Def_Vlak', 'Def_Vindplaats', 'Def_Artefact', 'Def_Foto']
-            # ['Def_Magazijnlocatie', 'Def_Plaatsing', 'Def_Vlak', 'Def_Vindplaats', 'Def_Project', 'Def_Doos', 'Def_Stelling', 'Def_Put', 'Def_Spoor', 'Def_Foto', 'Def_Artefact', 'Def_Vondst']
+            lst_tables = ['Def_Project', 'Def_Put', 'Def_Vondst', 'Def_Spoor', 'Def_Stelling', 'Def_Doos', 'Def_Standplaats', 'Def_Plaatsing', 'Def_Vlak', 'Def_Vindplaats', 'Def_Artefact', 'Def_Foto']
+            # ['Def_Standplaats', 'Def_Plaatsing', 'Def_Vlak', 'Def_Vindplaats', 'Def_Project', 'Def_Doos', 'Def_Stelling', 'Def_Put', 'Def_Spoor', 'Def_Foto', 'Def_Artefact', 'Def_Vondst']
             # Then load new data
             for table in lst_tables:            
                 if table.startswith('Def_'):

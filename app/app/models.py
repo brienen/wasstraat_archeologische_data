@@ -335,8 +335,8 @@ table_foto = metadata.tables['Def_Foto']
 #    __table__ = select_foto_zonder
 
 
-class Magazijnlocatie(Model):
-    __tablename__ = 'Def_Magazijnlocatie'
+class Standplaats(Model):
+    __tablename__ = 'Def_Standplaats'
 
     primary_key = Column(Integer, primary_key=True, autoincrement=True)
     uuid = Column('_id', String(40))

@@ -42,7 +42,7 @@ services:
       - ./config/postgres.env
       - ./config/mongo.env
     ports:
-      - '5000:5000'
+      - '5050:5050'
     depends_on:
       - postgres
       - mongo
@@ -50,7 +50,7 @@ services:
       #- ./examples/polymorph:/app
       - ./data/images:/images
       - ./app:/app
-    entrypoint: 'flask run --host=0.0.0.0'
+    entrypoint: 'flask run --host=0.0.0.0 --port=5050'
     build: 
       dockerfile: ./services/flask/Dockerfile
       context: .
