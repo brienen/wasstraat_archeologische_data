@@ -18,7 +18,7 @@ logger = logging.getLogger("airflow.task")
 
 def callAggregation(collection, pipeline):   
     try: 
-        logger.debug("Calling aggregation with pipeline: " + str(pipeline))
+        logger.info("Calling aggregation with pipeline: " + str(pipeline))
         myclient = pymongo.MongoClient(str(config.MONGO_URI))
         stagingdb = myclient[str(config.DB_STAGING)]
         stagingcollection = stagingdb[collection]
