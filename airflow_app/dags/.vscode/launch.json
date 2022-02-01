@@ -26,8 +26,21 @@
             "args": [
                 "dags",
                 "test",
-                "DAG_Transform3_References_Only",
-                "2020-01-28"
+                "DAG_Transform4_References_Only",
+                "2020-01-30"
+            ]
+        },
+        {
+            "name": "Airflow SetKeys Only",
+            "type": "python",
+            "request": "launch",
+            "program": "/home/airflow/.local/bin/airflow",
+            "console": "integratedTerminal",
+            "args": [
+                "dags",
+                "test",
+                "DAG_Transform3_Keys_Only",
+                "2020-01-31"
             ]
         },
         {

@@ -13,12 +13,11 @@ import wasstraat.setAttributes_functions as setAttributes_functions
 import wasstraat.meta as meta
 
 
-def getSetReferencesTaskGroup():
+def getSetKeysTaskGroup():
 
-    tg1 = TaskGroup(group_id='Transform3_Set_References_Group')
+    tg1 = TaskGroup(group_id='Transform3_Set_Keys_Group')
     with tg1:
         first = DummyOperator(task_id="first")
-        middle = DummyOperator(task_id="middle")
         last = DummyOperator(task_id="last")
 
         Set_Artefactnr_Unique = PythonOperator(
@@ -34,20 +33,12 @@ def getSetReferencesTaskGroup():
                 python_callable=references_functions.setReferenceKeys,
                 op_kwargs={'pipeline': meta.getReferenceKeysPipeline(obj_type), 'soort': obj_type}
             )
-            Set_Artefactnr_Unique >> tsk >> middle
+            Set_Artefactnr_Unique >> tsk >> last
 
-        Set_Reference_Keys_Doos = PythonOperator(
-            task_id='Set_Reference_Keys_Dozen',
-            python_callable=references_functions.setReferenceKeysDozen,
-        )
-        Set_Artefactnr_Unique >> Set_Reference_Keys_Doos >> middle
-
-        for obj_type in obj_types:
-            tsk = PythonOperator(
-                task_id=f'Set_Reference_{obj_type}',
-                python_callable=references_functions.setReferences,
-                op_kwargs={'soort': obj_type}
-            )
-            middle >> tsk >> last
+        #Set_Reference_Keys_Doos = PythonOperator(
+        #    task_id='Set_Reference_Keys_Dozen',
+        #    python_callable=references_functions.setReferenceKeysDozen,
+        #)
+        #Set_Artefactnr_Unique >> Set_Reference_Keys_Doos >> last
 
     return tg1

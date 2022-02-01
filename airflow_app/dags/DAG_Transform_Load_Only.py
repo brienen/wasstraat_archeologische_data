@@ -24,9 +24,11 @@ from airflow.operators.dummy import DummyOperator
 from airflow.operators.python import PythonOperator
 
 import config
-import tasks_transform3_references
+import tasks_transform3_keys
 import tasks_transform1_harmonize
 import tasks_transform2_attributes
+import tasks_transform4_references
+import tasks_transform5_moveAndMerge
 import wasstraat.mongoUtils as mongoUtils
 import wasstraat.loadToDatabase_functions as loadToDatabase
 
@@ -63,7 +65,9 @@ with DAG(
     
     tg_harmonize = tasks_transform1_harmonize.getHarmonizeTaskGroup()
     tg_enhanceAttrs = tasks_transform2_attributes.getEnhanceAttributesGroup()
-    tg_references = tasks_transform3_references.getSetReferencesTaskGroup()
+    tg_keys = tasks_transform3_keys.getSetKeysTaskGroup()
+    tg_references = tasks_transform4_references.getSetReferencesTaskGroup()
+    tg_moveAndMerge = tasks_transform5_moveAndMerge.getMoveAndMergeTaskGroup()
 
 
-    Start_cycle >> Drop_Analyse_Database >> tg_harmonize >> tg_enhanceAttrs >> tg_references >> LoadToDatabase_postgres >> End_cycle 
+    Start_cycle >> Drop_Analyse_Database >> tg_harmonize >> tg_enhanceAttrs >> tg_keys >> tg_references >> tg_moveAndMerge >> LoadToDatabase_postgres >> End_cycle 

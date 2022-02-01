@@ -19,11 +19,6 @@ def getAnalyseCollection():
     analyseDb = myclient[str(config.DB_ANALYSE)]
     return analyseDb[config.COLL_ANALYSE]
 
-def getAnalyseCleanCollection():   
-    myclient = pymongo.MongoClient(str(config.MONGO_URI))
-    analyseDb = myclient[str(config.DB_ANALYSE)]
-    return analyseDb[config.COLL_ANALYSE_CLEAN]
-
 def getAnalyseDoosCollection():   
     myclient = pymongo.MongoClient(str(config.MONGO_URI))
     analyseDb = myclient[str(config.DB_ANALYSE)]
@@ -36,10 +31,6 @@ def createIndex(collection, index_name, uniqueValue=False):
 
 def setReferenceKeys(pipeline, soort, col='analyse'):   
     try:
-        # First remove all dozen from Clean Collection
-        collectionClean = getAnalyseCleanCollection()
-        collectionClean.delete_many({"soort": soort})
-
         #Aggregate Pipelin
         if (col == 'analyse'):
             collection = getAnalyseCollection()
@@ -54,7 +45,11 @@ def setReferenceKeys(pipeline, soort, col='analyse'):
             df[['datum']] = df[['datum']].astype(object).where(df[['datum']].notnull(), None)
         
         if not df.empty:
-            collectionClean.with_options(write_concern=WriteConcern(w=0)).insert_many(df.to_dict('records'))
+            #collectionClean.with_options(write_concern=WriteConcern(w=0)).insert_many(df.to_dict('records'))
+
+            # Update soort documents 
+            updates=[ UpdateOne({'_id':x['_id']}, {'$set':x}, upsert=True) for x in df.to_dict('records')]
+            result = collection.bulk_write(updates)
         else:
             logger.warning(f"trying to insert empty dataframe of soort: {soort} into collection {col}.")
         
@@ -65,12 +60,11 @@ def setReferenceKeys(pipeline, soort, col='analyse'):
 
     finally:
         collection.database.client.close()
-        collectionClean.database.client.close()
 
 
 def setReferences(soort):
     try:
-        col = getAnalyseCleanCollection()
+        col = getAnalyseCollection()
         soort_lw = soort.lower()
         
         # Find all main entries for type soort
@@ -79,7 +73,11 @@ def setReferences(soort):
         if df_soort.size < 1:
             logger.warning("Er zjn geen documents gevonden van het type " +soort)
             return
-        
+
+        if not 'key_'+soort_lw in df_soort.columns:
+            logger.warning("Kan geen referenties maken voor " +soort + ". Geen Key-veld aanwezig.")
+            return
+
         # Find all references to type soort
         df_ref = pd.DataFrame(list(col.find({"key_"+soort_lw: {"$exists": True}}, projection={'key_'+soort_lw:1})))
         if df_ref.size < 1:
@@ -119,9 +117,9 @@ def setArtefactnrUnique():
                 project['artefactnrs_unique'] = unique
                 col.replace_one({'_id': project['_id']}, project)
 
-            except expression as exp2:
+            except Exception as exp2:
                 logger.error(f'Error while determining whether artefactnr are unique for project {proj} with message: {str(exp2)} ')
-    except expression as exp1:
+    except Exception as exp1:
         logger.error(f'Severe rrror while determining whether artefactnr are unique with message: {str(exp1)} ')
 
 
@@ -134,8 +132,8 @@ def setReferenceKeysDozen():
     #Find Doos in magazijnlijst
     try:
         # First remove all dozen from Clean Collection
-        collectionClean = getAnalyseCleanCollection()
-        collectionClean.delete_many({"soort": "Doos"})
+        #collectionClean = getAnalyseCleanCollection()
+        #collectionClean.delete_many({"soort": "Doos"})
 
         # First all Dozen in a separate collection
         collection = getAnalyseCollection()

@@ -115,4 +115,28 @@ def getHarmonizeAggr(soort, reload=False):
         logger.error(msg) 
         raise Exception(msg)
     return HARMONIZER[HARMONIZER.Object == soort]['aggr'].values[0]
-        
+
+
+def getObjects(inherit=False, merge=False):
+    if inherit and merge:
+        msg = 'When getting objects, inherit and merge cannot both be True.'
+        logger.error(msg) 
+        raise Exception(msg)
+
+    df = pd.read_excel(AIRFLOW_WASSTRAAT_CONFIG, sheet_name='Objecten')
+    if not inherit and not merge:
+        return list(df[pd.isnull(df.Overerven) & pd.isnull(df.Overerven)]['Object'])
+    elif not inherit:
+        return list(df[pd.notnull(df.Samenvoegen)]['Object'])
+    else:
+        return list(df[pd.notnull(df.Overerven)]['Object'])
+
+
+def getMergeWith(soort, inherit=True):
+    df = pd.read_excel(AIRFLOW_WASSTRAAT_CONFIG, sheet_name='Objecten')
+
+    return df[df.Object == soort]['Overerven'].values[0] if inherit else df[df.Object == soort]['Samenvoegen'].values[0]
+
+
+    
+

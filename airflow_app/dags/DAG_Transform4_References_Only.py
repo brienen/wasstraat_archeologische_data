@@ -23,14 +23,14 @@ from airflow import DAG
 from airflow.operators.dummy import DummyOperator
 
 import config
-import tasks_transform3_references
+import tasks_transform4_references
 
 
 rootDir = str(config.AIRFLOW_INPUTDIR)
 tmpDir = str(config.AIRFLOW_TEMPDIR)
 
 with DAG(
-    dag_id='DAG_Transform3_References_Only',
+    dag_id='DAG_Transform4_References_Only',
     start_date=datetime(2021, 1, 1),
     catchup=False,
     dagrun_timeout=timedelta(minutes=60),
@@ -42,6 +42,6 @@ with DAG(
     End_cycle = DummyOperator(
         task_id='End_cycle',
     )
-    tg_references = tasks_transform3_references.getSetReferencesTaskGroup()
+    tg_references = tasks_transform4_references.getSetReferencesTaskGroup()
 
     Start_cycle >> tg_references >> End_cycle 

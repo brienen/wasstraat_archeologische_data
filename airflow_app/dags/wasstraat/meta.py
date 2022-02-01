@@ -3,6 +3,9 @@ import wasstraat.harmonizer as harmonizer
 
 HARMONIZE_PIPELINES = "HARMONIZE_PIPELINES"
 SET_REFERENCES_PIPELINES = "SET_REFERENCES_PIPELINES"
+MOVE_FASE = "MOVE_FASE"
+MERGE_FASE = "MERGE_FASE"
+MERGE_INHERITED_FASE = "MERGE_INHERITED_FASE"
 STAGING_COLLECTION = "STAGING_COLLECTION"
 EXTRA_FIELDS = 'extra_fields'
 
@@ -17,10 +20,9 @@ wasstraat_model = {
             #{ '$group':{'_id': {"projectcd" : "$projectcd", 'putnr': "$putnr"}}},
             #{ '$unwind': "$_id"},
             #{ '$project': {'_id': 0, 'projectcd': "$_id.projectcd", 'putnr': "$_id.putnr"}},
-            { '$match': {'soort': "Spoor"}},
+            { '$match': {'soort': "Put"}},
             { '$addFields': {'key': { '$concat': [ "P", "$projectcd", "P", {'$toString': "$putnr"}] }}},  		
-            { '$addFields': {'key_project': { '$concat': [ "P", "$projectcd"]}}},
-            { '$addFields': {'soort': 'Put'}}	
+            { '$addFields': {'key_project': { '$concat': [ "P", "$projectcd"]}}}
         ]]
   },
   "Vlak": {
@@ -34,7 +36,7 @@ wasstraat_model = {
             { '$match': {'soort': "Vlak"}},
             { '$addFields': {'key': { '$concat': [ "P", "$projectcd", {'$ifNull': [{'$concat': ["P", {'$toString': "$putnr" }]}, ""]}, "V", {'$toString': "$vlaknr"}] }}},  		
             { '$addFields': {'key_project': { '$concat': [ "P", "$projectcd"]}}},
-            { '$addFields': {'key_put': { '$concat': [ "P", "$projectcd", {'$ifNull': [{'$concat': ["P", {'$toString': "$putnr" }]}, ""]}] }, 'soort': 'Vlak'}}	
+            { '$addFields': {'key_put': { '$concat': [ "P", "$projectcd", {'$ifNull': [{'$concat': ["P", {'$toString': "$putnr" }]}, ""]}] }}}	
         ]]
   },
   "Spoor": {
@@ -52,8 +54,7 @@ wasstraat_model = {
             { '$addFields': {'key_vlak': { '$concat': [ "P", "$projectcd", 
                 {'$ifNull': [{'$concat': ["P", {'$toString': "$putnr" }]}, ""]},
                 {'$ifNull': [{'$concat': ["V", {'$toString': "$vlaknr"}]}, ""]}] }}},  	
-            { '$addFields': {'key_project': { '$concat': [ "P", "$projectcd"]}}},
-            { '$addFields': {'soort': 'Spoor'}}	
+            { '$addFields': {'key_project': { '$concat': [ "P", "$projectcd"]}}}
         ]]
   },
   "Stelling": {
@@ -77,52 +78,8 @@ wasstraat_model = {
   "Artefact": {
         STAGING_COLLECTION: config.COLL_STAGING_OUD,
         HARMONIZE_PIPELINES: [harmonizer.getHarmonizeAggr('Artefact')],
-          #[ 
-          #  {'$match': { '$or': [
-          #  {'table': {'$regex':'.*steen.*', '$options': 'i'}},
-          #  {'table': {'$regex':'.*aardewerk.*', '$options': 'i'}},
-          #  {'table': {'$regex':'.*hout.*', '$options': 'i'}},
-          #  {'table': {'$regex':'.*glas.*', '$options': 'i'}},
-          #  {'table': {'$regex':'.*leer.*', '$options': 'i'}},					
-          #  {'table': {'$regex':'.*metaal.*', '$options': 'i'}},					
-          #  {'table': {'$regex':'.*penning.*', '$options': 'i'}},					
-          #  {'table': {'$regex':'.*spijker.*', '$options': 'i'}},					
-          #  {'table': {'$regex':'.*kleipijp.*', '$options': 'i'}},					
-          #  {'table': {'$regex':'.*bot.*', '$options': 'i'}},					
-          #  {'table': {'$regex':'.*skelet.*', '$options': 'i'}},					
-          # ]}},
-          #  {'$match': { 'table': {'$not': {'$regex':'.*backup.*', '$options': 'i'}}}},
-          #  {'$match': { 'table': {'$not': {'$regex':'.*kopie.*', '$options': 'i'}}}},
-          #  {'$replaceRoot': {'newRoot': {'_id': "$_id", 'brondata': "$$ROOT"}}},
-          #  {'$addFields': {'putnr': {'$ifNull': ["$brondata.PUTNO", "$brondata.Put"]}}},  		
-          #  {'$addFields': {'spoornr': {'$ifNull': ["$brondata.SPOORNO", "$brondata.Spoor"]}}},  		
-          #  {'$addFields': {'vondstnr': {'$ifNull': ["$brondata.VONDSTNO", "$brondata.Vondst"]}}},  		
-          #  {'$addFields': {'doosnr': {'$ifNull': ["$brondata.DOOSNO", "$brondata.10a"]}}},
-          #  {'$addFields': {'herkomst': {'$concat': ["$brondata.project", ".", "$brondata.table"]}}},  		  	  	  
-          #  {'$addFields': {'projectcd': "$brondata.project", 'soort': "artefact"}},
-          #  {'$addFields': {'datering': {'$ifNull': ["$brondata.3", "$brondata.1c"]}}},  		
-          #  {'$addFields': {'datering': {'$ifNull': ["$datering","$brondata.DATERING"]}}},  		
-          #  {'$addFields': {'artefactnr': "$brondata.SUBNO", 'beschrijving': "$brondata.4b", 'vindplek': "$brondata.1b", 'dateringvanaf': "$brondata.3a", 'dateringtot': "$brondata.3b", 'typecd': "$brondata.2", 'opmerkingen': "$brondata.OPMERKING", 
-          #      'typevoorwerp': "$brondata.7a", 'functievoorwerp': "$brondata.7b", 'origine': "$brondata.8", 'literatuur': "$brondata.9",'tekeningnr': "$brondata.10b", 'fotonrs': "$brondata.10d", 'dianrs': "$brondata.10c", 'restauratie': "$brondata.12", 'exposabel': "$brondata.13", 'conserveren': "$brondata.14", 'soort': "artefact", 'table': "$brondata.table"}},
-            #{'$addFields': {'artefactsoort': { '$switch': {
-            #    'branches': [
-            #        { 'case': {'table': {'$regex':'.*steen.*', '$options': 'i'}}, 'then': "bot" },
-            #        { 'case': {'table': {'$regex':'.*aardewerk.*', '$options': 'i'}}, 'then': "aardewerk" },
-            #        { 'case': {'table': {'$regex':'.*hout.*', '$options': 'i'}}, 'then': "hout" },
-            #        { 'case': {'table': {'$regex':'.*glas.*', '$options': 'i'}}, 'then': "glas" },
-            #        { 'case': {'table': {'$regex':'.*leer.*', '$options': 'i'}}, 'then': "leer" },
-            #        { 'case': {'table': {'$regex':'.*metaal.*', '$options': 'i'}}, 'then': "metaal" },
-            #        { 'case': {'table': {'$regex':'.*penning.*', '$options': 'i'}}, 'then': "penning" },
-            #        { 'case': {'table': {'$regex':'.*spijker.*', '$options': 'i'}}, 'then': "spijker" },
-            #        { 'case': {'table': {'$regex':'.*bot.*', '$options': 'i'}}, 'then': "bot" },
-            #        { 'case': {'table': {'$regex':'.*skelet.*', '$options': 'i'}}, 'then': "skelet" },
-            #        { 'case': {'table': {'$regex':'.*kleipijp.*', '$options': 'i'}}, 'then': "kleipijp" }
-            #    ],
-            #    'default': "Onbekend" }}}},	  	  	           
-            #{ "$merge": { "into": { "db": config.DB_ANALYSE, "coll": config.COLL_ANALYSE }, "on": "_id",  "whenMatched": "replace", "whenNotMatched": "insert" } }
-            #]],
         SET_REFERENCES_PIPELINES: [[ 
-            { '$match': { 'soort': "artefact" } },
+            { '$match': { 'soort': "Artefact" } },
             { '$addFields': {'key_doos': { '$concat': [ "P", "$projectcd", "D", {'$toString': "$doosnr"}] }}},
             { '$addFields': {'key_project': { '$concat': [ "P", "$projectcd"]}}}, 
             { '$addFields': {'key_put': { '$concat': [ "P", "$projectcd", 
@@ -134,8 +91,7 @@ wasstraat_model = {
                 {'$ifNull': [{'$concat': ["A", {'$toString': "$artefactnr"}]}, ""]}]}}},  		
             { '$addFields': {'key_vondst': { '$concat': [ "P", "$projectcd", 
                 {'$ifNull': [{'$concat': ["P", {'$toString': "$putnr" }]}, ""]},
-                "V", {'$toString': "$vondstnr"}] }}},  	
-            { '$addFields': {'soort': 'Artefact'}}	
+                "V", {'$toString': "$vondstnr"}] }}}
     ]]
   },
   "Magazijnlocatie": {
@@ -144,16 +100,16 @@ wasstraat_model = {
         { "$match": { "$or": [{"table": "magazijnlijst"}, {"table": "doosnr"}]}},
         { "$replaceRoot": {"newRoot": {"_id": "$_id", "brondata": "$$ROOT"}}},
         { "$addFields": {"projectcd": "$brondata.CODE", "projectnaam": "$brondata.PROJECT", "stelling": "$brondata.STELLING", "vaknr": "$brondata.VAKNO", "volgletter": "$brondata.VOLGLETTER", "inhoud":"$brondata.INHOUD", "doosnr": "$brondata.DOOSNO", 
-            "uitgeleend": "$brondata.UIT", "table": "$brondata.table"}},
+            "uitgeleend": "$brondata.UIT", "table": "$brondata.table", "soort": "Magazijnlocatie"}},
         { "$merge": { "into": { "db": config.DB_ANALYSE, "coll": config.COLL_ANALYSE }, "on": "_id",  "whenMatched": "replace", "whenNotMatched": "insert" } }
       ]],
       SET_REFERENCES_PIPELINES: [[ 
-        { '$match': {'table': "magazijnlijst"}},
+        { '$match': {'soort': "Magazijnlocatie"}},
         { '$addFields': {'herkomst': ["magazijnlijst"], 'soort': 'Magazijnlocatie'}},  	
         { '$addFields': {'key': { '$concat': [ "S", "$stelling", { '$ifNull': [ {'$concat': ["V", {'$toString': "$vaknr"}]}, ""]}, { '$ifNull': [ {'$concat': ["L", "$volgletter"]}, "" ] }] }}},  	
-        { '$addFields': {'soort':  { '$concat': [ "S", "$stelling"]}}},
-        { '$addFields': {'key_stelling': 'Magazijnlocatie'}},
-        { '$project': {'_id':0}} # Make sure magazijnlijsten do not interfere with plaatsingen
+        #{ '$addFields': {'soort':  { '$concat': [ "S", "$stelling"]}}},
+        { '$addFields': {'key_stelling': { '$concat': [ "S", "$stelling"]}}}
+        #,{ '$project': {'_id':0}} # Make sure magazijnlijsten do not interfere with plaatsingen
     ]]
   },
   "Project": {
@@ -190,19 +146,8 @@ wasstraat_model = {
   "Vondst": {
         STAGING_COLLECTION: config.COLL_STAGING_OUD,
         HARMONIZE_PIPELINES: [harmonizer.getHarmonizeAggr('Vondst')],
-            #[ 
-            #{ '$match': {'table': "VONDSTENLIJST"}},
-            #{ '$replaceRoot': {'newRoot': {'_id': "$_id", 'brondata': "$$ROOT"}}},
-            #{ '$addFields': {'projectcd': "$brondata.project", 'vondstnr': {'$ifNull': ["$brondata.VONDSTNO", "$brondata.Vondst"]}}},  		
-            #{ '$addFields': {'putnr': {'$ifNull': ["$brondata.PUTNO", "$brondata.Put"]}}},  		
-            #{ '$addFields': {'spoornr': {'$ifNull': ["$brondata.SPOORNO", "$brondata.Spoor"]}}},  		
-            #{ '$addFields': {'vlaknr': {'$ifNull': ["$brondata.VLAKNO", "$brondata.Vlak"]}}},  		
-            #{ '$addFields': {'lengte': "$brondata.LENGTE", 'breedte': "$brondata.BREEDTE", 'diepte': "$brondata.DIEPTE", 'omstandigheden': "$brondata.VONDSTOMSTH", 'inhoud': "$brondata.INHOUD",
-            #    'datering': "$brondata.VOORLOPIGEDATERING", 'xcoor_rd': "$brondata.XCOORD", 'ycoor_rd': "$brondata.YCOORD", 'datum': "$brondata.DATUM", 'table': "$brondata.table", 'soort':"vondst"}},
-            #{ "$merge": { "into": { "db": config.DB_ANALYSE, "coll": config.COLL_ANALYSE }, "on": "_id",  "whenMatched": "replace", "whenNotMatched": "insert" } }
-        #]],
         SET_REFERENCES_PIPELINES: [[ 
-            { '$match': { 'soort': "vondst" } },
+            { '$match': { 'soort': "Vondst" } },
             { '$addFields': {'key': { '$concat': [ "P", "$projectcd", 
                 {'$ifNull': [{'$concat': ["P", {'$toString': "$putnr" }]}, ""]},
                 {'$ifNull': [{'$concat': ["V", {'$toString': "$vondstnr" }]}, ""]}]}}},
@@ -211,8 +156,7 @@ wasstraat_model = {
                 {'$ifNull': [{'$concat': ["V", {'$toString': "$vlaknr"}]}, ""]}] }}},  		
             { '$addFields': {'key_put': { '$concat': [ "P", "$projectcd", 
                 {'$ifNull': [{'$concat': ["P", {'$toString': "$putnr" }]}, ""]}] }}},  		
-            { '$addFields': {'key_project': { '$concat': [ "P", "$projectcd"]}}},
-            { '$addFields': {'soort': 'Vondst'}}	
+            { '$addFields': {'key_project': { '$concat': [ "P", "$projectcd"]}}}
         ]]
   },
   "Foto": {
@@ -254,31 +198,40 @@ wasstraat_model = {
   },
   "Doos": {
         STAGING_COLLECTION: config.COLL_STAGING_MAGAZIJNLIJST,
-        HARMONIZE_PIPELINES: [[]],
-        SET_REFERENCES_PIPELINES: [[ 
-                { '$match': { '$and': [{'doosnr': { '$exists': True }}, {'soort': "artefact"}]}},
-                { '$group':{'_id': {"projectcd" : "$projectcd", 'doosnr': "$doosnr"}}},
-                { '$unwind': "$_id"},
-                { '$project': {'_id': 0, 'projectcd': "$_id.projectcd", 'doosnr': "$_id.doosnr"}},
-                { '$addFields': {'key': { '$concat': [ "P", "$projectcd", "D", {'$toString': "$doosnr"}] }, 'soort': 'Doos'}},
-                { '$addFields': {'key_project': { '$concat': [ "P", "$projectcd"]}}}
-                ,{ "$out": config.COLL_ANALYSE_DOOS}
-            ],[
-                { '$match': { '$and': [ {'table': "magazijnlijst"}, {'doosnr': { '$exists': True }} ] } },	
-                { '$addFields': {'herkomst': ["magazijnlijst"]}},  	
-                { '$addFields': {'key': { '$concat': [ "P", { '$ifNull': [ '$projectcd', {'$concat': ["I",{'$toString': '$_id'}]} ] }, "D", {'$toString': "$doosnr"}] }}},  	
-                { '$addFields': {'key_magazijnlocatie': { '$concat': [ "S", "$stelling", "V", {'$toString': "$vaknr"}, { '$ifNull': [ {'$concat': ["L", "$volgletter"]}, "" ] }] }}},  
-                { '$addFields': {'key_project': { '$concat': [ "P", { '$ifNull': [ '$projectcd', {'$concat': ["I",{'$toString': '$_id'}]} ] }]}}},
-                { '$addFields': {'soort': 'Doos'}},	
-                { '$project': {'_id':0}},
-                { "$merge": { "into": config.COLL_ANALYSE_DOOS, "on": "key",  "whenMatched": "merge", "whenNotMatched": "insert" } }
-            ],[ 
+        HARMONIZE_PIPELINES: [[
                 { '$match': {'table': "doosnr"}},
-                { '$addFields': {'key': { '$concat': [ "P", { '$ifNull': [ '$projectcd', {'$concat': ["I",{'$toString': '$_id'}]} ] }, "D", {'$toString': "$doosnr"}] }}},
-                { '$project': {'_id':0}},
-                { '$addFields': {'soort': 'Doos'}},	
+                { '$replaceRoot': {'newRoot': {'_id': "$_id", 'brondata': "$$ROOT"}}},
+                { '$addFields': {'projectcd': "$brondata.CODE", 'projectnaam': "$brondata.PROJECT", "doosnr": "$brondata:DOOSNO", 'uitgeleend': "$brondata.UIT", "inhoud": "$brondata.INHOUD", 'soort':"Doos"}},
                 { '$addFields': {'key_project': { '$concat': [ "P", { '$ifNull': [ '$projectcd', {'$concat': ["I",{'$toString': '$_id'}]} ] }]}}},
-                { "$merge": { "into": config.COLL_ANALYSE_DOOS, "on": "key",  "whenMatched": "merge", "whenNotMatched": "insert" } }
+                { "$merge": { "into": { "db": config.DB_ANALYSE, "coll": config.COLL_ANALYSE }, "on": "_id",  "whenMatched": "replace", "whenNotMatched": "insert" } }
+        ]],
+        SET_REFERENCES_PIPELINES: [
+            #[ 
+            #    { '$match': { '$and': [{'doosnr': { '$exists': True }}, {'soort': "artefact"}]}},
+            #    { '$group':{'_id': {"projectcd" : "$projectcd", 'doosnr': "$doosnr"}}},
+            #    { '$unwind': "$_id"},
+            #    { '$project': {'_id': 0, 'projectcd': "$_id.projectcd", 'doosnr': "$_id.doosnr"}},
+            #    { '$addFields': {'key': { '$concat': [ "P", "$projectcd", "D", {'$toString': "$doosnr"}] }, 'soort': 'Doos'}},
+            #    { '$addFields': {'key_project': { '$concat': [ "P", "$projectcd"]}}}
+            #    ,{ "$out": config.COLL_ANALYSE_DOOS}
+            #],[
+            #    { '$match': { '$and': [ {'table': "magazijnlijst"}, {'doosnr': { '$exists': True }} ] } },	
+            #    { '$addFields': {'herkomst': ["magazijnlijst"]}},  	
+            #    { '$addFields': {'key': { '$concat': [ "P", { '$ifNull': [ '$projectcd', {'$concat': ["I",{'$toString': '$_id'}]} ] }, "D", {'$toString': "$doosnr"}] }}},  	
+            #    { '$addFields': {'key_magazijnlocatie': { '$concat': [ "S", "$stelling", "V", {'$toString': "$vaknr"}, { '$ifNull': [ {'$concat': ["L", "$volgletter"]}, "" ] }] }}},  
+            #    { '$addFields': {'key_project': { '$concat': [ "P", { '$ifNull': [ '$projectcd', {'$concat': ["I",{'$toString': '$_id'}]} ] }]}}},
+            #    { '$addFields': {'soort': 'Doos'}},	
+            #    { '$project': {'_id':0}},
+            #    { "$merge": { "into": config.COLL_ANALYSE_DOOS, "on": "key",  "whenMatched": "merge", "whenNotMatched": "insert" } }
+            #],
+            [ 
+                #{ '$match': {'table': "doosnr"}},
+                { '$match': {'soort': "Doos"}},
+                { '$addFields': {'key': { '$concat': [ "P", { '$ifNull': [ '$projectcd', {'$concat': ["I",{'$toString': '$_id'}]} ] }, "D", {'$toString': "$doosnr"}] }}},
+                #{ '$project': {'_id':0}},
+                #{ '$addFields': {'soort': 'Doos'}},	
+                { '$addFields': {'key_project': { '$concat': [ "P", { '$ifNull': [ '$projectcd', {'$concat': ["I",{'$toString': '$_id'}]} ] }]}}}
+                #,{ "$merge": { "into": config.COLL_ANALYSE_DOOS, "on": "key",  "whenMatched": "merge", "whenNotMatched": "insert" } }
             ]],
         EXTRA_FIELDS: ['key_stelling']
   }
@@ -348,12 +301,34 @@ def getVeldnamen(soort):
 
 
 def getKeys(fase):
-    if not fase in [HARMONIZE_PIPELINES, SET_REFERENCES_PIPELINES]:
+    if not fase in [HARMONIZE_PIPELINES, SET_REFERENCES_PIPELINES, MOVE_FASE, MERGE_FASE, MERGE_INHERITED_FASE]:
         raise Exception(f'Fout bij het opvragen van metadata. {fase} is een onbekend fase.')
 
     all_keys = wasstraat_model.keys()
-    keys = []
-    for k in all_keys:
-        if wasstraat_model[k][fase] != [[]]:
-            keys.append(k)
-    return keys
+    
+    if fase == MOVE_FASE:
+        set_mrg = set(harmonizer.getObjects(merge=True))
+        set_inh = set(harmonizer.getObjects(inherit=True))
+
+        set_keys = set(all_keys) - set_mrg
+        set_keys = set_keys - set_inh
+
+        return(list(set_keys)) 
+
+    elif fase == MERGE_FASE:
+        set_mv = set(harmonizer.getObjects(merge=True))
+        set_keys = set(all_keys) 
+        return(list(set_keys.intersection(set_mv))) 
+    
+    elif fase == MERGE_INHERITED_FASE:
+        set_mv = set(harmonizer.getObjects(inherit=True))
+        set_keys = set(all_keys) 
+        return(list(set_keys.intersection(set_mv))) 
+    else:
+        keys = []
+        for k in all_keys:
+            if wasstraat_model[k][fase] != [[]]:
+                keys.append(k)
+
+        return keys
+

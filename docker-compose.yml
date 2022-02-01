@@ -42,7 +42,7 @@ services:
       - ./config/postgres.env
       - ./config/mongo.env
     ports:
-      - '5001:5000'
+      - '5000:5000'
     depends_on:
       - postgres
       - mongo
@@ -76,6 +76,7 @@ services:
     volumes:
       - ./notebooks:/home/jovyan/
       - ./data/wasstraat_config:/home/jovyan/wasstraat_config/
+      - ./airflow_app/dags:/opt/wasstraat/
     environment:
       JUPYTER_ENABLE_LAB: "yes"
     command: "start-notebook.sh --NotebookApp.token='' --NotebookApp.password=''"
