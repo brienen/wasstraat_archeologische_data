@@ -101,4 +101,25 @@ def dropSingleStoreClean():
         myclient.close()
 
 
-        
+def setIndexes(collection):
+    if not collection in [config.COLL_ANALYSE, config.COLL_ANALYSE_CLEAN]:
+        msg = f"Fout bij het indexeren van collection {collection}: onbekende collectie. Gebruik {config.COLL_ANALYSE} of {config.COLL_ANALYSE_CLEAN}."
+        logger.error(msg)    
+        raise Exception(msg)
+
+    try: 
+        myclient = pymongo.MongoClient(str(config.MONGO_URI))
+        db = myclient[config.DB_ANALYSE]
+        col = db[collection]
+
+        logger.info(f"Setting indexes for collection {collection}.")
+        if collection == config.COLL_ANALYSE:
+            col.create_index("key")
+        elif collection == config.COLL_ANALYSE_CLEAN:
+            col.create_index(["soort", "key"])
+
+    except Exception as err:
+        msg = f"Fout bij het verwijderen van collection {config.DB_ANALYSE} uit database {config.DB_ANALYSE} met melding: " + str(err)
+        logger.error(msg)    
+    finally:
+        myclient.close()

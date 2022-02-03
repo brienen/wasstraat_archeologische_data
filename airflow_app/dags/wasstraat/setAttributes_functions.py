@@ -163,10 +163,10 @@ def extractImagedataFromFileNames():
                 foto['materiaal'] = file_dict.get(foto.get('directory')).get('materiaal')                
                 col.replace_one({'_id': foto['_id']}, foto)
 
-            except expression as exp2:
+            except Exception as exp2:
                 filename = foto['fileName']
                 logger.error(f'Error while setting missing values in foto {filename} with message: {str(exp2)} ')
-    except expression as exp1:
+    except Exception as exp1:
         msg = f'Severe error while while setting missing values on fotos: {str(exp1)} '
         logger.error(msg)
         raise Exception(msg) from exp1

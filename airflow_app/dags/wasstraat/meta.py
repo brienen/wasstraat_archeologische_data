@@ -1,5 +1,10 @@
 import config
 import wasstraat.harmonizer as harmonizer
+import copy
+
+import logging
+logger = logging.getLogger("airflow.task")
+
 
 HARMONIZE_PIPELINES = "HARMONIZE_PIPELINES"
 SET_REFERENCES_PIPELINES = "SET_REFERENCES_PIPELINES"
@@ -36,7 +41,7 @@ wasstraat_model = {
             { '$match': {'soort': "Vlak"}},
             { '$addFields': {'key': { '$concat': [ "P", "$projectcd", {'$ifNull': [{'$concat': ["P", {'$toString': "$putnr" }]}, ""]}, "V", {'$toString': "$vlaknr"}] }}},  		
             { '$addFields': {'key_project': { '$concat': [ "P", "$projectcd"]}}},
-            { '$addFields': {'key_put': { '$concat': [ "P", "$projectcd", {'$ifNull': [{'$concat': ["P", {'$toString': "$putnr" }]}, ""]}] }}}	
+            { '$addFields': {'key_put': { '$concat': [ "P", "$projectcd", {'$concat': ["P", {'$toString': "$putnr" }]}] }}}	
         ]]
   },
   "Spoor": {
@@ -83,12 +88,12 @@ wasstraat_model = {
             { '$addFields': {'key_doos': { '$concat': [ "P", "$projectcd", "D", {'$toString': "$doosnr"}] }}},
             { '$addFields': {'key_project': { '$concat': [ "P", "$projectcd"]}}}, 
             { '$addFields': {'key_put': { '$concat': [ "P", "$projectcd", 
-                {'$ifNull': [{'$concat': ["P", {'$toString': "$putnr" }]}, ""]}]}}},  				
+                            {'$concat': ["P", {'$toString': "$putnr" }]}]}}},  				
             { '$addFields': {'key_plaatsing': "$key_doos"}},
             { '$addFields': {'key': { '$concat': [ "P", "$projectcd", 
                 {'$ifNull': [{'$concat': ["P", {'$toString': "$putnr" }]}, ""]},
                 {'$ifNull': [{'$concat': ["V", {'$toString': "$vondstnr" }]}, ""]},
-                {'$ifNull': [{'$concat': ["A", {'$toString': "$artefactnr"}]}, ""]}]}}},  		
+                             {'$concat': ["A", {'$toString': "$artefactnr"}]}]}}},  		
             { '$addFields': {'key_vondst': { '$concat': [ "P", "$projectcd", 
                 {'$ifNull': [{'$concat': ["P", {'$toString': "$putnr" }]}, ""]},
                 "V", {'$toString': "$vondstnr"}] }}}
@@ -105,11 +110,8 @@ wasstraat_model = {
       ]],
       SET_REFERENCES_PIPELINES: [[ 
         { '$match': {'soort': "Standplaats"}},
-        #{ '$addFields': {'herkomst': ["magazijnlijst"], 'soort': 'Standplaats'}},  	
         { '$addFields': {'key': { '$concat': [ "S", {'$toString': "$stelling"}, { '$ifNull': [ {'$concat': ["V", {'$toString': "$vaknr"}]}, ""]}, { '$ifNull': [ {'$concat': ["L", {'$toString': "$volgletter"}]}, "" ] }] }}},  	
-        #{ '$addFields': {'soort':  { '$concat': [ "S", "$stelling"]}}},
         { '$addFields': {'key_stelling': { '$concat': [ "S", {'$toString': "$stelling"}]}}}
-        #,{ '$project': {'_id':0}} # Make sure magazijnlijsten do not interfere with plaatsingen
     ]]
   },
   "Project": {
@@ -154,8 +156,7 @@ wasstraat_model = {
             { '$addFields': {'key_vlak': { '$concat': [ "P", "$projectcd", 
                 {'$ifNull': [{'$concat': ["P", {'$toString': "$putnr" }]}, ""]},
                 {'$ifNull': [{'$concat': ["V", {'$toString': "$vlaknr"}]}, ""]}] }}},  		
-            { '$addFields': {'key_put': { '$concat': [ "P", "$projectcd", 
-                {'$ifNull': [{'$concat': ["P", {'$toString': "$putnr" }]}, ""]}] }}},  		
+            { '$addFields': {'key_put': { '$concat': [ "P", "$projectcd", {'$concat': ["P", {'$toString': "$putnr" }]}] }}},
             { '$addFields': {'key_project': { '$concat': [ "P", "$projectcd"]}}}
         ]]
   },
@@ -236,7 +237,24 @@ wasstraat_model = {
         EXTRA_FIELDS: ['key_stelling']
   }
 }
-wasstraat_model["Aardewerk"][SET_REFERENCES_PIPELINES] = wasstraat_model['Artefact']['SET_REFERENCES_PIPELINES']
+
+
+def addToMetaLike(soort_add, soort_like):
+    try:
+        set_references_pipelines = copy.deepcopy(wasstraat_model[soort_like]['SET_REFERENCES_PIPELINES'])
+        set_references_pipelines[0][0] = {'$match': {'soort': soort_add}}
+
+        wasstraat_model[soort_add] = {
+            STAGING_COLLECTION: wasstraat_model[soort_like][STAGING_COLLECTION],
+            HARMONIZE_PIPELINES: [harmonizer.getHarmonizeAggr(soort_add)],
+            SET_REFERENCES_PIPELINES: set_references_pipelines
+        }
+    except Exception as err:
+        msg = f"Onbekende fout bij het toevoegen van {soort_add} aan meta.wasstraat_model volgens {soort_like} met melding: {str(err)}"
+        logger.error(msg)   
+        raise Exception(msg) from err
+
+[addToMetaLike(soort, 'Artefact') for soort in ['Aardewerk', 'Bot', 'Glas', 'Leer', 'Steen', 'Kleipijp', 'Skelet', 'Hout', 'Spijker', 'Muur', 'Keramiek', 'Metaal', 'Munt']]  
 
 
 
