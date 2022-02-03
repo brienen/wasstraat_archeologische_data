@@ -77,6 +77,7 @@ services:
       - ./notebooks:/home/jovyan/
       - ./data/wasstraat_config:/home/jovyan/wasstraat_config/
       - ./airflow_app/dags:/opt/wasstraat/
+      - ./data/input/basefiles:/home/jovyan/basefiles
     environment:
       JUPYTER_ENABLE_LAB: "yes"
     command: "start-notebook.sh --NotebookApp.token='' --NotebookApp.password=''"

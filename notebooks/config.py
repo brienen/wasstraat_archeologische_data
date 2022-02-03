@@ -63,7 +63,7 @@ try:
 except KeyError: 
    logger.error("Cannot read environment variables (ie. POSTGRES_DB, POSTGRES_USER, POSTGRES_PASSWORD) needed to connect to the database. Add them to your .env files")
 
-
+IMAGE_EXTENSIONS = [".jpg",".gif",".png",".tga"]
 
 CSRF_ENABLED = True
 SECRET_KEY = os.getenv("SECRET_KEY")

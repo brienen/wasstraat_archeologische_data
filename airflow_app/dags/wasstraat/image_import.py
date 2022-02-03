@@ -69,36 +69,30 @@ def shrinkAndSaveImage(filename, size, fs, postcard=False):
 
 
 
-def importImages(rootDir, mongo_uri, db_files, db_staging):   
+def importImages(fileList, mongo_uri, db_files, db_staging):   
     try: 
         myclient = pymongo.MongoClient(mongo_uri)
         filesdb = myclient[db_files]
         fs = gridfs.GridFS(filesdb)
         stagingdb = myclient[db_staging]
 
+        for filedirname in fileList:     
+            logger.info('Processing and loading image file: %s' % filedirname)
 
-        # Set the directory you want to start from
-        valid_images = [".jpg",".gif",".png",".tga"]
-        for leesdir, subdirList, fileList in os.walk(rootDir):
-            logger.info('Scanning directory: %s' % leesdir)
-            for fname in fileList:     
-                filedirname = os.path.join(leesdir,fname)
-                logger.info('Processing and loading image file: %s' % filedirname)
+            filename, file_extension = os.path.splitext(filedirname)
+            if file_extension.lower() not in config.IMAGE_EXTENSIONS:
+                continue
+            
+            mime_type = magic.from_file(filedirname, mime=True)
 
-                filename, file_extension = os.path.splitext(filedirname)
-                if file_extension.lower() not in valid_images:
-                    continue
-                
-                mime_type = magic.from_file(filedirname, mime=True)
+            imageUUID = shrinkAndSaveImage(filedirname, config.IMAGE_SIZE_ORIGINAL, fs)
+            imageMiddleUUID = shrinkAndSaveImage(filedirname, config.IMAGE_MIDDLE_SIZE, fs)
+            imageThumbUUID = shrinkAndSaveImage(filedirname, config.IMAGE_THUMB_SIZE, fs, postcard=True)
 
-                imageUUID = shrinkAndSaveImage(filedirname, config.IMAGE_SIZE_ORIGINAL, fs)
-                imageMiddleUUID = shrinkAndSaveImage(filedirname, config.IMAGE_MIDDLE_SIZE, fs)
-                imageThumbUUID = shrinkAndSaveImage(filedirname, config.IMAGE_THUMB_SIZE, fs, postcard=True)
-
-                stagingdb[config.COLL_PLAATJES].insert_one({
-                    'fileName': fname, 'imageUUID': str(imageUUID), 'imageMiddleUUID': str(imageMiddleUUID), 'imageThumbUUID': str(imageThumbUUID),
-                    'fileType': file_extension.lower(), 'directory': leesdir, 'mime_type': mime_type 
-                    })  
+            stagingdb[config.COLL_PLAATJES].insert_one({
+                'fileName': filename, 'imageUUID': str(imageUUID), 'imageMiddleUUID': str(imageMiddleUUID), 'imageThumbUUID': str(imageThumbUUID),
+                'fileType': file_extension.lower(), 'directory': os.path.dirname(filedirname), 'mime_type': mime_type 
+                })  
 
     except Exception as err:
         msg = "Onbekende fout bij het laden van images: " + str(err)
