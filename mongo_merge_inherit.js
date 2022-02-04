@@ -2,16 +2,6 @@
 __3tsoftwarelabs_disabled_aggregation_stages = [
 
     {
-        // Stage 7 - excluded
-        stage: 7,  source: {
-            $project: {
-                // specifications
-                "Artefacts":0, "matchsize":0
-            }
-        }
-    },
-
-    {
         // Stage 8 - excluded
         stage: 8,  source: {
             $merge: {
@@ -95,6 +85,14 @@ db.getCollection("Single_Store").aggregate(
         {
             $replaceRoot: {
                 newRoot: { $mergeObjects: [ "$$ROOT", { $arrayElemAt: [ "$artefacts", 0 ]}] }
+            }
+        },
+
+        // Stage 7
+        {
+            $project: {
+                // specifications
+                "Artefacts":0, "matchsize":0
             }
         }
     ],

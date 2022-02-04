@@ -19,15 +19,16 @@ AGGREGATE_MOVE = [
     { "$merge": { "into": { "db": config.DB_ANALYSE, "coll": config.COLL_ANALYSE_CLEAN }, "on": "_id",  "whenMatched": "replace", "whenNotMatched": "insert" } }
     ]
 AGGREGATE_MERGE = [
-        {"$match" : {"soort" : {"$in" : ["XXX"]}}},
+        {"$match" : {"artefactsoort" : {"$in" : ["XXX"]}}},
         {"$lookup" : { 
                 "from" : "Single_Store", 
                 "let" : {"key" : "$key"}, 
                 "pipeline" : [{"$match" : {"$expr" : {"$and" : [
                                     {"$eq" : ["$soort","Artefact"]},
-                                    {"$eq" : ["$key","$$key"]}]}}}],
+                                    {"$eq" : ["$key","$$key"]},
+                                    {"$eq" : ["$artefactsoort",np.nan]},
+                                    ]}}}],
                 "as" : "results"}},
-        {"$addFields" : {"artefactsoort" : "$soort"}},
         {"$addFields" : { 
                 "results" : { 
                     "$map" : { 
@@ -89,6 +90,8 @@ def moveSoort(soort):
 
     aggr = copy.deepcopy(AGGREGATE_MOVE)
     aggr[0]['$match']['soort'] = soort
+    if soort == 'Artefact':
+        aggr[0]['$match']['artefactsoort'] = np.nan
 
     try:
         #Aggregate Pipelin
@@ -112,7 +115,7 @@ def mergeSoort(soort):
         raise Exception(msg)
 
     aggr = copy.deepcopy(AGGREGATE_MERGE)
-    aggr[0]['$match']['soort']["$in"] = meta.getKeys(meta.MERGE_INHERITED_FASE)
+    aggr[0]['$match']['artefactsoort']["$in"] = meta.getKeys(meta.MERGE_INHERITED_FASE)
 
     try:
         #Aggregate Pipelin

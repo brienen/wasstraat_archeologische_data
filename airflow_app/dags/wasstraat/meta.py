@@ -242,13 +242,14 @@ wasstraat_model = {
 def addToMetaLike(soort_add, soort_like):
     try:
         set_references_pipelines = copy.deepcopy(wasstraat_model[soort_like]['SET_REFERENCES_PIPELINES'])
-        set_references_pipelines[0][0] = {'$match': {'soort': soort_add}}
+        #set_references_pipelines[0][0] = {'$match': {'soort': soort_add}}
 
         wasstraat_model[soort_add] = {
             STAGING_COLLECTION: wasstraat_model[soort_like][STAGING_COLLECTION],
             HARMONIZE_PIPELINES: [harmonizer.getHarmonizeAggr(soort_add)],
             SET_REFERENCES_PIPELINES: set_references_pipelines
         }
+        wasstraat_model[soort_add][HARMONIZE_PIPELINES][0].insert(-1, { '$addFields': {f"{soort_like}soort".lower(): soort_add, 'soort': soort_like}})
     except Exception as err:
         msg = f"Onbekende fout bij het toevoegen van {soort_add} aan meta.wasstraat_model volgens {soort_like} met melding: {str(err)}"
         logger.error(msg)   
