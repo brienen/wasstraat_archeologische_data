@@ -27,11 +27,46 @@ AGGREGATE_MERGE = [
                                     {"$eq" : ["$soort","Artefact"]},
                                     {"$eq" : ["$key","$$key"]}]}}}],
                 "as" : "results"}},
-        {"$addFields" : {"matchsize" : {"$size" : "$results"}}},
+        {"$addFields" : {"artefactsoort" : "$soort"}},
+        {"$addFields" : { 
+                "results" : { 
+                    "$map" : { 
+                        "input" : "$results", 
+                        "as" : "res", 
+                        "in" : { 
+                            "$arrayToObject" : { 
+                                "$filter" : { 
+                                    "input" : { 
+                                        "$objectToArray" : "$$res"
+                                    }, 
+                                    "as" : "item", 
+                                    "cond" : { 
+                                        "$and" : [
+                                            { 
+                                                "$ne" : [
+                                                    "$$item.v", 
+                                                    np.NaN
+                                                ]
+                                            }, 
+                                            { 
+                                                "$ne" : [
+                                                    "$$item.v", 
+                                                    None
+                                                ]
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }, 
         {"$replaceRoot" : {"newRoot" : {"$mergeObjects" : ["$$ROOT", {"$arrayElemAt" : ["$results", 0]}]}}},
-        {"$addFields" : {"artefactsoort" : "$soort", "soort" : "Artefact"}},
-        {"$project" : {"results" : 0, "matchsize" : 0}},
-    { "$merge": { "into": { "db": config.DB_ANALYSE, "coll": config.COLL_ANALYSE_CLEAN }, "on": "_id",  "whenMatched": "replace", "whenNotMatched": "insert" } }]
+        {"$project" : {"results" : 0}}
+    ,{ "$merge": { "into": { "db": config.DB_ANALYSE, "coll": config.COLL_ANALYSE_CLEAN }, "on": "_id",  "whenMatched": "replace", "whenNotMatched": "insert" } }
+    ]
 
 
 

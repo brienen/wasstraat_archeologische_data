@@ -113,10 +113,7 @@ def setIndexes(collection):
         col = db[collection]
 
         logger.info(f"Setting indexes for collection {collection}.")
-        if collection == config.COLL_ANALYSE:
-            col.create_index("key")
-        elif collection == config.COLL_ANALYSE_CLEAN:
-            col.create_index(["soort", "key"])
+        col.create_index([("soort", pymongo.ASCENDING), ("key", pymongo.ASCENDING)], name='idx_soort_key')
 
     except Exception as err:
         msg = f"Fout bij het verwijderen van collection {config.DB_ANALYSE} uit database {config.DB_ANALYSE} met melding: " + str(err)

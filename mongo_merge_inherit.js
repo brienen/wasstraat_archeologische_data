@@ -2,11 +2,24 @@
 __3tsoftwarelabs_disabled_aggregation_stages = [
 
     {
-        // Stage 4 - excluded
-        stage: 4,  source: {
-            $match: {
-                // enter query here
-                "matchsize": {"$gt": 0}
+        // Stage 7 - excluded
+        stage: 7,  source: {
+            $project: {
+                // specifications
+                "Artefacts":0, "matchsize":0
+            }
+        }
+    },
+
+    {
+        // Stage 8 - excluded
+        stage: 8,  source: {
+            $merge: {
+                 // The $merge operator must be the last stage in the pipeline
+                 into: "Single_Store_Clean",
+                 on: "_id",  // optional
+                 whenMatched: "replace",
+                 whenNotMatched: "insert"                     // optional
             }
         }
     }
@@ -35,7 +48,7 @@ db.getCollection("Single_Store").aggregate(
                         { "$eq": [ "$soort",  "Artefact" ] }, 
                         { "$eq": [ "$key",  "$$key" ] }]}}}
                 ],
-                as: "Artefacts"
+                as: "artefacts"
             }
             
             // Uncorrelated Subqueries
@@ -51,40 +64,37 @@ db.getCollection("Single_Store").aggregate(
         // Stage 3
         {
             $addFields: {
-                "matchsize": {"$size": "$Artefacts"} //, "_id": {"$ifNull": ["$Artefacts.0._id", "$$ROOT._id"] }
+                "matchsize": {"$size": "$artefacts"}, "artefactsoort": "$soort"
+            }
+        },
+
+        // Stage 4
+        {
+            $addFields: {
+                // specifications
+                "artefacts": {"$map": {
+                    "input": "$artefacts",
+                    "as": "artf",
+                    "in": {"$arrayToObject": { "$filter": {
+                                "input": { "$objectToArray": "$$artf" },
+                                "as": "item",
+                                "cond": {"$and": [{ "$ne": ["$$item.v", NaN] }, { "$ne": ["$$item.v", null] }]}}}}
+                  }}
             }
         },
 
         // Stage 5
         {
-            $replaceRoot: {
-                newRoot: { $mergeObjects: [ "$$ROOT", { $arrayElemAt: [ "$Artefacts", 0 ]}] }
+            $match: {
+                // enter query here
+                "matchsize": {"$gt": 0}
             }
         },
 
         // Stage 6
         {
-            $addFields: {
-                "artefactsoort": "$soort", "soort": "Artefact"
-            }
-        },
-
-        // Stage 7
-        {
-            $project: {
-                // specifications
-                "Artefacts":0, "matchsize":0
-            }
-        },
-
-        // Stage 8
-        {
-            $merge: {
-                 // The $merge operator must be the last stage in the pipeline
-                 into: "Single_Store_Clean",
-                 on: "_id",  // optional
-                 whenMatched: "replace",
-                 whenNotMatched: "insert"                     // optional
+            $replaceRoot: {
+                newRoot: { $mergeObjects: [ "$$ROOT", { $arrayElemAt: [ "$artefacts", 0 ]}] }
             }
         }
     ],

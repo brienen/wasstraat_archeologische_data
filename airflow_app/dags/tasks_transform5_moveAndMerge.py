@@ -28,12 +28,12 @@ def getMoveAndMergeTaskGroup():
         )
         first >> Drop_SingleStoreClean
 
-        Set_Index_SingleStore = PythonOperator(
-            task_id='Set_Index_SingleStore',
+        Set_Index_SingleStoreClean = PythonOperator(
+            task_id='Set_Index_SingleStoreClean',
             python_callable=mongoUtils.setIndexes,
             op_kwargs={'collection': config.COLL_ANALYSE_CLEAN}
         )
-        Set_Index_SingleStore >> middle
+        Set_Index_SingleStoreClean >> middle
 
         obj_types = meta.getKeys(meta.MOVE_FASE)
         for obj_type in obj_types:
@@ -42,7 +42,7 @@ def getMoveAndMergeTaskGroup():
                 python_callable=merge_functions.moveSoort,
                 op_kwargs={'soort': obj_type}
             )
-            Drop_SingleStoreClean >> tsk >> Set_Index_SingleStore
+            Drop_SingleStoreClean >> tsk >> Set_Index_SingleStoreClean
 
         Merge_Inherited = PythonOperator(
             task_id='Merge_Inherited',
