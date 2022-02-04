@@ -34,8 +34,6 @@ def setReferenceKeys(pipeline, soort, col='analyse'):
         #Aggregate Pipelin
         if (col == 'analyse'):
             collection = getAnalyseCollection()
-        elif (col == 'doos'):
-            collection = getAnalyseDoosCollection()
         else:
             raise ValueError('Error: Herkent de collectie niet met naam ' + col)
 
@@ -45,8 +43,6 @@ def setReferenceKeys(pipeline, soort, col='analyse'):
             df[['datum']] = df[['datum']].astype(object).where(df[['datum']].notnull(), None)
         
         if not df.empty:
-            #collectionClean.with_options(write_concern=WriteConcern(w=0)).insert_many(df.to_dict('records'))
-
             # Update soort documents 
             updates=[ UpdateOne({'_id':x['_id']}, {'$set':x}, upsert=True) for x in df.to_dict('records')]
             result = collection.bulk_write(updates)
@@ -125,50 +121,3 @@ def setArtefactnrUnique():
 
 
 
-
-
-    # Doos is a combination of doosnr, magazijnlijst and artefacts
-def setReferenceKeysDozen():   
-    #Find Doos in magazijnlijst
-    try:
-        # First remove all dozen from Clean Collection
-        #collectionClean = getAnalyseCleanCollection()
-        #collectionClean.delete_many({"soort": "Doos"})
-
-        # First all Dozen in a separate collection
-        collection = getAnalyseCollection()
-        # Find and merge doos from artefacts
-        collection.aggregate(meta.getReferenceKeysPipelines('Doos')[0])
-        createIndex(collection.database[config.COLL_ANALYSE_DOOS], 'key', uniqueValue=True)
-
-        collection.aggregate(meta.getReferenceKeysPipelines('Doos')[1])
-
-        # Find and merge doos from Doos
-        collection.aggregate(meta.getReferenceKeysPipelines('Doos')[2])
-
-        doosCollection = getAnalyseDoosCollection()
-        for doc in doosCollection.find({'stelling': {'$exists': True}}):
-            doc['key_stelling'] = 'S' + str(doc['stelling'])
-            doosCollection.update_one({'_id': doc['_id']}, {'$set': doc})
-
-        # Set Primary key and read data from dooscollection
-        setReferenceKeys([{ '$match': {'soort': "Doos"}}], 'Doos', 'doos')
-
-    except Exception as err:
-        msg = "Onbekende fout bij het aanroepen van een aggregation met melding: " + str(err)
-        logger.error(msg)    
-    finally:
-        collection.database.client.close()
-
-
-
-def setAllReferences():
-    setReferences('Project')
-    setReferences('Put')
-    setReferences('Vondst')
-    setReferences('Spoor')
-    setReferences('Vlak')
-    setReferences('Doos')
-    setReferences('Stelling')
-    setReferences('Artefact')
-    setReferences('Project_type')

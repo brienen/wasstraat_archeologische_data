@@ -21,27 +21,30 @@ mindate = datetime.date(datetime.MINYEAR, 1, 1)
 metadata = Model.metadata
 
 
-class Stelling(Model):
+class WasstraatModel(Model):
+    __abstract__ = True
+
+    herkomst = Column(Text)
+    soort = Column(String(80))
+    brondata = Column(Text)
+    uuid = Column('_id', String(40))
+
+class Stelling(WasstraatModel):
     __tablename__ = 'Def_Stelling'
 
     primary_key = Column(Integer, primary_key=True, autoincrement=True)
     uuid = Column('_id', String(40))
-    herkomst = Column(Text)
     inhoud = Column(Text)
-    soort = Column(String(80))
     stelling = Column(String(1))
-    brondata = Column(Text)
-    herkomst = Column(Text)
-
+    
     def __repr__(self):
         return str(self.stelling) + ' ('+ str(self.inhoud) + ')'
 
 
-class Vindplaats(Model):
+class Vindplaats(WasstraatModel):
     __tablename__ = 'Def_Vindplaats'
 
     primary_key = Column(Integer, primary_key=True, autoincrement=True)
-    uuid = Column('_id', String(40))
     aard = Column(Text)
     begindatering = Column(Text)
     datering = Column(Text)
@@ -52,15 +55,13 @@ class Vindplaats(Model):
     mobilia = Column(Text)
     onderzoek = Column(Text)
     projectcd = Column(String(12))
-    soort = Column(String(80))
-    table = Column(String(40))
     vindplaats = Column(String(200))
     xcoor_rd = Column(Float(53))
     ycoor_rd = Column(Float(53))
-    brondata = Column(Text)
+    
 
 
-class Observation(Model):
+class Observation(WasstraatModel):
     id = Column(Integer, primary_key=True)
     name = Column(String)
     location = Column(Geometry(geometry_type='POINT', srid=4326))
@@ -71,7 +72,7 @@ class Observation(Model):
         else:
             return 'Person Type %s' % self.id
 
-class Project(Model):
+class Project(Model): # Inherit from Model for cannot use Abstract class Wasstraatmodel, for geo-package gives errors
     __tablename__ = 'Def_Project'
 
     primary_key = Column(Integer, primary_key=True, autoincrement=True)
@@ -81,15 +82,18 @@ class Project(Model):
     toponiem = Column(String(200))
     trefwoorden = Column(String(200))
     location = Column(Geometry('POINT', srid=4326), default=(52.00667, 4.35556)) # 52.00667, 4.35556.
-    uuid = Column('_id', String(40))
-    soort = Column(String(80))
     xcoor_rd = Column(Float)
     ycoor_rd = Column(Float)
     longitude = Column(Float)
     latitude = Column(Float)
-    brondata = Column(Text)
-    herkomst = Column(String(200))
     artefacten = relationship("Artefact", back_populates="project")
+
+    # Explicit defined for cannot use Abstract class Wasstraatmodel, for geo-package gives errors
+    herkomst = Column(Text)
+    soort = Column(String(80))
+    brondata = Column(Text)
+    uuid = Column('_id', String(40))
+
 
     @hybrid_method
     def aantalArtefacten(self):
@@ -101,11 +105,10 @@ class Project(Model):
         else:
             return None
 
-class Doos(Model):
+class Doos(WasstraatModel):
     __tablename__ = 'Def_Doos'
 
     primary_key = Column(Integer, primary_key=True, autoincrement=True)
-    uuid = Column('_id', String(40))
     doosnr = Column(Integer)
     inhoud = Column(Text)
     projectcd = Column(String(12))
@@ -129,7 +132,7 @@ class Doos(Model):
     def aantalArtefacten(self):
         return len(self.artefacten)
 
-class Put(Model):
+class Put(WasstraatModel):
     __tablename__ = 'Def_Put'
 
     primary_key = Column(Integer, primary_key=True, autoincrement=True)
@@ -141,19 +144,26 @@ class Put(Model):
         return self.project.projectcd + ' Put ' + str(self.putnr)
 
 
-class Spoor(Model):
+class Spoor(WasstraatModel):
     __tablename__ = 'Def_Spoor'
 
     primary_key = Column(Integer, primary_key=True, autoincrement=True)
     vlaknr = Column(String(40))
     spoornr = Column(Integer)
+    aard = Column(String(200))
+    beschrijving = Column(Text)
+    dateringvanaf = Column(Integer)
+    dateringtot = Column(Integer)
+    datering = Column(String(200))
+    vorm = Column(String(200))
+    diepte = Column(String(200))
     projectID = Column(ForeignKey('Def_Project.primary_key'), index=True)
     project = relationship('Project')
     putID = Column(ForeignKey('Def_Put.primary_key'), index=True)
     put = relationship('Put')
 
 
-class Vondst(Model):
+class Vondst(WasstraatModel):
     __tablename__ = 'Def_Vondst'
 
     primary_key = Column(Integer, primary_key=True, autoincrement=True)
@@ -165,10 +175,6 @@ class Vondst(Model):
     dateringvanaf = Column(Integer)
     dateringtot = Column(Integer)
     datering = Column(String(200))
-    uuid = Column('_id', String(40), nullable=False, unique=True)
-    brondata = Column(Text)
-    herkomst = Column(String(200))
-
     projectID = Column(ForeignKey('Def_Project.primary_key'), index=True)
     project = relationship('Project')
     putID = Column(ForeignKey('Def_Put.primary_key'), index=True)
@@ -180,7 +186,7 @@ class Vondst(Model):
 
         return self.project.projectcd + put + vondstnr
 
-class Artefact(Model):
+class Artefact(WasstraatModel):
     __tablename__ = 'Def_Artefact'
 
     primary_key = Column(Integer, primary_key=True, autoincrement=True)
@@ -199,10 +205,6 @@ class Artefact(Model):
     literatuur = Column(String(200))
     putnr = Column(Integer)
     restauratie = Column(Integer)
-    soort = Column(String(80))
-    uuid = Column('_id', String(40))
-    brondata = Column(Text)
-    herkomst = Column(Text)
     projectID = Column(ForeignKey('Def_Project.primary_key'), index=True)
     project = relationship('Project')
     putID = Column(ForeignKey('Def_Put.primary_key'), index=True)
@@ -211,6 +213,7 @@ class Artefact(Model):
     vondst = relationship('Vondst')
     doosID = Column(ForeignKey('Def_Doos.primary_key'), index=True)
     doos = relationship('Doos')
+    artefactsoort = Column(String(40))
     #fotos = relationship("Foto", back_populates="artefact")
 
     def __repr__(self):
@@ -235,11 +238,10 @@ class Artefact(Model):
 
 
 
-class Foto(Model):
+class Foto(WasstraatModel):
     __tablename__ = 'Def_Foto'
 
     primary_key = Column(Integer, primary_key=True, autoincrement=True)
-    uuid = Column('_id', String(40))
     artefactnr = Column(Text)
     directory = Column(Text)
     fileName = Column(Text)
@@ -254,7 +256,6 @@ class Foto(Model):
     mime_type = Column(String(20))
     projectcd = Column(String(12))
     putnr = Column(Text)
-    soort = Column(String(80))
     vondstnr = Column(Text)
     photo = Column(ImageColumn(size=(1500, 1000, True), thumbnail_size=(300, 200, True)))
 
@@ -311,17 +312,15 @@ class Foto(Model):
 table_foto = metadata.tables['Def_Foto']
 #select_foto_zonder = select([table_foto]).where(table_foto.c.artefact == None).alias()
 #select_foto_zonder = select([table_foto.c.primary_key]).alias()
-#class Foto_Ongekoppeld(Model):
+#class Foto_Ongekoppeld(WasstraatModel):
 #    __table__ = select_foto_zonder
 
 
-class Standplaats(Model):
+class Standplaats(WasstraatModel):
     __tablename__ = 'Def_Standplaats'
 
     primary_key = Column(Integer, primary_key=True, autoincrement=True)
-    uuid = Column('_id', String(40))
     doosnr = Column(Integer)
-    herkomst_0 = Column('herkomst.0', Text)
     inhoud = Column(Text)
     projectcd = Column(String(12))
     projectnaam = Column(Text)
@@ -331,47 +330,34 @@ class Standplaats(Model):
     volgletter = Column(Text)
 
 
-class Plaatsing(Model):
+class Plaatsing(WasstraatModel):
     __tablename__ = 'Def_Plaatsing'
 
     primary_key = Column(Integer, primary_key=True, autoincrement=True)
-    uuid = Column('_id', String(40))
     doosnr = Column(Integer)
-    herkomst_0 = Column('herkomst.0', Text)
     inhoud = Column(Text)
     projectcd = Column(String(12))
     projectnaam = Column(Text)
     stelling = Column(Text)
-    table = Column(String(40))
     uitgeleend = Column(Integer)
     vaknr = Column(Integer)
     volgletter = Column(Text)
-    brondata = Column(Text)
+    
 
-
-
-
-
-
-
-
-
-
-class Vlak(Model):
+class Vlak(WasstraatModel):
     __tablename__ = 'Def_Vlak'
 
     primary_key = Column(Integer, primary_key=True, autoincrement=True)
-    uuid = Column('_id', String(40))
     putnr = Column(Integer)
     vlaknr = Column(Text)
 
 
-class Person(Model):
+class Person(WasstraatModel):
     id = Column(Integer, primary_key=True)
     name = Column(String(150), unique = True, nullable=False)
 
 
-class ContactGroup(Model):
+class ContactGroup(WasstraatModel):
     id = Column(Integer, primary_key=True)
     name = Column(String(50), unique=True, nullable=False)
 
@@ -379,7 +365,7 @@ class ContactGroup(Model):
         return self.name
 
 
-class Gender(Model):
+class Gender(WasstraatModel):
     id = Column(Integer, primary_key=True)
     name = Column(String(50), unique=True, nullable=False)
 
@@ -387,7 +373,7 @@ class Gender(Model):
         return self.name
 
 
-class Contact(Model):
+class Contact(WasstraatModel):
     id = Column(Integer, primary_key=True)
     name = Column(String(150), unique=True, nullable=False)
     address = Column(String(564))

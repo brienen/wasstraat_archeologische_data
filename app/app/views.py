@@ -209,6 +209,8 @@ class ArchSpoorView(MyModelView):
     list_title = "Sporen"
     show_fieldsets = [
         ("Hoofdvelden", {"fields": ["project", "put", "vlaknr", "spoornr"]}),
+        ("Spoorvelden", {"fields": ["aard", "beschrijving", "vorm", "diepte"]}),
+        ("Datering", {"fields": ["dateringvanaf", "dateringtot", "datering"]}),
     ]
     edit_fieldsets = show_fieldsets
     add_fieldsets = show_fieldsets
