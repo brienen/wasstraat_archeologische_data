@@ -82,7 +82,8 @@ def importImages(fileList, mongo_uri, db_files, db_staging):
             filename, file_extension = os.path.splitext(filedirname)
             if file_extension.lower() not in config.IMAGE_EXTENSIONS:
                 continue
-            
+            dir, filename = os.path.split(filedirname)
+
             mime_type = magic.from_file(filedirname, mime=True)
 
             imageUUID = shrinkAndSaveImage(filedirname, config.IMAGE_SIZE_ORIGINAL, fs)
@@ -91,7 +92,7 @@ def importImages(fileList, mongo_uri, db_files, db_staging):
 
             stagingdb[config.COLL_PLAATJES].insert_one({
                 'fileName': filename, 'imageUUID': str(imageUUID), 'imageMiddleUUID': str(imageMiddleUUID), 'imageThumbUUID': str(imageThumbUUID),
-                'fileType': file_extension.lower(), 'directory': os.path.dirname(filedirname), 'mime_type': mime_type 
+                'fileType': file_extension.lower(), 'directory': dir, 'mime_type': mime_type 
                 })  
 
     except Exception as err:
