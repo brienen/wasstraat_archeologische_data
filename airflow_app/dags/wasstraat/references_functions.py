@@ -7,6 +7,7 @@ import numpy as np
 import roman
 import wasstraat.meta as meta
 import wasstraat.mongoUtils as mongoUtil
+import simplejson
  
 # Import app code
 # Absolute imports for Hydrogen (Jupyter Kernel) compatibility
@@ -44,7 +45,8 @@ def setReferenceKeys(pipeline, soort, col='analyse'):
         
         if not df.empty:
             # Update soort documents 
-            updates=[ UpdateOne({'_id':x['_id']}, {'$set':x}, upsert=True) for x in df.to_dict('records')]
+            #updates=[ UpdateOne({'_id':x['_id']}, {'$set':x}, upsert=True) for x in df.to_dict('records')]  # v.dropna().to_dict() for k,v in df.iterrows()
+            updates=[ UpdateOne({'_id':x['_id']}, {'$set':x}, upsert=True) for x in [v.dropna().to_dict() for k,v in df.iterrows()]]  # 
             result = collection.bulk_write(updates)
         else:
             logger.warning(f"trying to insert empty dataframe of soort: {soort} into collection {col}.")
@@ -84,7 +86,8 @@ def setReferences(soort):
         df_merge = pd.merge(df_ref, df_soort, how='left', on='key_'+soort_lw)
         
         # Update soort documents 
-        updates=[ UpdateOne({'_id':x['_id']}, {'$set':x}) for x in df_merge.to_dict('records')]
+        #updates=[ UpdateOne({'_id':x['_id']}, {'$set':x}) for x in df_merge.to_dict('records')] # [v.dropna().to_dict() for k,v in df.iterrows()]
+        updates=[ UpdateOne({'_id':x['_id']}, {'$set':x}) for x in [v.dropna().to_dict() for k,v in df_merge.iterrows()]] # 
         result = col.bulk_write(updates)
 
         return result.bulk_api_result

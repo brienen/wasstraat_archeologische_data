@@ -152,10 +152,10 @@ wasstraat_model = {
             { '$match': { 'soort': "Vondst" } },
             { '$addFields': {'key': { '$concat': [ "P", "$projectcd", 
                 {'$ifNull': [{'$concat': ["P", {'$toString': "$putnr" }]}, ""]},
-                {'$ifNull': [{'$concat': ["V", {'$toString': "$vondstnr" }]}, ""]}]}}},
+                    {'$concat': ["V", {'$toString': "$vondstnr" }]}]}}},
             { '$addFields': {'key_vlak': { '$concat': [ "P", "$projectcd", 
                 {'$ifNull': [{'$concat': ["P", {'$toString': "$putnr" }]}, ""]},
-                {'$ifNull': [{'$concat': ["V", {'$toString': "$vlaknr"}]}, ""]}] }}},  		
+                    {'$concat': ["V", {'$toString': "$vlaknr"}]}] }}},  		
             { '$addFields': {'key_put': { '$concat': [ "P", "$projectcd", {'$concat': ["P", {'$toString': "$putnr" }]}] }}},
             { '$addFields': {'key_project': { '$concat': [ "P", "$projectcd"]}}}
         ]]
@@ -196,7 +196,7 @@ wasstraat_model = {
                 { '$concat': [ "S", {'$toString': "$stelling"}, "V", {'$toString': "$vaknr"}, { '$ifNull': [ {'$concat': ["L", {'$toString': "$volgletter"}]}, "" ] }] }		   
             }},  	
             { '$addFields': {'key_doos': 
-                { '$concat': [ "P", "$projectcd", "D", {'$toString': "$doosnr"}]},		   
+                { '$concat': [ "P", {"$toString": "$projectcd"}, "D", {'$toString': "$doosnr"}]},		   
             }}  	
             #{ '$addFields': {'herkomst': ["magazijnlijst"]}},  	
             #, { '$merge': {'into': config.COLL_ANALYSE_CLEAN}}

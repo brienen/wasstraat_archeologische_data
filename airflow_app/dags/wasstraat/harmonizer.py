@@ -27,11 +27,15 @@ def getAggrTables(root, tabellen, include):
     if len(lst_tabellen) == 0:
         root["table"] = {"$in" : []} if include else {"$not": {"$in" : []}}
     elif len(lst_tabellen) == 1:
-        root["table"] = {'$regex': lst_tabellen[0], '$options': 'i'} if include else {"$not": {'$regex': lst_tabellen[0], '$options': 'i'}}
+        regx = re.compile(lst_tabellen[0], re.IGNORECASE)
+        #root["table"] = {'$regex': lst_tabellen[0], '$options': 'i'} if include else {"$not": {'$regex': lst_tabellen[0], '$options': 'i'}}
+        root["table"] = regx if include else {"$not": regx}
     else:
         or_lst = []
         for tabel in lst_tabellen:
-            or_lst.append({"table": {'$regex': tabel, '$options': 'i'}} if include else {"table": {"$not": {'$regex': tabel, '$options': 'i'}}})
+            regx = re.compile(tabel, re.IGNORECASE)
+            #or_lst.append({"table": {'$regex': tabel, '$options': 'i'}} if include else {"table": {"$not": {'$regex': tabel, '$options': 'i'}}})
+            or_lst.append({"table": regx} if include else {"table": {"$not": regx}})
         root = {"$or": or_lst} if include else {"$and": or_lst}
     return root
 

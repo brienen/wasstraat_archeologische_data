@@ -2,6 +2,7 @@ import sqlalchemy as db
 import pymongo
 import pandas as pd
 import numpy as np
+import sqlalchemy
 import wasstraat.meta as meta
 
 
@@ -10,7 +11,7 @@ from sqlalchemy import create_engine, inspect
 from sqlalchemy.engine import reflection
 from geoalchemy2 import Geometry, WKTElement
 from shapely.geometry import Point
-
+from sqlalchemy.sql import null as sqlnull
 from operator import itemgetter 
 
 import config
@@ -86,6 +87,7 @@ def transferToDB(objecttype, soort, table, connection):
         dict_intersect_columns = dict((x) for x in lst if x[0] in df_columnnames)
         
         df_load = df_load[lst_intersect_columnnames]
+        # df_load.fillna(sqlnull(), inplace=True) #@ Returns Error
         df_load.to_sql(table, con=connection, if_exists='append', index=False, dtype=dict_intersect_columns)
 
     except Exception as err:
