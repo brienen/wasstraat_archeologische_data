@@ -70,4 +70,4 @@ with DAG(
     tg_moveAndMerge = tasks_transform5_moveAndMerge.getMoveAndMergeTaskGroup()
 
 
-    Start_cycle >> Drop_Analyse_Database >> tg_harmonize >> tg_enhanceAttrs >> tg_keys >> tg_references >> tg_moveAndMerge >> LoadToDatabase_postgres >> End_cycle 
+    Start_cycle >> Drop_Analyse_Database >> tg_harmonize >> tg_enhanceAttrs >> tg_keys >> tg_moveAndMerge >> tg_references >> LoadToDatabase_postgres >> End_cycle 

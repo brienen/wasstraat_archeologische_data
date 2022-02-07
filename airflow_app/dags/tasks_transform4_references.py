@@ -18,15 +18,29 @@ def getSetReferencesTaskGroup():
     tg1 = TaskGroup(group_id='Transform4_Set_References_Group')
     with tg1:
         first = DummyOperator(task_id="first")
+        middle = DummyOperator(task_id="middle")
         last = DummyOperator(task_id="last")
 
-        obj_types = meta.getKeys(meta.SET_REFERENCES_PIPELINES)
+        obj_types = meta.getKeys(meta.MOVE_FASE)
+        for obj_type in obj_types:
+            tsk = PythonOperator(
+                task_id=f'Set_PrimaryKey_{obj_type}',
+                python_callable=references_functions.setPrimaryKeys,
+                op_kwargs={'soort': obj_type, 'col': 'analyseclean'}
+            )
+            first >> tsk >> middle
+
+        curr = middle
+        obj_types = meta.getKeys(meta.MOVE_FASE)
         for obj_type in obj_types:
             tsk = PythonOperator(
                 task_id=f'Set_Reference_{obj_type}',
                 python_callable=references_functions.setReferences,
-                op_kwargs={'soort': obj_type}
+                op_kwargs={'soort': obj_type, 'col': 'analyseclean'}
             )
-            first >> tsk >> last
+            curr >> tsk
+            curr = tsk
+
+        curr >> last
 
     return tg1

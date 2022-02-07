@@ -73,4 +73,4 @@ with DAG(
     tg_moveAndMerge = tasks_transform5_moveAndMerge.getMoveAndMergeTaskGroup()
 
 
-    Start_ETL_full_cycle >> Drop_All_Databases >> tg_import >> tg_harmonize >> tg_enhanceAttrs >> tg_keys >> tg_references >> tg_moveAndMerge >> LoadToDatabase_postgres >> End_ETL_full_cycle 
+    Start_ETL_full_cycle >> Drop_All_Databases >> tg_import >> tg_harmonize >> tg_enhanceAttrs >> tg_keys >> tg_moveAndMerge >> tg_references >> LoadToDatabase_postgres >> End_ETL_full_cycle 

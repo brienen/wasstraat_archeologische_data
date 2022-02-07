@@ -59,8 +59,8 @@ with DAG(
     tg_harmonize = tasks_transform1_harmonize.getHarmonizeTaskGroup()
     tg_enhanceAttrs = tasks_transform2_attributes.getEnhanceAttributesGroup()
     tg_keys = tasks_transform3_keys.getSetKeysTaskGroup()
-    tg_references = tasks_transform4_references.getSetReferencesTaskGroup()
     tg_moveAndMerge = tasks_transform5_moveAndMerge.getMoveAndMergeTaskGroup()
+    tg_references = tasks_transform4_references.getSetReferencesTaskGroup()
 
 
-    Start_cycle >> Drop_Analyse_Database >> tg_harmonize >> tg_enhanceAttrs >> tg_keys >> tg_references >> tg_moveAndMerge >> End_cycle 
+    Start_cycle >> Drop_Analyse_Database >> tg_harmonize >> tg_enhanceAttrs >> tg_keys >> tg_moveAndMerge >> tg_references >> End_cycle 

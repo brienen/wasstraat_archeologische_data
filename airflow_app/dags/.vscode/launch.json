@@ -18,7 +18,7 @@
             ]
         },
         {
-            "name": "Airflow SetReferences Only",
+            "name": "Airflow DAG_Transform_Move_And_References_Only",
             "type": "python",
             "request": "launch",
             "program": "/home/airflow/.local/bin/airflow",
@@ -26,7 +26,7 @@
             "args": [
                 "dags",
                 "test",
-                "DAG_Transform4_References_Only",
+                "DAG_Transform_Move_And_References_Only",
                 "2020-01-30"
             ]
         },
