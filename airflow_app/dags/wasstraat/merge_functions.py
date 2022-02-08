@@ -1,6 +1,6 @@
 # Import the os module, for the os.walk function
 import pymongo
-from pymongo import UpdateOne, WriteConcern
+from pymongo import UpdateOne, WriteConcern, InsertOne
 import re
 import pandas as pd
 import numpy as np
@@ -130,5 +130,45 @@ def mergeSoort(soort):
 
     finally:
         collection.database.client.close()
+
+
+def mergeMissing(soort):
+    logger.info(f"Start ind and merge missing for {soort}")
+    if not soort in meta.getKeys(meta.GENERATE_MISSING_PIPELINES):
+        msg = f"Fout bij het aanroepen van de merge aggregation voor merge missing. Onbekend soort: {soort}. Alleen deze zijn geldig: {meta.getKeys(meta.GENERATE_MISSING_PIPELINES)}"
+        logger.error(msg)    
+        raise Exception(msg)
+
+    aggr_lst = meta.getGenerateMissingPipelines(soort)
+
+    try:
+        #Aggregate Pipelin
+        collection = getAnalyseCollection()
+        cleancollection = getAnalyseCleanCollection()
+
+        for aggr in aggr_lst:
+            logger.info("Calling aggregation: " + str(aggr))
+            collection.aggregate(aggr)
+
+            df_gen = pd.DataFrame(list(collection.aggregate(aggr)))            
+            if not df_gen.empty and 'keys' in df_gen.columns:
+                df_orig = pd.DataFrame(list(cleancollection.find({'soort': soort})))
+
+                df_all = df_gen.merge(df_orig, on=['key', 'soort'], how='left', indicator=True, suffixes=[None, "_orig"])
+                df = df_all[df_all._merge == 'left_only'][df_gen.columns]
+
+                inserts=[ InsertOne(record) for record in [v.dropna().to_dict() for k,v in df.iterrows()]]  # 
+                result = cleancollection.bulk_write(inserts)
+            else:
+                logger.warning(f"trying to insert empty dataframe of soort: {soort} into collection.")
+
+    except Exception as err:
+        msg = "Onbekende fout bij het aanroepen van een aggregation met melding: " + str(err)
+        logger.error(msg)    
+        raise Exception(msg) from err
+
+    finally:
+        collection.database.client.close()
+        cleancollection.database.client.close()
 
 

@@ -32,7 +32,7 @@ def getSetKeysTaskGroup():
         first >> Set_Artefactnr_Unique
         Set_Index_SingleStore >> last
 
-        obj_types = meta.getKeys(meta.SET_REFERENCES_PIPELINES)
+        obj_types = meta.getKeys(meta.SET_KEYS_PIPELINES)
         for obj_type in obj_types:
             tsk = PythonOperator(
                 task_id=f'Set_ReferenceKeys_{obj_type}',

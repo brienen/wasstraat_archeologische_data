@@ -19,7 +19,8 @@ def getMoveAndMergeTaskGroup():
     tg1 = TaskGroup(group_id='Transform5_Move_And_Merge_Group')
     with tg1:
         first = DummyOperator(task_id="first")
-        middle = DummyOperator(task_id="middle")
+        middle1 = DummyOperator(task_id="middle1")
+        middle2 = DummyOperator(task_id="middle2")
         last = DummyOperator(task_id="last")
 
         Drop_SingleStoreClean = PythonOperator(
@@ -33,7 +34,7 @@ def getMoveAndMergeTaskGroup():
             python_callable=mongoUtils.setIndexes,
             op_kwargs={'collection': config.COLL_ANALYSE_CLEAN}
         )
-        Set_Index_SingleStoreClean >> middle
+        Set_Index_SingleStoreClean >> middle1
 
         obj_types = meta.getKeys(meta.MOVE_FASE)
         for obj_type in obj_types:
@@ -49,6 +50,16 @@ def getMoveAndMergeTaskGroup():
             python_callable=merge_functions.mergeSoort,
             op_kwargs={'soort': "Artefact"}
         )
-        middle >> Merge_Inherited >> last
+        middle1 >> Merge_Inherited >> middle2
+
+        obj_types = meta.getKeys(meta.GENERATE_MISSING_PIPELINES)
+        for obj_type in obj_types:
+            tsk = PythonOperator(
+                task_id=f'Generate_Missing_{obj_type}',
+                python_callable=merge_functions.mergeMissing,
+                op_kwargs={'soort': obj_type}
+            )
+            middle2 >> tsk >> last
+
 
     return tg1
