@@ -32,6 +32,9 @@ formatters_columns = {
     'stelling': lambda x: Markup(f'<a href="/archstellingview/show/{str(x.primary_key)}">{str(x)}</a>') if x and not type(x) == str else ''
 }
 
+
+flds_migratie_info = ("Migratie-informatie", {"fields": ["soort","brondata","herkomst"],"expanded": False})
+
 class MyModelView(ModelView):
     formatters_columns = formatters_columns
 
@@ -46,7 +49,7 @@ class ArtefactChartView(GroupByChartView):
     definitions = [
     {
         'label': 'Soorten Artefact',
-        'group': 'soort',
+        'group': 'artefactsoort',
         'series': [(aggregate_count,'primary_key')],
         'group_by_label': 'Telling'
     },
@@ -130,27 +133,15 @@ class ArchNietFotoView(ArchFotoView):
 class ArchArtefactView(MyModelView):
     datamodel = SQLAInterface(Artefact)
     # base_permissions = ['can_add', 'can_show']
-    list_columns = ["project", "artefactnr", "typecd", "datering", 'typevoorwerp']
+    list_columns = ["project", "artefactnr", "artefactsoort", "typecd", "datering", 'typevoorwerp']
     list_widget = ListThumbnail
     list_title = "Artefacten"
     related_views = [ArchArtefactFotoView]
 
     show_fieldsets = [
-        ("Projectvelden", {"fields": ["project", "put", "vondst", "artefactnr"]}),
+        ("Projectvelden", {"fields": ["project", "put", "vondst", "artefactnr", "artefactsoort"]}),
         ("Artefactvelden", {"fields": ["typevoorwerp", "typecd", "functievoorwerp", "origine", "dateringvanaf", "dateringtot", "datering", "conserveren", "exposabel", "literatuur", "doos"]}),
-        (
-            "Migratie-informatie",
-            {
-                "fields": [
-                    "uuid",
-                    "soort",
-                    "brondata",
-                    "herkomst",
-                ],
-                "expanded": False,
-            },
-        ),
-    ]
+    flds_migratie_info]
     edit_fieldsets = show_fieldsets
     add_fieldsets = show_fieldsets
 
@@ -165,18 +156,7 @@ class ArchDoosView(MyModelView):
     show_fieldsets = [
         ("Hoofdvelden", {"fields": ["project", "doosnr", "inhoud", "aantalArtefacten"]}),
         ("Locatie", {"fields": ["stelling", "vaknr", "volgletter", "uitgeleend"]}),
-        (
-            "Migratie-informatie",
-            {
-                "fields": [
-                    "uuid",
-                    "projectcd",
-                    "projectnaam",
-                ],
-                "expanded": False,
-            },
-        ),
-    ]
+        flds_migratie_info]
 
 class ArchStellingView(MyModelView):
     datamodel = SQLAInterface(Stelling)
@@ -187,18 +167,7 @@ class ArchStellingView(MyModelView):
     related_views = [ArchDoosView]
     show_fieldsets = [
         ("Hoofdvelden", {"fields": ["stelling", "inhoud"]}),
-        (
-            "Migratie-informatie",
-            {
-                "fields": [
-                    "uuid",
-                    "brondata",
-                    "herkomst",
-                ],
-                "expanded": False,
-            },
-        ),
-    ]
+        flds_migratie_info]
 
 
 class ArchSpoorView(MyModelView):
@@ -211,6 +180,7 @@ class ArchSpoorView(MyModelView):
         ("Hoofdvelden", {"fields": ["project", "put", "vlaknr", "spoornr"]}),
         ("Spoorvelden", {"fields": ["aard", "beschrijving", "vorm", "diepte"]}),
         ("Datering", {"fields": ["dateringvanaf", "dateringtot", "datering"]}),
+        flds_migratie_info
     ]
     edit_fieldsets = show_fieldsets
     add_fieldsets = show_fieldsets
@@ -219,11 +189,11 @@ class ArchVondstView(MyModelView):
     datamodel = SQLAInterface(Vondst)
     # base_permissions = ['can_add', 'can_show']
     list_title = "Vondsten"
-    list_columns = ["project", "put", 'vondstnr', 'inhoud']
+    list_columns = ["project", "put", 'vondstnr', 'inhoud', 'omstandigheden']
     show_fieldsets = [
         ("Projectvelden", {"fields": ["project", "put", "vlaknr", "vondstnr"]}),
         ("inhoudvelden", {"fields": ["inhoud", "omstandigheden", "datering", "dateringvanaf", "dateringtot"]}),
-    ]
+        flds_migratie_info]
     edit_fieldsets = show_fieldsets
     add_fieldsets = show_fieldsets
     related_views = [ArchArtefactView]
@@ -251,17 +221,7 @@ class ArchProjectView(MyGeoModelView):
 
     show_fieldsets = [
         ("Projectvelden", {"fields": ["projectcd", "projectnaam", "jaar", "toponiem", "trefwoorden", "location"]}),
-        (
-            "Migratie-informatie",
-            {
-                "fields": [
-                    "soort",
-                    "brondata",
-                    "herkomst",
-                ],
-                "expanded": False,
-            },
-        ),
+        flds_migratie_info
     ]
     edit_fieldsets = show_fieldsets
     add_fieldsets = show_fieldsets
