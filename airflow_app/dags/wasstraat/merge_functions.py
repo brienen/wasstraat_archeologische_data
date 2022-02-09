@@ -151,7 +151,7 @@ def mergeMissing(soort):
             collection.aggregate(aggr)
 
             df_gen = pd.DataFrame(list(collection.aggregate(aggr)))            
-            if not df_gen.empty and 'keys' in df_gen.columns:
+            if not df_gen.empty and 'key' in df_gen.columns:
                 df_orig = pd.DataFrame(list(cleancollection.find({'soort': soort})))
 
                 df_all = df_gen.merge(df_orig, on=['key', 'soort'], how='left', indicator=True, suffixes=[None, "_orig"])

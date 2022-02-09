@@ -27,11 +27,11 @@ wasstraat_model = {
             { '$addFields': {'key_project': { '$concat': [ "P", "$projectcd"]}}}
         ]],
         GENERATE_MISSING_PIPELINES: [[
-            { '$match': { '$and': [{'putnr': { '$exists': True }}, {'projectcd': { '$exists': True }}]}},
+            { '$match': {'putnr': { '$exists': {"$toBool": 1} }, 'projectcd': { '$exists': {"$toBool": 1} }}},
             { '$group':{'_id': {"projectcd" : "$projectcd", 'putnr': "$putnr"}}},
             { '$unwind': "$_id"},
             { '$project': {'_id': 0, 'projectcd': "$_id.projectcd", 'putnr': "$_id.putnr"}},       
-            { '$addFields': {'brondata.table': 'generated_put', 'soort': 'Put'}}
+            { '$addFields': {'brondata.table': 'generated_put', 'brondata.project': '$projectcd', 'soort': 'Put'}}
         ]]
   },
   "Vlak": {
@@ -44,11 +44,11 @@ wasstraat_model = {
             { '$addFields': {'key_put': { '$concat': [ "P", "$projectcd", {'$concat': ["P", {'$toString': "$putnr" }]}] }}}	
         ]],
         GENERATE_MISSING_PIPELINES: [[
-            { '$match': {"$and": [{'vlaknr': { '$exists': True }}, {'putnr': { '$exists': True }}]}},
+            { '$match': {'vlaknr': { '$exists': {"$toBool": 1} }, 'projectcd': { '$exists': {"$toBool": 1} }, 'putnr': { '$exists': {"$toBool": 1} }}},
             { '$group':{'_id': {"projectcd" : "$projectcd", 'putnr': "$putnr", 'vlaknr': "$vlaknr"}}},
             { '$unwind': "$_id"},
             { '$project': {'_id': 0, 'projectcd': "$_id.projectcd", 'putnr': "$_id.putnr", 'vlaknr': "$_id.vlaknr"}},
-            { '$addFields': {'brondata.table': 'generated_vlak', 'soort': 'Vlak'}}
+            { '$addFields': {'brondata.table': 'generated_vlak', 'brondata.project': '$projectcd', 'soort': 'Vlak'}}
         ]]
   },
   "Spoor": {
@@ -65,11 +65,11 @@ wasstraat_model = {
             { '$addFields': {'key_project': { '$concat': [ "P", "$projectcd"]}}}
         ]],
         GENERATE_MISSING_PIPELINES: [[
-            {'$match': {'spoornr': { '$exists': True }}},
+            { '$match': {'vlaknr': { '$exists': {"$toBool": 1} }, 'projectcd': { '$exists': {"$toBool": 1} }, 'putnr': { '$exists': {"$toBool": 1} }, 'spoornr': { '$exists': {"$toBool": 1} }}},
             { '$group':{'_id': {'projectcd':"$projectcd", 'putnr':"$putnr", 'spoornr':"$spoornr", 'vlaknr':"$vlaknr"}, 'aard': {'$max': "$aard"}}},  
             { '$unwind': "$_id"},
             { '$project': {'_id': 0, 'projectcd': "$_id.projectcd", 'putnr': "$_id.putnr", 'spoornr': "$_id.spoornr", 'vlaknr': "$_id.vlaknr"}},
-            { '$addFields': {'brondata.table': 'generated_spoor', 'soort': 'Spoor'}}
+            { '$addFields': {'brondata.table': 'generated_spoor', 'brondata.project': '$projectcd', 'soort': 'Spoor'}}
         ]]
   },
   "Stelling": {
@@ -168,6 +168,13 @@ wasstraat_model = {
                     {'$concat': ["V", {'$toString': "$vlaknr"}]}] }}},  		
             { '$addFields': {'key_put': { '$concat': [ "P", "$projectcd", {'$concat': ["P", {'$toString': "$putnr" }]}] }}},
             { '$addFields': {'key_project': { '$concat': [ "P", "$projectcd"]}}}
+        ]],
+        GENERATE_MISSING_PIPELINES: [[
+            { '$match': {'putnr': { '$exists': {"$toBool": 1} }, 'projectcd': { '$exists': {"$toBool": 1} }, 'vondstnr': { '$exists': {"$toBool": 1} }}},
+            { '$group':{'_id': {"projectcd" : "$projectcd", 'putnr': "$putnr", 'vondstnr': "$vondstnr"}}},
+            { '$unwind': "$_id"},
+            { '$project': {'_id': 0, 'projectcd': "$_id.projectcd", 'putnr': "$_id.putnr", 'vondstnr': "$_id.vondstnr"}},       
+            { '$addFields': {'brondata.table': 'generated_vondst', 'brondata.project': '$projectcd', 'soort': 'Vondst'}}
         ]]
   },
   "Foto": {
@@ -226,14 +233,14 @@ wasstraat_model = {
             ]],        
         GENERATE_MISSING_PIPELINES: [
             [ 
-                { '$match': { '$and': [{'doosnr': { '$exists': True }}, {'soort': "artefact"}]}},
+                { '$match': {'doosnr': { '$exists': {"$toBool": 1} }, 'soort': "Artefact"}},            
                 { '$group':{'_id': {"projectcd" : "$projectcd", 'doosnr': "$doosnr"}}},
                 { '$unwind': "$_id"},
                 { '$project': {'_id': 0, 'projectcd': "$_id.projectcd", 'doosnr': "$_id.doosnr"}},
-                { '$addFields': {'brondata.table': 'generated_Doos', 'soort': 'Doos'}}
+                { '$addFields': {'brondata.table': 'generated_Doos', 'brondata.project': '$projectcd', 'soort': 'Doos'}}
             ]
             #,[
-            #    { '$match': { '$and': [ {'table': "magazijnlijst"}, {'doosnr': { '$exists': True }} ] } },	
+            #    { '$match': {'doosnr': { '$exists': True }, 'brondata.table': "magazijnlijst"}},            
             #    { '$addFields': {'herkomst': ["magazijnlijst"]}},  	
             #    { '$addFields': {'brondata.table': 'generated_Doos', 'soort': 'Doos'}}
             #]
