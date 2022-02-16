@@ -104,6 +104,10 @@ wasstraat_model = {
                 {'$ifNull': [{'$concat': ["P", {'$toString': "$putnr" }]}, ""]},
                 {'$ifNull': [{'$concat': ["V", {'$toString': "$vondstnr" }]}, ""]},
                              {'$concat': ["A", {'$toString': "$artefactnr"}]}]}}},  		
+            { '$addFields': {'key_subnr': { '$concat': [ "P", "$projectcd", 
+                {'$ifNull': [{'$concat': ["P", {'$toString': "$putnr" }]}, ""]},
+                {'$ifNull': [{'$concat': ["V", {'$toString': "$vondstnr" }]}, ""]},
+                             {'$concat': ["A", {'$toString': "$subnr"}]}]}}},  		
             { '$addFields': {'key_vondst': { '$concat': [ "P", "$projectcd", 
                 {'$ifNull': [{'$concat': ["P", {'$toString': "$putnr" }]}, ""]},
                 "V", {'$toString': "$vondstnr"}] }}}

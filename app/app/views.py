@@ -139,7 +139,7 @@ class ArchArtefactView(MyModelView):
     related_views = [ArchArtefactFotoView]
 
     show_fieldsets = [
-        ("Projectvelden", {"fields": ["project", "put", "vondst", "artefactnr", "artefactsoort"]}),
+        ("Projectvelden", {"fields": ["project", "put", "vondst", "artefactnr", "subnr", "artefactsoort"]}),
         ("Artefactvelden", {"fields": ["typevoorwerp", "typecd", "functievoorwerp", "origine", "dateringvanaf", "dateringtot", "datering", "conserveren", "exposabel", "literatuur", "doos"]}),
     flds_migratie_info]
     edit_fieldsets = show_fieldsets
@@ -192,7 +192,7 @@ class ArchVondstView(MyModelView):
     list_title = "Vondsten"
     list_columns = ["project", "put", 'spoor', 'vondstnr', 'inhoud', 'omstandigheden', 'vullingnr']
     show_fieldsets = [
-        ("Projectvelden", {"fields": ["project", "put", "vlaknr", "vondstnr"]}),
+        ("Projectvelden", {"fields": ["project", "put", "vlaknr", "spoor", "vondstnr"]}),
         ("inhoudvelden", {"fields": ["inhoud", "omstandigheden", "segment", "vaknummer", "verzamelwijze"]}),
         ("Datering", {"fields": ["dateringvanaf", "dateringtot", "datering"]}),
         flds_migratie_info]

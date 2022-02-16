@@ -92,7 +92,7 @@ def setPrimaryKeys(soort, col='analyse'):
 
 
 
-def setReferences(soort, col='analyse'):
+def setReferences(soort, col='analyse', key='key'):
     try:
         if (col == 'analyse'):
             collection = getAnalyseCollection()
@@ -104,8 +104,8 @@ def setReferences(soort, col='analyse'):
         soort_lw = soort.lower()
         
         # Find all main entries for type soort
-        df_soort = pd.DataFrame(list(collection.find({'soort': soort}, projection={'key':1, 'ID':1})))
-        df_soort = df_soort.rename(columns={'_id': soort_lw+'UUID', 'index':soort_lw+'ID', 'key':'key_'+soort_lw})
+        df_soort = pd.DataFrame(list(collection.find({'soort': soort}, projection={key:1, 'ID':1})))
+        df_soort = df_soort.rename(columns={'_id': soort_lw+'UUID', 'index':soort_lw+'ID', key:'key_'+soort_lw})
         if df_soort.size < 1:
             logger.warning("Er zjn geen documents gevonden van het type " +soort)
             return

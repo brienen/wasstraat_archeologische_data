@@ -41,6 +41,13 @@ def getSetReferencesTaskGroup():
             curr >> tsk
             curr = tsk
 
-        curr >> last
+        tsk_iamge = PythonOperator(
+            task_id=f'Set_Reference_Images_to_Subnr',
+            python_callable=references_functions.setReferences,
+            op_kwargs={'soort': 'Artefact', 'col': 'analyseclean', 'key': 'key_subnr'}
+        )
+
+        curr >> tsk_iamge >> last
+
 
     return tg1

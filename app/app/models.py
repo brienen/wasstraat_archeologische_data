@@ -146,7 +146,7 @@ class Put(WasstraatModel):
     project = relationship('Project')
 
     def __repr__(self):
-        beschr = str(self.beschrijving) if str(self.beschrijving) else ""
+        beschr = str(self.beschrijving) if self.beschrijving else ""
 
         return self.project.projectcd + ' Put ' + str(self.putnr) + ' ' + beschr
 
@@ -242,6 +242,7 @@ class Artefact(WasstraatModel):
     exposabel = Column(Integer)
     literatuur = Column(String(200))
     putnr = Column(Integer)
+    subnr = Column(Integer) 
     restauratie = Column(Integer)
     projectID = Column(ForeignKey('Def_Project.primary_key'), index=True)
     project = relationship('Project')
