@@ -27,14 +27,14 @@ def getExtractTaskGroup():
         last = DummyOperator(task_id="last")
 
         # [START howto_operator_bash]
-        Extract_Data_From_old = BashOperator(
-            task_id='Extract_Data_From_Oude_Projecten',
-            bash_command="${AIRFLOW_HOME}/scripts/importMDB.sh %s %s " % (rootDir + "/projectdatabase/oud", config.COLL_STAGING_OUD)
+        Extract_Data_From_DC = BashOperator(
+            task_id='Extract_Data_From_DC_Projecten',
+            bash_command="${AIRFLOW_HOME}/scripts/importMDB.sh %s %s " % (rootDir + "/projectdatabase/digidepot_DC", config.COLL_STAGING_OUD)
         )
         # [START howto_operator_bash]
-        Extract_Data_From_new = BashOperator(
-            task_id='Extract_Data_From_Nieuwe_Projecten',
-            bash_command="${AIRFLOW_HOME}/scripts/importMDB.sh %s %s " % (rootDir + "/projectdatabase/nieuw", config.COLL_STAGING_OUD)
+        Extract_Data_From_DB = BashOperator(
+            task_id='Extract_Data_From_DB_Projecten',
+            bash_command="${AIRFLOW_HOME}/scripts/importMDB.sh %s %s " % (rootDir + "/projectdatabase/digidepot_DB", config.COLL_STAGING_OUD)
         )
         # [START howto_operator_bash]
         Extract_Data_From_DelfIT = BashOperator(
@@ -52,8 +52,8 @@ def getExtractTaskGroup():
             bash_command="${AIRFLOW_HOME}/scripts/importMDB.sh %s %s " % (rootDir + "/projectdatabase/digifotos", config.COLL_STAGING_DIGIFOTOS)
         )
 
-        big_filelist = getImageNamesFromDir(rootDir + "/fotos")
-        for i, files_list in enumerate(np.array_split(big_filelist, 7)):
+        big_filelist = getImageNamesFromDir(rootDir + "/fotos") + getImageNamesFromDir(rootDir + "/projectdatabase/digidepot_DC") + getImageNamesFromDir(rootDir + "/projectdatabase/digidepot_DB")
+        for i, files_list in enumerate(np.array_split(big_filelist, 10)):
             tsk = PythonOperator(
                 task_id='Extract_Data_From_Fotos_' + str(i),
                 python_callable=importImages,
@@ -62,6 +62,6 @@ def getExtractTaskGroup():
             first >> tsk >> last
         
         
-        first >> [Extract_Data_From_old, Extract_Data_From_new, Extract_Data_From_DelfIT, Extract_Data_From_Magazijnlijst, Extract_Data_From_DigiFotolijst] >> last
+        first >> [Extract_Data_From_DC, Extract_Data_From_DB, Extract_Data_From_DelfIT, Extract_Data_From_Magazijnlijst, Extract_Data_From_DigiFotolijst] >> last
         
     return tg1

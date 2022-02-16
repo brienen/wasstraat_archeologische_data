@@ -11,19 +11,21 @@ DATABASE=$DB_STAGING
 
 #timestamp=`date --rfc-3339=seconds`
 timestamp=`date --iso-8601=seconds`
-FILES="$1"/*.mdb
+#FILES="$1"/*.mdb
+#FILES="$(find "$1" -name *.mdb)"
 Collection="$2"
 LOG=${AIRFLOW_LOGDIR}/${Collection}.log
 
-echo Loading "$FILES" to collection "$Collection" in database "$DATABASE" and logging to "$LOG" 
-
+echo Loading from "$1" to collection "$Collection" in database "$DATABASE" and logging to "$LOG" 
 # Setting logging to log files, including error log
 exec &> >(tee "$LOG") 2>&1
-echo Loading "$FILES" to collection "$Collection" in database "$DATABASE" and logging to "$LOG" 
+echo Loading from "$1" to collection "$Collection" in database "$DATABASE" and logging to "$LOG" 
 
 
 DB_STAGING_URI=mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@${MONGO_SERVER}
-for mdbfile in $FILES
+shopt -s globstar
+for mdbfile in "$1"/*.mdb "$1"/**/*.mdb
+#for mdbfile in $FILES
 do
 	PROJECT=${mdbfile%.mdb}
 	PROJECT=${PROJECT##*\/} 
@@ -32,7 +34,7 @@ do
   
 
 	IFS=","
-  	TABLES=`mdb-tables -d, $mdbfile`
+  	TABLES=`mdb-tables -d, "$mdbfile"`
 	echo "$TABLES"
 	for TABLE in $TABLES
 	do
