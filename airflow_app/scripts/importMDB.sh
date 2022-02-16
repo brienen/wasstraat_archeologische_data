@@ -24,7 +24,7 @@ echo Loading from "$1" to collection "$Collection" in database "$DATABASE" and l
 
 DB_STAGING_URI=mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@${MONGO_SERVER}
 shopt -s globstar
-for mdbfile in "$1"/*.mdb "$1"/**/*.mdb
+for mdbfile in "$1"/**/*.mdb
 #for mdbfile in $FILES
 do
 	PROJECT=${mdbfile%.mdb}
