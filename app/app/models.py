@@ -222,7 +222,7 @@ class Vondst(WasstraatModel):
         vondstnr = (' Vondstnr ' + str(self.vondstnr)) + " " if self.vondstnr else ''
         put = (' Put ' + str(self.put.putnr)) + " " if self.put else ''
 
-        return self.project.projectcd + put + vondstnr + self.omstandigheden
+        return self.project.projectcd + put + vondstnr + self.omstandigheden if self.omstandigheden else ''
 
 class Artefact(WasstraatModel):
     __tablename__ = 'Def_Artefact'
@@ -386,8 +386,20 @@ class Vlak(WasstraatModel):
     __tablename__ = 'Def_Vlak'
 
     primary_key = Column(Integer, primary_key=True, autoincrement=True)
-    putnr = Column(Integer)
-    vlaknr = Column(Text)
+    vlaknr = Column(String(50))
+    beschrijving = Column(Text)
+    datum_aanleg = Column(String(50))
+    vlaktype = Column(String(50))
+    projectID = Column(ForeignKey('Def_Project.primary_key'), index=True)
+    project = relationship('Project')
+    putID = Column(ForeignKey('Def_Put.primary_key', deferrable=True), index=True)
+    put = relationship('Put')
+
+    def __repr__(self):
+        put = (' Put ' + str(self.put.putnr)) + " " if self.put else ''
+        vlak = (' Vlaknr ' + str(self.vlaknr)) + " " if self.vlaknr else ''
+
+        return self.project.projectcd + put + + vlak + self.beschrijving if self.beschrijving else ''
 
 
 class Person(WasstraatModel):

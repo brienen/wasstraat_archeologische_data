@@ -17,7 +17,7 @@ from fab_addon_geoalchemy.models import GeoSQLAInterface, Geometry
 from wtforms.fields import StringField
 
 from . import appbuilder, db
-from .models import Stelling, Doos, Artefact, Foto, Spoor, Project, Contact, ContactGroup, Gender, Put, Vondst
+from .models import Stelling, Doos, Artefact, Foto, Spoor, Project, Contact, ContactGroup, Gender, Put, Vondst, Vlak
 from .widgets import MediaListWidget
 
 
@@ -201,10 +201,26 @@ class ArchVondstView(MyModelView):
     related_views = [ArchArtefactView]
 
 
+class ArchVlakView(MyModelView):
+    datamodel = SQLAInterface(Vlak)
+    # base_permissions = ['can_add', 'can_show']
+    related_views = [ArchSpoorView, ArchVondstView, ArchArtefactView]
+    list_title = "Vlakken"
+    list_columns = ["project", "put", 'vlaknr', 'beschrijving']
+    show_fieldsets = [
+        ("Hoofdvelden", {"fields": list_columns}),
+        ("Vlakvelden", {"fields": ["datum_aanleg", "vlaktype"]}),
+        flds_migratie_info
+    ]
+    edit_fieldsets = show_fieldsets
+    add_fieldsets = show_fieldsets
+
+
+
 class ArchPutView(MyModelView):
     datamodel = SQLAInterface(Put)
     # base_permissions = ['can_add', 'can_show']
-    related_views = [ArchSpoorView, ArchVondstView, ArchArtefactView]
+    related_views = [ArchVlakView, ArchSpoorView, ArchVondstView, ArchArtefactView]
     list_title = "Putten"
     list_columns = ["project", "putnr", 'beschrijving']
     show_fieldsets = [
@@ -394,6 +410,12 @@ appbuilder.add_view(
 appbuilder.add_view(
     ArchPutView,
     "Putten",
+    icon="fa-dashboard",
+    category="Projecten",
+)
+appbuilder.add_view(
+    ArchVlakView,
+    "Vlakken",
     icon="fa-dashboard",
     category="Projecten",
 )
