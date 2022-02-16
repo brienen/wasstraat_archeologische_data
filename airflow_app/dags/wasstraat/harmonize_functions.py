@@ -49,7 +49,7 @@ def collectImageInfo():
                     doc['fileName'] = os.path.splitext(doc['fileName'])[0]
 
                 # Objectfoto's extraheren (Bevatten altijd een _H en beginnen met projectcode)
-                matchObj = re.match( r'^([a-zA-Z0-9]+)(_P(\d+))?_H(\d+)(_(\w+))?_(\d+)\.[a-z]{3}$', doc['fileName'], re.M|re.I)
+                matchObj = re.match( r'^([a-zA-Z0-9]+)(_B?P(\d+))?_H(\d+)(_(\w+))?_(\d+)\.[a-z]{3}$', doc['fileName'], re.M|re.I)
                 if matchObj:
                     doc['projectcd'] = matchObj.group(1)
                     if matchObj.group(3) is not None: doc['putnr'] = matchObj.group(3)

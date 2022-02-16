@@ -399,7 +399,7 @@ class Vlak(WasstraatModel):
         put = (' Put ' + str(self.put.putnr)) + " " if self.put else ''
         vlak = (' Vlaknr ' + str(self.vlaknr)) + " " if self.vlaknr else ''
 
-        return self.project.projectcd + put + + vlak + self.beschrijving if self.beschrijving else ''
+        return self.project.projectcd + put + vlak + self.beschrijving if self.beschrijving else ''
 
 
 class Person(WasstraatModel):

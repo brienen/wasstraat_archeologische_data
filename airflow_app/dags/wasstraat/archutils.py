@@ -26,7 +26,14 @@ def convertToInt(d, attr, force):
         else:
             if 'numpy.float' in str(type(d[attr])): d[attr] = int(d[attr])
             if 'numpy.int' in str(type(d[attr])): d[attr] = int(d[attr])
-        
+
+# Conveniece methods
+def convertToBool(d, attr):
+    if attr in d:
+        s = str(d[attr]).lower()
+        d[attr] = 1 if d[attr] in ['1', 'true', 'ja'] else 0
+
+
 def convertToDate(d, attr, force):
     if attr in d:
         d[attr] = pd.to_datetime(d[attr], dayfirst=True, cache=True, errors='coerce' if force else 'ignore')
