@@ -25,6 +25,7 @@ class WasstraatModel(Model):
     __abstract__ = True
 
     herkomst = Column(Text)
+    key = Column(Text)
     soort = Column(String(80))
     brondata = Column(Text)
     uuid = Column('_id', String(40))
@@ -137,11 +138,15 @@ class Put(WasstraatModel):
 
     primary_key = Column(Integer, primary_key=True, autoincrement=True)
     putnr = Column(Integer)
+    beschrijving = Column(Text)
+    aangelegd = Column(Boolean)
+    datum_ingevoerd = Column(Text)
+    datum_gewijzigd = Column(Text)
     projectID = Column(ForeignKey('Def_Project.primary_key'), index=True)
     project = relationship('Project')
 
     def __repr__(self):
-        return self.project.projectcd + ' Put ' + str(self.putnr)
+        return self.project.projectcd + ' Put ' + str(self.putnr) + ' ' + str(self.beschrijving)
 
 
 class Spoor(WasstraatModel):

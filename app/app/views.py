@@ -204,7 +204,14 @@ class ArchPutView(MyModelView):
     # base_permissions = ['can_add', 'can_show']
     related_views = [ArchVondstView, ArchArtefactView]
     list_title = "Putten"
-    list_columns = ["project", "putnr"]
+    list_columns = ["project", "putnr", 'beschrijving']
+    show_fieldsets = [
+        ("Hoofdvelden", {"fields": ["project", "putnr", "beschrijving"]}),
+        ("Putvelden", {"fields": ["beschrijving", "aangelegd", "datum_ingevoerd", "datum_gewijzigd"]}),
+        flds_migratie_info
+    ]
+    edit_fieldsets = show_fieldsets
+    add_fieldsets = show_fieldsets
 
 
 
