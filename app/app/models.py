@@ -142,7 +142,7 @@ class Put(WasstraatModel):
     aangelegd = Column(Boolean)
     datum_ingevoerd = Column(Text)
     datum_gewijzigd = Column(Text)
-    projectID = Column(ForeignKey('Def_Project.primary_key'), index=True)
+    projectID = Column(ForeignKey('Def_Project.primary_key', deferrable=True), index=True)
     project = relationship('Project')
 
     def __repr__(self):
@@ -157,15 +157,37 @@ class Spoor(WasstraatModel):
     spoornr = Column(Integer)
     aard = Column(String(200))
     beschrijving = Column(Text)
+    gecoupeerd =  Column(Text)
+    coupnrs =   Column(Text)
+    afgewerkt = Column(Text)
     dateringvanaf = Column(Integer)
     dateringtot = Column(Integer)
     datering = Column(String(200))
     vorm = Column(String(200))
     diepte = Column(String(200))
-    projectID = Column(ForeignKey('Def_Project.primary_key'), index=True)
+    breedte_bovenkant= Column(String(200))
+    lengte_bovenkant= Column(String(200))
+    hoogte_bovenkant= Column(String(200))
+    hoogte_onderkant= Column(String(200))
+    breedte_onderkant= Column(String(200))
+    onderkant_NAP = Column(String(200))
+    profiel = Column(String(200))
+    richting = Column(String(200))
+    steenformaat = Column(String(200))
+    metselverband = Column(String(200))
+    steenformaat = Column(String(200))
+    jonger_dan = Column(String(200))
+    ouder_dan = Column(String(200))
+    sporen_zelfde_periode = Column(String(200))
+    projectID = Column(ForeignKey('Def_Project.primary_key', deferrable=True), index=True)
     project = relationship('Project')
-    putID = Column(ForeignKey('Def_Put.primary_key'), index=True)
+    putID = Column(ForeignKey('Def_Put.primary_key', deferrable=True), index=True)
     put = relationship('Put')
+    vlakID = Column(ForeignKey('Def_Vlak.primary_key', deferrable=True), index=True)
+    vlak = relationship('Vlak')
+
+    def __repr__(self):
+        return self.project.projectcd + ' Put ' + str(self.put.putnr) + ' Spoor ' + str(self.spoornr) + ' ' + str(self.beschrijving)
 
 
 class Vondst(WasstraatModel):

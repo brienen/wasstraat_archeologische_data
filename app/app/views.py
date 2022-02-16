@@ -172,13 +172,14 @@ class ArchStellingView(MyModelView):
 
 class ArchSpoorView(MyModelView):
     datamodel = SQLAInterface(Spoor)
-    # base_permissions = ['can_add', 'can_show']
-    list_columns = ["project", "put", "spoornr"]
-    #related_views = [ArchPutView, ArchVondstView, ArchArtefactView]
+    list_columns = ["project", "put", "vlaknr", "spoornr", 'beschrijving']
     list_title = "Sporen"
     show_fieldsets = [
         ("Hoofdvelden", {"fields": ["project", "put", "vlaknr", "spoornr"]}),
-        ("Spoorvelden", {"fields": ["aard", "beschrijving", "vorm", "diepte"]}),
+        ("Spoorvelden", {"fields": ["aard", "beschrijving", "vorm", "richting", "gecoupeerd", "coupnrs", "afgewerkt"]}),
+        ("Stenen", {"fields": ["steenformaat", "metselverband"]}),
+        ("Maten", {"fields": ["hoogte_bovenkant", "breedte_bovenkant", "lengte_bovenkant", "hoogte_onderkant", "breedte_onderkant", "diepte"]}),
+        ("Andere sporen", {"fields": ["jonger_dan", "ouder_dan", "sporen_zelfde_periode"]}),
         ("Datering", {"fields": ["dateringvanaf", "dateringtot", "datering"]}),
         flds_migratie_info
     ]
