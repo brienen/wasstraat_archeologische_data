@@ -190,10 +190,11 @@ class ArchVondstView(MyModelView):
     datamodel = SQLAInterface(Vondst)
     # base_permissions = ['can_add', 'can_show']
     list_title = "Vondsten"
-    list_columns = ["project", "put", 'vondstnr', 'inhoud', 'omstandigheden']
+    list_columns = ["project", "put", 'spoor', 'vondstnr', 'inhoud', 'omstandigheden', 'vullingnr']
     show_fieldsets = [
         ("Projectvelden", {"fields": ["project", "put", "vlaknr", "vondstnr"]}),
-        ("inhoudvelden", {"fields": ["inhoud", "omstandigheden", "datering", "dateringvanaf", "dateringtot"]}),
+        ("inhoudvelden", {"fields": ["inhoud", "omstandigheden", "segment", "vaknummer", "verzamelwijze"]}),
+        ("Datering", {"fields": ["dateringvanaf", "dateringtot", "datering"]}),
         flds_migratie_info]
     edit_fieldsets = show_fieldsets
     add_fieldsets = show_fieldsets
@@ -203,7 +204,7 @@ class ArchVondstView(MyModelView):
 class ArchPutView(MyModelView):
     datamodel = SQLAInterface(Put)
     # base_permissions = ['can_add', 'can_show']
-    related_views = [ArchVondstView, ArchArtefactView]
+    related_views = [ArchSpoorView, ArchVondstView, ArchArtefactView]
     list_title = "Putten"
     list_columns = ["project", "putnr", 'beschrijving']
     show_fieldsets = [

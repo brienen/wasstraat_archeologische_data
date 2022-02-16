@@ -94,7 +94,7 @@ class Project(Model): # Inherit from Model for cannot use Abstract class Wasstra
     soort = Column(String(80))
     brondata = Column(Text)
     uuid = Column('_id', String(40))
-
+    key = Column(Text)
 
     @hybrid_method
     def aantalArtefacten(self):
@@ -146,7 +146,9 @@ class Put(WasstraatModel):
     project = relationship('Project')
 
     def __repr__(self):
-        return self.project.projectcd + ' Put ' + str(self.putnr) + ' ' + str(self.beschrijving)
+        beschr = str(self.beschrijving) if str(self.beschrijving) else ""
+
+        return self.project.projectcd + ' Put ' + str(self.putnr) + ' ' + beschr
 
 
 class Spoor(WasstraatModel):
@@ -187,7 +189,10 @@ class Spoor(WasstraatModel):
     vlak = relationship('Vlak')
 
     def __repr__(self):
-        return self.project.projectcd + ' Put ' + str(self.put.putnr) + ' Spoor ' + str(self.spoornr) + ' ' + str(self.beschrijving)
+        put = (' Put ' + str(self.put.putnr)) + " " if self.put else ''
+        beschr = str(self.beschrijving) if str(self.beschrijving) else ""
+
+        return self.project.projectcd + put + ' Spoor ' + str(self.spoornr) + ' ' + beschr
 
 
 class Vondst(WasstraatModel):
@@ -202,16 +207,22 @@ class Vondst(WasstraatModel):
     dateringvanaf = Column(Integer)
     dateringtot = Column(Integer)
     datering = Column(String(200))
-    projectID = Column(ForeignKey('Def_Project.primary_key'), index=True)
+    segment = Column(String(200))
+    vaknummer = Column(String(200))
+    verzamelwijze = Column(String(200))
+    vullingnr = Column(String(200)) 
+    projectID = Column(ForeignKey('Def_Project.primary_key', deferrable=True), index=True)
     project = relationship('Project')
-    putID = Column(ForeignKey('Def_Put.primary_key'), index=True)
+    putID = Column(ForeignKey('Def_Put.primary_key', deferrable=True), index=True)
     put = relationship('Put')
+    spoorID = Column(ForeignKey('Def_Spoor.primary_key', deferrable=True), index=True)
+    spoor = relationship('Spoor')
 
     def __repr__(self):
-        vondstnr = (' Vondstnr ' + str(self.vondstnr)) if self.vondstnr else ''
-        put = (' Put ' + str(self.put.putnr)) if self.put else ''
+        vondstnr = (' Vondstnr ' + str(self.vondstnr)) + " " if self.vondstnr else ''
+        put = (' Put ' + str(self.put.putnr)) + " " if self.put else ''
 
-        return self.project.projectcd + put + vondstnr
+        return self.project.projectcd + put + vondstnr + self.omstandigheden
 
 class Artefact(WasstraatModel):
     __tablename__ = 'Def_Artefact'
