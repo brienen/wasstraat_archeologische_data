@@ -142,11 +142,11 @@ def setReferences(soort, col='analyse', key='key'):
 def setArtefactnrUnique():
     try:        
         col = getAnalyseCollection()
-        lst_project = list(col.find({'soort': 'artefact'}).distinct('projectcd'))
+        lst_project = list(col.find({'soort': 'Artefact'}).distinct('projectcd'))
 
         for proj in lst_project:
             try:
-                df_art = pd.DataFrame(list(col.find({'soort': 'artefact', 'projectcd': proj}, projection={'artefactnr':1}))).dropna()
+                df_art = pd.DataFrame(list(col.find({'soort': 'Artefact', 'projectcd': proj}, projection={'artefactnr':1}))).dropna()
                 unique = df_art['artefactnr'].is_unique
                 
                 project = col.find_one({ 'soort': "project", 'projectcd': proj })

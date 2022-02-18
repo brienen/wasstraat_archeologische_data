@@ -156,6 +156,9 @@ def mergeMissing(soort):
 
                 df_all = df_gen.merge(df_orig, on=['key', 'soort'], how='left', indicator=True, suffixes=[None, "_orig"])
                 df = df_all[df_all._merge == 'left_only'][df_gen.columns]
+                if len(df) < 1:
+                    logger.info(f"No missing records for type: {soort} nothing inserted in collection.")
+                    return
 
                 inserts=[ InsertOne(record) for record in [v.dropna().to_dict() for k,v in df.iterrows()]]  # 
                 result = cleancollection.bulk_write(inserts)

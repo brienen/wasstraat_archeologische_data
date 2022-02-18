@@ -40,6 +40,7 @@ tmpDir = str(config.AIRFLOW_TEMPDIR)
 with DAG(
     dag_id='Extract_Transform_Load_Full_Cycle',
     start_date=datetime(2021, 1, 1),
+    schedule_interval=None,
     catchup=False,
     dagrun_timeout=timedelta(minutes=60),
     template_searchpath="/opt/airflow"
