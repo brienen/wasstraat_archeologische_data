@@ -138,25 +138,49 @@ def setReferences(soort, col='analyse', key='key'):
         collection.database.client.close()
 
 
+# returns all project where the same vondstnr is used in multiple putten
+aggr_vondstnr_not_unique = [{"$match" : {"soort" : "Vondst"}},
+        {"$group" : {"_id" : {"projectcd" : "$projectcd","vondstnr" : "$vondstnr"}, "putnrs" : {"$addToSet" : "$putnr"}}},
+        {"$replaceRoot" : {"newRoot" : {"_id" : 0,"projectcd" : "$_id.projectcd","aantal_put" : {"$size" : "$putnrs"}}}},
+        {"$match" : {"aantal_put" : {"$gt" : 1.0}}},
+        {"$group" : {"_id" : "$projectcd"}},
+        {"$replaceRoot" : {"newRoot" : {"projectcd" : "$_id"}}}]
 
-def setArtefactnrUnique():
+def setAndVondstUniqueInProject(col='analyse'):
     try:        
-        col = getAnalyseCollection()
-        lst_project = list(col.find({'soort': 'Artefact'}).distinct('projectcd'))
+        if (col == 'analyse'):
+            collection = getAnalyseCollection()
+        elif (col == 'analyseclean'):
+            collection = getAnalyseCleanCollection()
+        else:
+            raise ValueError('Error: Herkent de collectie niet met naam ' + col)
 
+        lst_project = list(collection.find({'soort': 'Artefact'}).distinct('projectcd'))
         for proj in lst_project:
             try:
-                df_art = pd.DataFrame(list(col.find({'soort': 'Artefact', 'projectcd': proj}, projection={'artefactnr':1}))).dropna()
+                df_art = pd.DataFrame(list(collection.find({'soort': 'Artefact', 'projectcd': proj}, projection={'artefactnr':1}))).dropna()
                 unique = df_art['artefactnr'].is_unique
                 
-                project = col.find_one({ 'soort': "project", 'projectcd': proj })
+                project = collection.find_one({ 'soort': "Project", 'projectcd': proj })
                 project['artefactnrs_unique'] = unique
-                col.replace_one({'_id': project['_id']}, project)
+                collection.replace_one({'_id': project['_id']}, project)
 
             except Exception as exp2:
-                logger.error(f'Error while determining whether artefactnr are unique for project {proj} with message: {str(exp2)} ')
+                logger.error(f'Error while determining whether artefactnrs are unique for project {proj} with message: {str(exp2)} ')
+
+
+        lst_vondst_in_multi_putten = list(pd.DataFrame(list(collection.aggregate(aggr_vondstnr_not_unique)))['projectcd'])
+        if len(lst_vondst_in_multi_putten) > 0:
+            try:
+                collection.update_many({'vondstnr': {"$exists": {"$Bool": 1}}, 'projectcd': {"$exists": {"$Bool": 1}}, 'projectcd': {'$in': lst_vondst_in_multi_putten}}, {'$set': {'vondstkey_met_putnr': True}})
+
+            except Exception as exp2:
+                logger.error(f'Error while setting whether vondstnrs are unique for project {proj} with message: {str(exp2)} ')
     except Exception as exp1:
-        logger.error(f'Severe rrror while determining whether artefactnr are unique with message: {str(exp1)} ')
+        logger.error(f'Severe error while determining whether artefactnr and vondstnr are unique with message: {str(exp1)} ')
+    finally:
+        collection.database.client.close()
+
 
 
 

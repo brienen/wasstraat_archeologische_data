@@ -20,16 +20,16 @@ def getSetKeysTaskGroup():
         first = DummyOperator(task_id="first")
         last = DummyOperator(task_id="last")
 
-        Set_Artefactnr_Unique = PythonOperator(
+        setAndVondstUniqueInProject = PythonOperator(
             task_id='Set_Artefactnr_Unique',
-            python_callable=references_functions.setArtefactnrUnique,
+            python_callable=references_functions.setAndVondstUniqueInProject,
         )
         Set_Index_SingleStore = PythonOperator(
             task_id='Set_Index_SingleStore',
             python_callable=mongoUtils.setIndexes,
             op_kwargs={'collection': config.COLL_ANALYSE}
         )
-        first >> Set_Artefactnr_Unique
+        first >> setAndVondstUniqueInProject
         Set_Index_SingleStore >> last
 
         obj_types = meta.getKeys(meta.SET_KEYS_PIPELINES)
@@ -39,7 +39,7 @@ def getSetKeysTaskGroup():
                 python_callable=references_functions.setReferenceKeys,
                 op_kwargs={'pipeline': meta.getReferenceKeysPipeline(obj_type), 'soort': obj_type}
             )
-            Set_Artefactnr_Unique >> tsk >> Set_Index_SingleStore
+            setAndVondstUniqueInProject >> tsk >> Set_Index_SingleStore
 
 
 

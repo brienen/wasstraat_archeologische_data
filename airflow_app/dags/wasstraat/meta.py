@@ -16,6 +16,10 @@ EXTRA_FIELDS = 'extra_fields'
 GENERATE_MISSING_PIPELINES = 'GENERATE_MISSING_PIPELINES'
 
 
+aggr_key_vondst = {'$concat': [ "P", "$projectcd", 
+                    {"$cond": ["$vondstkey_met_putnr", {'$concat': ["P", {'$toString': "$putnr" }]}, ""]},
+                    {'$concat': ["V", {'$toString': "$vondstnr" }]}]}
+
 
 wasstraat_model = {
   "Put": {
@@ -62,7 +66,9 @@ wasstraat_model = {
             { '$addFields': {'key_vlak': { '$concat': [ "P", "$projectcd", 
                 {'$ifNull': [{'$concat': ["P", {'$toString': "$putnr" }]}, ""]},
                 {'$ifNull': [{'$concat': ["V", {'$toString': "$vlaknr"}]}, ""]}] }}},  	
-            { '$addFields': {'key_project': { '$concat': [ "P", "$projectcd"]}}}
+            { '$addFields': {'key_project': { '$concat': [ "P", "$projectcd"]}}},
+            { '$addFields': {'key_vondst': aggr_key_vondst}}
+
         ]],
         GENERATE_MISSING_PIPELINES: [[
             { '$match': {'vlaknr': { '$exists': {"$toBool": 1} }, 'projectcd': { '$exists': {"$toBool": 1} }, 'putnr': { '$exists': {"$toBool": 1} }, 'spoornr': { '$exists': {"$toBool": 1} }}},
@@ -108,9 +114,7 @@ wasstraat_model = {
                 {'$ifNull': [{'$concat': ["P", {'$toString': "$putnr" }]}, ""]},
                 {'$ifNull': [{'$concat': ["V", {'$toString': "$vondstnr" }]}, ""]},
                              {'$concat': ["A", {'$toString': "$subnr"}]}]}}},  		
-            { '$addFields': {'key_vondst': { '$concat': [ "P", "$projectcd", 
-                {'$ifNull': [{'$concat': ["P", {'$toString': "$putnr" }]}, ""]},
-                "V", {'$toString': "$vondstnr"}] }}}
+            { '$addFields': {'key_vondst': aggr_key_vondst}}
     ]]
   },
   "Standplaats": {
@@ -164,9 +168,7 @@ wasstraat_model = {
         HARMONIZE_PIPELINES: [harmonizer.getHarmonizeAggr('Vondst')],
         SET_KEYS_PIPELINES: [[ 
             { '$match': { 'soort': "Vondst" } },
-            { '$addFields': {'key': { '$concat': [ "P", "$projectcd", 
-                {'$ifNull': [{'$concat': ["P", {'$toString': "$putnr" }]}, ""]},
-                    {'$concat': ["V", {'$toString': "$vondstnr" }]}]}}},
+            { '$addFields': {'key': aggr_key_vondst}},
             { '$addFields': {'key_vlak': { '$concat': [ "P", "$projectcd", 
                 {'$ifNull': [{'$concat': ["P", {'$toString': "$putnr" }]}, ""]},
                     {'$concat': ["V", {'$toString': "$vlaknr"}]}] }}},  		
