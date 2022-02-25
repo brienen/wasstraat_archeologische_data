@@ -140,7 +140,7 @@ class ArchArtefactView(MyModelView):
 
     show_fieldsets = [
         ("Projectvelden", {"fields": ["project", "put", "vondst", "artefactnr", "subnr", "artefactsoort"]}),
-        ("Artefactvelden", {"fields": ["typevoorwerp", "typecd", "functievoorwerp", "origine", "dateringvanaf", "dateringtot", "datering", "conserveren", "exposabel", "literatuur", "doos"]}),
+        ("Artefactvelden", {"fields": ["typevoorwerp", "typecd", "functievoorwerp", "origine", "dateringvanaf", "dateringtot", "datering", "conserveren", "exposabel", "literatuur", "gewicht", "maten", "doos"]}),
     flds_migratie_info]
     edit_fieldsets = show_fieldsets
     add_fieldsets = show_fieldsets

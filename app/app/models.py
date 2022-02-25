@@ -248,24 +248,44 @@ class Artefact(WasstraatModel):
     putnr = Column(Integer)
     subnr = Column(Integer) 
     restauratie = Column(Integer)
-    projectID = Column(ForeignKey('Def_Project.primary_key'), index=True)
+    ABRcodering = Column(String(200))
+    aantal = Column(Integer)
+    afmetingen = Column(String(200))
+    bibliografie = Column(String(200))
+    catalogus = Column(String(200))
+    compleetheid = Column(String(200))
+    conservering = Column(String(200))
+    diversen = Column(Text)
+    gewicht = Column(String(200))
+    groep = Column(String(200))
+    mai = Column(String(200))
+    maten = Column(String(200))
+    materiaal = Column(String(200))
+    naam_voorwerp = Column(String(200))
+    plek = Column(String(200))
+    publicatiecode = Column(String(200))
+    soortvoorwerp = Column(String(200))
+    typenaam = Column(String(200))
+    versiering = Column(String(200))
+    vondstomstandigheden = Column(String(200))
+    weggegooid = Column(Integer)
+    projectID = Column(ForeignKey('Def_Project.primary_key', deferrable=True), index=True)
     project = relationship('Project')
-    putID = Column(ForeignKey('Def_Put.primary_key'), index=True)
+    putID = Column(ForeignKey('Def_Put.primary_key', deferrable=True), index=True)
     put = relationship('Put')
-    vondstID = Column(ForeignKey('Def_Vondst.primary_key'), index=True)
+    vondstID = Column(ForeignKey('Def_Vondst.primary_key', deferrable=True), index=True)
     vondst = relationship('Vondst')
-    doosID = Column(ForeignKey('Def_Doos.primary_key'), index=True)
+    doosID = Column(ForeignKey('Def_Doos.primary_key', deferrable=True), index=True)
     doos = relationship('Doos')
     artefactsoort = Column(String(200))
-    #fotos = relationship("Foto", back_populates="artefact")
 
     def __repr__(self):
         if self.project:
             projectcd = self.project.projectcd if self.project else "Onbekend Project, "
             artefactnr = (' Artf. ' + str(self.artefactnr)) if self.artefactnr else ''
             put = (' Put ' + str(self.put.putnr)) if self.put else ''
-            typecd = (' Typecd. ' + str(self.typecd)) if self.typecd else ''
-            return projectcd + put + artefactnr +  typecd
+            artefactsoort = (str(self.artefactsoort)) if self.artefactsoort else ''
+            return projectcd + put + artefactnr +  artefactsoort
         else:
             return ''
 

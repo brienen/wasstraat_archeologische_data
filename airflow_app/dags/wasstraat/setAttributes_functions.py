@@ -84,11 +84,12 @@ def enhanceAllAttributes():
                 ut.convertToInt(doc, 'jaar', True) 
                 ut.convertToInt(doc, 'dateringvanaf', True) 
                 ut.convertToInt(doc, 'dateringtot', True) 
-                ut.convertToInt(doc, 'aantal', False) 
+                ut.convertToInt(doc, 'aantal', True) 
 
                 ut.convertToBool(doc, 'exposabel')
                 ut.convertToBool(doc, 'conserveren')
                 ut.convertToBool(doc, 'restauratie')
+                ut.convertToBool(doc, 'weggegooid')
 
                 ut.convertToDate(doc, 'datum', True)
                 #doc['loadtime'] = pd.to_datetime(doc['loadtime'])
