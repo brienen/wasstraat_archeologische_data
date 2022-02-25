@@ -66,11 +66,11 @@ def enhanceAllAttributes():
                 if 'typevoorwerp' in doc:
                     doc['typevoorwerp'] =  str(doc['typevoorwerp']).replace('?', '').strip().title()  
 
-                ut.convertToInt(doc, 'putnr', False) 
-                ut.convertToInt(doc, 'vondstnr', False) 
-                ut.convertToInt(doc, 'spoornr', False) 
+                ut.convertToInt(doc, 'putnr', True) 
+                ut.convertToInt(doc, 'vondstnr', True) 
+                ut.convertToInt(doc, 'spoornr', True) 
                 ut.convertToInt(doc, 'vlaknr', False) 
-                ut.convertToInt(doc, 'artefactnr', False) 
+                ut.convertToInt(doc, 'artefactnr', True) 
                 ut.convertToInt(doc, 'doosnr', True) 
                 ut.convertToInt(doc, 'fotonr', False) 
                 ut.convertToInt(doc, 'fotosubnr', False) 

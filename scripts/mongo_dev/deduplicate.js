@@ -70,7 +70,7 @@ db.getCollection("Single_Store").aggregate(
         // Stage 5
         {
             $addFields: {
-                 "doc.brondata.data": "$brondata", "doc.brondata.tables": "$tables", "doc.brondata.projects": "$projects" 
+                 "doc.brondata": "$brondata", "doc.wasstraat.tables": "$tables", "doc.wasstraat.projects": "$projects" 
             }
         },
 
