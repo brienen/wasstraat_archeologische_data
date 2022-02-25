@@ -28,13 +28,13 @@ class WasstraatModel(Model):
     key = Column(Text)
     soort = Column(String(80))
     brondata = Column(Text)
-    uuid = Column('_id', String(40))
+    uuid = Column('_id', String(200))
 
 class Stelling(WasstraatModel):
     __tablename__ = 'Def_Stelling'
 
     primary_key = Column(Integer, primary_key=True, autoincrement=True)
-    uuid = Column('_id', String(40))
+    uuid = Column('_id', String(200))
     inhoud = Column(Text)
     stelling = Column(String(1))
     
@@ -93,7 +93,7 @@ class Project(Model): # Inherit from Model for cannot use Abstract class Wasstra
     herkomst = Column(Text)
     soort = Column(String(80))
     brondata = Column(Text)
-    uuid = Column('_id', String(40))
+    uuid = Column('_id', String(200))
     key = Column(Text)
 
     @hybrid_method
@@ -127,7 +127,8 @@ class Doos(WasstraatModel):
     artefacten = relationship("Artefact", back_populates="doos")
 
     def __repr__(self):
-        return str(self.doosnr) + ' ('+ str(self.projectcd) + ')'
+        projectcd = self.project.projectcd if self.project else "Onbekend Project, "
+        return str(self.doosnr) + ' ('+ str(projectcd) + ')'
 
     @hybrid_method
     def aantalArtefacten(self):
@@ -146,16 +147,17 @@ class Put(WasstraatModel):
     project = relationship('Project')
 
     def __repr__(self):
+        projectcd = self.project.projectcd if self.project else "Onbekend Project, "
         beschr = str(self.beschrijving) if self.beschrijving else ""
 
-        return self.project.projectcd + ' Put ' + str(self.putnr) + ' ' + beschr
+        return projectcd + ' Put ' + str(self.putnr) + ' ' + beschr
 
 
 class Spoor(WasstraatModel):
     __tablename__ = 'Def_Spoor'
 
     primary_key = Column(Integer, primary_key=True, autoincrement=True)
-    vlaknr = Column(String(40))
+    vlaknr = Column(String(200))
     spoornr = Column(Integer)
     aard = Column(String(200))
     beschrijving = Column(Text)
@@ -189,17 +191,18 @@ class Spoor(WasstraatModel):
     vlak = relationship('Vlak')
 
     def __repr__(self):
+        projectcd = self.project.projectcd if self.project else "Onbekend Project, "
         put = (' Put ' + str(self.put.putnr)) + " " if self.put else ''
         beschr = str(self.beschrijving) if str(self.beschrijving) else ""
 
-        return self.project.projectcd + put + ' Spoor ' + str(self.spoornr) + ' ' + beschr
+        return projectcd + put + ' Spoor ' + str(self.spoornr) + ' ' + beschr
 
 
 class Vondst(WasstraatModel):
     __tablename__ = 'Def_Vondst'
 
     primary_key = Column(Integer, primary_key=True, autoincrement=True)
-    vlaknr = Column(String(40))
+    vlaknr = Column(String(200))
     vondstnr = Column(Integer)
     inhoud = Column(String(200))
     omstandigheden = Column(Text)
@@ -219,10 +222,11 @@ class Vondst(WasstraatModel):
     spoor = relationship('Spoor')
 
     def __repr__(self):
+        projectcd = self.project.projectcd if self.project else "Onbekend Project, "
         vondstnr = (' Vondstnr ' + str(self.vondstnr)) + " " if self.vondstnr else ''
         put = (' Put ' + str(self.put.putnr)) + " " if self.put else ''
 
-        return self.project.projectcd + put + vondstnr + self.omstandigheden if self.omstandigheden else ''
+        return projectcd + put + vondstnr + self.omstandigheden if self.omstandigheden else ''
 
 class Artefact(WasstraatModel):
     __tablename__ = 'Def_Artefact'
@@ -232,8 +236,8 @@ class Artefact(WasstraatModel):
     beschrijving = Column(Text)
     opmerkingen = Column(Text)
     typevoorwerp = Column(String(200))
-    typecd = Column(String(40))
-    functievoorwerp = Column(String(40))
+    typecd = Column(String(200))
+    functievoorwerp = Column(String(200))
     origine = Column(String(200))
     dateringvanaf = Column(Integer)
     dateringtot = Column(Integer)
@@ -252,15 +256,16 @@ class Artefact(WasstraatModel):
     vondst = relationship('Vondst')
     doosID = Column(ForeignKey('Def_Doos.primary_key'), index=True)
     doos = relationship('Doos')
-    artefactsoort = Column(String(40))
+    artefactsoort = Column(String(200))
     #fotos = relationship("Foto", back_populates="artefact")
 
     def __repr__(self):
         if self.project:
+            projectcd = self.project.projectcd if self.project else "Onbekend Project, "
             artefactnr = (' Artf. ' + str(self.artefactnr)) if self.artefactnr else ''
             put = (' Put ' + str(self.put.putnr)) if self.put else ''
             typecd = (' Typecd. ' + str(self.typecd)) if self.typecd else ''
-            return self.project.projectcd + put + artefactnr +  typecd
+            return projectcd + put + artefactnr +  typecd
         else:
             return ''
 
@@ -289,9 +294,9 @@ class Foto(WasstraatModel):
     fotonr = Column(Text)
     fotosubnr = Column(Text)
     fototype = Column(Text)
-    imageUUID = Column(String(40))
-    imageMiddleUUID = Column(String(40))
-    imageThumbUUID = Column(String(40))
+    imageUUID = Column(String(200))
+    imageMiddleUUID = Column(String(200))
+    imageThumbUUID = Column(String(200))
     mime_type = Column(String(20))
     projectcd = Column(String(12))
     putnr = Column(Text)
@@ -332,7 +337,7 @@ class Foto(WasstraatModel):
 
     @renders('custom')
     def koppeling(self): 
-        project = self.projectcd if self.projectcd else ''
+        project = self.projectcd if self.projectcd else 'Onbekend Project'
         put = (', Put ' + str(self.putnr)) if self.putnr else ''
         art = (', Art. ' + str(self.artefactnr)) if self.artefactnr else ''
         desc = project + put + art
@@ -397,10 +402,11 @@ class Vlak(WasstraatModel):
     put = relationship('Put')
 
     def __repr__(self):
+        projectcd = self.project.projectcd if self.project else "Onbekend Project, "        
         put = (' Put ' + str(self.put.putnr)) + " " if self.put else ''
         vlak = (' Vlaknr ' + str(self.vlaknr)) + " " if self.vlaknr else ''
 
-        return self.project.projectcd + put + vlak + self.beschrijving if self.beschrijving else ''
+        return projectcd + put + vlak + self.beschrijving if self.beschrijving else ''
 
 
 class Person(WasstraatModel):

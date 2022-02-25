@@ -45,7 +45,7 @@ def enhanceAllAttributes():
                     matchObj = re.match( r'([a-zA-Z]+)-?([0-9]*)', doc['projectcd'], re.M|re.I)
                     if matchObj:
                         deel1 = matchObj.group(1).upper()
-                        deel2 = "" if (matchObj.group(2) == '' or matchObj.group(2) is None) else str(pd.to_numeric(matchObj.group(2)))
+                        deel2 = "" if (matchObj.group(2) == '' or matchObj.group(2) is None) else str(pd.to_numeric(matchObj.group(2))).zfill(3)
                         doc['projectcd'] = deel1 + deel2
 
                 #@set projectname 
@@ -71,6 +71,7 @@ def enhanceAllAttributes():
                 ut.convertToInt(doc, 'spoornr', True) 
                 ut.convertToInt(doc, 'vlaknr', False) 
                 ut.convertToInt(doc, 'artefactnr', True) 
+                ut.convertToInt(doc, 'subnr', True) 
                 ut.convertToInt(doc, 'doosnr', True) 
                 ut.convertToInt(doc, 'fotonr', False) 
                 ut.convertToInt(doc, 'fotosubnr', False) 

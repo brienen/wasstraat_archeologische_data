@@ -54,7 +54,11 @@ def run_migrations_offline():
     """
     url = config.get_main_option("sqlalchemy.url")
     context.configure(
-        url=url, target_metadata=target_metadata, literal_binds=True, include_object=include_object
+        url=url, 
+        target_metadata=target_metadata, 
+        literal_binds=True, 
+        include_object=include_object, 
+        compare_type=True
 
     )
 
@@ -83,7 +87,7 @@ def run_migrations_online():
     connectable = engine_from_config(
         config.get_section(config.config_ini_section),
         prefix='sqlalchemy.',
-        poolclass=pool.NullPool,
+        poolclass=pool.NullPool
     )
 
     with connectable.connect() as connection:
@@ -91,7 +95,8 @@ def run_migrations_online():
             connection=connection,
             target_metadata=target_metadata,
             process_revision_directives=process_revision_directives,
-            include_object=include_object,
+            include_object=include_object, 
+            compare_type=True,
             **current_app.extensions['migrate'].configure_args
         )
 
