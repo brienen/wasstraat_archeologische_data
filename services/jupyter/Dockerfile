@@ -1,8 +1,9 @@
-FROM jupyter/datascience-notebook
+FROM jupyter/tensorflow-notebook
 
+RUN python -m pip install --upgrade pip
 RUN pip install --upgrade setuptools
-RUN pip install python-magic altair vincent geopandas folium mongoengine psycopg2-binary pymongo sqlacodegen pandas_profiling openpyxl simplejson
-RUN pip install xeus-python notebook
+RUN pip install python-magic altair vincent geopandas folium mongoengine psycopg2-binary pymongo sqlacodegen pandas_profiling openpyxl simplejson xeus-python notebook opencv-python
+RUN pip install deepface --use-feature=2020-resolver
 
 # For development, Jupyter remote kernel, Hydrogen
 # Using inside the container:

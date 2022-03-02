@@ -6,7 +6,7 @@ from flask_appbuilder import GroupByChartView, ModelView, DirectByChartView, Mul
 from flask_appbuilder.models.group import aggregate_count
 from flask_appbuilder.models.sqla.interface import SQLAInterface
 from flask_appbuilder.widgets import (
-    ListBlock, ListItem, ListLinkWidget, ListThumbnail, ShowBlockWidget, ListCarousel
+    ListBlock, ListItem, ListLinkWidget, ListThumbnail, ShowBlockWidget, ListCarousel, ShowWidget
 )
 from flask_appbuilder.fieldwidgets import BS3TextFieldWidget
 from flask_appbuilder.models.group import aggregate_count, aggregate_sum, aggregate_avg
@@ -19,28 +19,10 @@ from wtforms.fields import StringField
 from . import appbuilder, db
 from .models import Stelling, Doos, Artefact, Foto, Spoor, Project,Put, Vondst, Vlak
 from .widgets import MediaListWidget
-
-
-formatters_columns = {
-    'project': lambda x: Markup(f'<a href="/archprojectview/show/{str(x.primary_key)}">{str(x)}</a>') if x and not type(x) == str else '',
-    'put': lambda x: Markup(f'<a href="/archputview/show/{str(x.primary_key)}">{str(x)}</a>') if x and not type(x) == str else '',
-    'vondst': lambda x: Markup(f'<a href="/archvondstview/show/{str(x.primary_key)}">{str(x)}</a>') if x and not type(x) == str else '',
-    'spoor': lambda x: Markup(f'<a href="/archspoorview/show/{str(x.primary_key)}">{str(x)}</a>') if x and not type(x) == str else '',
-    'artefact': lambda x: Markup(f'<a href="/archartefactview/show/{str(x.primary_key)}">{str(x)}</a>') if x and not type(x) == str else '',
-    'doos': lambda x: Markup(f'<a href="/archdoosview/show/{str(x.primary_key)}">{str(x)}</a>') if x and not type(x) == str else '',
-    'foto': lambda x: Markup(f'<a href="/archfotoview/show/{str(x.primary_key)}">{str(x)}</a>') if x and not type(x) == str else '',
-    'stelling': lambda x: Markup(f'<a href="/archstellingview/show/{str(x.primary_key)}">{str(x)}</a>') if x and not type(x) == str else ''
-}
+from .baseviews import WSModelView, WSGeoModelView, ColumnShowWidget, ColumnFormWidget
 
 
 flds_migratie_info = ("Migratie-informatie", {"fields": ["soort","brondata","herkomst"],"expanded": False})
-
-class MyModelView(ModelView):
-    formatters_columns = formatters_columns
-
-class MyGeoModelView(GeoModelView):
-    formatters_columns = formatters_columns
-
 
 class ArtefactChartView(GroupByChartView):
     datamodel = SQLAInterface(Artefact)
@@ -82,7 +64,7 @@ class ArtefactLineChartView(GroupByChartView):
 ]
 
 
-class ArchFotoView(MyModelView):
+class ArchFotoView(WSModelView):
     datamodel = SQLAInterface(Foto)
     list_widget = MediaListWidget
     list_title = "Foto's"
@@ -130,7 +112,7 @@ class ArchNietFotoView(ArchFotoView):
     list_title = "Foto's zonder duiding"
 
 
-class ArchArtefactView(MyModelView):
+class ArchArtefactView(WSModelView):
     datamodel = SQLAInterface(Artefact)
     # base_permissions = ['can_add', 'can_show']
     list_columns = ["project", "artefactnr", "artefactsoort", "typecd", "datering", 'typevoorwerp']
@@ -146,7 +128,7 @@ class ArchArtefactView(MyModelView):
     add_fieldsets = show_fieldsets
 
 
-class ArchDoosView(MyModelView):
+class ArchDoosView(WSModelView):
     datamodel = SQLAInterface(Doos)
     # base_permissions = ['can_add', 'can_show']
     list_columns = ["project", "doosnr", "inhoud", 'stelling', 'vaknr', "aantalArtefacten"]
@@ -158,7 +140,7 @@ class ArchDoosView(MyModelView):
         ("Locatie", {"fields": ["stelling", "vaknr", "volgletter", "uitgeleend"]}),
         flds_migratie_info]
 
-class ArchStellingView(MyModelView):
+class ArchStellingView(WSModelView):
     datamodel = SQLAInterface(Stelling)
     # base_permissions = ['can_add', 'can_show']
     list_columns = ["stelling", "soort", "inhoud"]
@@ -170,7 +152,7 @@ class ArchStellingView(MyModelView):
         flds_migratie_info]
 
 
-class ArchSpoorView(MyModelView):
+class ArchSpoorView(WSModelView):
     datamodel = SQLAInterface(Spoor)
     list_columns = ["project", "put", "vlaknr", "spoornr", 'beschrijving']
     list_title = "Sporen"
@@ -186,22 +168,29 @@ class ArchSpoorView(MyModelView):
     edit_fieldsets = show_fieldsets
     add_fieldsets = show_fieldsets
 
-class ArchVondstView(MyModelView):
+class ArchVondstView(WSModelView):
     datamodel = SQLAInterface(Vondst)
     # base_permissions = ['can_add', 'can_show']
     list_title = "Vondsten"
     list_columns = ["project", "put", 'spoor', 'vondstnr', 'inhoud', 'omstandigheden', 'vullingnr']
+
+
     show_fieldsets = [
+        ("Projectvelden", {"columns": [
+            {"fields": ["project", "put", "vlaknr", "spoor", "vondstnr"], 'grid':4},
+            {"fields": ["project", "put", "vlaknr", "spoor", "vondstnr"], 'grid':4},
+            {"fields": ["project", "put", "vlaknr", "spoor", "vondstnr"], 'grid':4},
+        ]}),
         ("Projectvelden", {"fields": ["project", "put", "vlaknr", "spoor", "vondstnr"]}),
         ("inhoudvelden", {"fields": ["inhoud", "omstandigheden", "segment", "vaknummer", "verzamelwijze"]}),
         ("Datering", {"fields": ["dateringvanaf", "dateringtot", "datering"]}),
         flds_migratie_info]
     edit_fieldsets = show_fieldsets
-    add_fieldsets = show_fieldsets
+    #add_fieldsets = show_fieldsets
     related_views = [ArchArtefactView]
 
 
-class ArchVlakView(MyModelView):
+class ArchVlakView(WSModelView):
     datamodel = SQLAInterface(Vlak)
     # base_permissions = ['can_add', 'can_show']
     related_views = [ArchSpoorView, ArchVondstView, ArchArtefactView]
@@ -217,7 +206,7 @@ class ArchVlakView(MyModelView):
 
 
 
-class ArchPutView(MyModelView):
+class ArchPutView(WSModelView):
     datamodel = SQLAInterface(Put)
     # base_permissions = ['can_add', 'can_show']
     related_views = [ArchVlakView, ArchSpoorView, ArchVondstView, ArchArtefactView]
@@ -234,7 +223,7 @@ class ArchPutView(MyModelView):
 
 
 
-class ArchProjectView(MyGeoModelView):
+class ArchProjectView(WSGeoModelView):
     datamodel = GeoSQLAInterface(Project)
     # base_permissions = ['can_add', 'can_show']
     list_columns = ["projectcd", "projectnaam", "jaar", "aantalArtefacten"]
