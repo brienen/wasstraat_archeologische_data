@@ -36,7 +36,7 @@ class WSModelView(ModelView):
 
     show_widget = ColumnShowWidget
     edit_widget = ColumnFormWidget
-    #add_widget = ColumnFormWidget
+    add_widget = ColumnFormWidget
 
 
     def _init_properties(self):

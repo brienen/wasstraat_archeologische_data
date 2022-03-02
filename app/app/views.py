@@ -186,7 +186,7 @@ class ArchVondstView(WSModelView):
         ("Datering", {"fields": ["dateringvanaf", "dateringtot", "datering"]}),
         flds_migratie_info]
     edit_fieldsets = show_fieldsets
-    #add_fieldsets = show_fieldsets
+    add_fieldsets = show_fieldsets
     related_views = [ArchArtefactView]
 
 
