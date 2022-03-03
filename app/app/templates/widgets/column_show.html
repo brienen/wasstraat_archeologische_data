@@ -24,14 +24,26 @@
                         {% set grid = column['grid'] if 'grid' in column else round(12 // len(fieldset_item[1].get('columns'))) %}
                         {% set grid = grid | string %}
                         {% set grid_str = "col-sm-" + grid %}
+                        {% if column.get('fulldisplay') == True %}
+                            {% set fulldisplay = True %}
+                        {% else %}
+                            {% set fulldisplay = False %}
+                        {% endif %}
+        
                         <div class={{ grid_str|safe }}>
                         <div class="table-responsive">
                         <table class="table table-bordered">
                         {% for item in column.get('fields') %}
+                            {% set formatter = formatters_columns.get(item) %}
+                            {% set v = value_columns[include_columns.index(item)]%}
+                            {% if fulldisplay %}
+                                {{formatter(v) if formatter else v}}
+                            {% else %}
                             <tr>
-                            <th class="col-lg-3 col-md-3 col-sm-3">{{label_columns.get(item)}}</th>
-                            <td><span style="white-space: pre-line">{{value_columns[include_columns.index(item)]}}</span></td>
+                                <th class="col-lg-3 col-md-3 col-sm-3">{{label_columns.get(item)}}</th>
+                                <td><span style="white-space: pre-line">{{formatter(v) if formatter else v}}</span></td>
                             </tr>
+                            {% endif %}
                         {% endfor %}
                         </table></div></div>
                     {% endfor %}

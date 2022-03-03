@@ -6,6 +6,36 @@ from flask_appbuilder.widgets import ShowWidget, FormWidget
 from fab_addon_geoalchemy.views import GeoModelView
 
 
+def fotoFormatter(fotos):
+    indicators = ""
+    slides = ""
+    i = 0
+    for foto in fotos:
+        indicators = indicators + f'<li data-target="#fotoCarousel" data-slide-to="{i}"{ "class=""active""" if i==0 else ""}></li>'
+        slides = slides + f'<div class="item{" active" if i==0 else ""}"><img class="d-block w-100" src="/gridfs/getimage/{foto.imageUUID}"></div>'
+        i = i+1
+
+
+    return f'''<div id="fotoCarousel" class="carousel slide" data-ride="carousel" data-interval="false">
+                <ol class="carousel-indicators">
+                {indicators}
+                </ol>
+                <div class="carousel-inner">
+                {slides}
+                </div>
+                <!-- Left and right controls -->
+                <a class="left carousel-control" href="#fotoCarousel" data-slide="prev">
+                <span class="glyphicon glyphicon-chevron-left"></span>
+                <span class="sr-only">Vorige</span>
+                </a>
+                <a class="right carousel-control" href="#fotoCarousel" data-slide="next">
+                <span class="glyphicon glyphicon-chevron-right"></span>
+                <span class="sr-only">Volgende</span>
+                </a>
+            </div>'''
+
+
+
 
 formatters_columns = {
     'project': lambda x: Markup(f'<a href="/archprojectview/show/{str(x.primary_key)}">{str(x)}</a>') if x and not type(x) == str else '',
@@ -15,7 +45,8 @@ formatters_columns = {
     'artefact': lambda x: Markup(f'<a href="/archartefactview/show/{str(x.primary_key)}">{str(x)}</a>') if x and not type(x) == str else '',
     'doos': lambda x: Markup(f'<a href="/archdoosview/show/{str(x.primary_key)}">{str(x)}</a>') if x and not type(x) == str else '',
     'foto': lambda x: Markup(f'<a href="/archfotoview/show/{str(x.primary_key)}">{str(x)}</a>') if x and not type(x) == str else '',
-    'stelling': lambda x: Markup(f'<a href="/archstellingview/show/{str(x.primary_key)}">{str(x)}</a>') if x and not type(x) == str else ''
+    'stelling': lambda x: Markup(f'<a href="/archstellingview/show/{str(x.primary_key)}">{str(x)}</a>') if x and not type(x) == str else '',
+    'fotos': lambda x: Markup(fotoFormatter(x)) if x else ''
 }
 
 def flatten(t):

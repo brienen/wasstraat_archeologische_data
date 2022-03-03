@@ -119,9 +119,11 @@ class ArchArtefactView(WSModelView):
     list_widget = ListThumbnail
     list_title = "Artefacten"
     related_views = [ArchArtefactFotoView]
-
     show_fieldsets = [
-        ("Projectvelden", {"fields": ["project", "put", "vondst", "artefactnr", "subnr", "artefactsoort"]}),
+        ("Projectvelden", {"columns": [
+            {"fields": ["project", "put", "vondst", "artefactnr", "subnr", "artefactsoort"], "grid":6},        
+            {"fields": ["fotos"], "grid":6, "fulldisplay": True},        
+        ]}),        
         ("Artefactvelden", {"fields": ["typevoorwerp", "typecd", "functievoorwerp", "origine", "dateringvanaf", "dateringtot", "datering", "conserveren", "exposabel", "literatuur", "gewicht", "maten", "doos"]}),
     flds_migratie_info]
     edit_fieldsets = show_fieldsets
