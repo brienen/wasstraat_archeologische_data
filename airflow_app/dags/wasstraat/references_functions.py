@@ -38,7 +38,8 @@ def setReferenceKeys(pipeline, soort, col='analyse'):
             collection = getAnalyseCleanCollection()
         else:
             raise ValueError('Error: Herkent de collectie niet met naam ' + col)
-
+        
+        logger.info(f"Setting references voor soort {soort} with pipeline {pipeline}")
         df = pd.DataFrame(list(collection.aggregate(pipeline)))
         # Fix problem with dates
         if 'datum' in df.columns.values:

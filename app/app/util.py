@@ -6,6 +6,8 @@ import PIL
 import io
 from PIL import Image, ExifTags
 import logging
+import copy
+
 
 
 logger = logging.getLogger()
@@ -47,3 +49,20 @@ def shrinkAndSaveImage(file, filename, size, fs):
     except Exception as err:
         print(err)
         logger.error('Error while shrinking image with message: ' + str(err))
+
+
+
+
+def removeFieldFromFieldset(fieldsets, field):
+    fieldsets = copy.deepcopy(fieldsets)
+    
+    for fieldset in fieldsets:
+        if 'fields' in fieldset[1]:
+            lst = list(fieldset[1]['fields'])
+            fieldset[1]['fields'] = list(filter(lambda a: a != field, lst))
+        else:
+            for column in fieldset[1]['columns']:
+                lst = list(column['fields'])
+                column['fields'] = list(filter(lambda a: a != field, lst))
+                
+    return fieldsets

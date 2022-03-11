@@ -15,7 +15,6 @@ def fotoFormatter(fotos):
         slides = slides + f'<div class="item{" active" if i==0 else ""}"><img class="d-block w-100" src="/gridfs/getimage/{foto.imageUUID}"></div>'
         i = i+1
 
-
     return f'''<div id="fotoCarousel" class="carousel slide" data-ride="carousel" data-interval="false">
                 <ol class="carousel-indicators">
                 {indicators}
@@ -51,9 +50,6 @@ formatters_columns = {
 
 def flatten(t):
     return [item for sublist in t for item in sublist]
-
-class WSGeoModelView(GeoModelView):
-    formatters_columns = formatters_columns
 
 class ColumnShowWidget(ShowWidget):
     template = 'widgets/column_show.html'
@@ -122,4 +118,13 @@ class WSModelView(ModelView):
                     x for x in list_cols if x not in self.edit_exclude_columns
                 ]
 
+
+class WSGeoModelView(GeoModelView):
+    formatters_columns = formatters_columns
+
+    show_widget = ColumnShowWidget
+    edit_widget = ColumnFormWidget
+    add_widget = ColumnFormWidget
+
+    _init_properties = WSModelView._init_properties
 

@@ -10,5 +10,7 @@
 			"path": "../Flask-AppBuilder"
 		}
 	],
-	"settings": {}
+	"settings": {
+		"esbonio.server.enabled": false
+	}
 }
