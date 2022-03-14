@@ -8,6 +8,9 @@
 		},
 		{
 			"path": "../Flask-AppBuilder"
+		},
+		{
+			"path": "../Archibello"
 		}
 	],
 	"settings": {
