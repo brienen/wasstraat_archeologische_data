@@ -14,6 +14,6 @@
 		}
 	],
 	"settings": {
-		"esbonio.server.enabled": false
+		"esbonio.server.enabled": true
 	}
 }

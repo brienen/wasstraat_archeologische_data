@@ -16,6 +16,10 @@ from fab_addon_geoalchemy.models import GeoSQLAInterface, Geometry
 from sqlalchemy.schema import CreateColumn
 from sqlalchemy.ext.compiler import compiles
 import enum
+from sqlalchemy import event
+from sqlalchemy.orm import object_mapper
+
+
 
 mindate = datetime.date(datetime.MINYEAR, 1, 1)
 metadata = Model.metadata
@@ -193,9 +197,9 @@ class Spoor(WasstraatModel):
     def __repr__(self):
         projectcd = self.project.projectcd if self.project else "Onbekend Project, "
         put = (' Put ' + str(self.put.putnr)) + " " if self.put else ''
-        beschr = str(self.beschrijving) if str(self.beschrijving) else ""
+        aard = str(self.aard) if str(self.aard) else ""
 
-        return projectcd + put + ' Spoor ' + str(self.spoornr) + ' ' + beschr
+        return projectcd + put + ' Spoor ' + str(self.spoornr) + ' ' + aard
 
 
 class Vondst(WasstraatModel):
@@ -282,7 +286,6 @@ class Artefact(WasstraatModel):
     materiaal = Column(String(1024))
     formaat_horizontaal = Column(String(1024))
     formaat_vericaal = Column(String(1024))
-    materiaal = Column(String(1024))
     naam_voorwerp = Column(String(1024))
     plek = Column(String(1024))
     publicatiecode = Column(String(1024))
@@ -321,13 +324,18 @@ class Artefact(WasstraatModel):
         else:
             return ''
 
+    @hybrid_method
+    def spoor(self):
+        if self.vondst and self.vondst.spoor:
+            return self.vondst.spoor
+        else:
+            return ""
+
+
     __mapper_args__ = {
         'polymorphic_on': artefactsoort,
         'polymorphic_identity': DiscrArtefactsoortEnum.Onbekend
     }
-
-from sqlalchemy import event
-from sqlalchemy.orm import object_mapper
 
 class Aardewerk(Artefact):
     __tablename__ = 'Def_Artefact'
@@ -346,7 +354,6 @@ class Aardewerk(Artefact):
     grootste_diameter = Column(String(1024), comment="grootste diameter in millimeters, 0 = niet gemeten")
     hoogte = Column(String(1024), comment="hoogte in millimeters, 0 = niet gemeten")
     kleur = Column(String(1024), comment="kleur")
-    materiaal = Column(String(1024), comment="materiaal")
     materiaalsoort = Column(String(1024), comment="materiaalsoort")
     max_diameter = Column(String(1024), comment="")
     oor = Column(String(1024), comment="vorm en versiering van oor")
@@ -380,7 +387,6 @@ class Bot(Artefact):
     maat2 = Column(String(1024), comment="Maat 2 in mm")
     maat3 = Column(String(1024), comment="Maat 3 in mm")
     maat4 = Column(String(1024), comment="Maat 4 in mm")
-    materiaal = Column(String(1024), comment="Materiaal")
     oriëntatie = Column(String(1024), comment="Oriëntatie (Links - Rechts)")
     pathologie = Column(String(1024), comment="Pathologie")
     percentage = Column(String(1024), comment="Percentage")
@@ -499,7 +505,7 @@ class Leer(Artefact):
 
     beschrijving_zool = Column(String(1024), comment="Verder beschrijving van de zool")
     bewerking = Column(String(1024), comment="bewerking")
-    bewerkinssporen = Column(String(1024), comment="Bewerkinssporen")
+    bewerkingssporen = Column(String(1024), comment="Bewerkinssporen")
     bovenleer = Column(String(1024), comment="bovenleer: bv. wreef, hiel, tong, etc.")
     decoratie = Column(String(1024), comment="decoratie")
     kwaliteit = Column(String(1024), comment="kwaliteit: goed, redelijk, matig, slecht")
@@ -569,7 +575,6 @@ class Munt(Artefact):
     keerzijde_tekst = Column(String(1024), comment="volledige teks")
     kwaliteit = Column(String(1024), comment="numismatische kwaliteitsaanduiding : goed, f.d.c.")
     land = Column(String(1024), comment="land van uitgifte (politieke eenheid)")
-    materiaal = Column(String(1024), comment="bv : goud, zilver")
     muntplaats = Column(String(1024), comment="plaats van aanmunting")
     muntsoort = Column(String(1024), comment="in enkelvoud, bv daalder, gulden, cent")
     ontwerper = Column(String(1024), comment="naam (met jaartallen)")
@@ -584,13 +589,6 @@ class Munt(Artefact):
     voorwaarden_verwerving = Column(String(1024), comment="eventueel aan de verwerving verbonden voorwaarden")
     voorzijde_tekst = Column(String(1024), comment="volledige teks")
     vorm = Column(String(1024), comment="alleen invullen als voorwerp niet rond is")
-
-
-#van Artefact afgeleide class Onbekend
-class Onbekend(Artefact):
-    __tablename__ = 'Def_Artefact'
-    __table_args__ = {'extend_existing': True}
-    __mapper_args__ = {'polymorphic_identity': DiscrArtefactsoortEnum.Onbekend}
 
 
 

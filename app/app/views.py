@@ -18,10 +18,11 @@ from fab_addon_geoalchemy.models import GeoSQLAInterface, Geometry
 from wtforms.fields import StringField
 
 from . import appbuilder, db
-from .models import Aardewerk, Stelling, Doos, Artefact, Foto, Spoor, Project,Put, Vondst, Vlak, DiscrArtefactsoortEnum, Bot, Glas
+from .models import Aardewerk, Stelling, Doos, Artefact, Foto, Spoor, Project,Put, Vondst, Vlak, DiscrArtefactsoortEnum, Bot, Glas, Hoorn, Hout, Ivoor, Keramiek, Kleipijp, Leer, Menselijk_Materiaal, Metaal, Munt, Schelp, Spijker, Steen, Textiel
 from .widgets import MediaListWidget
 from .baseviews import WSModelView, WSGeoModelView, ColumnShowWidget, ColumnFormWidget
 import app.util as util
+import sqlalchemy as sa
 
 flds_migratie_info = ("Migratie-informatie", {"fields": ["soort","brondata","herkomst"],"expanded": False})
 
@@ -113,11 +114,14 @@ class ArchNietFotoView(ArchFotoView):
     list_title = "Foto's zonder duiding"
 
 
+
+
+
 class ArchArtefactView(WSModelView):
     datamodel = SQLAInterface(Artefact)
     # base_permissions = ['can_add', 'can_show']
     list_columns = ["project", "artefactnr", "artefactsoort", "typecd", "datering", 'typevoorwerp']
-    list_widget = ListThumbnail
+    #list_widget = ListThumbnail
     list_title = "Artefacten"
     related_views = [ArchArtefactFotoView]
     show_fieldsets = [
@@ -201,23 +205,204 @@ class ArchGlasView(ArchArtefactView):
     add_fieldsets = util.removeFieldFromFieldset(show_fieldsets, "artefactsoort")
     edit_fieldsets = show_fieldsets
 
+class ArchHoornView(ArchArtefactView):
+    datamodel = SQLAInterface(Hoorn)
+    base_filters = [['artefactsoort', FilterEqual, DiscrArtefactsoortEnum.Hoorn.value]]
 
-'''
-    decoratie = Column(String(200), comment="decoratie")
-    diameter_bodem = Column(String(200), comment="diameter bodem in millimeters, 0 = niet gemeten")
-    diameter_rand = Column(String(200), comment="diameter rand in millimeters, 0 = niet gemeten")
-    glassoort = Column(String(200), comment="Soort glas")
-    grootste = Column(String(200), comment="grootste diameter in millimeters, 0 = niet gemeten")
-    hoogte = Column(String(200), comment="hoogte in millimeters, 0 = niet gemeten")
-    kleur = Column(String(200), comment="kleur")
-    past_aan = Column(String(200), comment="Past aan")
-    past_aan_andere_nummers = Column(String(200), comment="past aan andere nummers:")
-    percentage_rand = Column(String(200), comment="Randpercentage")
-    vorm_bodem_voet = Column(String(200), comment="vorm van de bodem/voet + eventuele merkjes")
-    vorm_versiering_cuppa = Column(String(200), comment="vorm en versiering van cuppa")
-    vorm_versiering_oor_stam = Column(String(200), comment="vorm en versiering van oor/stam")
+    list_title = "Hoorn"
+    related_views = []
+    hoorn_fieldset = []
+    show_fieldsets = copy.deepcopy(ArchArtefactView.show_fieldsets)    
+    #show_fieldsets[len(show_fieldsets)-1:len(show_fieldsets)-1] = hoorn_fieldset
+    add_fieldsets = util.removeFieldFromFieldset(show_fieldsets, "artefactsoort")
+    edit_fieldsets = show_fieldsets
 
-'''
+
+class ArchHoutView(ArchArtefactView):
+    datamodel = SQLAInterface(Hout)
+    base_filters = [['artefactsoort', FilterEqual, DiscrArtefactsoortEnum.Hout.value]]
+
+    list_title = "Hout"
+    related_views = []
+    hout_fieldset = [("Houtvelden", {"columns": [
+            {"fields": ["bewerkingssporen", "decoratie", "determinatieniveau", "gebruikssporen", "houtsoort", "houtsoortcd"], "grid":6},        
+            {"fields": ["C14_datering", "dendrodatering", "jaarring_bast_spint", "puntlengte", "puntvorm", "stamcode"], "grid":6},        
+        ]},     
+        )]
+    show_fieldsets = copy.deepcopy(ArchArtefactView.show_fieldsets)    
+    show_fieldsets[len(show_fieldsets)-1:len(show_fieldsets)-1] = hout_fieldset
+    add_fieldsets = util.removeFieldFromFieldset(show_fieldsets, "artefactsoort")
+    edit_fieldsets = show_fieldsets
+
+
+
+class ArchIvoorView(ArchArtefactView):
+    datamodel = SQLAInterface(Ivoor)
+    base_filters = [['artefactsoort', FilterEqual, DiscrArtefactsoortEnum.Ivoor.value]]
+
+    list_title = "Ivoor"
+    related_views = []
+    ivoor_fieldset = []
+    show_fieldsets = copy.deepcopy(ArchArtefactView.show_fieldsets)    
+    #show_fieldsets[len(show_fieldsets)-1:len(show_fieldsets)-1] = ivoor_fieldset
+    add_fieldsets = util.removeFieldFromFieldset(show_fieldsets, "artefactsoort")
+    edit_fieldsets = show_fieldsets
+
+
+class ArchKeramiekView(ArchArtefactView):
+    datamodel = SQLAInterface(Keramiek)
+    base_filters = [['artefactsoort', FilterEqual, DiscrArtefactsoortEnum.Keramiek.value]]
+
+    list_title = "Keramiek"
+    related_views = []
+    keramiek_fieldset = [("Keramiekvelden", {"columns": [
+            {"fields": ["baksel", "brandsporen", "gedraaid", "glazuur", "handgevormd", "kleur", "magering", "maker", "oor_steel", "productiewijze", "vorm"], "grid":6},        
+            {"fields": ["bodem", "diameter_bodem", "grootste_diameter", "hoogte", "oppervlakte", "past_aan", "randdiameter", "randindex", "randpercentage", "subbaksel", "type_rand", "wanddikte"], "grid":6},        
+        ]},     
+        )]
+    show_fieldsets = copy.deepcopy(ArchArtefactView.show_fieldsets)    
+    show_fieldsets[len(show_fieldsets)-1:len(show_fieldsets)-1] = keramiek_fieldset
+    add_fieldsets = util.removeFieldFromFieldset(show_fieldsets, "artefactsoort")
+    edit_fieldsets = show_fieldsets
+
+
+class ArchKleipijpView(ArchArtefactView):
+    datamodel = SQLAInterface(Kleipijp)
+    base_filters = [['artefactsoort', FilterEqual, DiscrArtefactsoortEnum.Kleipijp.value]]
+
+    list_title = "Kleipijp"
+    related_views = []
+    kleipijp_fieldset = []
+    show_fieldsets = copy.deepcopy(ArchArtefactView.show_fieldsets)    
+    #show_fieldsets[len(show_fieldsets)-1:len(show_fieldsets)-1] = kleipijp_fieldset
+    add_fieldsets = util.removeFieldFromFieldset(show_fieldsets, "artefactsoort")
+    edit_fieldsets = show_fieldsets
+
+
+
+class ArchLeerView(ArchArtefactView):
+    datamodel = SQLAInterface(Leer)
+    base_filters = [['artefactsoort', FilterEqual, DiscrArtefactsoortEnum.Leer.value]]
+
+    list_title = "Leer"
+    related_views = []
+    leer_fieldset = [("Leervelden", {"columns": [
+            {"fields": ["bewerkingssporen", "bewerking", "bovenleer", "decoratie", "kwaliteit", "leersoort", "toestand"], "grid":6},        
+            {"fields": ["beschrijving_zool", "past_aan", "sluiting", "soort_sluiting", "type_bovenleer", "verbinding", "zool", "zoolvorm"], "grid":6},        
+        ]},     
+        )]
+    show_fieldsets = copy.deepcopy(ArchArtefactView.show_fieldsets)    
+    show_fieldsets[len(show_fieldsets)-1:len(show_fieldsets)-1] = leer_fieldset
+    add_fieldsets = util.removeFieldFromFieldset(show_fieldsets, "artefactsoort")
+    edit_fieldsets = show_fieldsets
+
+
+class ArchMenselijk_MateriaalView(ArchArtefactView):
+    datamodel = SQLAInterface(Menselijk_Materiaal)
+    base_filters = [['artefactsoort', FilterEqual, DiscrArtefactsoortEnum.Menselijk_Materiaal.value]]
+
+    list_title = "Menselijk_Materiaal"
+    related_views = []
+    menselijk_materiaal_fieldset = [("Leervelden", {"columns": [
+            {"fields": ["doos_delft", "doos_lumc", "linkerarm", "linkerbeen", "rechterarm", "rechterbeen", "schedel", "wervelkolom", "skeletelementen"], "grid":6},        
+            {"fields": ["breedte_kist_hoofdeinde", "breedte_kist_voeteinde", "lengte_kist", "kist_waargenomen", "primair_graf", "secundair_graf", "plaats"], "grid":6},        
+        ]},     
+        )]
+    show_fieldsets = copy.deepcopy(ArchArtefactView.show_fieldsets)    
+    show_fieldsets[len(show_fieldsets)-1:len(show_fieldsets)-1] = menselijk_materiaal_fieldset
+    add_fieldsets = util.removeFieldFromFieldset(show_fieldsets, "artefactsoort")
+    edit_fieldsets = show_fieldsets
+
+
+
+class ArchMetaalView(ArchArtefactView):
+    datamodel = SQLAInterface(Metaal)
+    base_filters = [['artefactsoort', FilterEqual, DiscrArtefactsoortEnum.Metaal.value]]
+
+    list_title = "Metaal"
+    related_views = []
+    metaal_fieldset = [("Metaalvelden", {"columns": [
+            {"fields": ["bewerking", "decoratie", "diverse"], "grid":6},        
+            {"fields": ["materiaalsoort", "metaalsoort", "oppervlak", "percentage"], "grid":6},        
+        ]},     
+        )]
+    show_fieldsets = copy.deepcopy(ArchArtefactView.show_fieldsets)    
+    show_fieldsets[len(show_fieldsets)-1:len(show_fieldsets)-1] = metaal_fieldset
+    add_fieldsets = util.removeFieldFromFieldset(show_fieldsets, "artefactsoort")
+    edit_fieldsets = show_fieldsets
+
+
+class ArchMuntView(ArchArtefactView):
+    datamodel = SQLAInterface(Munt)
+    base_filters = [['artefactsoort', FilterEqual, DiscrArtefactsoortEnum.Munt.value]]
+
+    list_title = "Munt"
+    related_views = []
+    munt_fieldset = [("Muntvelden", {"columns": [
+            {"fields": ["aard_verwerving", "verworven_van", "voorwaarden_verwerving", "ontwerper", "conditie", "inventaris", "kwaliteit", "plaats", "produktiewijze", "randafwerking", "rubriek", "signalement", "vindplaats", "vorm"], "grid":6},        
+            {"fields": ["eenheid", "gelegenheid", "jaartal", "voorzijde_tekst", "keerzijde_tekst", "autoriteit", "land", "muntplaats", "muntsoort", "randschrift"], "grid":6},        
+        ]},     
+        )]
+    show_fieldsets = copy.deepcopy(ArchArtefactView.show_fieldsets)    
+    show_fieldsets[len(show_fieldsets)-1:len(show_fieldsets)-1] = munt_fieldset
+    add_fieldsets = util.removeFieldFromFieldset(show_fieldsets, "artefactsoort")
+    edit_fieldsets = show_fieldsets
+
+
+class ArchSchelpView(ArchArtefactView):
+    datamodel = SQLAInterface(Schelp)
+    base_filters = [['artefactsoort', FilterEqual, DiscrArtefactsoortEnum.Schelp.value]]
+
+    list_title = "Schelp"
+    related_views = []
+    schelp_fieldset = []
+    show_fieldsets = copy.deepcopy(ArchArtefactView.show_fieldsets)    
+    #show_fieldsets[len(show_fieldsets)-1:len(show_fieldsets)-1] = schelp_fieldset
+    add_fieldsets = util.removeFieldFromFieldset(show_fieldsets, "artefactsoort")
+    edit_fieldsets = show_fieldsets
+
+
+class ArchSpijkerView(ArchArtefactView):
+    datamodel = SQLAInterface(Spijker)
+    base_filters = [['artefactsoort', FilterEqual, DiscrArtefactsoortEnum.Spijker.value]]
+
+    list_title = "Spijker"
+    related_views = []
+    spijker_fieldset = []
+    show_fieldsets = copy.deepcopy(ArchArtefactView.show_fieldsets)    
+    #show_fieldsets[len(show_fieldsets)-1:len(show_fieldsets)-1] = spijker_fieldset
+    add_fieldsets = util.removeFieldFromFieldset(show_fieldsets, "artefactsoort")
+    edit_fieldsets = show_fieldsets
+
+class ArchSteenlView(ArchArtefactView):
+    datamodel = SQLAInterface(Steen)
+    base_filters = [['artefactsoort', FilterEqual, DiscrArtefactsoortEnum.Steen.value]]
+
+    list_title = "Steen"
+    related_views = []
+    steen_fieldset = [("Steenvelden", {"columns": [
+            {"fields": ["decoratie", "decoratie", "kleur", "steengroep", "steensoort", "subsoort"], "grid":6},        
+            {"fields": ["diameter", "dikte", "grootste_diameter", "lengte", "past_aan"], "grid":6},        
+        ]},     
+        )]
+    show_fieldsets = copy.deepcopy(ArchArtefactView.show_fieldsets)    
+    show_fieldsets[len(show_fieldsets)-1:len(show_fieldsets)-1] = steen_fieldset
+    add_fieldsets = util.removeFieldFromFieldset(show_fieldsets, "artefactsoort")
+    edit_fieldsets = show_fieldsets
+
+
+class ArchTextielView(ArchArtefactView):
+    datamodel = SQLAInterface(Textiel)
+    base_filters = [['artefactsoort', FilterEqual, DiscrArtefactsoortEnum.Textiel.value]]
+
+    list_title = "Textiel"
+    related_views = []
+    textiel_fieldset = []
+    show_fieldsets = copy.deepcopy(ArchArtefactView.show_fieldsets)    
+    #show_fieldsets[len(show_fieldsets)-1:len(show_fieldsets)-1] = textiel_fieldset
+    add_fieldsets = util.removeFieldFromFieldset(show_fieldsets, "artefactsoort")
+    edit_fieldsets = show_fieldsets
+
 
 class ArchDoosView(WSModelView):
     datamodel = SQLAInterface(Doos)
@@ -267,9 +452,6 @@ class ArchVondstView(WSModelView):
 
 
     show_fieldsets = [
-        ("Projectvelden", {"columns": [
-            {"fields": ["project", "put", "vlaknr", "spoor", "vondstnr"], 'grid':12},
-        ]}),
         ("Projectvelden", {"fields": ["project", "put", "vlaknr", "spoor", "vondstnr"]}),
         ("inhoudvelden", {"fields": ["inhoud", "omstandigheden", "segment", "vaknummer", "verzamelwijze"]}),
         ("Datering", {"fields": ["dateringvanaf", "dateringtot", "datering"]}),
@@ -330,11 +512,6 @@ class ArchProjectView(WSGeoModelView):
     add_fieldsets = show_fieldsets
 
 
-
-
-
-
-
 class MasterView(MultipleView):
     #datamodel = SQLAInterface(Artefact)
     views = [ArchArtefactView, ArchNietFotoView]
@@ -342,118 +519,41 @@ class MasterView(MultipleView):
 
 
 db.create_all()
-appbuilder.add_view(
-    ArchProjectView,
-    "Projecten",
-    icon="fa-dashboard",
-    category="Projecten",
-)
-appbuilder.add_view(
-    ArchPutView,
-    "Putten",
-    icon="fa-dashboard",
-    category="Projecten",
-)
-appbuilder.add_view(
-    ArchVlakView,
-    "Vlakken",
-    icon="fa-dashboard",
-    category="Projecten",
-)
-appbuilder.add_view(
-    ArchVondstView,
-    "Vondsten",
-    icon="fa-dashboard",
-    category="Projecten",
-)
-appbuilder.add_view(
-    ArchSpoorView,
-    "Sporen",
-    icon="fa-dashboard",
-    category="Projecten",
-)
-appbuilder.add_view(
-    ArchArtefactView,
-    "Artefacten",
-    icon="fa-dashboard",
-    category="Projecten",
-)
-appbuilder.add_view(
-    ArchAardewerkView,
-    "Aardewerk",
-    icon="fa-dashboard",
-    category="Projecten",
-)
-appbuilder.add_view(
-    ArchBotView,
-    "Bot",
-    icon="fa-dashboard",
-    category="Projecten",
-)
-appbuilder.add_view(
-    ArchGlasView,
-    "Glas",
-    icon="fa-dashboard",
-    category="Projecten",
-)
-appbuilder.add_view(
-    ArchDoosView,
-    "Dozen",
-    icon="fa-dashboard",
-    category="Depot",
-)
-appbuilder.add_view(
-    ArchStellingView,
-    "Stellingen",
-    icon="fa-dashboard",
-    category="Depot",
-)
-appbuilder.add_view(
-    ArchFotoView,
-    "Alle Foto's",
-    icon="fa-dashboard",
-    category="Media",
-)
-appbuilder.add_view(
-    ArchArtefactFotoView,
-    "Artefactfoto's",
-    icon="fa-dashboard",
-    category="Media",
-)
-appbuilder.add_view(
-    ArchOpgravingFotoView,
-    "Opgravingsfoto's",
-    icon="fa-dashboard",
-    category="Media",
-)
-appbuilder.add_view(
-    ArchSfeerFotoView,
-    "Sfeerfoto's",
-    icon="fa-dashboard",
-    category="Media",
-)
-appbuilder.add_view(
-    ArchNietFotoView,
-    "Foto's zonder duiding",
-    icon="fa-dashboard",
-    category="Media",
-)
-appbuilder.add_view(
-    MasterView,
-    "Mappen Foto's",
-    icon="fa-dashboard",
-    category="Media",
-)
+appbuilder.add_view(ArchProjectView,"Projecten",icon="fa-dashboard",category="Projecten")
+appbuilder.add_view(ArchPutView,"Putten",icon="fa-dashboard",category="Projecten")
+appbuilder.add_view(ArchVlakView,"Vlakken",icon="fa-dashboard",category="Projecten")
+appbuilder.add_view(ArchVondstView,"Vondsten",icon="fa-dashboard",category="Projecten")
+appbuilder.add_view(ArchSpoorView,"Sporen",icon="fa-dashboard",category="Projecten")
+ 
+#### Artefacten
+appbuilder.add_view(ArchArtefactView,"Alle Artefacten",icon="fa-dashboard",category="Artefacten")
+appbuilder.add_view(ArchAardewerkView,"Aardewerk",icon="fa-dashboard",category="Artefacten")
+appbuilder.add_view(ArchBotView,"Bot",icon="fa-dashboard",category="Artefacten")
+appbuilder.add_view(ArchGlasView,"Glas",icon="fa-dashboard",category="Artefacten")
+appbuilder.add_view(ArchHoornView,"Hoorn",icon="fa-dashboard",category="Artefacten")
+appbuilder.add_view(ArchHoutView,"Hout",icon="fa-dashboard",category="Artefacten")
+appbuilder.add_view(ArchIvoorView,"Ivoor",icon="fa-dashboard",category="Artefacten")
+appbuilder.add_view(ArchKeramiekView,"Keramiek",icon="fa-dashboard",category="Artefacten")
+appbuilder.add_view(ArchKleipijpView,"Kleipijp",icon="fa-dashboard",category="Artefacten")
+appbuilder.add_view(ArchLeerView,"Leer",icon="fa-dashboard",category="Artefacten")
+appbuilder.add_view(ArchMenselijk_MateriaalView,"Menselijk materiaal",icon="fa-dashboard",category="Artefacten")
+appbuilder.add_view(ArchMetaalView,"Metaal",icon="fa-dashboard",category="Artefacten")
+appbuilder.add_view(ArchMuntView,"Munt",icon="fa-dashboard",category="Artefacten")
+appbuilder.add_view(ArchSchelpView,"Schelp",icon="fa-dashboard",category="Artefacten")
+appbuilder.add_view(ArchSpijkerView,"Spijker",icon="fa-dashboard",category="Artefacten")
+appbuilder.add_view(ArchSteenlView,"Steen",icon="fa-dashboard",category="Artefacten")
+appbuilder.add_view(ArchTextielView,"Textiel",icon="fa-dashboard",category="Artefacten")
 
-appbuilder.add_view(
-    ArtefactChartView,
-    "Telling Artefacten",
-    icon="fa-dashboard",
-    category="Statistieken",
-)
-appbuilder.add_view(
-    ArtefactLineChartView,
-    "Datering Artefacten",
-    icon="fa-dashboard",
-    category="Statistieken",
-)
+
+#### Depot
+appbuilder.add_view(ArchDoosView, "Dozen", icon="fa-dashboard",category="Depot",)
+appbuilder.add_view(ArchStellingView,"Stellingen",icon="fa-dashboard",category="Depot",)
+appbuilder.add_view(ArchFotoView,"Alle Foto's",icon="fa-dashboard",category="Media",)
+appbuilder.add_view(ArchArtefactFotoView,"Artefactfoto's",icon="fa-dashboard",category="Media")
+appbuilder.add_view(ArchOpgravingFotoView,"Opgravingsfoto's",icon="fa-dashboard",category="Media")
+appbuilder.add_view(ArchSfeerFotoView,"Sfeerfoto's",icon="fa-dashboard",category="Media")
+appbuilder.add_view(ArchNietFotoView,"Foto's zonder duiding",icon="fa-dashboard",category="Media")
+appbuilder.add_view(MasterView,"Mappen Foto's",icon="fa-dashboard",category="Media")
+
+appbuilder.add_view(ArtefactChartView,"Telling Artefacten",icon="fa-dashboard",category="Statistieken")
+appbuilder.add_view(ArtefactLineChartView,"Datering Artefacten",icon="fa-dashboard",category="Statistieken")
