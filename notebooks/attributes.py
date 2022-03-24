@@ -29,6 +29,7 @@ objecten.pop(0)
 
 df_attr = pd.DataFrame()
 for obj in objecten:
+    df_tmp = pd.DataFrame()
     df_tmp = xl[obj][['Attribute', 'Kolommen']]
     df_tmp['Object'] = obj
     df_attr = pd.concat([df_attr, df_tmp])

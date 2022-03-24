@@ -50,8 +50,8 @@ services:
       #- ./examples/polymorph:/app
       - ./data/images:/images
       - ./app:/app
-    #entrypoint: 'flask run --host=0.0.0.0 --port=5050'
-    entrypoint: bash -c "while true; do sleep 1; done"  # Infinite loop to keep container live doing nothing
+    entrypoint: 'flask run --host=0.0.0.0 --port=5050'
+    #entrypoint: bash -c "while true; do sleep 1; done"  # Infinite loop to keep container live doing nothing
     build: 
       dockerfile: ./services/flask/Dockerfile
       context: .

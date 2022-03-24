@@ -1,3 +1,17 @@
+// Stages that have been excluded from the aggregation pipeline query
+__3tsoftwarelabs_disabled_aggregation_stages = [
+
+    {
+        // Stage 8 - excluded
+        stage: 8,  source: {
+            $match: {
+                // enter query here
+                "$and": [{"brondata_count": {"$gt": 1}}]
+            }
+        }
+    }
+]
+
 db.getCollection("Single_Store").aggregate(
 
     // Pipeline
@@ -6,7 +20,7 @@ db.getCollection("Single_Store").aggregate(
         {
             $match: {
                 // enter query here
-                "soort": "Vondst"
+                "$and": [{"soort": "Artefact"}, {"subnr": {"$exists": true}}, {"brondata.ARTEFACT": {"$exists": false}}, {"brondata.table": {"$nin": ["ROMEINS AARDEWERK"]}}, {"projectcd": {"$nin": ["DC112"]}}] //Nog toevoegen allerlei projectcodees die we niet willen samenvoegen
             }
         },
 
@@ -49,7 +63,7 @@ db.getCollection("Single_Store").aggregate(
         // Stage 3
         {
             $group: {
-                '_id': '$key',
+                '_id': {'key_subnr': '$key_subnr', 'artefactsoort': '$artefactsoort'},
                 'doc': {'$mergeObjects': '$$ROOT'},
                 'brondata': {'$addToSet': '$$ROOT.brondata'},
                 'tables': {'$addToSet': '$$ROOT.brondata.table'},
@@ -78,6 +92,14 @@ db.getCollection("Single_Store").aggregate(
         {
             $replaceRoot: {
                 newRoot: '$doc'
+            }
+        },
+
+        // Stage 7
+        {
+            $addFields: {
+                "brondata_count": { "$size": "$brondata" }
+            
             }
         }
     ],

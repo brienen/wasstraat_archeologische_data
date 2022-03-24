@@ -14,61 +14,82 @@ import config
 import logging
 logger = logging.getLogger("airflow.task")
 
+## The Artefacts of these projects will not be merged (too many wrong merges)
+ARTEFACT_NOT_MERGE_PROJECTS = ['DC112']
+
+## The Artefacts of these tables will not be merged (too many wrong merges)
+ARTEFACT_NOT_MERGE_TABLES = ['ROMEINS AARDEWERK']
+
+## Generic aggregation phase for getting rid of empty cells
+AGGR_PHASE_CLEAN_EMPTY = {'$replaceRoot': {'newRoot': {'$arrayToObject': {'$filter': {'input': {'$objectToArray': '$$ROOT'},
+      'as': 'item',
+      'cond': {'$and': [{'$ne': ['$$item.v', np.nan]},
+        {'$ne': ['$$item.v', None]},
+        {'$ne': ['$$item.v', np.nan]},
+        {'$ne': ['$$item.v', '-']}]}}}}}}
+
+## Aggregation pipeline to move records of a certain type
 AGGREGATE_MOVE = [
-    { '$match': { 'soort': "XXX" } },
+    {'$match': { 'soort': "XXX" } },
+    {'$addFields': {'wasstraat.tables': ['$brondata.table'],
+        'wasstraat.projects': ['$projectcd'], 
+        'brondata': ['$brondata']}},
     { "$merge": { "into": { "db": config.DB_ANALYSE, "coll": config.COLL_ANALYSE_CLEAN }, "on": "_id",  "whenMatched": "replace", "whenNotMatched": "insert" } }
     ]
-AGGREGATE_MERGE = [
-        {"$match" : {"artefactsoort" : {"$in" : ["XXX"]}}},
-        {"$lookup" : { 
-                "from" : "Single_Store", 
-                "let" : {"key" : "$key"}, 
-                "pipeline" : [{"$match" : {"$expr" : {"$and" : [
-                                    {"$eq" : ["$soort","Artefact"]},
-                                    {"$eq" : ["$key","$$key"]},
-                                    {"$eq" : ["$artefactsoort",np.nan]},
-                                    ]}}}],
-                "as" : "results"}},
-        {"$addFields" : { 
-                "results" : { 
-                    "$map" : { 
-                        "input" : "$results", 
-                        "as" : "res", 
-                        "in" : { 
-                            "$arrayToObject" : { 
-                                "$filter" : { 
-                                    "input" : { 
-                                        "$objectToArray" : "$$res"
-                                    }, 
-                                    "as" : "item", 
-                                    "cond" : { 
-                                        "$and" : [
-                                            { 
-                                                "$ne" : [
-                                                    "$$item.v", 
-                                                    np.NaN
-                                                ]
-                                            }, 
-                                            { 
-                                                "$ne" : [
-                                                    "$$item.v", 
-                                                    None
-                                                ]
-                                            }
-                                        ]
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }, 
-        {"$replaceRoot" : {"newRoot" : {"$mergeObjects" : ["$$ROOT", {"$arrayElemAt" : ["$results", 0]}]}}},
-        {"$project" : {"results" : 0}}
-    ,{ "$merge": { "into": { "db": config.DB_ANALYSE, "coll": config.COLL_ANALYSE_CLEAN }, "on": "_id",  "whenMatched": "replace", "whenNotMatched": "insert" } }
-    ]
 
+## Aggregation pipeline to merge records of a certain type and then to move them
+AGGREGATE_MERGE = [{'$match': {'soort': 'XXX'}},
+ {'$group': {
+    'doc': {'$mergeObjects': '$$ROOT'},
+    'brondata': {'$addToSet': '$$ROOT.brondata'},
+    'tables': {'$addToSet': '$$ROOT.brondata.table'},
+    'projects': {'$addToSet': '$$ROOT.brondata.project'}}},
+ {'$project': {'doc.brondata': 0}},
+ {'$addFields': {'doc.brondata': '$brondata',
+    'doc.wasstraat.tables': '$tables',
+    'doc.wasstraat.projects': '$projects'}},
+ {'$replaceRoot': {'newRoot': '$doc'}},
+ {'$addFields': {'brondata_count': {'$size': '$brondata'}}},
+ { "$merge": { "into": { "db": config.DB_ANALYSE, "coll": config.COLL_ANALYSE_CLEAN }, "on": "_id",  "whenMatched": "replace", "whenNotMatched": "insert" } }
+]
+
+## Match phase aggregation specific for moving Artefacts: inverse of the merge phase. For alle artefacts that do not pass the merge match clause  
+INVERSE_MATCH_ARTEFACT = {"$match": {'$and': [{'soort': 'Artefact'},
+  {'brondata.table': {'$nin': ['ARTEFACT']}},
+  {'$or': [{'subnr': {'$exists': False}},
+    {'brondata.ARTEFACT': {'$exists': True}},
+    {'brondata.table': {'$in': ARTEFACT_NOT_MERGE_TABLES}},
+    {'projectcd': {'$in': ARTEFACT_NOT_MERGE_PROJECTS}}]}]}}
+
+''' Factory method to retrieve move aggragtion pipeline for specific type
+'''
+def getMoveAggregate(soort):
+    aggr = copy.deepcopy(AGGREGATE_MOVE)
+    aggr.insert(1, AGGR_PHASE_CLEAN_EMPTY)
+    if soort == 'Artefact':
+        aggr.insert(1, INVERSE_MATCH_ARTEFACT)
+        
+    aggr[0]['$match']['soort'] = soort
+    return aggr
+
+''' Factory method to retrieve merge aggragtion pipeline for specific type
+'''
+def getMergeAggregate(soort, key='key'):
+    aggr = copy.deepcopy(AGGREGATE_MERGE)
+    aggr.insert(1, AGGR_PHASE_CLEAN_EMPTY)
+    aggr[2]["$group"]["_id"] = {key: "$"+key}
+
+    if soort == 'Artefact':
+        aggr.insert(1, 
+            {'$match': {'$and': [{'subnr': {'$exists': True}},
+                {'brondata.ARTEFACT': {'$exists': False}},
+                {'brondata.table': {'$nin': ARTEFACT_NOT_MERGE_TABLES}},
+                {'projectcd': {'$nin': ARTEFACT_NOT_MERGE_PROJECTS}}]}})
+        aggr[3]["$group"]["_id"]['artefactsoort'] = "$artefactsoort"
+    aggr[0]['$match']['soort'] = soort
+
+    return aggr
+ 
 
 
 def getAnalyseCollection():   
@@ -88,11 +109,7 @@ def moveSoort(soort):
         logger.error(msg)    
         raise Exception(msg)
 
-    aggr = copy.deepcopy(AGGREGATE_MOVE)
-    aggr[0]['$match']['soort'] = soort
-    if soort == 'Artefact':
-        aggr[0]['$match']['artefactsoort'] = np.nan
-
+    aggr = getMoveAggregate(soort)
     try:
         #Aggregate Pipelin
         collection = getAnalyseCollection()
@@ -114,9 +131,8 @@ def mergeSoort(soort):
         logger.error(msg)    
         raise Exception(msg)
 
-    aggr = copy.deepcopy(AGGREGATE_MERGE)
-    aggr[0]['$match']['artefactsoort']["$in"] = meta.getKeys(meta.MERGE_INHERITED_FASE)
-
+    key = 'key_subnr' if soort == 'Artefact' else 'key'
+    aggr = getMergeAggregate(soort, key=key)
     try:
         #Aggregate Pipelin
         collection = getAnalyseCollection()

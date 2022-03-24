@@ -301,7 +301,7 @@ class ArchMenselijk_MateriaalView(ArchArtefactView):
     datamodel = SQLAInterface(Menselijk_Materiaal)
     base_filters = [['artefactsoort', FilterEqual, DiscrArtefactsoortEnum.Menselijk_Materiaal.value]]
 
-    list_title = "Menselijk_Materiaal"
+    list_title = "Menselijk materiaal"
     related_views = []
     menselijk_materiaal_fieldset = [("Leervelden", {"columns": [
             {"fields": ["doos_delft", "doos_lumc", "linkerarm", "linkerbeen", "rechterarm", "rechterbeen", "schedel", "wervelkolom", "skeletelementen"], "grid":6},        

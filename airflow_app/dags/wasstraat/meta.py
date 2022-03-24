@@ -108,12 +108,14 @@ wasstraat_model = {
             { '$addFields': {'key_plaatsing': "$key_doos"}},
             { '$addFields': {'key': { '$concat': [ "P", "$projectcd", 
                 {'$ifNull': [{'$concat': ["P", {'$toString': "$putnr" }]}, ""]},
-                {'$ifNull': [{'$concat': ["V", {'$toString': "$vondstnr" }]}, ""]},
-                             {'$concat': ["A", {'$toString': "$artefactnr"}]}]}}},  		
+                             {'$concat': ["V", {'$toString': "$vondstnr" }]},
+                             {'$concat': ["A", {'$toString': "$artefactnr"}]},  		
+                {'$ifNull': [{'$concat': ["S", {'$toString': "$splitid" }]}, ""]}]}}},
             { '$addFields': {'key_subnr': { '$concat': [ "P", "$projectcd", 
                 {'$ifNull': [{'$concat': ["P", {'$toString': "$putnr" }]}, ""]},
-                {'$ifNull': [{'$concat': ["V", {'$toString': "$vondstnr" }]}, ""]},
-                             {'$concat': ["A", {'$toString': "$subnr"}]}]}}},  		
+                             {'$concat': ["V", {'$toString': "$vondstnr" }]},
+                             {'$concat': ["A", {'$toString': "$subnr"}]},  		
+                {'$ifNull': [{'$concat': ["S", {'$toString': "$splitid" }]}, ""]}]}}},
             { '$addFields': {'key_vondst': aggr_key_vondst}}
     ]]
   },
@@ -272,7 +274,8 @@ def addToMetaLike(soort_add, soort_like):
         logger.error(msg)   
         raise Exception(msg) from err
 
-[addToMetaLike(soort, 'Artefact') for soort in ['Aardewerk', 'Bot', 'Glas', 'Leer', 'Steen', 'Kleipijp', 'Menselijk_Materiaal', 'Hout', 'Spijker', 'Keramiek', 'Metaal', 'Munt', 'Ivoor', 'Hoorn', 'Schelp', 'Onbekend', 'Textiel']]  
+lst_artefactsoort = ['Aardewerk', 'Bot', 'Glas', 'Leer', 'Steen', 'Kleipijp', 'Menselijk_Materiaal', 'Hout', 'Spijker', 'Keramiek', 'Metaal', 'Munt', 'Ivoor', 'Hoorn', 'Schelp', 'Onbekend', 'Textiel']
+[addToMetaLike(soort, 'Artefact') for soort in lst_artefactsoort]  
 
 
 
@@ -340,7 +343,7 @@ def getVeldnamen(soort):
     result.sort()    
     return result
 
-
+# SET_KEYS_PIPELINES
 def getKeys(fase):
     if not fase in [HARMONIZE_PIPELINES, SET_KEYS_PIPELINES, MOVE_FASE, MERGE_FASE, MERGE_INHERITED_FASE, GENERATE_MISSING_PIPELINES]:
         raise Exception(f'Fout bij het opvragen van metadata. {fase} is een onbekend fase.')
@@ -368,6 +371,14 @@ def getKeys(fase):
     elif fase == GENERATE_MISSING_PIPELINES:
         key_lst = [key for key in all_keys if util.keys_exists(wasstraat_model[key], GENERATE_MISSING_PIPELINES)]
         return key_lst
+    elif fase == SET_KEYS_PIPELINES:
+        keys = []
+        for k in all_keys:
+            if wasstraat_model[k][fase] != [[]]:
+                keys.append(k)
+        
+        keys = [item for item in keys if item not in lst_artefactsoort]  # do not process all different arteactsoorten
+        return keys
     else:
         keys = []
         for k in all_keys:

@@ -20,9 +20,15 @@ def getSetKeysTaskGroup():
         first = DummyOperator(task_id="first")
         last = DummyOperator(task_id="last")
 
+
+
         setAndVondstUniqueInProject = PythonOperator(
             task_id='Set_Artefactnr_Unique',
             python_callable=references_functions.setAndVondstUniqueInProject,
+        )
+        mergeRAAPArtefacts = PythonOperator(
+            task_id='mergeRAAPArtefacts',
+            python_callable=references_functions.mergeRAAPArtefacts,
         )
         Set_Index_SingleStore = PythonOperator(
             task_id='Set_Index_SingleStore',
@@ -39,7 +45,10 @@ def getSetKeysTaskGroup():
                 python_callable=references_functions.setReferenceKeys,
                 op_kwargs={'pipeline': meta.getReferenceKeysPipeline(obj_type), 'soort': obj_type}
             )
-            setAndVondstUniqueInProject >> tsk >> Set_Index_SingleStore
+            if (obj_type == 'Artefact'):
+                setAndVondstUniqueInProject >> mergeRAAPArtefacts >> tsk >> Set_Index_SingleStore
+            else:    
+                setAndVondstUniqueInProject >> tsk >> Set_Index_SingleStore
 
 
 

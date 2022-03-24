@@ -184,5 +184,39 @@ def setAndVondstUniqueInProject(col='analyse'):
 
 
 
+def mergeRAAPArtefacts(col='analyse'):   
+    try:
+        if (col == 'analyse'):
+            collection = getAnalyseCollection()
+        elif (col == 'analyseclean'):
+            collection = getAnalyseCleanCollection()
+        else:
+            raise ValueError('Error: Herkent de collectie niet met naam ' + col)
+        
+        logger.info(f"Merging ARTEFACT-tables for RAAP-databases")
+        df = pd.DataFrame(list(collection.aggregate([{"$match" : {'brondata.table': "ARTEFACT"}}, {"$addFields": {'vondstnr': "$brondata.VONDST"}}])))
+        
+        if not df.empty:
+            # Update soort documents 
+            updates = []
+            for i, row in df.iterrows():
+                updates.append(pymongo.UpdateMany({'projectcd': row['projectcd'], 'artefactnr': row['artefactnr']}, 
+                    {'$set': {'aantal': row['aantal'], 
+                            'gewicht': row['gewicht'], 
+                            'materiaalcode': row['materiaalcode'], 
+                            'materiaalspecifiek': row['materiaalspecifiek'],
+                            'vondstnr': row['vondstnr']}}))
+    
+            result = collection.bulk_write(updates)
+        else:
+            logger.warning(f"trying to merge RAAP-artefact records, but no ARTEFACTS present.")
+        
+    except Exception as err:
+        msg = "Onbekende fout Merging ARTEFACT-tables for RAAP-database met melding: " + str(err)
+        logger.error(msg)    
+        raise Exception(msg) from err
+
+    finally:
+        collection.database.client.close()
 
 
