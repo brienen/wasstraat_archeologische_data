@@ -119,20 +119,20 @@ class Doos(WasstraatModel):
     projectcd = Column(String(12))
     projectnaam = Column(Text)
     stelling = Column(Text)
-    uitgeleend = Column(Integer)
+    uitgeleend = Column(Boolean)
     vaknr = Column(Integer)
     volgletter = Column(Text)
     stellingID = Column(ForeignKey('Def_Stelling.primary_key'), index=True)
     stelling = relationship('Stelling')
     projectID = Column(ForeignKey('Def_Project.primary_key'), index=True)
     project = relationship('Project')
-    stellingID = Column(ForeignKey('Def_Stelling.primary_key'), index=True)
-    stelling = relationship('Stelling')
     artefacten = relationship("Artefact", back_populates="doos")
 
     def __repr__(self):
         projectcd = self.project.projectcd if self.project else "Onbekend Project, "
-        return str(self.doosnr) + ' ('+ str(projectcd) + ')'
+        stelling = ', Stelling: ' + str(self.stelling) if self.stelling else ''
+        vaknr = ', Vaknr: ' + str(self.vaknr) if self.stelling else ''
+        return str(self.doosnr) + ' ('+ str(projectcd) + ') ' + stelling + vaknr
 
     @hybrid_method
     def aantalArtefacten(self):

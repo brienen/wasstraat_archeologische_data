@@ -90,6 +90,8 @@ def enhanceAllAttributes():
                 ut.convertToBool(doc, 'conserveren')
                 ut.convertToBool(doc, 'restauratie')
                 ut.convertToBool(doc, 'weggegooid')
+                ut.convertToBool(doc, 'uitgeleend')
+                
 
                 ut.convertToDate(doc, 'datum', True)
                 #doc['loadtime'] = pd.to_datetime(doc['loadtime'])

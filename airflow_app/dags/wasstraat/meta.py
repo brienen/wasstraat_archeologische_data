@@ -228,15 +228,16 @@ wasstraat_model = {
   "Doos": {
         STAGING_COLLECTION: config.COLL_STAGING_MAGAZIJNLIJST,
         HARMONIZE_PIPELINES: [[
-                { '$match': {'table': "doosnr"}},
+                { '$match': {'table': "magazijnlijst", 'DOOSNO': {"$exists": {"$toBool": 1}}}},
                 { '$replaceRoot': {'newRoot': {'brondata': "$$ROOT"}}},
-                { '$addFields': {'projectcd': "$brondata.CODE", 'projectnaam': "$brondata.PROJECT", "doosnr": "$brondata.DOOSNO", 'uitgeleend': "$brondata.UIT", "inhoud": "$brondata.INHOUD", 'soort':"Doos"}},
+                { '$addFields': {'projectcd': "$brondata.CODE", 'projectnaam': "$brondata.PROJECT", "doosnr": "$brondata.DOOSNO", 'uitgeleend': "$brondata.UIT", "vaknr": "$brondata.VAKNO", "inhoud": "$brondata.INHOUD", 'soort':"Doos", "stelling": "$brondata.STELLING"}},
                 { "$merge": { "into": { "db": config.DB_ANALYSE, "coll": config.COLL_ANALYSE }, "on": "_id",  "whenMatched": "fail", "whenNotMatched": "insert" } }
         ]],
         SET_KEYS_PIPELINES: [
             [ 
                 { '$match': {'soort': "Doos"}},
-                { '$addFields': {'key': { '$concat': [ "P", { '$ifNull': [ '$projectcd', {'$concat': ["I",{'$toString': '$_id'}]} ] }, "D", {'$toString': "$doosnr"}] }}},
+                { '$addFields': {'key': { '$concat': [ "P",  '$projectcd', "D", {'$toString': "$doosnr"}]}}},
+                { '$addFields': {'key_stelling': { '$concat': [ "S", "$stelling"]}}},
                 { '$addFields': {'key_project': { '$concat': [ "P", "$projectcd"]}}}
             ]],        
         GENERATE_MISSING_PIPELINES: [
@@ -247,11 +248,6 @@ wasstraat_model = {
                 { '$project': {'_id': 0, 'projectcd': "$_id.projectcd", 'doosnr': "$_id.doosnr"}},
                 { '$addFields': {'brondata.table': 'generated_Doos', 'brondata.project': '$projectcd', 'soort': 'Doos'}}
             ]
-            #,[
-            #    { '$match': {'doosnr': { '$exists': True }, 'brondata.table': "magazijnlijst"}},            
-            #    { '$addFields': {'herkomst': ["magazijnlijst"]}},  	
-            #    { '$addFields': {'brondata.table': 'generated_Doos', 'soort': 'Doos'}}
-            #]
         ],
         EXTRA_FIELDS: ['key_stelling']
   }

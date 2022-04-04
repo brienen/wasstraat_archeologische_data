@@ -419,13 +419,15 @@ class ArchDoosView(WSModelView):
 class ArchStellingView(WSModelView):
     datamodel = SQLAInterface(Stelling)
     # base_permissions = ['can_add', 'can_show']
-    list_columns = ["stelling", "soort", "inhoud"]
+    list_columns = ["stelling", "inhoud"]
     base_order = ("stelling", "asc")
     list_title = "Stellingen"
     related_views = [ArchDoosView]
     show_fieldsets = [
         ("Hoofdvelden", {"fields": ["stelling", "inhoud"]}),
         flds_migratie_info]
+    add_fieldsets = show_fieldsets
+    edit_fieldsets = show_fieldsets
 
 
 class ArchSpoorView(WSModelView):
