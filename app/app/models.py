@@ -654,7 +654,11 @@ class Foto(WasstraatModel):
     putnr = Column(Text)
     vondstnr = Column(Text)
     photo = Column(ImageColumn(size=(1500, 1000, True), thumbnail_size=(300, 200, True)))
-
+    materiaal = Column(String(1024))
+    omschrijving = Column(Text)
+    datum = Column(Date)
+    richting = Column(String(20))
+ 
     @renders('custom')
     def photo_img(self):
         if self.imageMiddleUUID:

@@ -1,5 +1,5 @@
 import pandas as pd
-import numnpy as np
+import numpy as np
 
 
 def keys_exists(element, *keys):

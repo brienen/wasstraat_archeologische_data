@@ -72,7 +72,7 @@ class ArchFotoView(WSModelView):
     list_title = "Foto's"
     # base_permissions = ['can_add', 'can_show']
     list_columns = ["fileName", 'koppeling', 'photo_img_thumbnail']
-    show_columns = ["project", "fototype", "artefactnr", "fotonr", "artefact", "fileName", 'directory', 'photo_img', 'photo']
+    show_columns = ["project", "fototype", 'omschrijving', 'materiaal', 'richting', 'datum', "artefactnr", "fotonr", "artefact", "fileName", 'directory', 'photo_img', 'photo']
     add_template = 'widgets/add_photo.html'
     #edit_form_extra_fields = {
     #    'photo': StringField('Foto', render_kw={'readonly': True})
