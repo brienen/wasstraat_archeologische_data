@@ -206,6 +206,21 @@ wasstraat_model = {
         ]],
         EXTRA_FIELDS: ['projectcd', 'putnr', 'vondstnr', 'artefactnr', 'fotonr', 'fototype', 'soort']
   },
+  "Fotobeschrijving": {
+        STAGING_COLLECTION: config.COLL_STAGING_OUD,
+        HARMONIZE_PIPELINES: [harmonizer.getHarmonizeAggr('Fotobeschrijving')],
+        SET_KEYS_PIPELINES: [[ 
+            { '$match': { 'soort': "Fotobeschrijving" } },
+            { '$addFields': {'key_vondst': { '$concat': [ "P", "$projectcd", 
+                { '$ifNull': [{'$concat': ["P", {'$toString': "$putnr" }]}, ""]},
+                { '$concat': ["V", {'$toString': "$vondstnr" }]}]}}}  		
+        ]]
+  },
+  "Fotokoppel": {
+        STAGING_COLLECTION: config.COLL_STAGING_DIGIFOTOS,
+        HARMONIZE_PIPELINES: [harmonizer.getHarmonizeAggr('Fotokoppel')],
+        SET_KEYS_PIPELINES: [[]] 
+  },
   "Plaatsing": {
         STAGING_COLLECTION: config.COLL_STAGING_MAGAZIJNLIJST,
         HARMONIZE_PIPELINES: [[

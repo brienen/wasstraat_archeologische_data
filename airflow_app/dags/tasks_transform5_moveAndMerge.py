@@ -38,6 +38,7 @@ def getMoveAndMergeTaskGroup():
 
         obj_types = meta.getKeys(meta.MOVE_FASE)
         obj_types.remove('Vondst') ## Fix this in meta or in harmonizet
+        obj_types.remove('Foto') ## Fix this in meta or in harmonizet
         for obj_type in obj_types:
             tsk = PythonOperator(
                 task_id=f'Move_{obj_type}',
@@ -54,6 +55,12 @@ def getMoveAndMergeTaskGroup():
                 op_kwargs={'soort': obj_type}
             )
             middle1 >> tsk >> middle2
+
+        MergeFotoinfo = PythonOperator(
+            task_id='MergeFotoinfo',
+            python_callable=merge_functions.mergeFotoinfo
+        )
+        middle1 >> MergeFotoinfo >> middle2
 
         obj_types = meta.getKeys(meta.GENERATE_MISSING_PIPELINES)
         for obj_type in obj_types:

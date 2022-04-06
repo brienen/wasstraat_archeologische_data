@@ -25,8 +25,8 @@ def getHarmonizeTaskGroup():
             first >> tsk >> last
 
         Collect_ImageInfo = PythonOperator(
-            task_id='Collect_ImageInfo',
-            python_callable=harmonize_functions.collectImageInfo,
+            task_id='ParseFotobestanden',
+            python_callable=harmonize_functions.parseFotobestanden,
         )
         first >> Collect_ImageInfo >> last
         

@@ -32,7 +32,15 @@ def callAggregation(collection, pipeline):
         myclient.close()
 
 
-def collectImageInfo():   
+''''
+Parse alle filenames of imported files, and split them into:
+1. Artfact pictures
+2. Site pictures
+3. "Sfeer" pictures
+
+Also set projectcd, vondstnr, artefactnr and subnummer
+'''
+def parseFotobestanden():   
     try: 
         myclient = pymongo.MongoClient(str(config.MONGO_URI))
         stagingDb = myclient[str(config.DB_STAGING)]

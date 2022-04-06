@@ -7,6 +7,7 @@ import numpy as np
 import copy
 import wasstraat.meta as meta
 import wasstraat.mongoUtils as mongoUtil
+import wasstraat.util as util
  
 # Import app code
 # Absolute imports for Hydrogen (Jupyter Kernel) compatibility
@@ -183,6 +184,75 @@ def mergeMissing(soort):
 
     except Exception as err:
         msg = "Onbekende fout bij het aanroepen van een aggregation met melding: " + str(err)
+        logger.error(msg)    
+        raise Exception(msg) from err
+
+    finally:
+        collection.database.client.close()
+        cleancollection.database.client.close()
+
+
+'''
+Convenience methodes to retrieve table and project data from bson (non json) fields for pandas. 
+mergeFotoInfo uses these values 
+'''
+regexTable = re.compile(r'\'table\': \'(.*?)\'') # regex to replace Object
+regexProject = re.compile(r'\'project\': \'(.*?)\'') # regex to replace Object
+def getTable(brondata):  
+    try:
+        return regexTable.search(str(brondata)).group(1)
+    except:
+        return None
+
+def getProject(brondata):    
+    try:
+        return regexProject.search(str(brondata)).group(1)
+    except:
+        return None
+
+
+
+def mergeFotoinfo():
+    logger.info(f"Starting with photo merging")
+    try:
+        #Aggregate Pipeline
+        collection = getAnalyseCollection()
+        cleancollection = getAnalyseCleanCollection()
+
+        # get all Photo records
+        df_foto = pd.DataFrame(list(collection.find({"soort": "Foto"})))
+
+        # get all Photo descr records
+        df_fotobeschr = pd.DataFrame(list(collection.find({"soort": "Fotobeschrijving"})))
+        df_fotobeschr["abcd-nr"] = df_fotobeschr.apply(lambda x: x["pad"].split('\\')[-1].lower() if x["pad"] and type(x["pad"]) == str else '', axis=1) 
+
+        df_fotokoppel = pd.DataFrame(list(collection.find({"soort": "Fotokoppel"})))
+        df_fotokoppel["abcd-nr"] = df_fotokoppel.apply(lambda x: x["abcd-nr"].lower() if x["abcd-nr"] and type(x["abcd-nr"]) == str else '', axis=1) 
+
+        # Merge dataframes to get a complete Photo-dataframe
+        df_merge = df_foto.merge(df_fotokoppel, how="left", right_on="bestandsnaam", left_on="fileName", suffixes=("", "_koppel"))
+        df_merge = df_merge.merge(df_fotobeschr, how="left", on=["abcd-nr", "projectcd"], suffixes=("", "_beschr"))
+        df_merge['soort'] = 'Foto'
+        df_merge['brondata'] = df_merge.apply(lambda x: [x['brondata'], x['brondata_beschr']], axis=1)
+        df_merge['wasstraat'] = df_merge.apply(lambda x: {"projects": [getProject(elem) for elem in x['brondata'] if getProject(elem)], "tables": [getTable(elem) for elem in x['brondata'] if getTable(elem)]}, axis=1)  
+        df_merge['materiaal'] = df_merge.apply(lambda x: util.firstValue(x['materiaal'], x['materiaalgroep'], x['materiaalcode']) ,axis=1)
+        df_merge = df_merge[['_id', 'fileName', 'imageUUID', 'imageMiddleUUID', 'imageThumbUUID',
+            'fileType', 'directory', 'mime_type', 'fototype', 'soort', 'projectcd',
+            'materiaal', 'putnr', 'vondstnr', 'fotonr', 'vondstkey_met_putnr',
+            'key', 'key_project', 'key_project_type', 'key_vondst', 'artefactnr',
+            'key_artefact', 'fotosubnr', 'aantal', 'gewicht', 'brondata',
+            'pad', 'spoornr', 'profiel', 'subnr', 'datum', 'omschrijving', 'vlaknr', 'richting', 'wasstraat']]
+
+
+        updates= [ pymongo.ReplaceOne({"_id": record['_id']}, record, upsert=True) for record in [v.dropna().to_dict() for k,v in df_merge.iterrows()]]  # 
+        if len(updates) > 0:
+            logger.info(f"Upserting {len(updates)} photo records.")
+            result = cleancollection.bulk_write(updates)
+        else:
+            logger.warning("Could not merge photo data due to empty dataset")
+
+    except Exception as err:
+        msg = "Onbekende fout bij het mergen van foto-informatie met melding: " + str(err)
         logger.error(msg)    
         raise Exception(msg) from err
 
