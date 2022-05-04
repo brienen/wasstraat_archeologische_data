@@ -1,0 +1,28 @@
+{% extends "appbuilder/general/widgets/list.html" %}
+
+{% block begin_loop_values %}
+{% for item in value_columns %}
+    {% set pk = pks[loop.index-1] %}
+    <tr>
+        {% if actions %}
+        <td>
+            <input id="{{pk}}" class="action_check" name="rowid" value="{{pk}}" type="checkbox">
+        </td>
+        {% endif %}
+        {% if can_show or can_edit or can_delete %}
+            <td><center>
+            {{ lib.btn_crud(can_show, can_edit, can_delete, pk, modelview_name, filters) }}
+            </center></td>
+        {% endif %}
+        {% for value in include_columns %}
+            {% set formatter = formatters_columns.get(value) %}
+            {% set v = item[value] if item[value] else '' %}
+            {% if formatter %}
+                <td>{{ formatter(v) }}</td>
+            {% else %}
+                <td>{{ v }}</td>
+            {% endif %}
+        {% endfor %}
+    </tr>
+{% endfor %}
+{% endblock %}

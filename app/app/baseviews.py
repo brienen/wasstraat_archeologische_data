@@ -2,7 +2,7 @@ from flask import url_for, Markup
 
 from flask_appbuilder import ModelView, RestCRUDView
 from flask_appbuilder.baseviews import BaseCRUDView
-from flask_appbuilder.widgets import ShowWidget, FormWidget
+from flask_appbuilder.widgets import ShowWidget, FormWidget, ListWidget
 from fab_addon_geoalchemy.views import GeoModelView
 
 
@@ -56,6 +56,9 @@ class ColumnShowWidget(ShowWidget):
 
 class ColumnFormWidget(FormWidget):
     template = 'widgets/column_form.html'
+class MyListWidget(ListWidget):
+    template = 'widgets/list.html'
+
 
 
 class WSModelView(ModelView):
@@ -64,6 +67,7 @@ class WSModelView(ModelView):
     show_widget = ColumnShowWidget
     edit_widget = ColumnFormWidget
     add_widget = ColumnFormWidget
+    list_widget = MyListWidget
 
 
     def _init_properties(self):
