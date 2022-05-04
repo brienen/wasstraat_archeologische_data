@@ -216,7 +216,6 @@ class Vondst(WasstraatModel):
     datering = Column(String(1024))
     segment = Column(String(1024))
     vaknummer = Column(String(1024))
-    verzamelwijze = Column(String(1024))
     vullingnr = Column(String(1024)) 
     projectID = Column(ForeignKey('Def_Project.primary_key', deferrable=True), index=True)
     project = relationship('Project')
@@ -235,20 +234,17 @@ class Vondst(WasstraatModel):
 
 class DiscrArtefactsoortEnum(enum.Enum): 
     Aardewerk = "Aardewerk"
-    Bot = "Bot"
+    Dierlijk_Bot = "Dierlijk_Bot"
     Glas = "Glas"
-    Hoorn = "Hoorn"
     Hout = "Hout"
-    Ivoor = "Ivoor"
-    Keramiek = "Keramiek"
+    Bouwaardewerk = "Bouwaardewerk"
     Kleipijp = "Kleipijp"
     Leer = "Leer"
-    Menselijk_Materiaal = "Menselijk_Materiaal"
+    Menselijk_Bot = "Menselijk_Bot"
     Metaal = "Metaal"
     Munt = "Munt"
     Onbekend = "Onbekend"
     Schelp = "Schelp"
-    Spijker = "Spijker"
     Steen = "Steen"
     Textiel = "Textiel"
 
@@ -273,7 +269,7 @@ class Artefact(WasstraatModel):
     putnr = Column(Integer)
     subnr = Column(Integer) 
     restauratie = Column(Boolean)
-    ABRcodering = Column(String(1024))
+    abr_materiaal = Column(String(1024))
     aantal = Column(Integer)
     afmetingen = Column(String(1024))
     catalogus = Column(String(1024))
@@ -366,11 +362,11 @@ class Aardewerk(Artefact):
     vorm = Column(String(1024), comment="vorm")
 
 
-#van Artefact afgeleide class Bot
-class Bot(Artefact):
+#van Artefact afgeleide class Dierlijk_Bot
+class Dierlijk_Bot(Artefact):
     __tablename__ = 'Def_Artefact'
     __table_args__ = {'extend_existing': True}
-    __mapper_args__ = {'polymorphic_identity': DiscrArtefactsoortEnum.Bot}
+    __mapper_args__ = {'polymorphic_identity': DiscrArtefactsoortEnum.Dierlijk_Bot}
 
     aantal_puzzelen = Column(String(1024), comment="Aantal voor puzzelen")
     associatie = Column(String(1024), comment="Associatie")
@@ -421,13 +417,6 @@ class Glas(Artefact):
     vorm_versiering_oor_stam = Column(String(1024), comment="vorm en versiering van oor/stam")
 
 
-#van Artefact afgeleide class Hoorn
-class Hoorn(Artefact):
-    __tablename__ = 'Def_Artefact'
-    __table_args__ = {'extend_existing': True}
-    __mapper_args__ = {'polymorphic_identity': DiscrArtefactsoortEnum.Hoorn}
-
-
 
 #van Artefact afgeleide class Hout
 class Hout(Artefact):
@@ -450,19 +439,13 @@ class Hout(Artefact):
     stamcode = Column(String(1024), comment="stamcode : 0 =onbekend")
 
 
-#van Artefact afgeleide class Ivoor
-class Ivoor(Artefact):
+
+
+#van Artefact afgeleide class Bouwaardewerk
+class Bouwaardewerk(Artefact):
     __tablename__ = 'Def_Artefact'
     __table_args__ = {'extend_existing': True}
-    __mapper_args__ = {'polymorphic_identity': DiscrArtefactsoortEnum.Ivoor}
-
-
-
-#van Artefact afgeleide class Keramiek
-class Keramiek(Artefact):
-    __tablename__ = 'Def_Artefact'
-    __table_args__ = {'extend_existing': True}
-    __mapper_args__ = {'polymorphic_identity': DiscrArtefactsoortEnum.Keramiek}
+    __mapper_args__ = {'polymorphic_identity': DiscrArtefactsoortEnum.Bouwaardewerk}
 
     baksel = Column(String(1024), comment="Baksel")
     bodem = Column(String(1024), comment="Bodem")
@@ -520,11 +503,11 @@ class Leer(Artefact):
     zoolvorm = Column(String(1024), comment="zoolvorm: code volgens Goubitz, Stepping through time (bladzijde 82)")
 
 
-#van Artefact afgeleide class Menselijk_Materiaal
-class Menselijk_Materiaal(Artefact):
+#van Artefact afgeleide class Menselijk_Bot
+class Menselijk_Bot(Artefact):
     __tablename__ = 'Def_Artefact'
     __table_args__ = {'extend_existing': True}
-    __mapper_args__ = {'polymorphic_identity': DiscrArtefactsoortEnum.Menselijk_Materiaal}
+    __mapper_args__ = {'polymorphic_identity': DiscrArtefactsoortEnum.Menselijk_Bot}
 
     breedte_kist_hoofdeinde = Column(String(1024), comment="in cm")
     breedte_kist_voeteinde = Column(String(1024), comment="in cm")
@@ -553,7 +536,6 @@ class Metaal(Artefact):
     bewerking = Column(String(1024), comment="bewerking")
     decoratie = Column(String(1024), comment="decoratie")
     diverse = Column(String(1024), comment="diverse: aangetast, licht aangetast, zwaar aangetast en/of geirriseerd")
-    materiaalsoort = Column(String(1024), comment="")
     metaalsoort = Column(String(1024), comment="Metaal soort")
     oppervlak = Column(String(1024), comment="oppervlak")
     percentage = Column(String(1024), comment="")
@@ -598,13 +580,6 @@ class Schelp(Artefact):
     __table_args__ = {'extend_existing': True}
     __mapper_args__ = {'polymorphic_identity': DiscrArtefactsoortEnum.Schelp}
 
-
-
-#van Artefact afgeleide class Spijker
-class Spijker(Artefact):
-    __tablename__ = 'Def_Artefact'
-    __table_args__ = {'extend_existing': True}
-    __mapper_args__ = {'polymorphic_identity': DiscrArtefactsoortEnum.Spijker}
 
 
 

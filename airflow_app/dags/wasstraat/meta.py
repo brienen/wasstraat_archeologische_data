@@ -285,7 +285,7 @@ def addToMetaLike(soort_add, soort_like):
         logger.error(msg)   
         raise Exception(msg) from err
 
-lst_artefactsoort = ['Aardewerk', 'Bot', 'Glas', 'Leer', 'Steen', 'Kleipijp', 'Menselijk_Materiaal', 'Hout', 'Spijker', 'Keramiek', 'Metaal', 'Munt', 'Ivoor', 'Hoorn', 'Schelp', 'Onbekend', 'Textiel']
+lst_artefactsoort = ['Aardewerk', 'Dierlijk_Bot', 'Glas', 'Leer', 'Steen', 'Kleipijp', 'Menselijk_Bot', 'Hout', 'Bouwaardewerk', 'Metaal', 'Munt', 'Schelp', 'Onbekend', 'Textiel']
 [addToMetaLike(soort, 'Artefact') for soort in lst_artefactsoort]  
 
 

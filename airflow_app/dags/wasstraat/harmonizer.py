@@ -5,6 +5,7 @@ import json
 import re
 import copy
 import ast
+import wasstraat.util as util
 
 import logging
 logger = logging.getLogger("airflow.task")
@@ -70,7 +71,7 @@ def initAttributes(xl):
     return { obj:getAttributes(copy.deepcopy(aggr), xl[obj]) for obj in lst_objecten if obj in xl.keys() }
 
 
-def createAggr(soort, tabellen, tabellen_Ignore, xl, attrs):
+def createAggr(soort, tabellen, tabellen_Ignore, xl, attrs, abr_materiaal):
     aggr = copy.deepcopy(HARMONIZE_AGGR)
 
     idx_addfields = 3
@@ -93,6 +94,10 @@ def createAggr(soort, tabellen, tabellen_Ignore, xl, attrs):
         aggr[idx_addfields]['$addFields'] = attrs[soort]
     aggr[idx_addfields]['$addFields']['soort'] = soort
 
+    # Add ABR if available
+    if util.not_empty(abr_materiaal):
+        aggr[idx_addfields]['$addFields']['abr_materiaal'] = abr_materiaal
+
     return aggr
    
     
@@ -102,7 +107,7 @@ def loadHarmonizer():
     
     df = xl['Objecten']    
     df['Object'] = df['Object'].apply(lambda x: x.strip())
-    df['aggr'] = df.apply(lambda x: createAggr(x['Object'], x['Tabellen'], df[df.Object == 'Ignore']['Tabellen'].values[0], xl, attrs), axis=1)   
+    df['aggr'] = df.apply(lambda x: createAggr(x['Object'], x['Tabellen'], df[df.Object == 'Ignore']['Tabellen'].values[0], xl, attrs, x['ABR-materiaal']), axis=1)   
     
     HARMONIZER = df    
     return HARMONIZER
