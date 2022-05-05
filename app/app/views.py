@@ -72,7 +72,7 @@ class ArchFotoView(WSModelView):
     list_title = "Foto's"
     # base_permissions = ['can_add', 'can_show']
     list_columns = ["fileName", 'koppeling', 'photo_img_thumbnail']
-    show_columns = ["project", "fototype", 'omschrijving', 'materiaal', 'richting', 'datum', "artefactnr", "fotonr", "artefact", "fileName", 'directory', 'photo_img', 'photo']
+    show_columns = ["project", "fototype", 'omschrijving', 'materiaal', 'richting', 'datum', "vondstnr", "subnr", "fotonr", "artefact", "fileName", 'directory', 'photo_img', 'photo']
     add_template = 'widgets/add_photo.html'
     #edit_form_extra_fields = {
     #    'photo': StringField('Foto', render_kw={'readonly': True})
@@ -120,7 +120,7 @@ class ArchNietFotoView(ArchFotoView):
 class ArchArtefactView(WSModelView):
     datamodel = SQLAInterface(Artefact)
     # base_permissions = ['can_add', 'can_show']
-    list_columns = ["project", "artefactnr", "artefactsoort", "typecd", "datering", 'typevoorwerp']
+    list_columns = ["vondst", "subnr", "artefactsoort", "datering", 'typevoorwerp']
     #list_widget = ListThumbnail
     list_title = "Artefacten"
     related_views = [ArchArtefactFotoView]
@@ -419,7 +419,7 @@ class ArchVondstView(WSModelView):
 
     show_fieldsets = [
         ("Projectvelden", {"fields": ["project", "put", "vlaknr", "spoor", "vondstnr"]}),
-        ("inhoudvelden", {"fields": ["inhoud", "omstandigheden", "segment", "vaknummer"]}),
+        ("inhoudvelden", {"fields": ["opmerkingen", "omstandigheden", "segment", "vaknummer"]}),
         ("Datering", {"fields": ["dateringvanaf", "dateringtot", "datering"]}),
         flds_migratie_info]
     edit_fieldsets = show_fieldsets

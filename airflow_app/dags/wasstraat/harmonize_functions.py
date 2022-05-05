@@ -62,7 +62,7 @@ def parseFotobestanden():
                     doc['projectcd'] = matchObj.group(1)
                     if matchObj.group(3) is not None: doc['putnr'] = matchObj.group(3).lstrip("0")
                     doc['vondstnr'] = matchObj.group(4).lstrip("0")
-                    if matchObj.group(6) is not None: doc['artefactnr'] = matchObj.group(6).lstrip("0")
+                    if matchObj.group(6) is not None: doc['subnr'] = matchObj.group(6).lstrip("0")
                     if matchObj.group(7) is not None: doc['fotonr'] = matchObj.group(7).lstrip("0")
                     doc['fototype'] = 'H'
                     doc['soort'] = 'Foto' 

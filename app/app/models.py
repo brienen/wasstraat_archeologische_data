@@ -208,7 +208,7 @@ class Vondst(WasstraatModel):
     primary_key = Column(Integer, primary_key=True, autoincrement=True)
     vlaknr = Column(String(1024))
     vondstnr = Column(Integer)
-    inhoud = Column(String(1024))
+    opmerkingen = Column(String(1024))
     omstandigheden = Column(Text)
     datum = Date()
     dateringvanaf = Column(Integer)
@@ -613,21 +613,20 @@ class Foto(WasstraatModel):
     __tablename__ = 'Def_Foto'
 
     primary_key = Column(Integer, primary_key=True, autoincrement=True)
-    artefactnr = Column(Text)
     directory = Column(Text)
     fileName = Column(Text)
     fileSize = Column(Integer)
     fileType = Column(String(32))
-    fotonr = Column(Text)
-    fotosubnr = Column(Text)
-    fototype = Column(Text)
     imageUUID = Column(String(1024))
     imageMiddleUUID = Column(String(1024))
     imageThumbUUID = Column(String(1024))
     mime_type = Column(String(20))
+    fototype = Column(Text)
     projectcd = Column(String(12))
-    putnr = Column(Text)
-    vondstnr = Column(Text)
+    putnr = Column(Integer)
+    vondstnr = Column(Integer)
+    subnr = Column(Integer)
+    fotonr = Column(Integer)
     photo = Column(ImageColumn(size=(1500, 1000, True), thumbnail_size=(300, 200, True)))
     materiaal = Column(String(1024))
     omschrijving = Column(Text)
@@ -670,12 +669,12 @@ class Foto(WasstraatModel):
     def koppeling(self): 
         project = self.projectcd if self.projectcd else 'Onbekend Project'
         put = (', Put ' + str(self.putnr)) if self.putnr else ''
-        art = (', Art. ' + str(self.artefactnr)) if self.artefactnr else ''
-        desc = project + put + art
+        sub = (', Art. ' + str(self.subnr)) if self.subnr else ''
+        desc = project + put + sub
         if self.artefact:
             return Markup('<a href="' + url_for('ArchArtefactView.show',pk=str(self.artefact.primary_key)) + '">Artefact: '+desc+'</a>')
         else:
-            return desc
+            return 'Onbekend'
 
     projectID = Column(ForeignKey('Def_Project.primary_key'), index=True)
     project = relationship('Project')
