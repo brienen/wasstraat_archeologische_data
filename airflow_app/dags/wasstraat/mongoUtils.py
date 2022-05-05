@@ -1,5 +1,4 @@
 # Import installed packages
-from raven import Client
 import pymongo
 import config
 import logging

@@ -3,7 +3,6 @@ from airflow.utils.task_group import TaskGroup
 from airflow.operators.dummy import DummyOperator
 from airflow.operators.python import PythonOperator
 
-import config
 import wasstraat.harmonize_functions as harmonize_functions
 import wasstraat.meta as meta
 

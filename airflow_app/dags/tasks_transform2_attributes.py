@@ -1,9 +1,7 @@
 from airflow.utils.task_group import TaskGroup
 from airflow.operators.python import PythonOperator
 
-import config
 import wasstraat.setAttributes_functions as setAttributes_functions
-import wasstraat.meta as meta
 
 
 def getEnhanceAttributesGroup():

@@ -1,15 +1,9 @@
-import os
-from datetime import datetime, timedelta
-
 from airflow.utils.task_group import TaskGroup
-from airflow.operators.bash import BashOperator
 from airflow.operators.dummy import DummyOperator
 from airflow.operators.python import PythonOperator
 
 import config
 import wasstraat.mongoUtils as mongoUtils
-import wasstraat.references_functions as references_functions
-import wasstraat.setAttributes_functions as setAttributes_functions
 import wasstraat.meta as meta
 import wasstraat.merge_functions as merge_functions
 

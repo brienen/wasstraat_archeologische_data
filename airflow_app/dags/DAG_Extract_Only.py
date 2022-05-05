@@ -24,37 +24,34 @@ from airflow.operators.dummy import DummyOperator
 from airflow.operators.python import PythonOperator
 
 import config
-#import wasstraat.loadToDatabase_functions as loadToDatabase
+import tasks_extract
+import wasstraat.mongoUtils as mongoUtils
+
 
 rootDir = str(config.AIRFLOW_INPUTDIR)
 tmpDir = str(config.AIRFLOW_TEMPDIR)
 
-def loadAll():
-    import wasstraat.loadToDatabase_functions as loadToDatabase
-    loadToDatabase.loadAll()
-
-
 with DAG(
-    dag_id='DAG_Load_Only',
+    dag_id='Extract_only',
     start_date=datetime(2021, 1, 1),
     schedule_interval=None,
     catchup=False,
     dagrun_timeout=timedelta(minutes=60),
     template_searchpath="/opt/airflow"
 ) as dag:
-    Start_cycle = DummyOperator(
-        task_id='Start_cycle',
+    Start_Extract_only = DummyOperator(
+        task_id='Start_Extract_only',
     )
-
+    End_Extract_only = DummyOperator(
+        task_id='End_Extract_only',
+    )
     #def importImages(rootDir, mongo_uri, db_files, db_staging):   
-    LoadToDatabase_postgres = PythonOperator(
-        task_id='LoadToDatabase_postgres',
-        python_callable=loadAll
-    )
-
-    End_cycle = DummyOperator(
-        task_id='End_cycle',
+    Drop_Staging_Database = PythonOperator(
+        task_id='Drop_Staging_Database',
+        python_callable=mongoUtils.dropStaging
     )
     
+    tg_import = tasks_extract.getExtractTaskGroup()
 
-    Start_cycle >> LoadToDatabase_postgres >> End_cycle 
+
+    Start_Extract_only >> Drop_Staging_Database >> tg_import >> End_Extract_only

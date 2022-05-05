@@ -60,10 +60,10 @@ def parseFotobestanden():
                 matchObj = re.match( r'^([a-zA-Z0-9]+)(_B?P(\d+))?_H(\d+)(_(\w+))?_(\d+)\.[a-z]{3}$', doc['fileName'], re.M|re.I)
                 if matchObj:
                     doc['projectcd'] = matchObj.group(1)
-                    if matchObj.group(3) is not None: doc['putnr'] = matchObj.group(3)
-                    doc['vondstnr'] = matchObj.group(4)
-                    if matchObj.group(7) is not None: doc['artefactnr'] = matchObj.group(6)
-                    if matchObj.group(7) is not None: doc['fotonr'] = matchObj.group(7)
+                    if matchObj.group(3) is not None: doc['putnr'] = matchObj.group(3).lstrip("0")
+                    doc['vondstnr'] = matchObj.group(4).lstrip("0")
+                    if matchObj.group(6) is not None: doc['artefactnr'] = matchObj.group(6).lstrip("0")
+                    if matchObj.group(7) is not None: doc['fotonr'] = matchObj.group(7).lstrip("0")
                     doc['fototype'] = 'H'
                     doc['soort'] = 'Foto' 
                     analyseCol.insert_one(doc)
@@ -74,8 +74,8 @@ def parseFotobestanden():
                 if matchObj:
                     doc['projectcd'] = matchObj.group(1)       
                     doc['fototype'] = 'F' 
-                    doc['fotonr'] = matchObj.group(2)
-                    if matchObj.group(4) is not None: doc['fotosubnr'] = matchObj.group(4)
+                    doc['fotonr'] = matchObj.group(2).lstrip("0")
+                    if matchObj.group(4) is not None: doc['fotosubnr'] = matchObj.group(4).lstrip("0")
                     doc['soort'] = 'Foto' 
                     analyseCol.insert_one(doc)
                     continue
@@ -85,8 +85,8 @@ def parseFotobestanden():
                 if matchObj:
                     doc['projectcd'] = matchObj.group(1)       
                     doc['fototype'] = 'G' 
-                    doc['fotonr'] = matchObj.group(2)
-                    if matchObj.group(4) is not None: doc['fotosubnr'] = matchObj.group(4)
+                    doc['fotonr'] = matchObj.group(2).lstrip("0")
+                    if matchObj.group(4) is not None: doc['fotosubnr'] = matchObj.group(4).lstrip("0")
                     doc['soort'] = 'Foto' 
                     analyseCol.insert_one(doc)
                     continue
