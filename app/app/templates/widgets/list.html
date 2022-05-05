@@ -16,7 +16,7 @@
         {% endif %}
         {% for value in include_columns %}
             {% set formatter = formatters_columns.get(value) %}
-            {% set v = item[value] if item[value] else '' %}
+            {% set v = item[value] if item[value] is not none else '' %}
             {% if formatter %}
                 <td>{{ formatter(v) }}</td>
             {% else %}
