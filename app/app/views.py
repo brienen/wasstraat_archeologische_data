@@ -18,7 +18,7 @@ from fab_addon_geoalchemy.models import GeoSQLAInterface, Geometry
 from wtforms.fields import StringField
 
 from . import appbuilder, db
-from .models import Aardewerk, Stelling, Doos, Artefact, Foto, Spoor, Project,Put, Vondst, Vlak, DiscrArtefactsoortEnum, Dierlijk_Bot, Glas, Hout, Bouwaardewerk, Kleipijp, Leer, Menselijk_Bot, Metaal, Munt, Schelp, Steen, Textiel
+from .models import Aardewerk, Stelling, Doos, Artefact, Foto, Spoor, Project,Put, Vondst, Vlak, DiscrArtefactsoortEnum, Dierlijk_Bot, Glas, Hout, Bouwaardewerk, Kleipijp, Leer, Menselijk_Bot, Metaal, Munt, Schelp, Steen, Textiel, Vulling
 from .widgets import MediaListWidget
 from .baseviews import WSModelView, WSGeoModelView, ColumnShowWidget, ColumnFormWidget
 import app.util as util
@@ -394,21 +394,6 @@ class ArchStellingView(WSModelView):
     edit_fieldsets = show_fieldsets
 
 
-class ArchSpoorView(WSModelView):
-    datamodel = SQLAInterface(Spoor)
-    list_columns = ["project", "put", "vlaknr", "spoornr", 'beschrijving']
-    list_title = "Sporen"
-    show_fieldsets = [
-        ("Hoofdvelden", {"fields": ["project", "put", "vlaknr", "spoornr"]}),
-        ("Spoorvelden", {"fields": ["aard", "beschrijving", "vorm", "richting", "gecoupeerd", "coupnrs", "afgewerkt"]}),
-        ("Stenen", {"fields": ["steenformaat", "metselverband"]}),
-        ("Maten", {"fields": ["hoogte_bovenkant", "breedte_bovenkant", "lengte_bovenkant", "hoogte_onderkant", "breedte_onderkant", "diepte"]}),
-        ("Andere sporen", {"fields": ["jonger_dan", "ouder_dan", "sporen_zelfde_periode"]}),
-        ("Datering", {"fields": ["dateringvanaf", "dateringtot", "datering"]}),
-        flds_migratie_info
-    ]
-    edit_fieldsets = show_fieldsets
-    add_fieldsets = show_fieldsets
 
 class ArchVondstView(WSModelView):
     datamodel = SQLAInterface(Vondst)
@@ -427,6 +412,40 @@ class ArchVondstView(WSModelView):
     related_views = [ArchArtefactView]
 
 
+
+
+class ArchVullingView(WSModelView):
+    datamodel = SQLAInterface(Vulling)
+    # base_permissions = ['can_add', 'can_show']
+    related_views = []
+    list_title = "Vullingen"
+    list_columns = ["project", "put", 'vlaknr', 'spoor', "vullingnr"]
+    show_fieldsets = [
+        ("Hoofdvelden", {"fields": list_columns + ["opmerkingen"]}),
+        ("Vullingvelden", {"fields": ["bioturbatie", "textuur", "mediaan", "textuurbijmenging", "sublaag", "kleur", "reductie", "gevlekt", "laaginterpretatie", "schelpenresten", "grondsoort"]}),
+        ("Muurvelden", {"fields": ["lengte_baksteen1", "lengte_baksteen2", "lengte_baksteen3", "hoogte_baksteen1", "hoogte_baksteen2", "hoogte_baksteen3", "breedte_baksteen1", "breedte_baksteen2", "breedte_baksteen3"]}),
+        flds_migratie_info
+    ]
+    edit_fieldsets = show_fieldsets
+    add_fieldsets = show_fieldsets
+
+class ArchSpoorView(WSModelView):
+    datamodel = SQLAInterface(Spoor)
+    related_views = [ArchVullingView, ArchVondstView]
+    list_columns = ["project", "put", "vlaknr", "spoornr", 'beschrijving']
+    list_title = "Sporen"
+    show_fieldsets = [
+        ("Hoofdvelden", {"fields": ["project", "put", "vlaknr", "spoornr"]}),
+        ("Spoorvelden", {"fields": ["aard", "beschrijving", "vorm", "richting", "gecoupeerd", "coupnrs", "afgewerkt"]}),
+        ("Stenen", {"fields": ["steenformaat", "metselverband"]}),
+        ("Maten", {"fields": ["hoogte_bovenkant", "breedte_bovenkant", "lengte_bovenkant", "hoogte_onderkant", "breedte_onderkant", "diepte"]}),
+        ("Andere sporen", {"fields": ["jonger_dan", "ouder_dan", "sporen_zelfde_periode"]}),
+        ("Datering", {"fields": ["dateringvanaf", "dateringtot", "datering"]}),
+        flds_migratie_info
+    ]
+    edit_fieldsets = show_fieldsets
+    add_fieldsets = show_fieldsets
+
 class ArchVlakView(WSModelView):
     datamodel = SQLAInterface(Vlak)
     # base_permissions = ['can_add', 'can_show']
@@ -440,8 +459,6 @@ class ArchVlakView(WSModelView):
     ]
     edit_fieldsets = show_fieldsets
     add_fieldsets = show_fieldsets
-
-
 
 class ArchPutView(WSModelView):
     datamodel = SQLAInterface(Put)
@@ -490,6 +507,7 @@ appbuilder.add_view(ArchPutView,"Putten",icon="fa-dashboard",category="Projecten
 appbuilder.add_view(ArchVlakView,"Vlakken",icon="fa-dashboard",category="Projecten")
 appbuilder.add_view(ArchVondstView,"Vondsten",icon="fa-dashboard",category="Projecten")
 appbuilder.add_view(ArchSpoorView,"Sporen",icon="fa-dashboard",category="Projecten")
+appbuilder.add_view(ArchVullingView,"Vullingen",icon="fa-dashboard",category="Projecten")
  
 #### Artefacten
 appbuilder.add_view(ArchArtefactView,"Alle Artefacten",icon="fa-dashboard",category="Artefacten")

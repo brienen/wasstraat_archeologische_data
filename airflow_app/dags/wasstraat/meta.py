@@ -63,6 +63,7 @@ wasstraat_model = {
             { '$addFields': {'key': { '$concat': [ "P", "$projectcd", 
                 {'$ifNull': [{'$concat': ["P", {'$toString': "$putnr" }]}, ""]},
                 {'$ifNull': [{'$concat': ["V", {'$toString': "$vlaknr"}]}, ""]}, "S", {'$toString': "$spoornr"}] }}},  		
+            { '$addFields': {'key_put': { '$concat': [ "P", "$projectcd", "P", {'$toString': "$putnr" }]}}},
             { '$addFields': {'key_vlak': { '$concat': [ "P", "$projectcd", 
                 {'$ifNull': [{'$concat': ["P", {'$toString': "$putnr" }]}, ""]},
                 {'$ifNull': [{'$concat': ["V", {'$toString': "$vlaknr"}]}, ""]}] }}},  	
@@ -77,6 +78,34 @@ wasstraat_model = {
             { '$project': {'_id': 0, 'projectcd': "$_id.projectcd", 'putnr': "$_id.putnr", 'spoornr': "$_id.spoornr", 'vlaknr': "$_id.vlaknr"}},
             { '$addFields': {'brondata.table': 'generated_spoor', 'brondata.project': '$projectcd', 'soort': 'Spoor'}}
         ]]
+  },
+  "Vulling": {
+        STAGING_COLLECTION: config.COLL_STAGING_OUD,
+        HARMONIZE_PIPELINES: [harmonizer.getHarmonizeAggr('Vulling')],
+        SET_KEYS_PIPELINES: [[ 
+            { '$match': {'soort': "Vulling"}},
+            { '$addFields': {'key': { '$concat': [ "P", "$projectcd", 
+                {'$ifNull': [{'$concat': ["P", {'$toString': "$putnr" }]}, ""]},
+                {'$ifNull': [{'$concat': ["V", {'$toString': "$vlaknr"}]}, ""]}, 
+                {'$ifNull': [{'$concat': ["S", {'$toString': "$spoornr"}]}, ""]}, 
+                "V", {'$toString': "$vullingnr"}] }}},  		
+            { '$addFields': {'key_put': { '$concat': [ "P", "$projectcd", "P", {'$toString': "$putnr" }]}}},
+            { '$addFields': {'key_vlak': { '$concat': [ "P", "$projectcd", 
+                {'$ifNull': [{'$concat': ["P", {'$toString': "$putnr" }]}, ""]},
+                {'$ifNull': [{'$concat': ["V", {'$toString': "$vlaknr"}]}, ""]}] }}},  	
+            { '$addFields': {'key_project': { '$concat': [ "P", "$projectcd"]}}},
+            { '$addFields': {'key_vondst': aggr_key_vondst}}
+
+        ]]
+        #,
+        #GENERATE_MISSING_PIPELINES: [[
+        #    { '$match': {'vlaknr': { '$exists': {"$toBool": 1} }, 'projectcd': { '$exists': {"$toBool": 1} }, 'putnr': { '$exists': {"$toBool": 1} }, 'spoornr': { '$exists': {"$toBool": 1}, 'vullingnr': { '$exists': {"$toBool": 1} }}}},
+       #     { '$group':{'_id': {'projectcd':"$projectcd", 'putnr':"$putnr", 'spoornr':"$spoornr", 'vlaknr':"$vlaknr", 'vullingnr':"$vullingnr"}}},  
+       #     { '$unwind': "$_id"},
+       #     { '$project': {'_id': 0, 'projectcd': "$_id.projectcd", 'putnr': "$_id.putnr", 'spoornr': "$_id.spoornr", 'vlaknr': "$_id.vlaknr", 'vullingnr': "$_id.vullingnr"}},
+      #      { '$addFields': {'brondata.table': 'generated_vulling', 'brondata.project': '$projectcd', 'soort': 'Vulling'}}
+      #  ]]
+        
   },
   "Stelling": {
         STAGING_COLLECTION: config.COLL_STAGING_MAGAZIJNLIJST,

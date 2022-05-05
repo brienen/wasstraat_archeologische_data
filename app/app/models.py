@@ -157,6 +157,28 @@ class Put(WasstraatModel):
         return projectcd + ' Put ' + str(self.putnr) + ' ' + beschr
 
 
+
+class Vlak(WasstraatModel):
+    __tablename__ = 'Def_Vlak'
+
+    primary_key = Column(Integer, primary_key=True, autoincrement=True)
+    vlaknr = Column(String(50))
+    beschrijving = Column(Text)
+    datum_aanleg = Column(String(50))
+    vlaktype = Column(String(50))
+    projectID = Column(ForeignKey('Def_Project.primary_key'), index=True)
+    project = relationship('Project')
+    putID = Column(ForeignKey('Def_Put.primary_key', deferrable=True), index=True)
+    put = relationship('Put')
+
+    def __repr__(self):
+        projectcd = self.project.projectcd if self.project else "Onbekend Project, "        
+        put = (' Put ' + str(self.put.putnr)) + " " if self.put else ''
+        vlak = (' Vlaknr ' + str(self.vlaknr)) + " " if self.vlaknr else ''
+
+        return projectcd + put + vlak + self.beschrijving if self.beschrijving else ''
+
+
 class Spoor(WasstraatModel):
     __tablename__ = 'Def_Spoor'
 
@@ -230,6 +252,54 @@ class Vondst(WasstraatModel):
         put = (' Put ' + str(self.put.putnr)) + " " if self.put else ''
 
         return projectcd + put + vondstnr + self.omstandigheden if self.omstandigheden else ''
+
+
+
+class Vulling(WasstraatModel):
+    __tablename__ = 'Def_Vulling'
+
+    primary_key = Column(Integer, primary_key=True, autoincrement=True)
+    vullingnr = Column(Integer)
+    vlaknr = Column(String(1024))
+    vondstnr = Column(Integer)
+    spoornr = Column(Integer)
+    opmerkingen = Column(String(1024))
+    bioturbatie = Column(String(1024))
+    textuur = Column(String(1024))
+    mediaan = Column(String(1024))
+    textuurbijmenging = Column(String(1024))
+    sublaag = Column(String(1024))
+    kleur = Column(String(1024))
+    reductie = Column(String(1024))
+    gevlekt = Column(String(1024))
+    laaginterpretatie = Column(String(1024))
+    schelpenresten = Column(String(1024))
+    grondsoort = Column(String(1024))
+    lengte_baksteen1 = Column(String(1024))
+    lengte_baksteen2 = Column(String(1024))
+    lengte_baksteen3 = Column(String(1024))
+    hoogte_baksteen1 = Column(String(1024))
+    hoogte_baksteen2 = Column(String(1024))
+    hoogte_baksteen3 = Column(String(1024))
+    breedte_baksteen1 = Column(String(1024))
+    breedte_baksteen2 = Column(String(1024))
+    breedte_baksteen3 = Column(String(1024))
+    projectID = Column(ForeignKey('Def_Project.primary_key', deferrable=True), index=True)
+    project = relationship('Project')
+    putID = Column(ForeignKey('Def_Put.primary_key', deferrable=True), index=True)
+    put = relationship('Put')
+    spoorID = Column(ForeignKey('Def_Spoor.primary_key', deferrable=True), index=True)
+    spoor = relationship('Spoor')
+
+    def __repr__(self):
+        projectcd = self.project.projectcd if self.project else "Onbekend Project, "
+        vondstnr = (' Vondstnr ' + str(self.vondstnr)) + " " if self.vondstnr else ''
+        put = (' Put ' + str(self.put.putnr)) + " " if self.put else ''
+        spoornr = (' Spoor ' + str(self.spoor.spoornr)) + " " if self.spoor else ''
+        vulnr = self.vullingnr if self.vullingnr else ' Vullingnr onbekend'
+
+        return projectcd + put + vondstnr + spoornr + vulnr
+
 
 
 class DiscrArtefactsoortEnum(enum.Enum): 
@@ -717,26 +787,6 @@ class Plaatsing(WasstraatModel):
     vaknr = Column(Integer)
     volgletter = Column(Text)
     
-
-class Vlak(WasstraatModel):
-    __tablename__ = 'Def_Vlak'
-
-    primary_key = Column(Integer, primary_key=True, autoincrement=True)
-    vlaknr = Column(String(50))
-    beschrijving = Column(Text)
-    datum_aanleg = Column(String(50))
-    vlaktype = Column(String(50))
-    projectID = Column(ForeignKey('Def_Project.primary_key'), index=True)
-    project = relationship('Project')
-    putID = Column(ForeignKey('Def_Put.primary_key', deferrable=True), index=True)
-    put = relationship('Put')
-
-    def __repr__(self):
-        projectcd = self.project.projectcd if self.project else "Onbekend Project, "        
-        put = (' Put ' + str(self.put.putnr)) + " " if self.put else ''
-        vlak = (' Vlaknr ' + str(self.vlaknr)) + " " if self.vlaknr else ''
-
-        return projectcd + put + vlak + self.beschrijving if self.beschrijving else ''
 
 
 

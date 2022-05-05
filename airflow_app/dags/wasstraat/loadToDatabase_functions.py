@@ -119,7 +119,7 @@ def loadAll():
             dict_tables = metadata.tables.keys()
             lst_tables = [x for x in list(dict_tables) if x.startswith('Def_')]
             logger.info("Loading all data for " + str(lst_tables))
-            lst_tables = ['Def_Project', 'Def_Put', 'Def_Vondst', 'Def_Spoor', 'Def_Stelling', 'Def_Doos', 'Def_Standplaats', 'Def_Plaatsing', 'Def_Vlak', 'Def_Vindplaats', 'Def_Artefact', 'Def_Foto']
+            lst_tables = ['Def_Project', 'Def_Put', 'Def_Vondst', 'Def_Spoor', 'Def_Stelling', 'Def_Doos', 'Def_Standplaats', 'Def_Plaatsing', 'Def_Vlak', 'Def_Vindplaats', 'Def_Artefact', 'Def_Foto', 'Def_Vulling']
             
             # To make a comma separated string with substrings between double quotes
             f = lambda x: "\""+str(x)+"\""
