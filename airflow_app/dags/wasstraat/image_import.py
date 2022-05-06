@@ -16,6 +16,9 @@ logger = logging.getLogger("airflow.task")
 
 
 
+
+
+
 def shrinkAndSaveImage(filename, size, fs, postcard=False): 
     try:
         image = Image.open(filename, 'r')
@@ -34,7 +37,7 @@ def shrinkAndSaveImage(filename, size, fs, postcard=False):
                 elif orientation == 6: image = image.transpose(Image.ROTATE_270)
                 elif orientation == 8: image = image.transpose(Image.ROTATE_90)
 
-        image.thumbnail(size, Image.ANTIALIAS)
+        image.thumbnail(size, Image.Resampling.LANCZOS)
 
         # if size of picture does not fit paste it on a blank picture
         if postcard:

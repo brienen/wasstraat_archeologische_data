@@ -1,5 +1,6 @@
 import calendar
 import copy
+from PIL import Image
 
 from flask import url_for, Markup
 
@@ -23,6 +24,10 @@ from .widgets import MediaListWidget
 from .baseviews import WSModelView, WSGeoModelView, ColumnShowWidget, ColumnFormWidget
 import app.util as util
 import sqlalchemy as sa
+
+from flask_appbuilder.actions import action
+from flask import redirect
+
 
 flds_migratie_info = ("Migratie-informatie", {"fields": ["soort","brondata","herkomst"],"expanded": False})
 
@@ -95,6 +100,33 @@ class ArchFotoView(WSModelView):
     ]
     #show_fieldsets = fieldsets
     edit_fieldsets = fieldsets
+ 
+    @action("5linkskantelen", "Kantelen Linksom", "Geselecteerde foto's linksom kantelen?", "fa-rocket")
+    def linkskantelen(self, items):
+        if isinstance(items, list):
+            for foto in items:
+                foto = util.rotateImage(foto, 90)
+                self.datamodel.edit(foto, raise_exception=True)
+
+            self.update_redirect()
+        else:
+            foto = util.rotateImage(items, 90)
+            self.datamodel.edit(foto)
+        return redirect(self.get_redirect())
+
+    @action("6rechtskantelen", "Kantelen Rechtsom", "Geselecteerde foto's rechtsom kantelen?", "fa-rocket")
+    def rechtskantelen(self, items):
+        if isinstance(items, list):
+            for foto in items:
+                foto = util.rotateImage(foto, -90)
+                self.datamodel.edit(foto, raise_exception=True)
+
+            self.update_redirect()
+        else:
+            foto = util.rotateImage(items, -90)
+            self.datamodel.edit(foto)
+        return redirect(self.get_redirect())
+
 
 
 class ArchOpgravingFotoView(ArchFotoView):
@@ -445,6 +477,9 @@ class ArchSpoorView(WSModelView):
     ]
     edit_fieldsets = show_fieldsets
     add_fieldsets = show_fieldsets
+
+
+
 
 class ArchVlakView(WSModelView):
     datamodel = SQLAInterface(Vlak)

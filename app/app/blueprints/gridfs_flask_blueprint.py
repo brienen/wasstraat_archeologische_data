@@ -25,34 +25,6 @@ def allowed_file(filename):
             filename.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
 
 
-@gridfs.route('/', methods=['GET', 'POST'])
-def upload_image():
-    if request.method == 'POST':
-        file = request.files['file']
-        if file and allowed_file(file.filename):
-            filename = secure_filename(file.filename)
-            current_app.logger.info('GridFS Blueprint is going to store ' + filename)
-            oid = FS.put(file, content_type=file.content_type,
-                         filename=filename)
-            current_app.logger.info('GridFS Blueprint recieved OID ' + oid)
-            return redirect(url_for('gridfs.getimage', oid=str(oid)))
-    return '''
-    <!DOCTYPE html>
-    <html>
-    <head>
-    <title>Upload new file</title>
-    </head>
-    <body>
-    <h1>Upload new file</h1>
-    <form action="" method="post" enctype="multipart/form-data">
-    <p><input type="file" name="file"></p>
-    <p><input type="submit" value="Upload"></p>
-    </form>
-    <a href="%s">All files</a>
-    </body>
-    </html>
-    ''' % url_for('gridfs.listimages')
-
 
 @gridfs.route('/listimages')
 def listimages():

@@ -1,8 +1,12 @@
 FROM jupyter/tensorflow-notebook
 
+USER root 
+RUN ACCEPT_EULA=Y apt update && ACCEPT_EULA=Y apt -y upgrade && apt -y install libmagic-dev
+USER jovyan
+
 RUN python -m pip install --upgrade pip
 RUN pip install --upgrade setuptools
-RUN pip install python-magic altair vincent geopandas folium mongoengine psycopg2-binary pymongo sqlacodegen pandas_profiling openpyxl simplejson xeus-python notebook opencv-python
+RUN pip install python-magic altair vincent geopandas folium mongoengine psycopg2-binary pymongo sqlacodegen pandas_profiling openpyxl simplejson xeus-python notebook opencv-python python-magic
 RUN pip install deepface --use-feature=2020-resolver
 
 # For development, Jupyter remote kernel, Hydrogen

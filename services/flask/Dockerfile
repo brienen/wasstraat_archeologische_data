@@ -1,6 +1,7 @@
 FROM tiangolo/meinheld-gunicorn-flask:python3.8
 
 RUN apt-get update && apt-get -y upgrade
+
 RUN pip install --upgrade setuptools
 RUN pip install flask_dropzone python-magic vega_datasets altair vincent geopandas pandas numpy folium mongoengine flask_mongoengine flask-appbuilder fab-addon-geoalchemy Pillow Flask-Migrate flask-mysql psycopg2-binary panel pymongo sqlacodegen flask_debugtoolbar dash pandas_datareader dash_bootstrap_components
 RUN pip install Flask-WTF==0.14.3
