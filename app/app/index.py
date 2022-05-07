@@ -13,9 +13,6 @@ from sqlalchemy import inspect, create_engine, func
 from flask_appbuilder import IndexView
 from flask_appbuilder import BaseView, expose, has_access
 import folium
-from vega_datasets import data
-from altair import Chart, X, Y, Axis, Data, DataFormat
-import vincent
 
 from flask import current_app as app
 

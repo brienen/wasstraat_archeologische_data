@@ -11,7 +11,8 @@ services:
     volumes:
       - postgres_volume:/data/postgres
       - ./scripts/postgres/:/docker-entrypoint-initdb.d/
- 
+      - ./backup:/backup
+
   airflow:
     container_name: "wasstraat_airflow"
     env_file:
@@ -42,19 +43,10 @@ services:
       - ./config/postgres.env
       - ./config/mongo.env
     ports:
-      - '5050:5050'
+      - '5000:5000'
     depends_on:
       - postgres
       - mongo
-    volumes:
-      #- ./examples/polymorph:/app
-      - ./data/images:/images
-      - ./app:/app
-    entrypoint: 'flask run --host=0.0.0.0 --port=5050'
-    #entrypoint: bash -c "while true; do sleep 1; done"  # Infinite loop to keep container live doing nothing
-    build: 
-      dockerfile: ./services/flask/Dockerfile
-      context: .
 
   mongo:
     image: mongo:4.2    

@@ -1,0 +1,20 @@
+version: "3"
+
+# All available services
+services:
+  #postgres:
+    #restart: "always"
+
+  flask:
+    image: wasstraat_flask
+    #restart: "always"
+    environment: 
+      - env=prod
+      - FLASK_DEBUG=0
+      - MODULE_NAME=app
+      - PORT=5000
+    ports:
+      - 5000:5000
+        
+  #mongo:
+    #restart: "always"

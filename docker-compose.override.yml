@@ -3,7 +3,7 @@ version: "3"
 # All available services
 services:
   flask:
-    entrypoint: bash -c "while true; do sleep 1; done"  # Infinite loop to keep container live doing nothing
+    entrypoint: 'flask run --host=0.0.0.0 --port=5000'
     build: 
       dockerfile: ./services/flask/Dockerfile
       context: .
@@ -12,4 +12,3 @@ services:
       #- ./data/images:/images
       - ./app:/app
 
-   

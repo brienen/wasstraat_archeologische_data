@@ -1,0 +1,15 @@
+version: "3"
+
+# All available services
+services:
+  flask:
+    environment: 
+      - env=prod
+      - FLASK_DEBUG=0
+      - MODULE_NAME=app
+      - PORT=5000
+    ports:
+      - 5000:5000
+    build: 
+      dockerfile: ./services/flask/Dockerfile
+      context: .

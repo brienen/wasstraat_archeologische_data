@@ -3,8 +3,8 @@
 # inhoud van data directory gaat niet naat Github, behalve de directories zelf
 data/input/*
 !data/input/.gitkeep 
-data/output/*
-!data/output/.gitkeep 
+backup/*
+!backup/.gitkeep 
 data/images/*
 !data/images/.gitkeep 
 data/postgres/*
