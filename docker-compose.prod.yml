@@ -2,12 +2,11 @@ version: "3"
 
 # All available services
 services:
-  #postgres:
-    #restart: "always"
-
+  postgres:
+    restart: "unless-stopped"
   flask:
-    image: wasstraat_flask
-    #restart: "always"
+    image: brienen/wasstraat_flask:latest
+    restart: "unless-stopped"
     environment: 
       - env=prod
       - FLASK_DEBUG=0
@@ -16,5 +15,5 @@ services:
     ports:
       - 5000:5000
         
-  #mongo:
-    #restart: "always"
+  mongo:
+    restart: "unless-stopped"

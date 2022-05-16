@@ -13,3 +13,4 @@ services:
     build: 
       dockerfile: ./services/flask/Dockerfile
       context: .
+    image: brienen/wasstraat_flask
