@@ -40,10 +40,13 @@ git tag -a $2 -m "$3"
 docker-compose build postgres flask airflow
 docker tag wasstraat_flask:latest wasstraat_flask:$2 
 docker tag wasstraat_flask:latest brienen/wasstraat_flask:$2 
+docker push brienen/wasstraat_flask:$2
 docker tag wasstraat_postges:latest wasstraat_postgres:$2 
 docker tag wasstraat_postges:latest brienen/wasstraat_postgres:$2 
+docker push brienen/wasstraat_postgres:$2
 docker tag wasstraat_airflow:latest wasstraat_airflow:$2 
 docker tag wasstraat_airflow:latest brienen/wasstraat_airflow:$2 
+docker push brienen/wasstraat_airflow:$2
 ;;
 
 
