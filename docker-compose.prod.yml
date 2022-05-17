@@ -5,7 +5,7 @@ services:
   postgres:
     restart: "unless-stopped"
   flask:
-    image: brienen/wasstraat_flask:0.4.6
+    image: brienen/wasstraat_flask:0.4.10
     restart: "unless-stopped"
     environment: 
       - env=prod

@@ -81,8 +81,8 @@ class Project(Model): # Inherit from Model for cannot use Abstract class Wasstra
     __tablename__ = 'Def_Project'
 
     primary_key = Column(Integer, primary_key=True, autoincrement=True)
-    projectcd = Column(String(12), nullable=False)
-    projectnaam = Column(String(1024))
+    projectcd = Column(String(12), nullable=False, index=True)
+    projectnaam = Column(String(1024), index=True)
     jaar = Column(Integer)
     toponiem = Column(String(1024))
     trefwoorden = Column(String(1024))
@@ -114,7 +114,7 @@ class Doos(WasstraatModel):
     __tablename__ = 'Def_Doos'
 
     primary_key = Column(Integer, primary_key=True, autoincrement=True)
-    doosnr = Column(Integer)
+    doosnr = Column(Integer, index=True)
     inhoud = Column(Text)
     projectcd = Column(String(12))
     projectnaam = Column(Text)
@@ -142,7 +142,7 @@ class Put(WasstraatModel):
     __tablename__ = 'Def_Put'
 
     primary_key = Column(Integer, primary_key=True, autoincrement=True)
-    putnr = Column(Integer)
+    putnr = Column(Integer, index=True)
     beschrijving = Column(Text)
     aangelegd = Column(Boolean)
     datum_ingevoerd = Column(Text)
@@ -162,7 +162,7 @@ class Vlak(WasstraatModel):
     __tablename__ = 'Def_Vlak'
 
     primary_key = Column(Integer, primary_key=True, autoincrement=True)
-    vlaknr = Column(String(50))
+    vlaknr = Column(String(50), index=True)
     beschrijving = Column(Text)
     datum_aanleg = Column(String(50))
     vlaktype = Column(String(50))
@@ -184,7 +184,7 @@ class Spoor(WasstraatModel):
 
     primary_key = Column(Integer, primary_key=True, autoincrement=True)
     vlaknr = Column(String(1024))
-    spoornr = Column(Integer)
+    spoornr = Column(Integer, index=True)
     aard = Column(String(1024))
     beschrijving = Column(Text)
     gecoupeerd =  Column(Text)
@@ -229,7 +229,7 @@ class Vondst(WasstraatModel):
 
     primary_key = Column(Integer, primary_key=True, autoincrement=True)
     vlaknr = Column(String(1024))
-    vondstnr = Column(Integer)
+    vondstnr = Column(Integer, index=True)
     opmerkingen = Column(String(1024))
     omstandigheden = Column(Text)
     datum = Date()
@@ -259,7 +259,7 @@ class Vulling(WasstraatModel):
     __tablename__ = 'Def_Vulling'
 
     primary_key = Column(Integer, primary_key=True, autoincrement=True)
-    vullingnr = Column(Integer)
+    vullingnr = Column(Integer, index=True)
     vlaknr = Column(String(1024))
     vondstnr = Column(Integer)
     spoornr = Column(Integer)
@@ -323,7 +323,7 @@ class Artefact(WasstraatModel):
     __tablename__ = 'Def_Artefact'
 
     primary_key = Column(Integer, primary_key=True, autoincrement=True)
-    artefactnr = Column(Integer)
+    artefactnr = Column(Integer, index=True)
     beschrijving = Column(Text)
     opmerkingen = Column(Text)
     typevoorwerp = Column(String(1024))
@@ -367,7 +367,7 @@ class Artefact(WasstraatModel):
     vondst = relationship('Vondst')
     doosID = Column(ForeignKey('Def_Doos.primary_key', deferrable=True), index=True)
     doos = relationship('Doos')
-    artefactsoort =  Column(Enum(DiscrArtefactsoortEnum))
+    artefactsoort =  Column(Enum(DiscrArtefactsoortEnum), index=True)
 
     def __repr__(self):
         if self.project:
@@ -684,14 +684,14 @@ class Foto(WasstraatModel):
 
     primary_key = Column(Integer, primary_key=True, autoincrement=True)
     directory = Column(Text)
-    fileName = Column(Text)
+    fileName = Column(Text, index=True)
     fileSize = Column(Integer)
     fileType = Column(String(32))
     imageUUID = Column(String(1024))
     imageMiddleUUID = Column(String(1024))
     imageThumbUUID = Column(String(1024))
     mime_type = Column(String(20))
-    fototype = Column(Text)
+    fototype = Column(String(1))
     projectcd = Column(String(12))
     putnr = Column(Integer)
     vondstnr = Column(Integer)

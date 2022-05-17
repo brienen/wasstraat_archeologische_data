@@ -55,6 +55,12 @@ try:
    FLASK_PGUSER = os.getenv("FLASK_PGUSER")
    FLASK_PGDATABASE = os.getenv("FLASK_PGDATABASE")
 
+   MAIL_SERVER = os.getenv("MAIL_SERVER")
+   MAIL_USE_TLS= True
+   MAIL_USERNAME = os.getenv("MAIL_USERNAME")
+   MAIL_PASSWORD = os.getenv("MAIL_PASSWORD")
+   MAIL_DEFAULT_SENDER = os.getenv("MAIL_DEFAULT_SENDER")
+
 except KeyError: 
    logger.error("Cannot read environment variables (ie. POSTGRES_DB, POSTGRES_USER, POSTGRES_PASSWORD) needed to connect to the database. Add them to your .env files")
 

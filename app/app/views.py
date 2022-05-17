@@ -12,7 +12,7 @@ from flask_appbuilder.widgets import (
 )
 from flask_appbuilder.fieldwidgets import BS3TextFieldWidget
 from flask_appbuilder.models.group import aggregate_count, aggregate_sum, aggregate_avg
-from flask_appbuilder.models.sqla.filters import FilterEqual, FilterStartsWith
+from flask_appbuilder.models.sqla.filters import FilterEqual
 from fab_addon_geoalchemy.views import GeoModelView
 from fab_addon_geoalchemy.models import GeoSQLAInterface, Geometry
 
@@ -130,19 +130,19 @@ class ArchFotoView(WSModelView):
 
 
 class ArchOpgravingFotoView(ArchFotoView):
-    base_filters = [['fototype', FilterStartsWith, 'G']]
+    base_filters = [['fototype', FilterEqual, 'G']]
     list_title = "Opgravingsfoto's"
 
 class ArchSfeerFotoView(ArchFotoView):
-    base_filters = [['fototype', FilterStartsWith, 'F']]
+    base_filters = [['fototype', FilterEqual, 'F']]
     list_title = "Sfeerfoto's"
 
 class ArchArtefactFotoView(ArchFotoView):
-    base_filters = [['fototype', FilterStartsWith, 'H']]
+    base_filters = [['fototype', FilterEqual, 'H']]
     list_title = "Artefactfoto's"
 
 class ArchNietFotoView(ArchFotoView):
-    base_filters = [['fototype', FilterStartsWith, 'N']]
+    base_filters = [['fototype', FilterEqual, 'N']]
     list_title = "Foto's zonder duiding"
 
 
