@@ -1,6 +1,5 @@
 import pymongo
 import gridfs
-import sys
 import magic
 import PIL
 import io

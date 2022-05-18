@@ -3,7 +3,6 @@ import config
 import pandas as pd
 import geopandas
 import numpy as np
-import json
 import requests
 
 from sqlalchemy.orm import sessionmaker
@@ -83,7 +82,6 @@ class MyIndexView(IndexView):
 
             logger.debug('Setting folium string')
             self.foliummap_str = foliummap._repr_html_()
-            #self.foliummap_str = '<iframe src="/cockpit" width="100%" style="border:none;height:auto;min-height: 100vh;"></iframe>'
             self.extra_args = {'foliummap':self.foliummap_str}     
         finally:
             session.close()

@@ -37,6 +37,7 @@ echo "VERSION=$2" > config/version.env
 git tag -a $2 -m "$3"
 git stage .
 git commit -m "$3"
+git push --all
 git push --tags
 docker-compose build postgres flask airflow
 docker tag wasstraat_flask:latest wasstraat_flask:$2 

@@ -1,4 +1,3 @@
-import calendar
 import copy
 from PIL import Image
 
