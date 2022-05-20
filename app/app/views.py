@@ -99,6 +99,7 @@ class ArchFotoView(WSModelView):
     ]
     #show_fieldsets = fieldsets
     edit_fieldsets = fieldsets
+    base_order = ('fileName','asc')
  
     @action("5linkskantelen", "Kantelen Linksom", "Geselecteerde foto's linksom kantelen?", "fa-rocket")
     def linkskantelen(self, items):

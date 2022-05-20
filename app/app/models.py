@@ -4,7 +4,7 @@ from flask_appbuilder.models.decorators import renders
 
 from flask_appbuilder import Model
 from flask_appbuilder.filemanager import ImageManager
-from sqlalchemy import BigInteger, Column, Date, DateTime, Float, ForeignKey, Integer, LargeBinary, String, Table, Text, Boolean, JSON, UniqueConstraint, Enum
+from sqlalchemy import BigInteger, Column, Date, DateTime, Float, ForeignKey, Integer, LargeBinary, String, Table, Text, Boolean, JSON, UniqueConstraint, Enum, Index
 from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy import select, func
@@ -12,12 +12,7 @@ from sqlalchemy.ext.hybrid import hybrid_property, hybrid_method
 from flask_appbuilder.models.mixins import ImageColumn
 from fab_addon_geoalchemy.views import GeoModelView
 from fab_addon_geoalchemy.models import GeoSQLAInterface, Geometry
-
-from sqlalchemy.schema import CreateColumn
-from sqlalchemy.ext.compiler import compiles
 import enum
-from sqlalchemy import event
-from sqlalchemy.orm import object_mapper
 
 
 
@@ -123,9 +118,9 @@ class Doos(WasstraatModel):
     vaknr = Column(Integer)
     volgletter = Column(Text)
     stellingID = Column(ForeignKey('Def_Stelling.primary_key'), index=True)
-    stelling = relationship('Stelling')
+    stelling = relationship('Stelling', lazy="joined")
     projectID = Column(ForeignKey('Def_Project.primary_key'), index=True)
-    project = relationship('Project')
+    project = relationship('Project', lazy="joined")
     artefacten = relationship("Artefact", back_populates="doos")
 
     def __repr__(self):
@@ -148,7 +143,7 @@ class Put(WasstraatModel):
     datum_ingevoerd = Column(Text)
     datum_gewijzigd = Column(Text)
     projectID = Column(ForeignKey('Def_Project.primary_key', deferrable=True), index=True)
-    project = relationship('Project')
+    project = relationship('Project', lazy="joined")
 
     def __repr__(self):
         projectcd = self.project.projectcd if self.project else "Onbekend Project, "
@@ -167,9 +162,9 @@ class Vlak(WasstraatModel):
     datum_aanleg = Column(String(50))
     vlaktype = Column(String(50))
     projectID = Column(ForeignKey('Def_Project.primary_key'), index=True)
-    project = relationship('Project')
+    project = relationship('Project', lazy="joined")
     putID = Column(ForeignKey('Def_Put.primary_key', deferrable=True), index=True)
-    put = relationship('Put')
+    put = relationship('Put', lazy="joined")
 
     def __repr__(self):
         projectcd = self.project.projectcd if self.project else "Onbekend Project, "        
@@ -210,9 +205,9 @@ class Spoor(WasstraatModel):
     ouder_dan = Column(String(1024))
     sporen_zelfde_periode = Column(String(1024))
     projectID = Column(ForeignKey('Def_Project.primary_key', deferrable=True), index=True)
-    project = relationship('Project')
+    project = relationship('Project', lazy="joined")
     putID = Column(ForeignKey('Def_Put.primary_key', deferrable=True), index=True)
-    put = relationship('Put')
+    put = relationship('Put', lazy="joined")
     vlakID = Column(ForeignKey('Def_Vlak.primary_key', deferrable=True), index=True)
     vlak = relationship('Vlak')
 
@@ -240,9 +235,9 @@ class Vondst(WasstraatModel):
     vaknummer = Column(String(1024))
     vullingnr = Column(String(1024)) 
     projectID = Column(ForeignKey('Def_Project.primary_key', deferrable=True), index=True)
-    project = relationship('Project')
+    project = relationship('Project', lazy="joined")
     putID = Column(ForeignKey('Def_Put.primary_key', deferrable=True), index=True)
-    put = relationship('Put')
+    put = relationship('Put', lazy="joined")
     spoorID = Column(ForeignKey('Def_Spoor.primary_key', deferrable=True), index=True)
     spoor = relationship('Spoor')
 
@@ -285,9 +280,9 @@ class Vulling(WasstraatModel):
     breedte_baksteen2 = Column(String(1024))
     breedte_baksteen3 = Column(String(1024))
     projectID = Column(ForeignKey('Def_Project.primary_key', deferrable=True), index=True)
-    project = relationship('Project')
+    project = relationship('Project', lazy="joined")
     putID = Column(ForeignKey('Def_Put.primary_key', deferrable=True), index=True)
-    put = relationship('Put')
+    put = relationship('Put', lazy="joined")
     spoorID = Column(ForeignKey('Def_Spoor.primary_key', deferrable=True), index=True)
     spoor = relationship('Spoor')
 
@@ -295,7 +290,7 @@ class Vulling(WasstraatModel):
         projectcd = self.project.projectcd if self.project else "Onbekend Project, "
         vondstnr = (' Vondstnr ' + str(self.vondstnr)) + " " if self.vondstnr else ''
         put = (' Put ' + str(self.put.putnr)) + " " if self.put else ''
-        spoornr = (' Spoor ' + str(self.spoor.spoornr)) + " " if self.spoor else ''
+        spoornr = (' Spoor ' + str(self.spoornr)) + " " if self.spoornr else ''
         vulnr = self.vullingnr if self.vullingnr else ' Vullingnr onbekend'
 
         return projectcd + put + vondstnr + spoornr + vulnr
@@ -360,7 +355,7 @@ class Artefact(WasstraatModel):
     vondstomstandigheden = Column(String(1024))
     weggegooid = Column(Integer)
     projectID = Column(ForeignKey('Def_Project.primary_key', deferrable=True), index=True)
-    project = relationship('Project')
+    project = relationship('Project', lazy="joined")
     putID = Column(ForeignKey('Def_Put.primary_key', deferrable=True), index=True)
     put = relationship('Put')
     vondstID = Column(ForeignKey('Def_Vondst.primary_key', deferrable=True), index=True)
@@ -373,7 +368,7 @@ class Artefact(WasstraatModel):
         if self.project:
             projectcd = self.project.projectcd if self.project else "Onbekend Project, "
             artefactnr = (' Artf. ' + str(self.artefactnr)) if self.artefactnr else ''
-            put = (' Put ' + str(self.put.putnr)) if self.put else ''
+            put = (' Put ' + str(self.putnr)) if self.putnr else ''
             artefactsoort = (str(self.artefactsoort)) if self.artefactsoort else ''
             return projectcd + put + artefactnr +  artefactsoort
         else:
@@ -684,7 +679,7 @@ class Foto(WasstraatModel):
 
     primary_key = Column(Integer, primary_key=True, autoincrement=True)
     directory = Column(Text)
-    fileName = Column(Text, index=True)
+    fileName = Column(String(1024), index=True)
     fileSize = Column(Integer)
     fileType = Column(String(32))
     imageUUID = Column(String(1024))
@@ -749,7 +744,8 @@ class Foto(WasstraatModel):
     projectID = Column(ForeignKey('Def_Project.primary_key'), index=True)
     project = relationship('Project')
     artefactID = Column(ForeignKey('Def_Artefact.primary_key'), index=True)
-    artefact = relationship('Artefact', backref="fotos")
+    artefact = relationship('Artefact', backref="fotos", lazy="joined")
+    __table_args__ = (Index('ix_Foto_fototype_fileName', "fototype", "fileName"), )
 
 
 

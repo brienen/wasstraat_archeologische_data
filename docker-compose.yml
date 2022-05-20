@@ -9,9 +9,9 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - postgres_volume:/data/postgres
+      - wasstraat_postgres_volume:/data/postgres
       #- ./scripts/postgres/:/docker-entrypoint-initdb.d/
-      - ./backup:/backup
+      - /Users/arjen/stack/Wasstraat/backup:/backup
     build: 
       dockerfile: ./services/postgres/Dockerfile
       context: .
@@ -60,8 +60,8 @@ services:
     env_file:
       - ./config/mongo.env
     volumes:
-      - mongo_volume:/data/db
-      - ./backup:/backup
+      - wasstraat_mongo_volume:/data/db
+      - /Users/arjen/stack/Wasstraat/backup:/backup
 
   jupyter:
     container_name: wasstraat_jupyter
@@ -85,5 +85,5 @@ services:
        - ./config/postgres.env
 
 volumes:
-    postgres_volume:
-    mongo_volume:
+    wasstraat_postgres_volume:
+    wasstraat_mongo_volume:
