@@ -11,7 +11,8 @@ from flask_debugtoolbar import DebugToolbarExtension
 import config
 
 logging.basicConfig(format="%(asctime)s:%(levelname)s:%(name)s:%(message)s")
-logging.getLogger().setLevel(logging.WARNING)
+logging.getLogger().setLevel(logging.INFO)
+
 
 app = Flask(__name__)
 app.config.from_object("config")
@@ -19,10 +20,11 @@ dropzone = Dropzone(app)
 
 app.config['DEBUG_TB_INTERCEPT_REDIRECTS'] = False
 app.config['DEBUG_TB_PROFILER_ENABLED'] = config.DEBUG_TB_PROFILER_ENABLED
+app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {"pool_pre_ping": True}
 toolbar = DebugToolbarExtension(app)
 
-geo_logger = logging.getLogger('fab_addon_geoalchemy')
-geo_logger.setLevel(logging.INFO)
+#geo_logger = logging.getLogger('fab_addon_geoalchemy')
+#geo_logger.setLevel(logging.INFO)
 
 app.register_blueprint(gridfs)
 
@@ -30,6 +32,6 @@ db = SQLA(app)
 appbuilder = AppBuilder(app, db.session, base_template='mybase.html', indexview=MyIndexView)
 migrate = Migrate(app, db) # this
 
-from . import models, views, api, route  # noqa
+from . import models, views, route  # noqa
 
 

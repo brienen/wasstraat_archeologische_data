@@ -78,7 +78,7 @@ SQLALCHEMY_DATABASE_URI = f'postgresql://{FLASK_PGUSER}:{FLASK_PGPASSWORD}@postg
 SQLALCHEMY_TRACK_MODIFICATIONS = False
 # SQLALCHEMY_ECHO = True
 
-ADDON_MANAGERS = ['fab_addon_geoalchemy.manager.GeoAlchemyManager']
+#ADDON_MANAGERS = ['fab_addon_geoalchemy.manager.GeoAlchemyManager']
 
 BABEL_DEFAULT_LOCALE = "en"
 

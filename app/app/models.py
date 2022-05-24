@@ -86,7 +86,7 @@ class Project(Model): # Inherit from Model for cannot use Abstract class Wasstra
     ycoor_rd = Column(Float)
     longitude = Column(Float)
     latitude = Column(Float)
-    artefacten = relationship("Artefact", back_populates="project")
+    #artefacten = relationship("Artefact", back_populates="project")
 
     # Explicit defined for cannot use Abstract class Wasstraatmodel, for geo-package gives errors
     herkomst = Column(Text)
@@ -95,9 +95,9 @@ class Project(Model): # Inherit from Model for cannot use Abstract class Wasstra
     uuid = Column('_id', String)
     key = Column(Text)
 
-    @hybrid_method
-    def aantalArtefacten(self):
-        return len(self.artefacten)
+    #@hybrid_method
+    #def aantalArtefacten(self):
+    #    return len(self.artefacten)
 
     def __repr__(self):
         if self.projectcd:

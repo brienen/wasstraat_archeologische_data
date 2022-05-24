@@ -1,28 +1,28 @@
 import copy
-from PIL import Image
+#from PIL import Image
 
-from flask import url_for, Markup
+#from flask import url_for, Markup
 
-from flask_appbuilder import GroupByChartView, ModelView, DirectByChartView, MultipleView, MasterDetailView
+from flask_appbuilder import GroupByChartView, MultipleView
 from flask_appbuilder.models.group import aggregate_count
 from flask_appbuilder.models.sqla.interface import SQLAInterface
-from flask_appbuilder.widgets import (
-    ListBlock, ListItem, ListLinkWidget, ListThumbnail, ShowBlockWidget, ListCarousel, ShowWidget
-)
-from flask_appbuilder.fieldwidgets import BS3TextFieldWidget
-from flask_appbuilder.models.group import aggregate_count, aggregate_sum, aggregate_avg
+#from flask_appbuilder.widgets import (
+#    ListBlock, ListItem, ListLinkWidget, ListThumbnail, ShowBlockWidget, ListCarousel, ShowWidget
+#)
+#from flask_appbuilder.fieldwidgets import BS3TextFieldWidget
+from flask_appbuilder.models.group import aggregate_count
 from flask_appbuilder.models.sqla.filters import FilterEqual
-from fab_addon_geoalchemy.views import GeoModelView
-from fab_addon_geoalchemy.models import GeoSQLAInterface, Geometry
+#from fab_addon_geoalchemy.views import GeoModelView
+from fab_addon_geoalchemy.models import GeoSQLAInterface
 
-from wtforms.fields import StringField
+#from wtforms.fields import StringField
 
-from . import appbuilder, db
+from . import db, appbuilder
 from .models import Aardewerk, Stelling, Doos, Artefact, Foto, Spoor, Project,Put, Vondst, Vlak, DiscrArtefactsoortEnum, Dierlijk_Bot, Glas, Hout, Bouwaardewerk, Kleipijp, Leer, Menselijk_Bot, Metaal, Munt, Schelp, Steen, Textiel, Vulling
 from .widgets import MediaListWidget
-from .baseviews import WSModelView, WSGeoModelView, ColumnShowWidget, ColumnFormWidget
+from .baseviews import WSModelView, WSGeoModelView
 import app.util as util
-import sqlalchemy as sa
+#import sqlalchemy as sa
 
 from flask_appbuilder.actions import action
 from flask import redirect
@@ -515,7 +515,7 @@ class ArchPutView(WSModelView):
 class ArchProjectView(WSGeoModelView):
     datamodel = GeoSQLAInterface(Project)
     # base_permissions = ['can_add', 'can_show']
-    list_columns = ["projectcd", "projectnaam", "jaar", "aantalArtefacten"]
+    list_columns = ["projectcd", "projectnaam", "jaar"]
     #related_views = [ArchPutView, ArchVondstView, ArchArtefactView]
     base_order = ("projectcd", "asc")
     list_title = "Projecten"
@@ -537,6 +537,7 @@ class MasterView(MultipleView):
 
 
 db.create_all()
+
 appbuilder.add_view(ArchProjectView,"Projecten",icon="fa-dashboard",category="Projecten")
 appbuilder.add_view(ArchPutView,"Putten",icon="fa-dashboard",category="Projecten")
 appbuilder.add_view(ArchVlakView,"Vlakken",icon="fa-dashboard",category="Projecten")

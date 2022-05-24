@@ -1,0 +1,42 @@
+#FROM tiangolo/meinheld-gunicorn-flask:python3.8
+#FROM tiangolo/uvicorn-gunicorn:python3.6
+# pull official base image
+FROM python:3.6-slim-buster
+
+# set environment variables
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONUNBUFFERED 1
+
+
+RUN apt-get update && apt-get -y upgrade && apt-get clean
+RUN apt-get install -y libmagic-dev
+
+#ARG UNAME=flask
+#ARG UID=1000
+#ARG GID=1000
+#RUN groupadd -g $GID -o $UNAME
+#RUN useradd -m -u $UID -g $GID -o -s /bin/bash $UNAME
+
+#USER $UNAME
+#ENV VIRTUAL_ENV=/home/$UNAME/venv
+#RUN python -m venv $VIRTUAL_ENV
+#ENV PATH="$VIRTUAL_ENV/bin:$PATH"
+
+RUN pip install --upgrade pip
+RUN pip install --no-cache-dir --upgrade gunicorn psycopg2-binary flask_migrate flask_dropzone python-magic geopandas pandas numpy folium flask-appbuilder fab-addon-geoalchemy pillow pymongo sqlacodegen flask_debugtoolbar pandas_datareader typing_extensions
+#RUN pip install --no-cache-dir --upgrade flask_migrate
+#RUN pip install Flask-WTF==0.14.3 Werkzeug==2.0.0 jinja2==3.0.3
+# Fix for Github: https://github.com/tiangolo/meinheld-gunicorn-docker/issues/22 Error: class uri 'egg:meinheld#gunicorn_worker' invalid or not found #22
+#RUN pip install  --no-cache-dir greenlet==0.4.16
+#RUN pip install flask
+ENV PYTHONPATH=/app
+
+WORKDIR /app/
+COPY ./app /app
+#ADD ./app/lib /app/lib
+#RUN cd /app/lib; git clone https://github.com/mihxen/Flask-ImageManager; python setup.py install; cd /app 
+ENV STATIC_PATH /app/app/static
+ENV STATIC_INDEX 1
+
+EXPOSE 5000
+CMD ["gunicorn", "--conf", "gunicorn_conf.py", "--bind", "0.0.0.0:5000", "app:app"]
