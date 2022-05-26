@@ -2,8 +2,8 @@
 
 {% block head_css %}
     {{ super() }}
-    <link rel="stylesheet" href="/static/fab_addon_geoalchemy/css/leaflet.css"></link>
-    <link rel="stylesheet" href="/static/fab_addon_geoalchemy/css/map.css"></link>
+    <link rel="stylesheet" href="/static/css/leaflet.css"></link>
+    <link rel="stylesheet" href="/static/css/map.css"></link>
     <link rel="stylesheet" href="/static/css/arch.css"></link>
     {{ dropzone.load_css() }}
     {{ dropzone.style('border: 2px dashed #0087F7; margin: 10%; min-height: 400px;') }}
@@ -12,7 +12,7 @@
 
 {% block head_js %}
     {{ super() }}
-    <script src="/static/fab_addon_geoalchemy/js/leaflet.js"></script>
-    <script src="/static/fab_addon_geoalchemy/js/main.js"></script>
+    <script src="/static/js/leaflet.js"></script>
+    <script src="/static/js/main.js"></script>
     {{ dropzone.load_js() }}
 {% endblock %}

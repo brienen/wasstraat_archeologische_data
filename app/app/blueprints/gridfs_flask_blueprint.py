@@ -26,28 +26,6 @@ def allowed_file(filename):
 
 
 
-@gridfs.route('/listimages')
-def listimages():
-    files = [FS.get_last_version(file) for file in FS.list()]
-    file_list = "\n".join(['<li><a href="%s">%s</a></li>' %
-                          (url_for('gridfs.getimage', oid=str(file._id)),
-                           file.name) for file in files])
-    return '''
-    <!DOCTYPE html>
-    <html>
-    <head>
-    <title>Files</title>
-    </head>
-    <body>
-    <h1>Files</h1>
-    <ul>
-    %s
-    </ul>
-    <a href="%s">Upload new file</a>
-    </body>
-    </html>
-    ''' % (file_list, url_for('gridfs.upload_image'))
-
 
 @gridfs.route('/getimage/<oid>')
 def getimage(oid):
