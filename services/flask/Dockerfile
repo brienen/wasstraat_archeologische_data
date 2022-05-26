@@ -1,16 +1,36 @@
-FROM tiangolo/meinheld-gunicorn-flask:python3.8
+FROM python:3.10-slim-bullseye
+
+# set environment variables
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONUNBUFFERED 1
+
 
 RUN apt-get update && apt-get -y upgrade && apt-get clean
-RUN pip install --upgrade --no-cache-dir pip
-RUN pip install --no-cache-dir flask_dropzone python-magic geopandas pandas numpy folium flask-appbuilder Pillow Flask-Migrate psycopg2-binary pymongo sqlacodegen flask_debugtoolbar pandas_datareader geoalchemy2 typing_extensions
+RUN apt-get install -y libmagic-dev
 
-# Fix for Github: https://github.com/tiangolo/meinheld-gunicorn-docker/issues/22 Error: class uri 'egg:meinheld#gunicorn_worker' invalid or not found #22
-RUN pip install  --no-cache-dir greenlet==0.4.16
+#ARG UNAME=flask
+#ARG UID=1000
+#ARG GID=1000
+#RUN groupadd -g $GID -o $UNAME
+#RUN useradd -m -u $UID -g $GID -o -s /bin/bash $UNAME
+
+#USER $UNAME
+#ENV VIRTUAL_ENV=/home/$UNAME/venv
+#RUN python -m venv $VIRTUAL_ENV
+#ENV PATH="$VIRTUAL_ENV/bin:$PATH"
+
+RUN pip install --upgrade --no-cache-dir pip
+RUN pip install --no-cache-dir gunicorn gevent psycogreen flask_dropzone python-magic geopandas pandas numpy folium flask-appbuilder Pillow Flask-Migrate psycopg2-binary pymongo sqlacodegen flask_debugtoolbar pandas_datareader geoalchemy2 typing_extensions
+ENV PYTHONPATH=/app:/app/app
 
 WORKDIR /app/
 COPY ./app /app
-
 ENV STATIC_PATH /app/app/static
 ENV STATIC_INDEX 1
 
 EXPOSE 5000
+
+CMD gunicorn --worker-class gevent \
+  --bind 0.0.0.0:5000 \ 
+  --config ./gunicorn.conf.py \
+  patched_app:app

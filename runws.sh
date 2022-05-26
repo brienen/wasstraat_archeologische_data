@@ -16,6 +16,11 @@ echo "Starting in accept mode"
 docker-compose -f docker-compose.yml -f docker-compose.acc.yml up -d
 ;;
 
+meinheld)
+echo "Starting in gevent mode"
+docker-compose -f docker-compose.yml -f docker-compose.meinheld.yml up -d
+;;
+
 prod)
 echo "Starting in production mode"
 docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
