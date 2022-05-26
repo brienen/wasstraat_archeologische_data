@@ -1,5 +1,5 @@
 from app import db
-from app.models import ContactGroup, Gender, Contact
+from models import ContactGroup, Gender, Contact
 import random
 from datetime import datetime
 

@@ -6,7 +6,7 @@ import io
 from PIL import Image, ExifTags
 import logging
 import copy
-from app.models import Foto
+from models import Foto
 from gridfs import GridFS
 from gridfs.errors import NoFile
 from bson.objectid import ObjectId

@@ -1,12 +1,11 @@
 import logging
 
-from werkzeug.middleware.dispatcher import DispatcherMiddleware
 from flask import Flask
 from flask_appbuilder import AppBuilder, SQLA
 from flask_migrate import Migrate
 from flask_dropzone import Dropzone
-from app.blueprints.gridfs_flask_blueprint import gridfs
-from app.index import MyIndexView
+from blueprints.gridfs_flask_blueprint import gridfs
+from index import MyIndexView
 from flask_debugtoolbar import DebugToolbarExtension
 import config
 
@@ -32,6 +31,6 @@ db = SQLA(app)
 appbuilder = AppBuilder(app, db.session, base_template='mybase.html', indexview=MyIndexView)
 migrate = Migrate(app, db) # this
 
-from . import models, views, route  # noqa
+import models, views, route  # noqa
 
 

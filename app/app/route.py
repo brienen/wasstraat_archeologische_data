@@ -7,8 +7,8 @@ from flask_appbuilder import BaseView, expose, has_access
 from flask import abort, Blueprint, flash, render_template, request, session, url_for
 from app import appbuilder
 from app import db
-from .models import Foto, Artefact, Project
-from app.util import shrinkAndSaveImage
+from models import Foto, Artefact, Project
+from util import shrinkAndSaveImage
 
 import logging
 logger = logging.getLogger()

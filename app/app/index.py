@@ -1,16 +1,11 @@
-from app.models import Project, Artefact
+from models import Project, Artefact
 import config
-import pandas as pd
 import geopandas
-import numpy as np
-import requests
 
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy.engine import reflection
-from sqlalchemy import inspect, create_engine, func
+from sqlalchemy import create_engine, func
 
 from flask_appbuilder import IndexView
-from flask_appbuilder import BaseView, expose, has_access
 import folium
 
 from flask import current_app as app
