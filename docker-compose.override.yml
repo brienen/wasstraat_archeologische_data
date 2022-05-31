@@ -4,6 +4,10 @@ version: "3"
 services:
   flask:
     entrypoint: 'flask run --host=0.0.0.0 --port=5000'
+    environment: 
+      - FLASK_APP:app/app.py
+      - env:dev
+      - FLASK_DEBUG:1
     build: 
       dockerfile: ./services/flask/Dockerfile
       context: .
@@ -12,4 +16,4 @@ services:
       #- ./examples/polymorph:/app
       #- ./data/images:/images
       - ./app:/app
-      #- ../Flask-AppBuilder/examples/employees:/app
+      # ../Flask-AppBuilder/examples/employees:/app

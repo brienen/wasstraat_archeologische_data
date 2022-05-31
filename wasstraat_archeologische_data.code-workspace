@@ -4,16 +4,24 @@
 			"path": "."
 		},
 		{
-			"path": "../Archibello/examples"
-		},
-		{
 			"path": "../Flask-AppBuilder"
-		},
-		{
-			"path": "../Archibello"
 		}
 	],
 	"settings": {
 		"esbonio.server.enabled": false
+	},
+	"launch": {
+		"version": "0.2.0",
+		"configurations": [
+
+			{
+				"name": "Python: Huidige bestand",
+				"type": "python",
+				"request": "launch",
+				"program": "${file}",
+				"console": "integratedTerminal",
+				"justMyCode": false
+			}
+		]
 	}
 }

@@ -5,12 +5,11 @@ services:
   flask:
     environment: 
       - env=prod
-      - FLASK_DEBUG=0
-      - MODULE_NAME=app
+      - FLASK_DEBUG=1
       - PORT=5000
     ports:
       - 5000:5000
     build: 
-      dockerfile: ./services/flask/Dockerfile-meinheld
+      dockerfile: ./services/flask/Dockerfile-uwsgi
       context: .
-    image: wasstraat_flask_meinheld
+    image: wasstraat_flask-uwsgi

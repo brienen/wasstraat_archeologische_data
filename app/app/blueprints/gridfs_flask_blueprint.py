@@ -16,8 +16,10 @@ import config as co
 gridfs = Blueprint('gridfs', __name__, url_prefix='/gridfs')
 
 ALLOWED_EXTENSIONS = set(['txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'])
-DB = MongoClient(co.MONGO_URI).Arch_Files  # DB Name
-FS = GridFS(DB)
+#DB = MongoClient(co.MONGO_URI).Arch_Files  # DB Name
+#FS = GridFS(DB)
+
+client = MongoClient(co.MONGO_URI, minPoolSize=co.MONGO_MINPOOLSIZE)
 
 
 def allowed_file(filename):
@@ -30,6 +32,7 @@ def allowed_file(filename):
 @gridfs.route('/getimage/<oid>')
 def getimage(oid):
     try:
+        FS = GridFS(client[co.DB_FILES])
         # Convert the string to an ObjectId instance
         file_object = FS.get(ObjectId(oid))
         response = make_response(file_object.read())

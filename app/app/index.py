@@ -20,6 +20,23 @@ logger = logging.getLogger()
 class MyIndexView(IndexView):
 
 
+    # Works directly on resultset
+    #@classmethod
+    #def addMarker(self, pkey, projectcd, projectnaam, location_y, location_x, count, grp_niet, grp_ingl): 
+    #    #if count>0:
+    #    #    vis1 = json.loads(requests.get('http://localhost:5000/api/v1/example/greeting', allow_redirects=False).text)
+        
+    #    folium.CircleMarker(
+    #        location=[location_y, location_x],
+    #        radius=4 if count == 0 else 8,
+    #        #popup=projectnaam if count==0 else folium.Popup(max_width=450).add_child(folium.Vega(vis1, width=450, height=250)),
+    #        popup=folium.Popup(html=f'<div><b>Projectcode: </b><a href="/archprojectview/show/{pkey}" target="_PARENT">{projectcd}</a><br/><b>Projectnaam: </b>{projectnaam}</div>'),
+    #        color='blue' if count == 0 else 'red',
+    #        fill=True,
+    #        fill_color='#3186cc'
+    #   ).add_to(grp_niet if count ==0 else grp_ingl)    
+
+
     @classmethod
     def addMarker(self, pkey, location, projectcd, projectnaam, count, grp_niet, grp_ingl): 
         #if count>0:
@@ -62,12 +79,18 @@ class MyIndexView(IndexView):
             session = Session()
 
             stmt = (
+                # Works directly on resultset
+                #session.query(Project.primary_key, Project.projectcd, Project.projectnaam, func.st_y(Project.location), func.st_x(Project.location),func.count(Artefact.primary_key))
                 session.query(Project.primary_key, Project.projectcd, Project.projectnaam, Project.location, func.count(Artefact.primary_key))
                     .select_from(Artefact)
                     .join(Artefact.project, full=True)
                     .group_by(Project.primary_key, Project.projectcd, Project.projectnaam, Project.location)
                     .filter(Project.location != None).statement
                 )
+            # Works directly on resultset
+            #rs = dest_db_con.execute(stmt)
+            #[MyIndexView.addMarker(row[0],row[1],row[2],row[3],row[4],row[5], feature_group_niet,feature_group_ingl) for row in rs]
+
             gdf = geopandas.GeoDataFrame.from_postgis(stmt, dest_db_con, geom_col='location' )
             [MyIndexView.addMarker(row[0],row[1],row[2],row[3],row[4], feature_group_niet,feature_group_ingl) for row in gdf[['primary_key', 'location','projectcd', 'projectnaam','count_1']].values]
 

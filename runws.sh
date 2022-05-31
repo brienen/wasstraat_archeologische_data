@@ -17,8 +17,13 @@ docker-compose -f docker-compose.yml -f docker-compose.acc.yml up -d
 ;;
 
 meinheld)
-echo "Starting in gevent mode"
-docker-compose -f docker-compose.yml -f docker-compose.meinheld.yml up -d
+echo "Starting in meinheld mode"
+docker-compose -f docker-compose.yml -f docker-compose.acc-meinheld.yml up -d
+;;
+
+uwsgi)
+echo "Starting in uwsgi mode"
+docker-compose -f docker-compose.yml -f docker-compose.acc-uwsgi.yml up -d
 ;;
 
 prod)

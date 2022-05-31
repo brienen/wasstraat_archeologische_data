@@ -1,42 +1,36 @@
-from locust import HttpUser, between, task
+from locust import HttpUser, task, between
+from pyquery import PyQuery
 import re
 
-
-class WebsiteUser(HttpUser):
+class QuickstartUser(HttpUser):
     host = "http://localhost:5000"
-    wait_time = between(5, 15)
+    # Wait between 5 and 9 seconds per request per user
+    wait_time = between(5, 9)
+    
 
     def on_start(self):
-        """ on_start is called when a Locust start before any task is scheduled """
-        self.client.verify = False
-        self.get_token()
-        response = self.login()
-        print(f"Response {response}")
-
-    def on_stop(self):
-        """ on_stop is called when the TaskSet is stopping """
-        self.logout()
-
-    def get_token(self):
         response = self.client.get("/login")
-        # Sample string from response:
-        # <input id="csrf_token" name="csrf_token" type="hidden" value="REDACTED">
-        self.csrftoken = re.search(' name="csrf_token" .* value="(.+?)"', response.text).group(1)
-        print(f"DEBUG: self.csrftoken = {self.csrftoken}")
+        csrftoken = self.csrftoken = re.search(' name="csrf_token" .* value="(.+?)"', response.text).group(1)
+        print("my token is:", csrftoken)    
+        self.client.post("/login",
+                         {"username": "brienen@e-space.nl", "password": "gsmb10ns", "csrf_token" : csrftoken})
 
-    def login(self):
-        response = self.client.post("/login",
-                                    {"username": "brienen@e-space.nl",
-                                     "password": "gsmb10ns"
-                                     },
-                                    headers={"X-CSRFToken": self.csrftoken})
-        print(f"DEBUG: login response.status_code = {response.status_code}")
-
-    def logout(self):
-        self.client.get("/logout")
-
-
-    @task
-    def index(self):
+    @task(1)
+    def index_page(self):
+        # Request /dashboard on your Host
         self.client.get("/")
-        self.client.get("/archprojectview/list/")
+
+    @task(1)
+    def listprojecten(self):
+        # Request /dashboard on your Host
+        self.client.get("/archprojectview/list/")        
+
+    @task(1)
+    def listfotos(self):
+        # Request /dashboard on your Host
+        self.client.get("/archartefactfotoview/list/")        
+
+    @task(1)
+    def listaardewerk(self):
+        # Request /dashboard on your Host
+        self.client.get("/archaardewerkview/list/")                

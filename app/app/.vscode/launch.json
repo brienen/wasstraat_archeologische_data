@@ -26,7 +26,7 @@
             "request": "launch",
             "module": "flask",
             "env": {
-                "FLASK_APP": "__init__.py",
+                "FLASK_APP": "app.py",
                 "FLASK_ENV": "development",
                 "FLASK_DEBUG": "1"
             },
