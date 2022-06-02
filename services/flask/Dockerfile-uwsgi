@@ -32,8 +32,9 @@ EXPOSE 5000
 
 CMD uwsgi --master \
   --single-interpreter \
-  --workers 6 \
-  --gevent 2000 \
+  --workers 2 \
+  --gevent 200 \
   --protocol http \
   --socket 0.0.0.0:$PORT \
+  --gevent-monkey-patch \
   --module patched_app:app

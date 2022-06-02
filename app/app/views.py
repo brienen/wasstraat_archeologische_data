@@ -89,6 +89,7 @@ class ArchFotoView(WSModelView):
     #show_fieldsets = fieldsets
     edit_fieldsets = fieldsets
     base_order = ('fileName','asc')
+    search_exclude_columns = ['artefact']
  
     @action("5linkskantelen", "Kantelen Linksom", "Geselecteerde foto's linksom kantelen?", "fa-rocket")
     def linkskantelen(self, items):
@@ -145,6 +146,7 @@ class ArchArtefactView(WSModelView):
     #list_widget = ListThumbnail
     list_title = "Artefacten"
     related_views = [ArchArtefactFotoView]
+    search_exclude_columns = ['vondst', 'fotos', 'doos']
     show_fieldsets = [
         ("Projectvelden", {"columns": [
             {"fields": ["project", "vondst", "subnr", "aantal", "abr_materiaal", "artefactsoort", "typevoorwerp", "typecd", "functievoorwerp", "versiering", "beschrijving", "opmerkingen", "doos"], "grid":6},        
@@ -393,6 +395,7 @@ class ArchDoosView(WSModelView):
     datamodel = SQLAInterface(Doos)
     # base_permissions = ['can_add', 'can_show']
     list_columns = ["project", "doosnr", "inhoud", 'stelling', 'vaknr', "aantalArtefacten"]
+    search_exclude_columns = ['artefacten']
     base_order = ("doosnr", "asc")
     related_views = [ArchArtefactView]
     list_title = "Dozen"

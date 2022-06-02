@@ -5,9 +5,9 @@ services:
   flask:
     entrypoint: bash -c "while true; do sleep 1; done"  # Infinite loop to keep container live doing nothing
     environment: 
-      - FLASK_APP:app/app.py
-      - env:dev
-      - FLASK_DEBUG:1
+      - FLASK_APP=app/app.py
+      - env=dev
+      - FLASK_DEBUG=1
     build: 
       dockerfile: ./services/flask/Dockerfile
       context: .

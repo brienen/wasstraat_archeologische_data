@@ -10,5 +10,5 @@ graceful_timeout = 120
 timeout = 120
 keepalive = 5
 threads = 50
-workers = multiprocessing.cpu_count() * 3
+workers = multiprocessing.cpu_count() * 2
 preload_app=True
