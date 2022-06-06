@@ -38,19 +38,31 @@ services:
       dockerfile: ./services/airflow/Dockerfile
       context: .
 
+
+  redis:
+    image: bitnami/redis    
+    container_name: "wasstraat_redis"
+    ports:
+      - '6379:6379'
+    env_file:
+      - ./config/redis.env
+
+
+
 # Computation
   flask:
     container_name: "wasstraat_flask"
     env_file:
       - ./config/flask.env
-      - ./config/jupyter.env
       - ./config/postgres.env
       - ./config/mongo.env
+      - ./config/redis.env
     ports:
       - '5000:5000'
     depends_on:
       - postgres
       - mongo
+      - redis
 
   mongo:
     image: mongo:4.2    

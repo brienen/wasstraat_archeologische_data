@@ -64,6 +64,15 @@ try:
 
    DEBUG_TB_PROFILER_ENABLED= True if os.getenv("DEBUG_TB_PROFILER_ENABLED") == 'True' else False
 
+   CACHE_DEFAULT_TIMEOUT=os.getenv("CACHE_DEFAULT_TIMEOUT") if os.getenv("CACHE_DEFAULT_TIMEOUT") else 300
+   CACHE_KEY_PREFIX=os.getenv("CACHE_KEY_PREFIX") if os.getenv("CACHE_KEY_PREFIX") else ''
+   CACHE_REDIS_HOST=os.getenv("CACHE_REDIS_HOST")
+   CACHE_REDIS_PASSWORD=os.getenv("CACHE_REDIS_PASSWORD")   
+   REDIS_PASSWORD=os.getenv("REDIS_PASSWORD")
+   CACHE_REDIS_PORT=os.getenv("CACHE_REDIS_PORT") if os.getenv("CACHE_REDIS_PORT") else 6379
+   CACHE_REDIS_DB=os.getenv("CACHE_REDIS_DB") if os.getenv("CACHE_REDIS_DB") else 0
+
+
 except KeyError: 
    logger.error("Cannot read environment variables (ie. POSTGRES_DB, POSTGRES_USER, POSTGRES_PASSWORD) needed to connect to the database. Add them to your .env files")
 
