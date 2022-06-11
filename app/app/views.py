@@ -4,7 +4,7 @@ from flask_appbuilder import GroupByChartView, MultipleView
 from flask_appbuilder.models.group import aggregate_count
 from flask_appbuilder.models.sqla.interface import SQLAInterface
 from flask_appbuilder.models.group import aggregate_count
-from flask_appbuilder.models.sqla.filters import FilterEqual
+from flask_appbuilder.models.sqla.filters import FilterEqual, FilterGreater
 from fab_addon_geoalchemy.models import GeoSQLAInterface
 
 from app import db, appbuilder
@@ -142,7 +142,7 @@ class ArchNietFotoView(ArchFotoView):
 class ArchArtefactView(WSModelView):
     datamodel = SQLAInterface(Artefact)
     # base_permissions = ['can_add', 'can_show']
-    list_columns = ["vondst", "subnr", "artefactsoort", "datering", 'typevoorwerp']
+    list_columns = ["artefactsoort", 'typevoorwerp', "datering", "subnr", "vondst", 'aantal_fotos']
     #list_widget = ListThumbnail
     list_title = "Artefacten"
     related_views = [ArchArtefactFotoView]
@@ -160,6 +160,10 @@ class ArchArtefactView(WSModelView):
     edit_fieldsets = show_fieldsets
     add_fieldsets = util.removeFieldFromFieldset(show_fieldsets, "artefactsoort")
  
+class ArchArtefactMetFotoView(ArchArtefactView):
+    base_filters = [['aantal_fotos', FilterGreater, 0]]
+
+
 '''
 Nog niet
     groep = Column(String(200))
@@ -507,7 +511,7 @@ class ArchPutView(WSModelView):
 class ArchProjectView(WSGeoModelView):
     datamodel = GeoSQLAInterface(Project)
     # base_permissions = ['can_add', 'can_show']
-    list_columns = ["projectcd", "projectnaam", "jaar"]
+    list_columns = ["projectcd", "projectnaam", "jaar", "aantal_artefacten"]
     #related_views = [ArchPutView, ArchVondstView, ArchArtefactView]
     base_order = ("projectcd", "asc")
     list_title = "Projecten"
@@ -539,6 +543,7 @@ appbuilder.add_view(ArchVullingView,"Vullingen",icon="fa-dashboard",category="Pr
  
 #### Artefacten
 appbuilder.add_view(ArchArtefactView,"Alle Artefacten",icon="fa-dashboard",category="Artefacten")
+appbuilder.add_view(ArchArtefactMetFotoView,"Alle Artefacten met foto",icon="fa-dashboard",category="Artefacten")
 appbuilder.add_view(ArchAardewerkView,"Aardewerk",icon="fa-dashboard",category="Artefacten")
 appbuilder.add_view(ArchBouwaardewerkView,"Bouwaardewerk",icon="fa-dashboard",category="Artefacten")
 appbuilder.add_view(ArchKleipijpView,"Kleipijp",icon="fa-dashboard",category="Artefacten")

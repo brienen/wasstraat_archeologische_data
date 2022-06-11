@@ -9,6 +9,7 @@ from index import MyIndexView
 from flask_debugtoolbar import DebugToolbarExtension
 import config
 from caching import cache
+import init
 
 logging.basicConfig(format="%(asctime)s:%(levelname)s:%(name)s:%(message)s")
 logging.getLogger().setLevel(logging.INFO)
@@ -34,7 +35,8 @@ app.register_blueprint(gridfs)
 db = SQLA(app)
 appbuilder = AppBuilder(app, db.session, base_template='mybase.html', indexview=MyIndexView)
 migrate = Migrate(app, db) # this
+init.init()
 
-import models, views, route  # noqa
+import models, modelevents, views, route  # noqa
 
 

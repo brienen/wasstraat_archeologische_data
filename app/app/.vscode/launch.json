@@ -30,7 +30,7 @@
                 "FLASK_ENV": "development",
                 "FLASK_DEBUG": "1"
             },
-            "args": ["run", "--port", "5000"],
+            "args": ["run", "--port", "5000", "--host", "0.0.0.0"],
             "jinja": true
         }
     ]
