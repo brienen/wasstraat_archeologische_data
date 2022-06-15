@@ -14,6 +14,7 @@ MERGE_INHERITED_FASE = "MERGE_INHERITED_FASE"
 STAGING_COLLECTION = "STAGING_COLLECTION"
 EXTRA_FIELDS = 'extra_fields'
 GENERATE_MISSING_PIPELINES = 'GENERATE_MISSING_PIPELINES'
+ARTEFACTSOORT = 'ARTEFACTSOORT'
 
 
 aggr_key_vondst = {'$concat': [ "P", "$projectcd", 
@@ -306,7 +307,8 @@ def addToMetaLike(soort_add, soort_like):
         wasstraat_model[soort_add] = {
             STAGING_COLLECTION: wasstraat_model[soort_like][STAGING_COLLECTION],
             HARMONIZE_PIPELINES: [harmonizer.getHarmonizeAggr(soort_add)],
-            SET_KEYS_PIPELINES: set_references_pipelines
+            SET_KEYS_PIPELINES: set_references_pipelines,
+            ARTEFACTSOORT: True 
         }
         wasstraat_model[soort_add][HARMONIZE_PIPELINES][0].insert(-1, { '$addFields': {f"{soort_like}soort".lower(): soort_add, 'soort': soort_like}})
     except Exception as err:
