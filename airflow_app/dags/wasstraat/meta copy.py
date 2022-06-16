@@ -8,12 +8,12 @@ logger = logging.getLogger("airflow.task")
 
 HARMONIZE_PIPELINES = "HARMONIZE_PIPELINES"
 SET_KEYS_PIPELINES = "SET_KEYS_PIPELINES"
-MOVE_FASE = "MOVE_FASE"
-MERGE_FASE = "MERGE_FASE"
-MERGE_INHERITED_FASE = "MERGE_INHERITED_FASE"
+MOVEANDMERGE_MOVE = "MOVEANDMERGE_MOVE"
+MOVEANDMERGE_MERGE = "MOVEANDMERGE_MERGE"
+MOVEANDMERGE_INHERITED = "MOVEANDMERGE_INHERITED"
 STAGING_COLLECTION = "STAGING_COLLECTION"
 EXTRA_FIELDS = 'extra_fields'
-GENERATE_MISSING_PIPELINES = 'GENERATE_MISSING_PIPELINES'
+MOVEANDMERGE_GENERATE_MISSING_PIPELINES = 'MOVEANDMERGE_GENERATE_MISSING_PIPELINES'
 SET_HAMRONIZE = 'SET_HAMRONIZE'
 SET_SOORTLIKE = 'SET_SOORTLIKE'
 
@@ -35,7 +35,7 @@ wasstraat_model = {
             { '$addFields': {'key': { '$concat': [ "P", "$projectcd", "P", {'$toString': "$putnr"}] }}},  		
             { '$addFields': {'key_project': { '$concat': [ "P", "$projectcd"]}}}
         ]],
-        GENERATE_MISSING_PIPELINES: [[
+        MOVEANDMERGE_GENERATE_MISSING_PIPELINES: [[
             { '$match': {'putnr': { '$exists': {"$toBool": 1} }, 'projectcd': { '$exists': {"$toBool": 1} }}},
             { '$group':{'_id': {"projectcd" : "$projectcd", 'putnr': "$putnr"}}},
             { '$unwind': "$_id"},
@@ -53,7 +53,7 @@ wasstraat_model = {
             { '$addFields': {'key_project': { '$concat': [ "P", "$projectcd"]}}},
             { '$addFields': {'key_put': { '$concat': [ "P", "$projectcd", {'$concat': ["P", {'$toString': "$putnr" }]}] }}}	
         ]],
-        GENERATE_MISSING_PIPELINES: [[
+        MOVEANDMERGE_GENERATE_MISSING_PIPELINES: [[
             { '$match': {'vlaknr': { '$exists': {"$toBool": 1} }, 'projectcd': { '$exists': {"$toBool": 1} }, 'putnr': { '$exists': {"$toBool": 1} }}},
             { '$group':{'_id': {"projectcd" : "$projectcd", 'putnr': "$putnr", 'vlaknr': "$vlaknr"}}},
             { '$unwind': "$_id"},
@@ -77,7 +77,7 @@ wasstraat_model = {
             { '$addFields': {'key_vondst': aggr_key_vondst}}
 
         ]],
-        GENERATE_MISSING_PIPELINES: [[
+        MOVEANDMERGE_GENERATE_MISSING_PIPELINES: [[
             { '$match': {'vlaknr': { '$exists': {"$toBool": 1} }, 'projectcd': { '$exists': {"$toBool": 1} }, 'putnr': { '$exists': {"$toBool": 1} }, 'spoornr': { '$exists': {"$toBool": 1} }}},
             { '$group':{'_id': {'projectcd':"$projectcd", 'putnr':"$putnr", 'spoornr':"$spoornr", 'vlaknr':"$vlaknr"}, 'aard': {'$max': "$aard"}}},  
             { '$unwind': "$_id"},
@@ -181,7 +181,7 @@ wasstraat_model = {
             { '$addFields': {'key_put': { '$concat': [ "P", "$projectcd", {'$concat': ["P", {'$toString': "$putnr" }]}] }}},
             { '$addFields': {'key_project': { '$concat': [ "P", "$projectcd"]}}}
         ]],
-        GENERATE_MISSING_PIPELINES: [[
+        MOVEANDMERGE_GENERATE_MISSING_PIPELINES: [[
             { '$match': {'putnr': { '$exists': {"$toBool": 1} }, 'projectcd': { '$exists': {"$toBool": 1} }, 'vondstnr': { '$exists': {"$toBool": 1} }}},
             { '$group':{'_id': {"projectcd" : "$projectcd", 'putnr': "$putnr", 'vondstnr': "$vondstnr"}}},
             { '$unwind': "$_id"},
@@ -261,7 +261,7 @@ wasstraat_model = {
                 { '$addFields': {'key_stelling': { '$concat': [ "S", "$stelling"]}}},
                 { '$addFields': {'key_project': { '$concat': [ "P", "$projectcd"]}}}
             ]],        
-        GENERATE_MISSING_PIPELINES: [
+        MOVEANDMERGE_GENERATE_MISSING_PIPELINES: [
             [ 
                 { '$match': {'doosnr': { '$exists': {"$toBool": 1} }, 'soort': "Artefact"}},            
                 { '$group':{'_id': {"projectcd" : "$projectcd", 'doosnr': "$doosnr"}}},
@@ -358,8 +358,8 @@ def getReferenceKeysPipeline(soort):
 def getGenerateMissingPipelines(soort):
     init()
 
-    if soort in getKeys(GENERATE_MISSING_PIPELINES):
-        aggr1_lst = copy.deepcopy(wasstraat_model[soort][GENERATE_MISSING_PIPELINES])
+    if soort in getKeys(MOVEANDMERGE_GENERATE_MISSING_PIPELINES):
+        aggr1_lst = copy.deepcopy(wasstraat_model[soort][MOVEANDMERGE_GENERATE_MISSING_PIPELINES])
         aggr2 = getReferenceKeysPipeline(soort)
 
         aggrs = [aggr + aggr2 for aggr in aggr1_lst]
@@ -400,12 +400,12 @@ def getVeldnamen(soort):
 
 # SET_KEYS_PIPELINES
 def getKeys(fase):
-    if not fase in [HARMONIZE_PIPELINES, SET_KEYS_PIPELINES, MOVE_FASE, MERGE_FASE, MERGE_INHERITED_FASE, GENERATE_MISSING_PIPELINES]:
+    if not fase in [HARMONIZE_PIPELINES, SET_KEYS_PIPELINES, MOVEANDMERGE_MOVE, MOVEANDMERGE_MERGE, MOVEANDMERGE_INHERITED, MOVEANDMERGE_GENERATE_MISSING_PIPELINES]:
         raise Exception(f'Fout bij het opvragen van metadata. {fase} is een onbekend fase.')
 
     all_keys = wasstraat_model.keys()
     
-    if fase == MOVE_FASE:
+    if fase == MOVEANDMERGE_MOVE:
         set_mrg = set(harmonizer.getObjects(merge=True))
         set_inh = set(harmonizer.getObjects(inherit=True))
 
@@ -414,17 +414,17 @@ def getKeys(fase):
 
         return(list(set_keys)) 
 
-    elif fase == MERGE_FASE:
+    elif fase == MOVEANDMERGE_MERGE:
         set_mv = set(harmonizer.getObjects(merge=True))
         set_keys = set(all_keys) 
         return(list(set_keys.intersection(set_mv))) 
     
-    elif fase == MERGE_INHERITED_FASE:
+    elif fase == MOVEANDMERGE_INHERITED:
         set_mv = set(harmonizer.getObjects(inherit=True))
         set_keys = set(all_keys) 
         return(list(set_keys.intersection(set_mv))) 
-    elif fase == GENERATE_MISSING_PIPELINES:
-        key_lst = [key for key in all_keys if util.keys_exists(wasstraat_model[key], GENERATE_MISSING_PIPELINES)]
+    elif fase == MOVEANDMERGE_GENERATE_MISSING_PIPELINES:
+        key_lst = [key for key in all_keys if util.keys_exists(wasstraat_model[key], MOVEANDMERGE_GENERATE_MISSING_PIPELINES)]
         return key_lst
     elif fase == SET_KEYS_PIPELINES:
         keys = []

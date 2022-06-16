@@ -6,6 +6,7 @@ import re
 import os
 import pandas as pd
 import numpy as np
+import wasstraat.harmonizer as harmonizer
 
 # Import app code
 # Absolute imports for Hydrogen (Jupyter Kernel) compatibility
@@ -16,7 +17,14 @@ import logging
 logger = logging.getLogger("airflow.task")
 
 
-def callAggregation(collection, pipeline):   
+
+
+def harmonize(collection, strOrAggr):
+    if type(strOrAggr) == str:
+        pipeline = harmonizer.getHarmonizeAggr(str(strOrAggr)) 
+    else:
+        pipeline = strOrAggr[0]
+
     try: 
         logger.info("Calling aggregation with pipeline: " + str(pipeline))
         myclient = pymongo.MongoClient(str(config.MONGO_URI))
@@ -30,6 +38,7 @@ def callAggregation(collection, pipeline):
         raise Exception(msg) from err
     finally:
         myclient.close()
+
 
 
 ''''

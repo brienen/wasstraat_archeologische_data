@@ -1,4 +1,5 @@
 # Import the os module, for the os.walk function
+from os import urandom
 import pymongo
 import re
 import pandas as pd
@@ -24,6 +25,15 @@ def getAnalyseCleanCollection():
     return analyseDb[config.COLL_ANALYSE_CLEAN]
 
 
+def setDateringFields(doc, field):
+    datering = ut.fixDatering(doc[field])
+    if datering:
+        doc[field + '_vanaf'] = datering[0]
+        doc[field + '_tot'] = datering[1]
+        doc['datering_origineel'] = doc[field]
+        doc['datering'] = str(datering)
+    return doc
+
 
 def enhanceAllAttributes():   
     try: 
@@ -33,6 +43,8 @@ def enhanceAllAttributes():
         analyseDb = myclient[str(config.DB_ANALYSE)]
         stagingCol = stagingDb[config.COLL_PLAATJES]
         analyseCol = analyseDb[config.COLL_ANALYSE]
+
+        
 
         #loop over all docs in Collection
         #for doc in analyseCol.find({"projectcd": "MD108"}):
@@ -55,8 +67,12 @@ def enhanceAllAttributes():
                         doc['projectnaam'] = str(doc['projectnaam']).title()        
 
                 #set dates
-                if 'dateringvanaf' not in doc and 'datering' in doc:
-                    ut.fixDatering(doc)
+                if 'artefactdatering_vanaf' not in doc and 'artefactdatering' in doc:
+                    doc = setDateringFields(doc, 'artefactdatering')
+                if 'spoordatering' in doc:
+                    doc = setDateringFields(doc, 'spoordatering')
+                if 'vondstdatering' in doc:
+                    doc = setDateringFields(doc, 'vondstdatering')
 
                 #clean Functie Voorwerp
                 if 'functievoorwerp' in doc:
@@ -82,8 +98,12 @@ def enhanceAllAttributes():
                 ut.convertToInt(doc, 'jaarvanaf', True) 
                 ut.convertToInt(doc, 'jaartot', True) 
                 ut.convertToInt(doc, 'jaar', True) 
-                ut.convertToInt(doc, 'dateringvanaf', True) 
-                ut.convertToInt(doc, 'dateringtot', True) 
+                ut.convertToInt(doc, 'artefactdatering_vanaf', True) 
+                ut.convertToInt(doc, 'artefactdatering_tot', True) 
+                ut.convertToInt(doc, 'vondstdatering_vanaf', True) 
+                ut.convertToInt(doc, 'vondstdatering_tot', True) 
+                ut.convertToInt(doc, 'spoordatering_vanaf', True) 
+                ut.convertToInt(doc, 'spoodatering_tot', True) 
                 ut.convertToInt(doc, 'aantal', True) 
 
                 ut.convertToBool(doc, 'exposabel')
@@ -138,7 +158,7 @@ def extractImagedataFromFileNames():
     try:        
         col = getAnalyseCollection()
         dirs = pd.DataFrame(list(col.find({'soort': 'Foto'}, projection={'directory':1}))).dropna()['directory'].unique()
-        projs = pd.DataFrame(list(col.find({'soort': 'project'}, projection={'projectcd':1}))).dropna()['projectcd'].unique()
+        projs = pd.DataFrame(list(col.find({'soort': 'Project'}, projection={'projectcd':1}))).dropna()['projectcd'].unique()
 
         # Build dict with dirs as entry to projectcd, materiaal and fototype
         file_dict = {}

@@ -88,6 +88,7 @@ def transferToDB(objecttype, soort, table, connection):
         
         df_load = df_load[lst_intersect_columnnames]
         # df_load.fillna(sqlnull(), inplace=True) #@ Returns Error
+        logger.info(f"Transfering: {soort} with {len(df_load)} records")
         df_load.to_sql(table, con=connection, if_exists='append', index=False, dtype=dict_intersect_columns)
 
     except Exception as err:
@@ -135,6 +136,5 @@ def loadAll():
                 if table.startswith('Def_'):
                     soort = table[4:] # Remove Def_ 
                     tablename = table
-                    logger.info("Transfering: " + soort)
                     transferToDB(table, soort, tablename, connection)
         

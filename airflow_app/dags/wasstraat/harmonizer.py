@@ -4,6 +4,7 @@ import re
 import copy
 import ast
 import wasstraat.util as util
+import wasstraat.meta as meta
 
 import logging
 logger = logging.getLogger("airflow.task")
@@ -121,7 +122,11 @@ def getHarmonizeAggr(soort, reload=False):
         msg = 'Error while loading harmonizer, ' + soort + ' does not exist in Excel.'
         logger.error(msg) 
         raise Exception(msg)
-    return HARMONIZER[HARMONIZER.Object == soort]['aggr'].values[0]
+
+    aggr = HARMONIZER[HARMONIZER.Object == soort]['aggr'].values[0]
+    if soort in meta.lst_artefactsoort:
+        aggr.insert(-1, { '$addFields': {"artefactsoort": soort, 'soort': 'Artefact'}})
+    return aggr
 
 
 def getObjects(inherit=False, merge=False):

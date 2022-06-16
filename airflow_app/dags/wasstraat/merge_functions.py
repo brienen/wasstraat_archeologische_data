@@ -105,7 +105,7 @@ def getAnalyseCleanCollection():
 
 
 def moveSoort(soort):
-    if not soort in meta.getKeys(meta.MOVE_FASE):
+    if not soort in meta.getKeys(meta.MOVEANDMERGE_MOVE):
         msg = "Fout bij het aanroepen van de move aggregation. Onbekend soort:  " + soort
         logger.error(msg)    
         raise Exception(msg)
@@ -127,7 +127,7 @@ def moveSoort(soort):
 
 
 def mergeSoort(soort):
-    if not soort in meta.getKeys(meta.MOVE_FASE):
+    if not soort in meta.getKeys(meta.MOVEANDMERGE_INHERITED) and not soort in meta.getKeys(meta.MOVEANDMERGE_MERGE):
         msg = "Fout bij het aanroepen van de merge aggregation voor inherit. Onbekend soort:  " + soort
         logger.error(msg)    
         raise Exception(msg)
@@ -151,8 +151,8 @@ def mergeSoort(soort):
 
 def mergeMissing(soort):
     logger.info(f"Start ind and merge missing for {soort}")
-    if not soort in meta.getKeys(meta.GENERATE_MISSING_PIPELINES):
-        msg = f"Fout bij het aanroepen van de merge aggregation voor merge missing. Onbekend soort: {soort}. Alleen deze zijn geldig: {meta.getKeys(meta.GENERATE_MISSING_PIPELINES)}"
+    if not soort in meta.getKeys(meta.MOVEANDMERGE_GENERATE_MISSING_PIPELINES):
+        msg = f"Fout bij het aanroepen van de merge aggregation voor merge missing. Onbekend soort: {soort}. Alleen deze zijn geldig: {meta.getKeys(meta.MOVEANDMERGE_GENERATE_MISSING_PIPELINES)}"
         logger.error(msg)    
         raise Exception(msg)
 

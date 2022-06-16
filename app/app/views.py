@@ -46,13 +46,13 @@ class ArtefactLineChartView(GroupByChartView):
     definitions = [
     {
         'label': 'Datering Vanaf',
-        'group': 'dateringvanaf',
+        'group': 'datering_vanaf',
         'series': [(aggregate_count,'primary_key')],
         'group_by_label': 'Datum vanaf'
     },
     {
         'label': 'Datering Tot',
-        'group': 'dateringtot',
+        'group': 'datering_tot',
         'series': [(aggregate_count,'primary_key')],
         'group_by_label': 'Datum tot'
     }
@@ -153,8 +153,12 @@ class ArchArtefactView(WSModelView):
             {"fields": ["fotos"], "grid":6, "fulldisplay": True},        
         ]}),        
         ("Algemene Artefactvelden", {"columns": [
-            {"fields": ["origine", "dateringvanaf", "dateringtot", "datering", "conservering", "exposabel", "restauratie", "literatuur", "publicatiecode", "catalogus", "weggegooid"], "grid":6},        
+            {"fields": ["origine", "conservering", "exposabel", "restauratie", "literatuur", "publicatiecode", "catalogus", "weggegooid"], "grid":6},        
             {"fields": ["aantal", "gewicht", "afmetingen", "formaat_horizontaal", "formaat_vericaal", "compleetheid", "mai", "diversen"], "grid":6},        
+        ]}),
+        ("Datering", {"columns": [
+            {"fields": ["datering_vanaf", "datering_tot", "artefactdatering_vanaf", "artefactdatering_tot"], "grid":6},        
+            {"fields": ["vondstdatering_vanaf", "vondstdatering_tot", "spoordatering_vanaf", "spoordatering_tot"], "grid":6},        
         ]}),
     flds_migratie_info]
     edit_fieldsets = show_fieldsets
@@ -433,7 +437,7 @@ class ArchVondstView(WSModelView):
     show_fieldsets = [
         ("Projectvelden", {"fields": ["project", "put", "vlaknr", "spoor", "vondstnr"]}),
         ("inhoudvelden", {"fields": ["opmerkingen", "omstandigheden", "segment", "vaknummer"]}),
-        ("Datering", {"fields": ["dateringvanaf", "dateringtot", "datering"]}),
+        ("Datering", {"fields": ["vondstdatering_vanaf", "vondstdatering_tot"]}),
         flds_migratie_info]
     edit_fieldsets = show_fieldsets
     add_fieldsets = show_fieldsets
@@ -468,7 +472,7 @@ class ArchSpoorView(WSModelView):
         ("Stenen", {"fields": ["steenformaat", "metselverband"]}),
         ("Maten", {"fields": ["hoogte_bovenkant", "breedte_bovenkant", "lengte_bovenkant", "hoogte_onderkant", "breedte_onderkant", "diepte"]}),
         ("Andere sporen", {"fields": ["jonger_dan", "ouder_dan", "sporen_zelfde_periode"]}),
-        ("Datering", {"fields": ["dateringvanaf", "dateringtot", "datering"]}),
+        ("Datering", {"fields": ["spoordatering_vanaf", "spoordatering_tot"]}),
         flds_migratie_info
     ]
     edit_fieldsets = show_fieldsets

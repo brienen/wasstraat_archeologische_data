@@ -11,8 +11,6 @@ from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy import select, func
 from sqlalchemy.ext.hybrid import hybrid_property, hybrid_method
 from flask_appbuilder.models.mixins import ImageColumn
-from fab_addon_geoalchemy.views import GeoModelView
-from fab_addon_geoalchemy.models import GeoSQLAInterface, Geometry
 import enum
 
 from sqlalchemy_utils import observes
@@ -66,7 +64,7 @@ class Vindplaats(WasstraatModel):
 class Observation(WasstraatModel):
     id = Column(Integer, primary_key=True)
     name = Column(String(1024))
-    location = Column(Geometry(geometry_type='POINT', srid=4326))
+    #location = Column(Geometry(geometry_type='POINT', srid=4326))
 
     def __repr__(self):
         if self.name:
@@ -83,7 +81,7 @@ class Project(Model): # Inherit from Model for cannot use Abstract class Wasstra
     jaar = Column(Integer)
     toponiem = Column(String(1024))
     trefwoorden = Column(String(1024))
-    location = Column(Geometry('POINT', srid=4326), default=(52.00667, 4.35556)) # 52.00667, 4.35556.
+    #location = Column(Geometry('POINT', srid=4326), default=(52.00667, 4.35556)) # 52.00667, 4.35556.
     xcoor_rd = Column(Float)
     ycoor_rd = Column(Float)
     longitude = Column(Float)
@@ -384,35 +382,30 @@ class Artefact(WasstraatModel):
 
 
     vondstdatering_vanaf = Column(Integer, default=None, index=True)
-    @observes('vondst.vondstdatering_vanaf')  # Works only for update events, inserts and deletes via modelevents.py 
-    def vondstdatvanaf_observer(self, vondstdatering_vanaf):
-        self.vondstdatering_vanaf = vondstdatering_vanaf
+    vondstdatering_tot = Column(Integer, default=None, index=True)
+    @observes('vondst')  # Works only for update events, inserts and deletes via modelevents.py 
+    def vondst_observer(self, vondst):
+        self.vondstdatering_vanaf = vondst.vondstdatering_vanaf if vondst else None
+        self.vondstdatering_tot = vondst.vondstdatering_tot if vondst else None
+
         if not self.artefactdatering_vanaf:
             self.datering_vanaf = self.vondstdatering_vanaf
-
-    vondstdatering_tot = Column(Integer, default=None, index=True)
-    @observes('vondst.vondstdatering_tot')  # Works only for update events, inserts and deletes via modelevents.py 
-    def vondstdatatot_observer(self, vondstdatering_tot):
-        self.vondstdatering_tot = vondstdatering_tot
         if not self.artefactdatering_tot:
             self.datering_tot = self.vondstdatering_tot
 
 
-
+    spoordatering_vanaf = Column(Integer, default=None, index=True)
     spoordatering_tot = Column(Integer, default=None, index=True)
-    @observes('vondst.spoor.spoordatering_tot')  # Works only for update events, inserts and deletes via modelevents.py 
-    def spoor_observer(self, spoordatering_tot):
-        self.spoordatering_tot = spoordatering_tot
+    @observes('vondst.spoor')  # Works only for update events, inserts and deletes via modelevents.py 
+    def spoor_observer(self, spoor):
+        self.spoordatering_vanaf = spoor.spoordatering_vanaf if spoor else None
+        self.spoordatering_tot = spoor.spoordatering_tot if spoor else None
+
+        if not self.vondstdatering_vanaf and not self.artefactdatering_vanaf:
+            self.datering_vanaf = self.spoordatering_vanaf
         if not self.vondstdatering_tot and not self.artefactdatering_tot:
             self.datering_tot = self.spoordatering_tot
 
-
-    spoordatering_vanaf = Column(Integer, default=None, index=True)
-    @observes('vondst.spoor.spoordatering_vanaf')  # Works only for update events, inserts and deletes via modelevents.py 
-    def spoor_observer(self, spoordatering_vanaf):
-        self.spoordatering_vanaf = spoordatering_vanaf
-        if not self.vondstdatering_vanaf and not self.artefactdatering_vanaf:
-            self.datering_vanaf = self.spoordatering_vanaf
 
 
 

@@ -140,7 +140,7 @@ def setReferences(soort, col='analyse', key='key'):
 
 
 # returns all project where the same vondstnr is used in multiple putten
-aggr_vondstnr_not_unique = [{"$match" : {"soort" : "Vondst"}},
+aggr_vondstnr_not_unique = [ #{"$match" : {"soort" : "Vondst"}},
         {"$group" : {"_id" : {"projectcd" : "$projectcd","vondstnr" : "$vondstnr"}, "putnrs" : {"$addToSet" : "$putnr"}}},
         {"$replaceRoot" : {"newRoot" : {"_id" : 0,"projectcd" : "$_id.projectcd","aantal_put" : {"$size" : "$putnrs"}}}},
         {"$match" : {"aantal_put" : {"$gt" : 1.0}}},
@@ -159,8 +159,8 @@ def setAndVondstUniqueInProject(col='analyse'):
         lst_project = list(collection.find({'soort': 'Artefact'}).distinct('projectcd'))
         for proj in lst_project:
             try:
-                df_art = pd.DataFrame(list(collection.find({'soort': 'Artefact', 'projectcd': proj}, projection={'artefactnr':1}))).dropna()
-                unique = df_art['artefactnr'].is_unique
+                df_art = pd.DataFrame(list(collection.find({'soort': 'Artefact', 'projectcd': proj}, projection={'subnr':1}))).dropna()
+                unique = df_art['subnr'].is_unique
                 
                 project = collection.find_one({ 'soort': "Project", 'projectcd': proj })
                 project['artefactnrs_unique'] = unique
@@ -181,6 +181,10 @@ def setAndVondstUniqueInProject(col='analyse'):
         logger.error(f'Severe error while determining whether artefactnr and vondstnr are unique with message: {str(exp1)} ')
     finally:
         collection.database.client.close()
+
+def test(aggr):
+    collection = getAnalyseCollection()
+    return list(pd.DataFrame(list(collection.aggregate(aggr)))['projectcd'])
 
 
 

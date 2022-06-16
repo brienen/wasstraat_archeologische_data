@@ -1,10 +1,9 @@
-import json
-import pymongo
-import json
+import sys
 import re
 import pandas as pd
 import numpy as np
 import roman
+
 
 import logging
 logger = logging.getLogger("airflow.task")
@@ -39,44 +38,112 @@ def convertToDate(d, attr, force):
         d[attr] = pd.to_datetime(d[attr], dayfirst=True, cache=True, errors='coerce' if force else 'ignore')
         if (d[attr] is pd.NaT): 
             del d[attr] 
+
+
+
+
+def fixDatering(value):
+    import timeperiod2daterange 
+
+    try:     
+        value = str(value).replace("?", "")
+        value = value.replace('-', ',').replace("/", ",").replace("+", ",").replace("=", ",").replace(",,", ",-").replace(")", "").replace("(", "")
+        if value[0] == ',':
+            value = value.replace(',', '-', 1)
+        if value[-1] == ',':
+            value = value[:-1]
+
+        eersteDate = None
+        datset = set()
+        datlist = value.split(",")
+        for dat in datlist:
+            dat = str(dat)
+            if "LMEb" in dat:
+                datset.add(1200)
+                datset.add(1500)
+                continue
+            if "RT" in dat or 'romeins' in dat:
+                datset.add(-1200)
+                datset.add(450)
+                continue
+            if "XIV C" in dat:
+                datset.add(1450)
+                datset.add(1475)
+                continue
+                
+
+            matchObj = re.match( r'([0-9]{3,4})', dat.replace(" ", ""), re.M)
+            if matchObj:
+                datset.add(int(matchObj.group(1)))
+                eersteDate = int(matchObj.group(1)) if not eersteDate else eersteDate
+                continue
+            else:
+                matchObj = re.match( r'^([0-9]{1,2})([a-d]+)$', dat.replace(" ", ""), re.M|re.I)
+                if matchObj:
+                    intdate = int(matchObj.group(1)) * 100
+                    eersteDate = intdate if not eersteDate else eersteDate
+                    if matchObj.group(2) is not None: 
+                        kwart = str(matchObj.group(2))
+                        kwart_int_first = ord(kwart.lower()[0]) - 96
+                        kwart_int_last = ord(kwart.lower()[-1]) - 96
+                        datset.add(intdate + 25*(kwart_int_first-1))
+                        datset.add(intdate + 25*kwart_int_last)
+                        continue
+                    else:
+                        datset.add(intdate)
+                        continue
+
+
+            matchObj = re.match( r'^([IVXLCMD]+)([a-dA-D]+)?$', dat.replace(" ", ""), re.M) 
+            if matchObj:
+                try:
+                    romandate = int(roman.fromRoman(str(matchObj.group(1)))) * 100
+                    eersteDate = romandate if not eersteDate else eersteDate
+                    if matchObj.group(2) is not None: 
+                        kwart = str(matchObj.group(2))
+                        kwart_int_first = ord(kwart.lower()[0]) - 96
+                        kwart_int_last = ord(kwart.lower()[-1]) - 96
+                        datset.add(romandate + 25*(kwart_int_first-1))
+                        datset.add(romandate + 25*kwart_int_last)
+                        continue
+                    else:
+                        datset.add(romandate)
+                        continue
+
+                except Exception as err:
+                    msg = "Fout bij omzetten romeinse waarde naar getal: <" + value + ">"  +" met melding: " + str(err)
+                    logger.warning(msg)
+
+            matchObj = re.match( r'^([a-dA-D])?$', dat.replace(" ", ""), re.M) 
+            if matchObj and eersteDate:
+                try:
+                        kwart = str(matchObj.group(1))
+                        kwart_int_first = ord(kwart.lower()[0]) - 96
+                        kwart_int_last = ord(kwart.lower()[-1]) - 96
+                        datset.add(eersteDate + 25*(kwart_int_first-1))
+                        datset.add(eersteDate + 25*kwart_int_last)
+                        continue
+
+                except Exception as err:
+                    msg = "Fout bij omzetten kwarten (abcd) naar getal: <" + value + ">"  +" met melding: " + str(err)
+                    logger.warning(msg)
+
+            # If all fails try PHD-date fixer
+            phdfix = timeperiod2daterange.detection2daterange(dat)
+            if phdfix:
+                datset.add(phdfix[0] if phdfix[0] < -25 or phdfix[0] > 25 else phdfix[0] * 100)
+                datset.add(phdfix[1] if phdfix[1] < -25 or phdfix[1] > 25 else phdfix[1] * 100)
+
+                
+    except Exception as err:
+        msg = "Fout bij omzetten van datering naar tijdreeks: <" + value + ">"  +" met melding: " + str(err)
+        logger.warning(msg)
+        return None
+   
+    return (min(datset), max(datset)) if len(datset) > 0 else None
+       
+       
         
-def fixDatering(doc):
-    doc['datering_origineel'] = doc['datering']
-    doc['datering'] = str(doc['datering']).replace(" ", "").replace("?", "")
-
-    # Zo alle tijdseenheden doen volgens http://www.angelfire.com/me/ik/datering.html
-    if "LMEb" in str(doc['datering']):
-        doc['datering'] = '1250-1500'
-    if "RT" in str(doc['datering']):
-        doc['datering'] = '-1200-450'
-
-    #Eerst romeins getalnotering omzetten
-    matchObj = re.match( r'^([IVXLCMD]+)([a-e])?[-|=]?([IVXLCMD]+)?([a-e])?$', str(doc['datering']), re.M|re.I) 
-    if matchObj:
-        try:
-            doc['datering'] = str(roman.fromRoman(str(matchObj.group(1)))) 
-            if matchObj.group(2) is not None: 
-                doc['datering'] += str(matchObj.group(2))
-            if matchObj.group(3) is not None: 
-                doc['datering'] += '-' + str(roman.fromRoman(str(matchObj.group(3))))
-            if matchObj.group(4) is not None: 
-                doc['datering'] += str(matchObj.group(4))
-        except Exception as err:
-            msg = "Fout bij omzetten romeinse waarde naar getal: <" + doc['datering'] + "> bij doc met ID: <"+str(doc['_id']) +" met melding: " + str(err)
-            logError(doc, "Roman Conversion", msg, 4)
-
-    #Nu eeuwen omzetten
-    matchObj = re.match( r'(-?[0-9]{3,4})[-|=]?([0-9]{3,4})?', str(doc['datering']), re.M|re.I)
-    if matchObj:
-        doc['dateringvanaf'] = matchObj.group(1)
-        doc['dateringtot'] = matchObj.group(2)
-    else:
-        matchObj = re.match( r'^([0-9]{1,2})([a-e])?[-|=]?([0-9]{1,2})?([a-e])?$', str(doc['datering']), re.M|re.I)
-        if matchObj:
-    #        if Zet in een array [a,b,c,d] doe index * 25 en trek er bij e 100 vanaf     
-            doc['dateringvanaf'] = str(matchObj.group(1)) + "00"
-            doc['dateringtot'] = str(matchObj.group(3)) + "00"
-            doc['datering'] = str(doc['dateringvanaf']) + '-' + str(doc['dateringtot']) 
 
 
 

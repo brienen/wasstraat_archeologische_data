@@ -54,10 +54,7 @@ with DAG(
     End_cycle = DummyOperator(
         task_id='End_cycle',
     )
-    
-    tg_harmonize = tasks_transform1_harmonize.getHarmonizeTaskGroup()
     tg_enhanceAttrs = tasks_transform2_attributes.getEnhanceAttributesGroup()
-    tg_references = tasks_transform3_keys.getSetKeysTaskGroup()
 
 
     Start_cycle >> Drop_SingleStoreClean >> tg_enhanceAttrs >> End_cycle 

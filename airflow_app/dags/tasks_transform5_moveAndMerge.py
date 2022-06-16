@@ -30,9 +30,9 @@ def getMoveAndMergeTaskGroup():
         )
         Set_Index_SingleStoreClean >> middle1
 
-        obj_types = meta.getKeys(meta.MOVE_FASE)
-        obj_types.remove('Vondst') ## Fix this in meta or in harmonizet
-        obj_types.remove('Foto') ## Fix this in meta or in harmonizet
+        obj_types = meta.getKeys(meta.MOVEANDMERGE_MOVE)
+        #obj_types.remove('Vondst') ## Fix this in meta or in harmonizet
+        #obj_types.remove('Foto') ## Fix this in meta or in harmonizet
         for obj_type in obj_types:
             tsk = PythonOperator(
                 task_id=f'Move_{obj_type}',
@@ -41,7 +41,8 @@ def getMoveAndMergeTaskGroup():
             )
             Drop_SingleStoreClean >> tsk >> Set_Index_SingleStoreClean
 
-        obj_types = ['Artefact', 'Vondst'] ## Fix this in meta or in harmonizet
+        #obj_types = ['Artefact', 'Vondst'] ## Fix this in meta or in harmonizet
+        obj_types = meta.getKeys(meta.MOVEANDMERGE_MERGE)
         for obj_type in obj_types:
             tsk = PythonOperator(
                 task_id=f'Merge_{obj_type}',
@@ -56,7 +57,7 @@ def getMoveAndMergeTaskGroup():
         )
         middle1 >> MergeFotoinfo >> middle2
 
-        obj_types = meta.getKeys(meta.GENERATE_MISSING_PIPELINES)
+        obj_types = meta.getKeys(meta.MOVEANDMERGE_GENERATE_MISSING_PIPELINES)
         for obj_type in obj_types:
             tsk = PythonOperator(
                 task_id=f'Generate_Missing_{obj_type}',
