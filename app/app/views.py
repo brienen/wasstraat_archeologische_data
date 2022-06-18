@@ -14,7 +14,11 @@ from baseviews import WSModelView, WSGeoModelView
 import util as util
 
 from flask_appbuilder.actions import action
-from flask import redirect
+from flask import redirect, request, url_for
+import flask_appbuilder.hooks as hooks
+
+import logging
+logger = logging.getLogger()
 
 
 flds_migratie_info = ("Migratie-informatie", {"fields": ["soort","brondata","herkomst"],"expanded": False})
@@ -164,6 +168,26 @@ class ArchArtefactView_Abstr(WSModelView):
     edit_fieldsets = show_fieldsets
     add_fieldsets = util.removeFieldFromFieldset(show_fieldsets, "artefactsoort")
 
+    view_mapper = dict()
+    @hooks.before_request(only=["edit", "show"])
+    def Request_Handler(self):
+        '''
+        Request mappert that makes sure the detail view and update view with all details of the inherited class are shown. 
+        Necessary for inheritance.
+        '''
+        path = request.path 
+        lst_path = path[1:].split('/')
+
+        artf = db.session.query(Artefact).get(int(lst_path[2]))
+        expected_route = self.view_mapper.get(artf.artefactsoort.value)
+
+        if expected_route and str(expected_route).lower() != lst_path[0]:
+            return redirect(url_for(f'{expected_route}.{lst_path[1]}', pk=str(lst_path[2])))
+        else:
+            return None
+
+       
+
 class ArchArtefactView(ArchArtefactView_Abstr):
     datamodel = SQLAInterface(Artefact)
 
@@ -195,6 +219,7 @@ class ArchAardewerkView(ArchArtefactView_Abstr):
     show_fieldsets[len(show_fieldsets)-1:len(show_fieldsets)-1] = aardewerk_fieldset
     add_fieldsets = util.removeFieldFromFieldset(show_fieldsets, "artefactsoort")
     edit_fieldsets = show_fieldsets
+    ArchArtefactView_Abstr.view_mapper.update({DiscrArtefactsoortEnum.Aardewerk.value: 'ArchAardewerkView'})
 
 '''
 Nog niet
@@ -221,6 +246,8 @@ class ArchDierlijk_BotView(ArchArtefactView_Abstr):
     show_fieldsets[len(show_fieldsets)-1:len(show_fieldsets)-1] = aardewerk_fieldset
     add_fieldsets = util.removeFieldFromFieldset(show_fieldsets, "artefactsoort")
     edit_fieldsets = show_fieldsets
+    ArchArtefactView_Abstr.view_mapper.update({DiscrArtefactsoortEnum.Dierlijk_Bot.value: 'ArchDierlijk_BotView'})
+
 
 
 
@@ -239,6 +266,7 @@ class ArchGlasView(ArchArtefactView_Abstr):
     show_fieldsets[len(show_fieldsets)-1:len(show_fieldsets)-1] = aardewerk_fieldset
     add_fieldsets = util.removeFieldFromFieldset(show_fieldsets, "artefactsoort")
     edit_fieldsets = show_fieldsets
+    ArchArtefactView_Abstr.view_mapper.update({DiscrArtefactsoortEnum.Glas.value: 'ArchGlasView'})
 
 
 
@@ -257,6 +285,7 @@ class ArchHoutView(ArchArtefactView_Abstr):
     show_fieldsets[len(show_fieldsets)-1:len(show_fieldsets)-1] = hout_fieldset
     add_fieldsets = util.removeFieldFromFieldset(show_fieldsets, "artefactsoort")
     edit_fieldsets = show_fieldsets
+    ArchArtefactView_Abstr.view_mapper.update({DiscrArtefactsoortEnum.Hout.value: 'ArchHoutView'})
 
 
 
@@ -275,6 +304,7 @@ class ArchBouwaardewerkView(ArchArtefactView_Abstr):
     show_fieldsets[len(show_fieldsets)-1:len(show_fieldsets)-1] = Bouwaardewerk_fieldset
     add_fieldsets = util.removeFieldFromFieldset(show_fieldsets, "artefactsoort")
     edit_fieldsets = show_fieldsets
+    ArchArtefactView_Abstr.view_mapper.update({DiscrArtefactsoortEnum.Bouwaardewerk.value: 'ArchBouwaardewerkView'})
 
 
 class ArchKleipijpView(ArchArtefactView_Abstr):
@@ -288,6 +318,7 @@ class ArchKleipijpView(ArchArtefactView_Abstr):
     #show_fieldsets[len(show_fieldsets)-1:len(show_fieldsets)-1] = kleipijp_fieldset
     add_fieldsets = util.removeFieldFromFieldset(show_fieldsets, "artefactsoort")
     edit_fieldsets = show_fieldsets
+    ArchArtefactView_Abstr.view_mapper.update({DiscrArtefactsoortEnum.Kleipijp.value: 'ArchKleipijpView'})
 
 
 
@@ -306,6 +337,7 @@ class ArchLeerView(ArchArtefactView_Abstr):
     show_fieldsets[len(show_fieldsets)-1:len(show_fieldsets)-1] = leer_fieldset
     add_fieldsets = util.removeFieldFromFieldset(show_fieldsets, "artefactsoort")
     edit_fieldsets = show_fieldsets
+    ArchArtefactView_Abstr.view_mapper.update({DiscrArtefactsoortEnum.Leer.value: 'ArchLeerView'})
 
 
 class ArchMenselijk_BotView(ArchArtefactView_Abstr):
@@ -323,6 +355,7 @@ class ArchMenselijk_BotView(ArchArtefactView_Abstr):
     show_fieldsets[len(show_fieldsets)-1:len(show_fieldsets)-1] = menselijk_materiaal_fieldset
     add_fieldsets = util.removeFieldFromFieldset(show_fieldsets, "artefactsoort")
     edit_fieldsets = show_fieldsets
+    ArchArtefactView_Abstr.view_mapper.update({DiscrArtefactsoortEnum.Menselijk_Bot.value: 'ArchMenselijk_BotView'})
 
 
 
@@ -341,6 +374,7 @@ class ArchMetaalView(ArchArtefactView_Abstr):
     show_fieldsets[len(show_fieldsets)-1:len(show_fieldsets)-1] = metaal_fieldset
     add_fieldsets = util.removeFieldFromFieldset(show_fieldsets, "artefactsoort")
     edit_fieldsets = show_fieldsets
+    ArchArtefactView_Abstr.view_mapper.update({DiscrArtefactsoortEnum.Metaal.value: 'ArchMetaalView'})
 
 
 class ArchMuntView(ArchArtefactView_Abstr):
@@ -358,6 +392,7 @@ class ArchMuntView(ArchArtefactView_Abstr):
     show_fieldsets[len(show_fieldsets)-1:len(show_fieldsets)-1] = munt_fieldset
     add_fieldsets = util.removeFieldFromFieldset(show_fieldsets, "artefactsoort")
     edit_fieldsets = show_fieldsets
+    ArchArtefactView_Abstr.view_mapper.update({DiscrArtefactsoortEnum.Munt.value: 'ArchMuntView'})
 
 
 class ArchSchelpView(ArchArtefactView_Abstr):
@@ -371,6 +406,7 @@ class ArchSchelpView(ArchArtefactView_Abstr):
     #show_fieldsets[len(show_fieldsets)-1:len(show_fieldsets)-1] = schelp_fieldset
     add_fieldsets = util.removeFieldFromFieldset(show_fieldsets, "artefactsoort")
     edit_fieldsets = show_fieldsets
+    ArchArtefactView_Abstr.view_mapper.update({DiscrArtefactsoortEnum.Schelp.value: 'ArchSchelpView'})
 
 
 class ArchSteenlView(ArchArtefactView_Abstr):
@@ -388,6 +424,7 @@ class ArchSteenlView(ArchArtefactView_Abstr):
     show_fieldsets[len(show_fieldsets)-1:len(show_fieldsets)-1] = steen_fieldset
     add_fieldsets = util.removeFieldFromFieldset(show_fieldsets, "artefactsoort")
     edit_fieldsets = show_fieldsets
+    ArchArtefactView_Abstr.view_mapper.update({DiscrArtefactsoortEnum.Steen.value: 'ArchSteenlView'})
 
 
 class ArchTextielView(ArchArtefactView_Abstr):
@@ -401,6 +438,7 @@ class ArchTextielView(ArchArtefactView_Abstr):
     #show_fieldsets[len(show_fieldsets)-1:len(show_fieldsets)-1] = textiel_fieldset
     add_fieldsets = util.removeFieldFromFieldset(show_fieldsets, "artefactsoort")
     edit_fieldsets = show_fieldsets
+    ArchArtefactView_Abstr.view_mapper.update({DiscrArtefactsoortEnum.Textiel.value: 'ArchTextielView'})
 
 
 class ArchDoosView(WSModelView):

@@ -1,6 +1,6 @@
 import logging
 
-from flask import Flask
+from flask import Flask, request
 from flask_appbuilder import AppBuilder, SQLA
 from flask_migrate import Migrate
 from flask_dropzone import Dropzone
@@ -38,5 +38,12 @@ migrate = Migrate(app, db) # this
 #init.init()
 
 import models, modelevents, views, route  # noqa
+
+@app.before_request
+def before_request_callback():
+    method = request.method 
+    path = request.path 
+
+    print(f"before_request executing! {method} en path {path}")
 
 
