@@ -243,11 +243,12 @@ class Vondst(WasstraatModel):
     spoor = relationship('Spoor', backref="vondsten")
 
     def __repr__(self):
-        projectcd = self.project.projectcd if self.project else "Onbekend Project, "
-        vondstnr = (' Vondstnr ' + str(self.vondstnr)) + " " if self.vondstnr else ''
-        put = (' Put ' + str(self.put.putnr)) + " " if self.put else ''
+        projectcd = self.project.projectcd if self.project else "Onbekend Project"
+        vondstnr = ('Vondstnr ' + str(self.vondstnr)) + " " if self.vondstnr else ''
+        put = ('Put ' + str(self.put.putnr)) + " " if self.put else ''
+        omstandigheden = self.omstandigheden if self.omstandigheden else ''
 
-        return vondstnr + self.omstandigheden + put + projectcd if self.omstandigheden else ''
+        return f"{vondstnr} {omstandigheden} {put} {projectcd}"
 
 
 

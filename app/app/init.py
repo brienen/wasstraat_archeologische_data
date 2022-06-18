@@ -33,13 +33,13 @@ def init():
         session.execute(update(Artefact).values(spoordatering_vanaf=None, spoordatering_tot=None, vondstdatering_vanaf=None, vondstdatering_tot=None, datering_vanaf=None, datering_tot=None))
 
         # First set artefactdatering
-        #rs = (session.query(Artefact.primary_key, Artefact.artefactdatering_vanaf, Artefact.artefactdatering_tot)
-        #    .filter(or_(Artefact.artefactdatering_vanaf != None, Artefact.artefactdatering_tot != None))
-        #)
-        #for row in rs:
-        #    artf = session.query(Artefact).get(row[0])
-        #    artf.datering_vanaf = row[1] 
-        #    artf.datering_tot = row[2]
+        rs = (session.query(Artefact.primary_key, Artefact.artefactdatering_vanaf, Artefact.artefactdatering_tot)
+            .filter(or_(Artefact.artefactdatering_vanaf != None, Artefact.artefactdatering_tot != None))
+        )
+        for row in rs:
+            artf = session.query(Artefact).get(row[0])
+            artf.datering_vanaf = row[1] 
+            artf.datering_tot = row[2]
 
 
         # First set vondstdatering

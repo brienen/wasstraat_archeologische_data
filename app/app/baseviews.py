@@ -86,6 +86,8 @@ class WSModelView(ModelView):
     def _init_properties(self):
         """
             Init Properties with extension to be able to show columns
+
+            Extended to allow for multiple grids of columns to be shown. 
         """
         super(BaseCRUDView, self)._init_properties()
         # Reset init props
@@ -134,6 +136,10 @@ class WSModelView(ModelView):
                 self.edit_columns = [
                     x for x in list_cols if x not in self.edit_exclude_columns
                 ]
+
+
+
+
 
 
 class WSGeoModelView(GeoModelView):

@@ -139,7 +139,7 @@ class ArchNietFotoView(ArchFotoView):
 
 
 
-class ArchArtefactView(WSModelView):
+class ArchArtefactView_Abstr(WSModelView):
     datamodel = SQLAInterface(Artefact)
     # base_permissions = ['can_add', 'can_show']
     list_columns = ["artefactsoort", 'typevoorwerp', "datering", "subnr", "vondst", 'aantal_fotos']
@@ -163,8 +163,12 @@ class ArchArtefactView(WSModelView):
     flds_migratie_info]
     edit_fieldsets = show_fieldsets
     add_fieldsets = util.removeFieldFromFieldset(show_fieldsets, "artefactsoort")
- 
-class ArchArtefactMetFotoView(ArchArtefactView):
+
+class ArchArtefactView(ArchArtefactView_Abstr):
+    datamodel = SQLAInterface(Artefact)
+
+
+class ArchArtefactMetFotoView(ArchArtefactView_Abstr):
     base_filters = [['aantal_fotos', FilterGreater, 0]]
 
 
@@ -176,7 +180,7 @@ Nog niet
     plek = Column(String(200))
     vondstomstandigheden = Column(String(200))
     '''
-class ArchAardewerkView(ArchArtefactView):
+class ArchAardewerkView(ArchArtefactView_Abstr):
     datamodel = SQLAInterface(Aardewerk)
     base_filters = [['artefactsoort', FilterEqual, DiscrArtefactsoortEnum.Aardewerk.value]]
 
@@ -187,7 +191,7 @@ class ArchAardewerkView(ArchArtefactView):
             {"fields": ["bodem", "diameter", "grootste_diameter", "max_diameter", "rand", "rand_bodem", "rand_diameter", "vorm"], "grid":6},        
         ]},     
         )]
-    show_fieldsets = copy.deepcopy(ArchArtefactView.show_fieldsets)    
+    show_fieldsets = copy.deepcopy(ArchArtefactView_Abstr.show_fieldsets)    
     show_fieldsets[len(show_fieldsets)-1:len(show_fieldsets)-1] = aardewerk_fieldset
     add_fieldsets = util.removeFieldFromFieldset(show_fieldsets, "artefactsoort")
     edit_fieldsets = show_fieldsets
@@ -202,7 +206,7 @@ Nog niet
 
 '''
 
-class ArchDierlijk_BotView(ArchArtefactView):
+class ArchDierlijk_BotView(ArchArtefactView_Abstr):
     datamodel = SQLAInterface(Dierlijk_Bot)
     base_filters = [['artefactsoort', FilterEqual, DiscrArtefactsoortEnum.Dierlijk_Bot.value]]
 
@@ -213,14 +217,14 @@ class ArchDierlijk_BotView(ArchArtefactView):
             {"fields": ["lengte", "maat1", "maat2", "maat3", "maat4", "skeletdeel", "slijtage", "slijtage_onderkaaks_DP4", "slijtage_onderkaaks_M1", "slijtage_onderkaaks_M2", "slijtage_onderkaaks_M3"], "grid":6},        
         ]},     
         )]
-    show_fieldsets = copy.deepcopy(ArchArtefactView.show_fieldsets)    
+    show_fieldsets = copy.deepcopy(ArchArtefactView_Abstr.show_fieldsets)    
     show_fieldsets[len(show_fieldsets)-1:len(show_fieldsets)-1] = aardewerk_fieldset
     add_fieldsets = util.removeFieldFromFieldset(show_fieldsets, "artefactsoort")
     edit_fieldsets = show_fieldsets
 
 
 
-class ArchGlasView(ArchArtefactView):
+class ArchGlasView(ArchArtefactView_Abstr):
     datamodel = SQLAInterface(Glas)
     base_filters = [['artefactsoort', FilterEqual, DiscrArtefactsoortEnum.Glas.value]]
 
@@ -231,14 +235,14 @@ class ArchGlasView(ArchArtefactView):
             {"fields": ["diameter_bodem", "diameter_rand", "grootste", "hoogte", "percentage_rand"], "grid":6},        
         ]},     
         )]
-    show_fieldsets = copy.deepcopy(ArchArtefactView.show_fieldsets)    
+    show_fieldsets = copy.deepcopy(ArchArtefactView_Abstr.show_fieldsets)    
     show_fieldsets[len(show_fieldsets)-1:len(show_fieldsets)-1] = aardewerk_fieldset
     add_fieldsets = util.removeFieldFromFieldset(show_fieldsets, "artefactsoort")
     edit_fieldsets = show_fieldsets
 
 
 
-class ArchHoutView(ArchArtefactView):
+class ArchHoutView(ArchArtefactView_Abstr):
     datamodel = SQLAInterface(Hout)
     base_filters = [['artefactsoort', FilterEqual, DiscrArtefactsoortEnum.Hout.value]]
 
@@ -249,14 +253,14 @@ class ArchHoutView(ArchArtefactView):
             {"fields": ["C14_datering", "dendrodatering", "jaarring_bast_spint", "puntlengte", "puntvorm", "stamcode"], "grid":6},        
         ]},     
         )]
-    show_fieldsets = copy.deepcopy(ArchArtefactView.show_fieldsets)    
+    show_fieldsets = copy.deepcopy(ArchArtefactView_Abstr.show_fieldsets)    
     show_fieldsets[len(show_fieldsets)-1:len(show_fieldsets)-1] = hout_fieldset
     add_fieldsets = util.removeFieldFromFieldset(show_fieldsets, "artefactsoort")
     edit_fieldsets = show_fieldsets
 
 
 
-class ArchBouwaardewerkView(ArchArtefactView):
+class ArchBouwaardewerkView(ArchArtefactView_Abstr):
     datamodel = SQLAInterface(Bouwaardewerk)
     base_filters = [['artefactsoort', FilterEqual, DiscrArtefactsoortEnum.Bouwaardewerk.value]]
 
@@ -267,27 +271,27 @@ class ArchBouwaardewerkView(ArchArtefactView):
             {"fields": ["bodem", "diameter_bodem", "grootste_diameter", "hoogte", "oppervlakte", "past_aan", "randdiameter", "randindex", "randpercentage", "subbaksel", "type_rand", "wanddikte"], "grid":6},        
         ]},     
         )]
-    show_fieldsets = copy.deepcopy(ArchArtefactView.show_fieldsets)    
+    show_fieldsets = copy.deepcopy(ArchArtefactView_Abstr.show_fieldsets)    
     show_fieldsets[len(show_fieldsets)-1:len(show_fieldsets)-1] = Bouwaardewerk_fieldset
     add_fieldsets = util.removeFieldFromFieldset(show_fieldsets, "artefactsoort")
     edit_fieldsets = show_fieldsets
 
 
-class ArchKleipijpView(ArchArtefactView):
+class ArchKleipijpView(ArchArtefactView_Abstr):
     datamodel = SQLAInterface(Kleipijp)
     base_filters = [['artefactsoort', FilterEqual, DiscrArtefactsoortEnum.Kleipijp.value]]
 
     list_title = "Kleipijp"
     related_views = []
     kleipijp_fieldset = []
-    show_fieldsets = copy.deepcopy(ArchArtefactView.show_fieldsets)    
+    show_fieldsets = copy.deepcopy(ArchArtefactView_Abstr.show_fieldsets)    
     #show_fieldsets[len(show_fieldsets)-1:len(show_fieldsets)-1] = kleipijp_fieldset
     add_fieldsets = util.removeFieldFromFieldset(show_fieldsets, "artefactsoort")
     edit_fieldsets = show_fieldsets
 
 
 
-class ArchLeerView(ArchArtefactView):
+class ArchLeerView(ArchArtefactView_Abstr):
     datamodel = SQLAInterface(Leer)
     base_filters = [['artefactsoort', FilterEqual, DiscrArtefactsoortEnum.Leer.value]]
 
@@ -298,13 +302,13 @@ class ArchLeerView(ArchArtefactView):
             {"fields": ["beschrijving_zool", "past_aan", "sluiting", "soort_sluiting", "type_bovenleer", "verbinding", "zool", "zoolvorm"], "grid":6},        
         ]},     
         )]
-    show_fieldsets = copy.deepcopy(ArchArtefactView.show_fieldsets)    
+    show_fieldsets = copy.deepcopy(ArchArtefactView_Abstr.show_fieldsets)    
     show_fieldsets[len(show_fieldsets)-1:len(show_fieldsets)-1] = leer_fieldset
     add_fieldsets = util.removeFieldFromFieldset(show_fieldsets, "artefactsoort")
     edit_fieldsets = show_fieldsets
 
 
-class ArchMenselijk_BotView(ArchArtefactView):
+class ArchMenselijk_BotView(ArchArtefactView_Abstr):
     datamodel = SQLAInterface(Menselijk_Bot)
     base_filters = [['artefactsoort', FilterEqual, DiscrArtefactsoortEnum.Menselijk_Bot.value]]
 
@@ -315,14 +319,14 @@ class ArchMenselijk_BotView(ArchArtefactView):
             {"fields": ["breedte_kist_hoofdeinde", "breedte_kist_voeteinde", "lengte_kist", "kist_waargenomen", "primair_graf", "secundair_graf", "plaats"], "grid":6},        
         ]},     
         )]
-    show_fieldsets = copy.deepcopy(ArchArtefactView.show_fieldsets)    
+    show_fieldsets = copy.deepcopy(ArchArtefactView_Abstr.show_fieldsets)    
     show_fieldsets[len(show_fieldsets)-1:len(show_fieldsets)-1] = menselijk_materiaal_fieldset
     add_fieldsets = util.removeFieldFromFieldset(show_fieldsets, "artefactsoort")
     edit_fieldsets = show_fieldsets
 
 
 
-class ArchMetaalView(ArchArtefactView):
+class ArchMetaalView(ArchArtefactView_Abstr):
     datamodel = SQLAInterface(Metaal)
     base_filters = [['artefactsoort', FilterEqual, DiscrArtefactsoortEnum.Metaal.value]]
 
@@ -333,13 +337,13 @@ class ArchMetaalView(ArchArtefactView):
             {"fields": ["metaalsoort", "oppervlak", "percentage"], "grid":6},        
         ]},     
         )]
-    show_fieldsets = copy.deepcopy(ArchArtefactView.show_fieldsets)    
+    show_fieldsets = copy.deepcopy(ArchArtefactView_Abstr.show_fieldsets)    
     show_fieldsets[len(show_fieldsets)-1:len(show_fieldsets)-1] = metaal_fieldset
     add_fieldsets = util.removeFieldFromFieldset(show_fieldsets, "artefactsoort")
     edit_fieldsets = show_fieldsets
 
 
-class ArchMuntView(ArchArtefactView):
+class ArchMuntView(ArchArtefactView_Abstr):
     datamodel = SQLAInterface(Munt)
     base_filters = [['artefactsoort', FilterEqual, DiscrArtefactsoortEnum.Munt.value]]
 
@@ -350,26 +354,26 @@ class ArchMuntView(ArchArtefactView):
             {"fields": ["eenheid", "gelegenheid", "jaartal", "voorzijde_tekst", "keerzijde_tekst", "autoriteit", "land", "muntplaats", "muntsoort", "randschrift"], "grid":6},        
         ]},     
         )]
-    show_fieldsets = copy.deepcopy(ArchArtefactView.show_fieldsets)    
+    show_fieldsets = copy.deepcopy(ArchArtefactView_Abstr.show_fieldsets)    
     show_fieldsets[len(show_fieldsets)-1:len(show_fieldsets)-1] = munt_fieldset
     add_fieldsets = util.removeFieldFromFieldset(show_fieldsets, "artefactsoort")
     edit_fieldsets = show_fieldsets
 
 
-class ArchSchelpView(ArchArtefactView):
+class ArchSchelpView(ArchArtefactView_Abstr):
     datamodel = SQLAInterface(Schelp)
     base_filters = [['artefactsoort', FilterEqual, DiscrArtefactsoortEnum.Schelp.value]]
 
     list_title = "Schelp"
     related_views = []
     schelp_fieldset = []
-    show_fieldsets = copy.deepcopy(ArchArtefactView.show_fieldsets)    
+    show_fieldsets = copy.deepcopy(ArchArtefactView_Abstr.show_fieldsets)    
     #show_fieldsets[len(show_fieldsets)-1:len(show_fieldsets)-1] = schelp_fieldset
     add_fieldsets = util.removeFieldFromFieldset(show_fieldsets, "artefactsoort")
     edit_fieldsets = show_fieldsets
 
 
-class ArchSteenlView(ArchArtefactView):
+class ArchSteenlView(ArchArtefactView_Abstr):
     datamodel = SQLAInterface(Steen)
     base_filters = [['artefactsoort', FilterEqual, DiscrArtefactsoortEnum.Steen.value]]
 
@@ -380,20 +384,20 @@ class ArchSteenlView(ArchArtefactView):
             {"fields": ["diameter", "dikte", "grootste_diameter", "lengte", "past_aan"], "grid":6},        
         ]},     
         )]
-    show_fieldsets = copy.deepcopy(ArchArtefactView.show_fieldsets)    
+    show_fieldsets = copy.deepcopy(ArchArtefactView_Abstr.show_fieldsets)    
     show_fieldsets[len(show_fieldsets)-1:len(show_fieldsets)-1] = steen_fieldset
     add_fieldsets = util.removeFieldFromFieldset(show_fieldsets, "artefactsoort")
     edit_fieldsets = show_fieldsets
 
 
-class ArchTextielView(ArchArtefactView):
+class ArchTextielView(ArchArtefactView_Abstr):
     datamodel = SQLAInterface(Textiel)
     base_filters = [['artefactsoort', FilterEqual, DiscrArtefactsoortEnum.Textiel.value]]
 
     list_title = "Textiel"
     related_views = []
     textiel_fieldset = []
-    show_fieldsets = copy.deepcopy(ArchArtefactView.show_fieldsets)    
+    show_fieldsets = copy.deepcopy(ArchArtefactView_Abstr.show_fieldsets)    
     #show_fieldsets[len(show_fieldsets)-1:len(show_fieldsets)-1] = textiel_fieldset
     add_fieldsets = util.removeFieldFromFieldset(show_fieldsets, "artefactsoort")
     edit_fieldsets = show_fieldsets
@@ -405,7 +409,7 @@ class ArchDoosView(WSModelView):
     list_columns = ["project", "doosnr", "inhoud", 'stelling', 'vaknr', "aantalArtefacten"]
     search_exclude_columns = ['artefacten']
     base_order = ("doosnr", "asc")
-    related_views = [ArchArtefactView]
+    related_views = [ArchArtefactView_Abstr]
     list_title = "Dozen"
     show_fieldsets = [
         ("Hoofdvelden", {"fields": ["project", "doosnr", "inhoud", "aantalArtefacten"]}),

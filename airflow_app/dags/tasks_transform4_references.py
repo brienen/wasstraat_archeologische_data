@@ -15,7 +15,7 @@ def getSetReferencesTaskGroup():
         middle = DummyOperator(task_id="middle")
         last = DummyOperator(task_id="last")
 
-        obj_types = meta.getKeys(meta.MOVEANDMERGE_MOVE)
+        obj_types = meta.getKeys(meta.SET_KEYS_PIPELINES)
         for obj_type in obj_types:
             tsk = PythonOperator(
                 task_id=f'Set_PrimaryKey_{obj_type}',
@@ -25,7 +25,7 @@ def getSetReferencesTaskGroup():
             first >> tsk >> middle
 
         curr = middle
-        obj_types = meta.getKeys(meta.MOVEANDMERGE_MOVE)
+        obj_types = meta.getKeys(meta.SET_KEYS_PIPELINES)
         for obj_type in obj_types:
             tsk = PythonOperator(
                 task_id=f'Set_Reference_{obj_type}',
