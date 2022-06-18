@@ -13,3 +13,9 @@ services:
       dockerfile: ./services/flask/Dockerfile-uwsgi
       context: .
     image: wasstraat_flask-uwsgi
+    volumes:
+      #- ./examples/polymorph:/app
+      #- ./data/images:/images
+      - ./app:/app
+      # ../Flask-AppBuilder/examples/employees:/app
+

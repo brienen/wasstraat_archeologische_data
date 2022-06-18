@@ -63,7 +63,26 @@ docker tag wasstraat_airflow:latest brienen/wasstraat_airflow:$2
 docker push brienen/wasstraat_airflow:$2
 ;;
 
+backup)
+DT=$(date +"%Y-%m-%d_%H-%M-%S")
+echo "Backing up Postgres and Mongo with timestamp $DT"
+docker-compose stop flask airflow
+docker exec -u postgres -w /backup wasstraat_postgres bash -c "pg_dump -v -F t -f postgres_$DT.tar flask"
+docker exec -w /backup wasstraat_mongo bash -c "mongodump --uri mongodb://\$MONGO_INITDB_ROOT_USERNAME:\$MONGO_INITDB_ROOT_PASSWORD@localhost:27017/\$DB_STAGING?authSource=admin --out mongo_$DT"
+docker exec -w /backup wasstraat_mongo bash -c "mongodump --uri mongodb://\$MONGO_INITDB_ROOT_USERNAME:\$MONGO_INITDB_ROOT_PASSWORD@localhost:27017/\$DB_FILES?authSource=admin --out mongo_$DT"
+docker exec -w /backup wasstraat_mongo bash -c "mongodump --uri mongodb://\$MONGO_INITDB_ROOT_USERNAME:\$MONGO_INITDB_ROOT_PASSWORD@localhost:27017/\$DB_ANALYSE?authSource=admin --out mongo_$DT"
+;;
+
+restore)
+echo "Restoring Postgres and Mongo with timestamp $2"
+docker-compose stop flask airflow
+docker exec -u postgres -w /backup wasstraat_postgres bash -c "pg_restore -Ft -c -v -d flask < postgres_$2.tar"
+docker exec -w /backup wasstraat_mongo bash -c "mongorestore --drop --uri mongodb://\$MONGO_INITDB_ROOT_USERNAME:\$MONGO_INITDB_ROOT_PASSWORD@localhost:27017/?authSource=admin mongo_$2"
+;;
+
+
+
 
 *)
-echo "Sorry, onbekend commando. Gebruik: release, dev, app, acc, prod, start of stop" ;;
+echo "Sorry, onbekend commando. Gebruik: release, dev, app, acc, uwsg, meinheld, prod, start, backup, restore of stop" ;;
 esac

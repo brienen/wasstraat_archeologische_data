@@ -451,6 +451,10 @@ class Artefact(WasstraatModel):
         else:
             return ""
 
+    @hybrid_property
+    def datering(self):
+        return f"{self.datering_vanaf} - {self.datering_tot}"
+
 
     __mapper_args__ = {
         'polymorphic_on': artefactsoort,

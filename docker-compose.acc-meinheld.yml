@@ -14,3 +14,9 @@ services:
       dockerfile: ./services/flask/Dockerfile-meinheld
       context: .
     image: wasstraat_flask_meinheld
+    volumes:
+      #- ./examples/polymorph:/app
+      #- ./data/images:/images
+      - ./app:/app
+      # ../Flask-AppBuilder/examples/employees:/app
+
