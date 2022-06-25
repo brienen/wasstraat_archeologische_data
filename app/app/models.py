@@ -426,10 +426,9 @@ class Artefact(WasstraatModel):
     def __repr__(self):
         if self.project:
             projectcd = self.project.projectcd if self.project else "Onbekend Project, "
-            artefactnr = (' Artf. ' + str(self.artefactnr)) if self.artefactnr else ''
-            put = (' Put ' + str(self.putnr)) if self.putnr else ''
-            artefactsoort = (str(self.artefactsoort)) if self.artefactsoort else ''
-            return projectcd + put + artefactnr +  artefactsoort
+            subnr = str(self.subnr) if self.subnr else ''
+            artefactsoort = (str(self.artefactsoort.value)) if self.artefactsoort else ''
+            return f"{artefactsoort} {self.typevoorwerp} {subnr} {projectcd}"
         else:
             return ''
 
@@ -451,9 +450,16 @@ class Artefact(WasstraatModel):
         else:
             return ""
 
-    @hybrid_property
+    @hybrid_method
     def datering(self):
-        return f"{self.datering_vanaf} - {self.datering_tot}"
+        if self.datering_vanaf and self.datering_tot:
+            return f"{self.datering_vanaf} - {self.datering_tot}"
+        elif self.datering_vanaf:
+            return f"{self.datering_vanaf} -"
+        elif self.datering_tot:
+            return f"- {self.datering_tot}"
+        else: 
+            return ""
 
 
     __mapper_args__ = {
@@ -814,6 +820,15 @@ class Foto(WasstraatModel):
     artefact = relationship('Artefact', backref="fotos", lazy="joined")
     __table_args__ = (Index('ix_Foto_fototype_fileName', "fototype", "fileName"), )
 
+
+    def __repr__(self):
+        if self.imageThumbUUID:
+            return Markup('<a href="' + url_for('ArchFotoView.show',pk=str(self.primary_key)) +\
+             '" class="thumbnail"><img src="/gridfs/getimage/' + self.imageThumbUUID +\
+              '" alt="Photo" class="img-rounded img-responsive"></a>')
+        else:
+            return Markup('<a href="' + url_for('ArchFotoView.show',pk=str(self.primary_key)) +\
+             '" class="thumbnail"><img src="//:0" alt="Photo" class="img-responsive"></a>')
 
 
 table_foto = metadata.tables['Def_Foto']

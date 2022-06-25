@@ -1,75 +1,13 @@
 # Import the os module, for the os.walk function
-import os
 import config
-import io
- 
 import pymongo
 import gridfs
-import magic
-from PIL import Image, ExifTags
 
 # Import app code
-import wasstraat.mongoUtils as mongoUtil
+import shared.image_util as image_util
 import logging
 
 logger = logging.getLogger("airflow.task")
-
-
-
-
-
-
-def shrinkAndSaveImage(filename, size, fs, postcard=False): 
-    try:
-        image = Image.open(filename, 'r')
-        mime_type = magic.from_file(filename, mime=True)
-        
-        if hasattr(image, '_getexif'): # only present in JPEGs
-            for orientation in ExifTags.TAGS.keys(): 
-                if ExifTags.TAGS[orientation]=='Orientation':
-                    break 
-            e = image._getexif()       # returns None if no EXIF data
-            if e is not None:
-                exif=dict(e.items())
-                orientation = exif[orientation] 
-
-                if orientation == 3:   image = image.transpose(Image.ROTATE_180)
-                elif orientation == 6: image = image.transpose(Image.ROTATE_270)
-                elif orientation == 8: image = image.transpose(Image.ROTATE_90)
-
-        image.thumbnail(size, Image.Resampling.LANCZOS)
-
-        # if size of picture does not fit paste it on a blank picture
-        if postcard:
-            img_w, img_h = image.size
-
-            mode = image.mode
-            if len(mode) == 1:  # L, 1
-                new_background = (255)
-            if len(mode) == 3:  # RGB
-                new_background = (255, 255, 255)
-            if len(mode) == 4:  # RGBA, CMYK
-                new_background = (255, 255, 255, 255)
-            background = Image.new(mode, size, new_background)
-
-            bg_w, bg_h = background.size
-            offset = ((bg_w - img_w) // 2, (bg_h - img_h) // 2)
-            background.paste(image, offset)
-            image = background
-
-        width = str(size[0])
-        height = str(size[1])
-        
-        b = io.BytesIO()
-        image.save(b, "JPEG")
-        b.seek(0)
-
-        return fs.put(b, content_type=mime_type, height=height, width=width, filename=filename)
-
-    except Exception as err:
-        print(err)
-        logger.warning('Error while reszing image with message: ' + str(err))
-
 
 
 def importImages(fileList, mongo_uri, db_files, db_staging):   
@@ -82,22 +20,14 @@ def importImages(fileList, mongo_uri, db_files, db_staging):
         for filedirname in fileList:     
             logger.info('Processing and loading image file: %s' % filedirname)
 
-            filename, file_extension = os.path.splitext(filedirname)
-            if file_extension.lower() not in config.IMAGE_EXTENSIONS:
-                continue
-            dir, filename = os.path.split(filedirname)
-
-            mime_type = magic.from_file(filedirname, mime=True)
-
-            imageUUID = shrinkAndSaveImage(filedirname, config.IMAGE_SIZE_ORIGINAL, fs)
-            imageMiddleUUID = shrinkAndSaveImage(filedirname, config.IMAGE_MIDDLE_SIZE, fs)
-            imageThumbUUID = shrinkAndSaveImage(filedirname, config.IMAGE_THUMB_SIZE, fs, postcard=True)
-
-            stagingdb[config.COLL_PLAATJES].insert_one({
-                'fileName': filename, 'imageUUID': str(imageUUID), 'imageMiddleUUID': str(imageMiddleUUID), 'imageThumbUUID': str(imageThumbUUID),
-                'fileType': file_extension.lower(), 'directory': dir, 'mime_type': mime_type 
-                })  
-
+            try:
+                result = image_util.adjustAndSaveFile(filedirname, fs, stagingdb[config.COLL_PLAATJES])
+                if not result:
+                    logger.warning('Could nog load file with name: %s' % filedirname)
+            except Exception as err:
+                msg = f"Onbekende fout bij het laden van image: {filedirname} met melding {str(err)}" 
+                logger.error(msg)    
+            
     except Exception as err:
         msg = "Onbekende fout bij het laden van images: " + str(err)
         logger.error(msg)    

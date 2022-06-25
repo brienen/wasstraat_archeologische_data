@@ -77,8 +77,8 @@ class UploadView(BaseView):
 
 
                         imageUUID = shrinkAndSaveImage(f, filename, (5000,5000), fs)
-                        imageMiddleUUID = shrinkAndSaveImage(f, f.filename, app.config['IMAGE_MIDDLE_SIZE'], fs)
-                        imageThumbUUID = shrinkAndSaveImage(f, f.filename, app.config['IMAGE_THUMB_SIZE'], fs)
+                        imageMiddleUUID = shrinkAndSaveImage(f, f.filename, app.config['IMAGE_SIZE_MIDDLE'], fs)
+                        imageThumbUUID = shrinkAndSaveImage(f, f.filename, app.config['IMAGE_SIZE_THUMB'], fs)
 
                         foto.fileName = f.filename
                         foto.fileType = file_extension

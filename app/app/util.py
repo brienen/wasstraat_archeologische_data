@@ -115,8 +115,8 @@ def rotateImage(foto: Foto, degrees=90):
         image = Image.open(io.BytesIO(file_object.read()))
         image = image.rotate(degrees, expand = 1) 
         foto.imageUUID = str(putImage(fs, image, file_object.name, file_object.content_type))
-        foto.imageMiddleUUID = str(putImage(fs, image, file_object.name, file_object.content_type, size=config.IMAGE_MIDDLE_SIZE))
-        foto.imageThumbUUID = str(putImage(fs, image, file_object.name, file_object.content_type, size=config.IMAGE_THUMB_SIZE, postcard=True))
+        foto.imageMiddleUUID = str(putImage(fs, image, file_object.name, file_object.content_type, size=config.IMAGE_SIZE_MIDDLE))
+        foto.imageThumbUUID = str(putImage(fs, image, file_object.name, file_object.content_type, size=config.IMAGE_SIZE_THUMB, postcard=True))
 
         fs.delete(ObjectId(uuid_old))
         fs.delete(ObjectId(uuid_middle_old))

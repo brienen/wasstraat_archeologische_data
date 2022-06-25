@@ -194,6 +194,7 @@ class ArchArtefactView(ArchArtefactView_Abstr):
 
 class ArchArtefactMetFotoView(ArchArtefactView_Abstr):
     base_filters = [['aantal_fotos', FilterGreater, 0]]
+    list_title = "Artefacten met foto"
 
 
 '''
@@ -484,6 +485,7 @@ class ArchVondstView(WSModelView):
     edit_fieldsets = show_fieldsets
     add_fieldsets = show_fieldsets
     related_views = [ArchArtefactView]
+    search_exclude_columns = ["artefacten"] 
 
 
 
@@ -550,6 +552,8 @@ class ArchPutView(WSModelView):
     ]
     edit_fieldsets = show_fieldsets
     add_fieldsets = show_fieldsets
+    search_exclude_columns = ["artefacten", "vondsten"] 
+
 
 
 

@@ -34,6 +34,7 @@ services:
        - ./airflow_app/dags:/opt/airflow/dags
        - ./airflow_app/scripts:/opt/airflow/scripts
        - ./data/wasstraat_config:/opt/airflow/config
+       - ./shared:/opt/airflow/dags/shared/
     build: 
       dockerfile: ./services/airflow/Dockerfile
       context: .
@@ -46,7 +47,6 @@ services:
       - '6379:6379'
     env_file:
       - ./config/redis.env
-
 
 
 # Computation
@@ -87,6 +87,7 @@ services:
       - ./data/wasstraat_config:/home/jovyan/wasstraat_config/
       - ./airflow_app/dags:/opt/wasstraat/
       - ./data/input/basefiles:/home/jovyan/basefiles
+      - ./shared:/home/jovyan/shared/
     environment:
       JUPYTER_ENABLE_LAB: "yes"
     command: "start-notebook.sh --NotebookApp.token='' --NotebookApp.password=''"

@@ -16,4 +16,5 @@ services:
       #- ./examples/polymorph:/app
       #- ./data/images:/images
       - ./app:/app
+      - ./shared:/app/app/shared/
       # ../Flask-AppBuilder/examples/employees:/app

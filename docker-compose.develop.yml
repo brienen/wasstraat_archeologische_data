@@ -17,5 +17,6 @@ services:
       #- ./examples/polymorph:/app
       #- ./data/images:/images
       - ./app:/app
+      - ./shared:/app/app/shared/
 
    

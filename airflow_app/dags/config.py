@@ -92,16 +92,20 @@ LANGUAGES = {
 }
 
 # ------------------------------
-# GLOBALS FOR GENERAL APP's
+# Discarded
 # ------------------------------
 UPLOAD_FOLDER = basedir + "/app/static/uploads/"
 IMG_UPLOAD_FOLDER = basedir + "/app/static/uploads/"
 IMG_UPLOAD_URL = "/static/uploads/"
 IMG_SIZE = (300, 200, True)
 IMAGE_BIG_SIZE = (5000, 5000)
-IMAGE_THUMB_SIZE = (300, 200)
-IMAGE_MIDDLE_SIZE = (500, 500)
-IMAGE_SIZE_ORIGINAL = (5000, 5000)
+
+# ------------------------------
+# GLOBALS FOR GENERAL APP's
+# ------------------------------
+IMAGE_SIZE_THUMB = (300, 200)
+IMAGE_SIZE_MIDDLE = (750, 500)
+IMAGE_SIZE_BIGGEST = (5000, 5000)
 AUTH_TYPE = 1
 AUTH_ROLE_ADMIN = "Admin"
 AUTH_ROLE_PUBLIC = "Public"
