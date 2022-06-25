@@ -27,6 +27,7 @@ try:
    MONGO_ANALYSE_URI = (
       f"mongodb://{MONGO_INITDB_ROOT_USERNAME}:{MONGO_INITDB_ROOT_PASSWORD}@{MONGO_SERVER}/{DB_ANALYSE}"
    )
+   MONGO_MINPOOLSIZE = 50 if not os.getenv("MONGO_MINPOOLSIZE") else os.getenv("MONGO_MINPOOLSIZE")
 
    COLL_ANALYSE = os.getenv("COLL_ANALYSE")
    COLL_ANALYSE_CLEAN = os.getenv("COLL_ANALYSE_CLEAN") 
@@ -51,15 +52,30 @@ try:
    COLL_ANALYSE_PLAATSING = os.getenv("COLL_ANALYSE_PLAATSING")
    COLL_ANALYSE_VINDPLAATS = os.getenv("COLL_ANALYSE_VINDPLAATS")
 
+   FLASK_PGPASSWORD = os.getenv("FLASK_PGPASSWORD")
+   FLASK_PGUSER = os.getenv("FLASK_PGUSER")
+   FLASK_PGDATABASE = os.getenv("FLASK_PGDATABASE")
+
+   MAIL_SERVER = os.getenv("MAIL_SERVER")
+   MAIL_USE_TLS= True
+   MAIL_USERNAME = os.getenv("MAIL_USERNAME")
+   MAIL_PASSWORD = os.getenv("MAIL_PASSWORD")
+   MAIL_DEFAULT_SENDER = os.getenv("MAIL_DEFAULT_SENDER")
+
+   DEBUG_TB_PROFILER_ENABLED= True if os.getenv("DEBUG_TB_PROFILER_ENABLED") == 'True' else False
+
+   CACHE_DEFAULT_TIMEOUT=os.getenv("CACHE_DEFAULT_TIMEOUT") if os.getenv("CACHE_DEFAULT_TIMEOUT") else 300
+   CACHE_KEY_PREFIX=os.getenv("CACHE_KEY_PREFIX") if os.getenv("CACHE_KEY_PREFIX") else ''
+   CACHE_REDIS_HOST=os.getenv("CACHE_REDIS_HOST")
+   CACHE_REDIS_PASSWORD=os.getenv("CACHE_REDIS_PASSWORD")   
+   REDIS_PASSWORD=os.getenv("REDIS_PASSWORD")
+   CACHE_REDIS_PORT=os.getenv("CACHE_REDIS_PORT") if os.getenv("CACHE_REDIS_PORT") else 6379
+   CACHE_REDIS_DB=os.getenv("CACHE_REDIS_DB") if os.getenv("CACHE_REDIS_DB") else 0
+
    AIRFLOW_TEMPDIR = os.getenv("AIRFLOW_TEMPDIR")
    AIRFLOW_LOGDIR = os.getenv("AIRFLOW_LOGDIR")
    AIRFLOW_INPUTDIR = os.getenv("AIRFLOW_INPUTDIR")
    AIRFLOW_WASSTRAAT_CONFIG = os.getenv("AIRFLOW_WASSTRAAT_CONFIG") 
-
-
-   FLASK_PGPASSWORD = os.getenv("FLASK_PGPASSWORD")
-   FLASK_PGUSER = os.getenv("FLASK_PGUSER")
-   FLASK_PGDATABASE = os.getenv("FLASK_PGDATABASE")
 
 except KeyError: 
    logger.error("Cannot read environment variables (ie. POSTGRES_DB, POSTGRES_USER, POSTGRES_PASSWORD) needed to connect to the database. Add them to your .env files")
@@ -76,10 +92,6 @@ SQLALCHEMY_DATABASE_URI = f'postgresql://{FLASK_PGUSER}:{FLASK_PGPASSWORD}@postg
 SQLALCHEMY_TRACK_MODIFICATIONS = False
 # SQLALCHEMY_ECHO = True
 
-IMAGE_EXTENSIONS = [".jpg",".gif",".png",".tga"]
-
-ADDON_MANAGERS = ['fab_addon_geoalchemy.manager.GeoAlchemyManager']
-
 BABEL_DEFAULT_LOCALE = "en"
 
 LANGUAGES = {
@@ -92,7 +104,7 @@ LANGUAGES = {
 }
 
 # ------------------------------
-# Discarded
+# GLOBALS FOR GENERAL APP's
 # ------------------------------
 UPLOAD_FOLDER = basedir + "/app/static/uploads/"
 IMG_UPLOAD_FOLDER = basedir + "/app/static/uploads/"
@@ -100,16 +112,15 @@ IMG_UPLOAD_URL = "/static/uploads/"
 IMG_SIZE = (300, 200, True)
 IMAGE_BIG_SIZE = (5000, 5000)
 
-# ------------------------------
-# GLOBALS FOR GENERAL APP's
-# ------------------------------
+
+IMAGE_EXTENSIONS = [".jpg",".gif",".png",".tga"]
 IMAGE_SIZE_THUMB = (300, 200)
-IMAGE_SIZE_MIDDLE = (750, 500)
+IMAGE_SIZE_MIDDLE = (500, 500)
 IMAGE_SIZE_BIGGEST = (5000, 5000)
 AUTH_TYPE = 1
 AUTH_ROLE_ADMIN = "Admin"
 AUTH_ROLE_PUBLIC = "Public"
-APP_NAME = "Wasstraat Archeologie!"
+APP_NAME = "Wasstraat Archeologische Data"
 APP_THEME = ""  # default
 #APP_THEME = "cerulean.css"      # COOL
 # APP_THEME = "amelia.css"

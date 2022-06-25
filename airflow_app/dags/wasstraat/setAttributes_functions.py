@@ -10,7 +10,7 @@ import wasstraat.mongoUtils as mongoUtil
 
 # Import app code
 # Absolute imports for Hydrogen (Jupyter Kernel) compatibility
-import config
+import shared.config as config
 import logging
 logger = logging.getLogger("airflow.task")
 

@@ -10,7 +10,7 @@ import wasstraat.harmonizer as harmonizer
 
 # Import app code
 # Absolute imports for Hydrogen (Jupyter Kernel) compatibility
-import config
+import shared.config as config
 import wasstraat.mongoUtils as mongoUtil
 
 import logging

@@ -1,5 +1,5 @@
 from models import Project, Artefact, Foto, Spoor, Vondst
-import config
+import shared.config as config
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine, func, update
 from sqlalchemy import and_, or_

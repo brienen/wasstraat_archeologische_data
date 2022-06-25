@@ -22,7 +22,7 @@ from datetime import datetime, timedelta
 from airflow import DAG
 from airflow.operators.dummy import DummyOperator
 
-import config
+import shared.config as config
 import tasks_transform3_keys
 
 

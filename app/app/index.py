@@ -1,5 +1,5 @@
 from models import Project, Artefact
-import config
+import shared.config as config
 #import geopandas
 
 from sqlalchemy.orm import sessionmaker

@@ -7,7 +7,7 @@ from flask_dropzone import Dropzone
 from blueprints.gridfs_flask_blueprint import gridfs
 from index import MyIndexView
 from flask_debugtoolbar import DebugToolbarExtension
-import config
+import shared.config as config
 from caching import cache
 import init
 
@@ -16,7 +16,7 @@ logging.getLogger().setLevel(logging.INFO)
 
 
 app = Flask(__name__)
-app.config.from_object("config")
+app.config.from_object("shared.config")
 dropzone = Dropzone(app)
 
 app.config['CACHE_TYPE'] = 'RedisCache'

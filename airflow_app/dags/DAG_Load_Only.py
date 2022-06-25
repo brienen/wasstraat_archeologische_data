@@ -23,7 +23,7 @@ from airflow import DAG
 from airflow.operators.dummy import DummyOperator
 from airflow.operators.python import PythonOperator
 
-import config
+import shared.config as config
 #import wasstraat.loadToDatabase_functions as loadToDatabase
 
 rootDir = str(config.AIRFLOW_INPUTDIR)

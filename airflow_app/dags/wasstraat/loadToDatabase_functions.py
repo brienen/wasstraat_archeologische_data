@@ -14,7 +14,7 @@ from shapely.geometry import Point
 from sqlalchemy.sql import null as sqlnull
 from operator import itemgetter 
 
-import config
+import shared.config as config
 import logging
 logger = logging.getLogger("airflow.task")
 

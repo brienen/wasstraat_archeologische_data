@@ -1,6 +1,6 @@
 # Import installed packages
 import pymongo
-import config
+import shared.config as config
 import logging
 
 logger = logging.getLogger("airflow.task")

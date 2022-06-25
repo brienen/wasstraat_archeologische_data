@@ -10,7 +10,7 @@ from models import Foto
 from gridfs import GridFS
 from gridfs.errors import NoFile
 from bson.objectid import ObjectId
-import config
+import shared.config as config
 
 
 

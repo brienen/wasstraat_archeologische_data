@@ -1,6 +1,6 @@
 # Import the os module, for the os.walk function
 import os
-import config
+import shared.config as config
 import io
  
 import magic

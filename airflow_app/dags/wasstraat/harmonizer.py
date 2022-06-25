@@ -1,4 +1,4 @@
-import config
+import shared.config as config
 import pandas as pd
 import re
 import copy

@@ -2,7 +2,7 @@ from airflow.utils.task_group import TaskGroup
 from airflow.operators.dummy import DummyOperator
 from airflow.operators.python import PythonOperator
 
-import config
+import shared.config as config
 import wasstraat.mongoUtils as mongoUtils
 import wasstraat.meta as meta
 import wasstraat.merge_functions as merge_functions

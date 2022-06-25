@@ -1,4 +1,4 @@
-import config
+import shared.config as config
 import pymongo
 import numpy as np
 import pandas as pd

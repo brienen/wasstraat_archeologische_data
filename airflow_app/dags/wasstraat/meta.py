@@ -1,4 +1,4 @@
-import config
+import shared.config as config
 import wasstraat.harmonizer as harmonizer
 import copy
 import wasstraat.util as util

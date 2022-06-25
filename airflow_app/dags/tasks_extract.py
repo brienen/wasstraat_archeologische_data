@@ -6,7 +6,7 @@ from airflow.operators.bash import BashOperator
 from airflow.operators.dummy import DummyOperator
 from airflow.operators.python import PythonOperator
 
-import config
+import shared.config as config
 from wasstraat.image_import import importImages
 
 

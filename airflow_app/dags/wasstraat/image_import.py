@@ -1,5 +1,5 @@
 # Import the os module, for the os.walk function
-import config
+import shared.config as config
 import pymongo
 import gridfs
 

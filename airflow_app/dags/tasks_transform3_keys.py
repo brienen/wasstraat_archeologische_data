@@ -3,7 +3,7 @@ from airflow.operators.bash import BashOperator
 from airflow.operators.dummy import DummyOperator
 from airflow.operators.python import PythonOperator
 
-import config
+import shared.config as config
 import wasstraat.mongoUtils as mongoUtils
 import wasstraat.references_functions as references_functions
 import wasstraat.meta as meta

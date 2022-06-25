@@ -10,7 +10,7 @@ from bson.objectid import ObjectId
 from gridfs import GridFS
 from gridfs.errors import NoFile
 
-import config as co
+import shared.config as config
 
 
 gridfs = Blueprint('gridfs', __name__, url_prefix='/gridfs')
@@ -19,7 +19,7 @@ ALLOWED_EXTENSIONS = set(['txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'])
 #DB = MongoClient(co.MONGO_URI).Arch_Files  # DB Name
 #FS = GridFS(DB)
 
-client = MongoClient(co.MONGO_URI, minPoolSize=co.MONGO_MINPOOLSIZE)
+client = MongoClient(config.MONGO_URI, minPoolSize=config.MONGO_MINPOOLSIZE)
 
 
 def allowed_file(filename):

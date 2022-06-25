@@ -23,7 +23,7 @@ from airflow import DAG
 from airflow.operators.dummy import DummyOperator
 from airflow.operators.python import PythonOperator
 
-import config
+import shared.config as config
 import tasks_transform1_harmonize
 import wasstraat.mongoUtils as mongoUtils
 
