@@ -32,6 +32,7 @@ try:
    COLL_ANALYSE = os.getenv("COLL_ANALYSE")
    COLL_ANALYSE_CLEAN = os.getenv("COLL_ANALYSE_CLEAN") 
    COLL_PLAATJES = os.getenv("COLL_PLAATJES")
+   COLL_FILENAMES = os.getenv("COLL_FILENAMES")
 
    COLL_STAGING_METAINFO = os.getenv("COLL_STAGING_METAINFO")
    COLL_STAGING_OUD = os.getenv("COLL_STAGING_OUD")
@@ -74,7 +75,7 @@ try:
 
    AIRFLOW_TEMPDIR = os.getenv("AIRFLOW_TEMPDIR")
    AIRFLOW_LOGDIR = os.getenv("AIRFLOW_LOGDIR")
-   AIRFLOW_INPUTDIR = os.getenv("AIRFLOW_INPUTDIR")
+   AIRFLOW_INPUTDIR = os.getenv("AIRFLOW_INPUTDIR") if os.getenv("AIRFLOW_INPUTDIR") else "Niet Beschikbaar"
    AIRFLOW_WASSTRAAT_CONFIG = os.getenv("AIRFLOW_WASSTRAAT_CONFIG") 
 
 except KeyError: 
@@ -112,10 +113,10 @@ IMG_UPLOAD_URL = "/static/uploads/"
 IMG_SIZE = (300, 200, True)
 IMAGE_BIG_SIZE = (5000, 5000)
 
-
-IMAGE_EXTENSIONS = [".jpg",".gif",".png",".tga"]
+IMAGE_INPUTDIRS = [AIRFLOW_INPUTDIR + "/fotos", AIRFLOW_INPUTDIR + "/projectdatabase/digidepot_DC", AIRFLOW_INPUTDIR + "/projectdatabase/digidepot_DB"]
+IMAGE_EXTENSIONS = [".jpg",".jpeg", ".gif",".png",".tif", ".psd"]
 IMAGE_SIZE_THUMB = (300, 200)
-IMAGE_SIZE_MIDDLE = (500, 500)
+IMAGE_SIZE_MIDDLE = (1500, 1000)
 IMAGE_SIZE_BIGGEST = (5000, 5000)
 AUTH_TYPE = 1
 AUTH_ROLE_ADMIN = "Admin"

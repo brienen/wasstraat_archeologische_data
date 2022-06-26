@@ -190,11 +190,13 @@ class ArchArtefactView_Abstr(WSModelView):
 
 class ArchArtefactView(ArchArtefactView_Abstr):
     datamodel = SQLAInterface(Artefact)
+    related_views = [ArchArtefactFotoView]
 
 
 class ArchArtefactMetFotoView(ArchArtefactView_Abstr):
     base_filters = [['aantal_fotos', FilterGreater, 0]]
     list_title = "Artefacten met foto"
+    related_views = [ArchFotoView]
 
 
 '''

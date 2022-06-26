@@ -16,7 +16,7 @@ def fotoFormatter(fotos):
     i = 0
     for foto in fotos:
         indicators = indicators + f'<li data-target="#fotoCarousel" data-slide-to="{i}"{ "class=""active""" if i==0 else ""}></li>'
-        slides = slides + f'<div class="item{" active" if i==0 else ""}"><img class="d-block w-100" src="/gridfs/getimage/{foto.imageUUID}"></div>'
+        slides = slides + f'<div class="item{" active" if i==0 else ""}"><img class="d-block w-100" src="/gridfs/getimage/{foto.imageMiddleUUID}"></div>'
         i = i+1
 
     return f'''<div id="fotoCarousel" class="carousel slide" data-ride="carousel" data-interval="false">

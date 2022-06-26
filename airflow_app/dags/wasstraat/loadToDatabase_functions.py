@@ -85,8 +85,24 @@ def transferToDB(objecttype, soort, table, connection):
         
         lst = list(map(itemgetter('name', 'type'), db_columns))
         dict_intersect_columns = dict((x) for x in lst if x[0] in df_columnnames)
-        
         df_load = df_load[lst_intersect_columnnames]
+
+        # Truncate columns that are too long and set numeric values if required
+        for column in df_load.columns:
+            lst_columns = [col for col in db_columns if col['name'] == column]
+            if len(lst_columns) > 0:
+                column_def = lst_columns[0]
+            else:
+                continue
+            if 'VARCHAR' in str(column_def['type']) and column_def['type'].length:
+                df_load[column] = df_load[column].apply(lambda x: str(x)[0:column_def['type'].length] if x and str(x) != 'nan' else "")
+            if 'INTEGER' in str(column_def['type']):
+                df_load[column] = df_load[column].apply(lambda x: pd.to_numeric(x, errors='coerce', downcast='integer'))
+            if 'DOUBLE' in str(column_def['type']):
+                df_load[column] = df_load[column].apply(lambda x: pd.to_numeric(x, errors='coerce', downcast='float'))
+
+            
+
         # df_load.fillna(sqlnull(), inplace=True) #@ Returns Error
         logger.info(f"Transfering: {soort} with {len(df_load)} records")
         df_load.to_sql(table, con=connection, if_exists='append', index=False, dtype=dict_intersect_columns)

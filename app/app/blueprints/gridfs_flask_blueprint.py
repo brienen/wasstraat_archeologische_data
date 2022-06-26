@@ -32,7 +32,7 @@ def allowed_file(filename):
 @gridfs.route('/getimage/<oid>')
 def getimage(oid):
     try:
-        FS = GridFS(client[co.DB_FILES])
+        FS = GridFS(client[config.DB_FILES])
         # Convert the string to an ObjectId instance
         file_object = FS.get(ObjectId(oid))
         response = make_response(file_object.read())

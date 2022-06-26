@@ -7,7 +7,7 @@ from airflow.operators.dummy import DummyOperator
 from airflow.operators.python import PythonOperator
 
 import shared.config as config
-from wasstraat.image_import import importImages
+from wasstraat.image_import import importImages, getAndStoreImageFilenames
 
 
 
@@ -16,7 +16,7 @@ tmpDir = str(config.AIRFLOW_TEMPDIR)
 imageExtensions = str(config.IMAGE_EXTENSIONS)
 
 def getImageNamesFromDir(dir):
-    return [os.path.join(dp, f) for dp, dn, filenames in os.walk(dir) for f in filenames if os.path.splitext(f)[1].lower() in imageExtensions] 
+    return [os.path.join(dp, f) for dp, dn, filenames in os.walk(dir) for f in filenames if os.path.splitext(f)[1].lower() in config.IMAGE_EXTENSIONS] 
 
 
 def getExtractTaskGroup():
@@ -51,15 +51,20 @@ def getExtractTaskGroup():
             task_id='Extract_Data_From_DigiFotolijst',
             bash_command="${AIRFLOW_HOME}/scripts/importMDB.sh %s %s " % (rootDir + "/projectdatabase/digifotos", config.COLL_STAGING_DIGIFOTOS)
         )
-
-        big_filelist = getImageNamesFromDir(rootDir + "/fotos") + getImageNamesFromDir(rootDir + "/projectdatabase/digidepot_DC") + getImageNamesFromDir(rootDir + "/projectdatabase/digidepot_DB")
-        for i, files_list in enumerate(np.array_split(big_filelist, 10)):
+        GetAndStoreImageFilenames = PythonOperator(
+            task_id='GetAndStoreImageFilenames',
+            python_callable=getAndStoreImageFilenames,
+        )
+        first >> GetAndStoreImageFilenames
+        i=0
+        while i < 10:
             tsk = PythonOperator(
                 task_id='Extract_Data_From_Fotos_' + str(i),
                 python_callable=importImages,
-                op_kwargs={'fileList': list(files_list), 'mongo_uri': config.MONGO_URI, 'db_files': config.DB_FILES, 'db_staging': config.DB_STAGING}
+                op_kwargs={'index': i, 'of': 10}
             )
-            first >> tsk >> last
+            GetAndStoreImageFilenames >> tsk >> last
+            i += 1
         
         
         first >> [Extract_Data_From_DC, Extract_Data_From_DB, Extract_Data_From_DelfIT, Extract_Data_From_Magazijnlijst, Extract_Data_From_DigiFotolijst] >> last
