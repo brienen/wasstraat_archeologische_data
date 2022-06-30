@@ -38,6 +38,13 @@ def importImages(index, of):
         for filedirname in fileList:     
             logger.info('Processing and loading image file: %s' % filedirname)
 
+            # If file is Tif look if there is a jpg-version already. if so skip
+            filename, file_extension = os.path.splitext(filedirname)
+            if 'tif' in file_extension:
+                result = col.find_one({'filename': {"$regex": filename + ".jpg"}})
+                if result:
+                    continue 
+
             try:
                 result = image_util.adjustAndSaveFile(filedirname, fs, stagingdb[config.COLL_PLAATJES])
                 if not result:

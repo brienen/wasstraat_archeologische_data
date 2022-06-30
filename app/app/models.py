@@ -773,7 +773,7 @@ class Foto(WasstraatModel):
  
     @renders('custom')
     def photo_img(self):
-        if self.imageMiddleUUID:
+        if self.imageUUID:
             return Markup('<a href=/gridfs/getimage/' + self.imageUUID +\
              '><img src="/gridfs/getimage/' + self.imageMiddleUUID +\
               '" alt="Photo" class="img-rounded img-responsive"></a>')

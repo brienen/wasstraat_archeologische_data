@@ -14,6 +14,12 @@ def getHarmonizeTaskGroup():
         first = DummyOperator(task_id="first")
         last = DummyOperator(task_id="last")
 
+        FixProjectNames = PythonOperator(
+            task_id='FixProjectNames',
+            python_callable=harmonize_functions.fixProjectNames,
+        )
+        first >> FixProjectNames
+
         obj_types = meta.getKeys(meta.HARMONIZE_PIPELINES)
         obj_types.remove('Foto')
         for obj_type in obj_types:
@@ -22,12 +28,12 @@ def getHarmonizeTaskGroup():
                 python_callable=harmonize_functions.harmonize,
                 op_kwargs={'collection': meta.getHarmonizeStagingCollection(obj_type), 'strOrAggr': meta.getHarmonizePipelines(obj_type)}
             )
-            first >> tsk >> last
+            FixProjectNames >> tsk >> last
 
         Collect_ImageInfo = PythonOperator(
             task_id='ParseFotobestanden',
             python_callable=harmonize_functions.parseFotobestanden,
         )
-        first >> Collect_ImageInfo >> last
+        FixProjectNames >> Collect_ImageInfo >> last
         
     return tg1

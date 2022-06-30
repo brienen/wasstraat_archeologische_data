@@ -50,8 +50,12 @@ with DAG(
         task_id='Drop_Staging_Database',
         python_callable=mongoUtils.dropStaging
     )
+    Drop_Files_Database = PythonOperator(
+        task_id='Drop_Files_Database',
+        python_callable=mongoUtils.dropFileStore
+    )
     
     tg_import = tasks_extract.getExtractTaskGroup()
 
 
-    Start_Extract_only >> Drop_Staging_Database >> tg_import >> End_Extract_only
+    Start_Extract_only >> Drop_Staging_Database >> Drop_Files_Database >> tg_import >> End_Extract_only

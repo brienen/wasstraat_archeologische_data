@@ -4,13 +4,14 @@ import shared.config as config
 import io
  
 import magic
-from PIL import Image, ExifTags
+from PIL import Image, ExifTags, ImageOps
 
 # Import app code
 import logging
 logger = logging.getLogger()
 
-
+# Prevent error message when reading large files, see https://stackoverflow.com/questions/25705773/image-cropping-tool-python 
+Image.MAX_IMAGE_PIXELS = None
 
 
 def adjustImage(image: Image, size, postcard=False): 
@@ -62,43 +63,50 @@ def adjustAndSaveFile(fullfilename, fs, collection):
         if file_extension.lower() not in config.IMAGE_EXTENSIONS:
             return None
 
+        # If image is sfeerfoto then ignore to not add pictures of people
+        if 'Sfeerfoto' in fullfilename:
+            return None
+
         # First read image and make 3 versions with different sizes. And put them in a list 
         image = Image.open(fullfilename, 'r')
         mime_type = magic.from_file(fullfilename, mime=True)
+        
+        # Grayscale images need special attention for not distoring
+        lzw = False
+        if 'lzw' in filename.lower() and 'tif' in file_extension.lower():
+            image = ImageOps.grayscale(image)
+            lzw = True
 
         lst_images = []
         image_dict_big = {
-            'image': adjustImage(image, config.IMAGE_SIZE_BIGGEST),
-            'size': config.IMAGE_SIZE_BIGGEST
+            'image': adjustImage(image, config.IMAGE_SIZE_BIGGEST if not lzw else config.IMAGE_SIZE_LZW) # grayscale images can have more pixels
         }
         lst_images.append(image_dict_big)
         image_dict_med = {
-            'image': adjustImage(image, config.IMAGE_SIZE_MIDDLE, postcard=True),
-            'size': config.IMAGE_SIZE_MIDDLE
+            'image': adjustImage(image, config.IMAGE_SIZE_MIDDLE, postcard=True)
         }
         lst_images.append(image_dict_med)
         img_sml = image_dict_med['image'].copy()
         img_sml.thumbnail(config.IMAGE_SIZE_THUMB)
         image_dict_sml = {
-            'image': img_sml,
-            'size': config.IMAGE_SIZE_THUMB
+            'image': img_sml
         }
         lst_images.append(image_dict_sml)
 
         # Loop over all versions and store them in the filestore
         for img in lst_images:
-            width = str(img['size'][0])
-            height = str(img['size'][1])
+            width = str(img['image'].size[0])
+            height = str(img['image'].size[1])
         
             b = io.BytesIO()
             img['image'].save(b, "JPEG")
             b.seek(0)
 
-            img['uuid'] = fs.put(b, content_type=mime_type, height=height, width=width, filename=filename)
+            img['uuid'] = fs.put(b, content_type=mime_type, height=height, width=width, filename=filename, dir=dir, fullfilename=fullfilename)
 
         # Insert a record with metadata
         return collection.insert_one({
-            'fileName': filename, 'imageUUID': str(image_dict_big['uuid']), 'imageMiddleUUID': str(image_dict_med['uuid']), 'imageThumbUUID': str(image_dict_sml['uuid']),
+            'fileName': filename, 'fullFileName': fullfilename, 'imageUUID': str(image_dict_big['uuid']), 'imageMiddleUUID': str(image_dict_med['uuid']), 'imageThumbUUID': str(image_dict_sml['uuid']),
             'fileType': file_extension.lower(), 'directory': dir, 'mime_type': mime_type 
             }).inserted_id  
 

@@ -17,6 +17,27 @@ import logging
 logger = logging.getLogger("airflow.task")
 
 
+def fixProjectNames():
+    try: 
+        logger.info("Calling update statements to fix project codes...")
+        myclient = pymongo.MongoClient(str(config.MONGO_URI))
+        stagingdb = myclient[str(config.DB_STAGING)]
+        stagingcollection = stagingdb[config.COLL_STAGING_OUD]
+
+        stagingcollection.update_many({"mdbfile" : {"$regex" : "DC027_Voorstraat"}}, { "$set": { "project": "DC027" } })
+        stagingcollection.update_many({"mdbfile" : {"$regex" : "DC018_Nieuw"}}, { "$set": { "project": "DC018" } })
+        stagingcollection.update_many({"mdbfile" : {"$regex" : "DC024_Stadskantoor"}}, { "$set": { "project": "DC024" } })
+        stagingcollection.update_many({"mdbfile" : {"$regex" : "DC032_Hoogheem"}}, { "$set": { "project": "DC032" } })
+        stagingcollection.update_many({"mdbfile" : {"$regex" : "DC039_Schutter"}}, { "$set": { "project": "DC039" } })
+
+
+    except Exception as err:
+        msg = "Onbekende fout bij het fixen van projectcodes met melding: " + str(err)
+        logger.error(msg)    
+        raise Exception(msg) from err
+    finally:
+        myclient.close()
+
 
 
 def harmonize(collection, strOrAggr):

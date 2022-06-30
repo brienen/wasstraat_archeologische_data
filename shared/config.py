@@ -78,6 +78,12 @@ try:
    AIRFLOW_INPUTDIR = os.getenv("AIRFLOW_INPUTDIR") if os.getenv("AIRFLOW_INPUTDIR") else "Niet Beschikbaar"
    AIRFLOW_WASSTRAAT_CONFIG = os.getenv("AIRFLOW_WASSTRAAT_CONFIG") 
 
+   AIRFLOW_INPUT_PROJECTEN = os.getenv("AIRFLOW_INPUT_PROJECTEN") if os.getenv("AIRFLOW_INPUT_PROJECTEN") else "/input/projecten" 
+   AIRFLOW_INPUT_IMAGES = os.getenv("AIRFLOW_INPUT_IMAGES") if os.getenv("AIRFLOW_INPUT_IMAGES") else "/input/images"
+   AIRFLOW_INPUT_DELFIT = os.getenv("AIRFLOW_INPUT_DELFIT") if os.getenv("AIRFLOW_INPUT_DELFIT") else "/input/delfit"
+   AIRFLOW_INPUT_MAGAZIJNLIJST = os.getenv("AIRFLOW_INPUT_MAGAZIJNLIJST") if os.getenv("AIRFLOW_INPUT_MAGAZIJNLIJST") else "/input/magazijnlijst"
+   AIRFLOW_INPUT_DIGIFOTOS = os.getenv("AIRFLOW_INPUT_DIGIFOTOS") if os.getenv("AIRFLOW_INPUT_DIGIFOTOS") else "/input/digifotos"
+    
 except KeyError: 
    logger.error("Cannot read environment variables (ie. POSTGRES_DB, POSTGRES_USER, POSTGRES_PASSWORD) needed to connect to the database. Add them to your .env files")
 
@@ -117,7 +123,9 @@ IMAGE_INPUTDIRS = [AIRFLOW_INPUTDIR + "/fotos", AIRFLOW_INPUTDIR + "/projectdata
 IMAGE_EXTENSIONS = [".jpg",".jpeg", ".gif",".png",".tif", ".psd"]
 IMAGE_SIZE_THUMB = (300, 200)
 IMAGE_SIZE_MIDDLE = (1500, 1000)
-IMAGE_SIZE_BIGGEST = (5000, 5000)
+IMAGE_SIZE_BIGGEST = (7000, 7000)
+IMAGE_SIZE_LZW = (15000, 15000)
+
 AUTH_TYPE = 1
 AUTH_ROLE_ADMIN = "Admin"
 AUTH_ROLE_PUBLIC = "Public"

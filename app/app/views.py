@@ -127,10 +127,6 @@ class ArchOpgravingFotoView(ArchFotoView):
     base_filters = [['fototype', FilterEqual, 'G']]
     list_title = "Opgravingsfoto's"
 
-class ArchSfeerFotoView(ArchFotoView):
-    base_filters = [['fototype', FilterEqual, 'F']]
-    list_title = "Sfeerfoto's"
-
 class ArchArtefactFotoView(ArchFotoView):
     base_filters = [['fototype', FilterEqual, 'H']]
     list_title = "Artefactfoto's"
@@ -567,8 +563,8 @@ class ArchProjectView(WSGeoModelView):
     #related_views = [ArchPutView, ArchVondstView, ArchArtefactView]
     base_order = ("projectcd", "asc")
     list_title = "Projecten"
-    related_views = [ArchArtefactView, ArchDoosView, ArchPutView, ArchSpoorView, ArchVondstView, ArchOpgravingFotoView, ArchSfeerFotoView]
-    search_exclude_columns = ["location"] 
+    related_views = [ArchArtefactView, ArchDoosView, ArchPutView, ArchSpoorView, ArchVondstView, ArchOpgravingFotoView]
+    search_exclude_columns = ["location", "artefacten"] 
 
     show_fieldsets = [
         ("Projectvelden", {"fields": ["projectcd", "projectnaam", "jaar", "toponiem", "trefwoorden", "location"]}),
@@ -617,7 +613,6 @@ appbuilder.add_view(ArchStellingView,"Stellingen",icon="fa-dashboard",category="
 appbuilder.add_view(ArchFotoView,"Alle Foto's",icon="fa-dashboard",category="Media",)
 appbuilder.add_view(ArchArtefactFotoView,"Artefactfoto's",icon="fa-dashboard",category="Media")
 appbuilder.add_view(ArchOpgravingFotoView,"Opgravingsfoto's",icon="fa-dashboard",category="Media")
-appbuilder.add_view(ArchSfeerFotoView,"Sfeerfoto's",icon="fa-dashboard",category="Media")
 appbuilder.add_view(ArchNietFotoView,"Foto's zonder duiding",icon="fa-dashboard",category="Media")
 appbuilder.add_view(MasterView,"Mappen Foto's",icon="fa-dashboard",category="Media")
 

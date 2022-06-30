@@ -50,8 +50,8 @@ do
     	fi
 
 		echo Reading data 
-		sed -i s/$/,"$TABLE","$PROJECT",opgraving"$PROJECT","$timestamp"/ "$CSV"
-		sed -i 1s/,"$TABLE","$PROJECT",opgraving"$PROJECT","$timestamp"/,table,project,bron,loadtime/ "$CSV"
+		sed -i s/$/,"$TABLE","$PROJECT",opgraving"$PROJECT","$timestamp","${mdbfile//\//\\/}"/ "$CSV"
+		sed -i 1s/,"$TABLE","$PROJECT",opgraving"$PROJECT","$timestamp","${mdbfile//\//\\/}"/,table,project,bron,loadtime,mdbfile/ "$CSV"
 
 		# Remove Duplicate Columns https://stackoverflow.com/questions/15854720/deleting-duplicate-columns-from-csv-file
 		#awk -F, 'NR==1{for(i=1;i<=NF;i++)if(!($i in v)){ v[$i];t[i]}}{s=""; for(i=1;i<=NF;i++)if(i in t)s=s sprintf("%s,",$i);if(s){sub(/,$/,"",s);print s}} ' "$CSV"
