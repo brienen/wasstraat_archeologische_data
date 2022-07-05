@@ -27,9 +27,12 @@ shopt -s globstar
 for mdbfile in "$1"/**/*.mdb
 #for mdbfile in $FILES
 do
-	PROJECT=${mdbfile%.mdb}
-	PROJECT=${PROJECT##*\/} 
-	PROJECT=${PROJECT##*opgraving} 
+	PROJECT_R=${mdbfile#$1"/"}
+	PROJECT_L=${PROJECT_R%%/*}
+	[[ $PROJECT_L =~ ^([A-Z0-9]+).* ]] && PROJECT=${BASH_REMATCH[1]}
+	#PROJECT=${mdbfile%.mdb}
+	#PROJECT=${PROJECT##*\/} 
+	#PROJECT=${PROJECT##*opgraving} 
     echo "Processing $mdbfile file for project $PROJECT ..."
   
 

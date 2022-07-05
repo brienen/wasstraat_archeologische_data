@@ -27,15 +27,12 @@ import tasks_transform5_moveAndMerge
 import tasks_transform4_references
 
 
-rootDir = str(config.AIRFLOW_INPUTDIR)
-tmpDir = str(config.AIRFLOW_TEMPDIR)
-
 with DAG(
     dag_id='DAG_Transform_Move_And_References_Only',
     start_date=datetime(2021, 1, 1),
     schedule_interval=None,
     catchup=False,
-    dagrun_timeout=timedelta(minutes=60),
+    dagrun_timeout=timedelta(minutes=300),
     template_searchpath="/opt/airflow"
 ) as dag:
     Start_cycle = DummyOperator(

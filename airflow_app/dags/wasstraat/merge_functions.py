@@ -115,7 +115,7 @@ def moveSoort(soort):
         #Aggregate Pipelin
         collection = getAnalyseCollection()
         logger.info("Calling aggregation: " + str(aggr))
-        collection.aggregate(aggr)
+        collection.aggregate(aggr, allowDiskUse=True)
         
     except Exception as err:
         msg = "Onbekende fout bij het aanroepen van een aggregation met melding: " + str(err)
@@ -138,7 +138,7 @@ def mergeSoort(soort):
         #Aggregate Pipelin
         collection = getAnalyseCollection()
         logger.info("Calling aggregation: " + str(aggr))
-        collection.aggregate(aggr)
+        collection.aggregate(aggr, allowDiskUse=True)
         
     except Exception as err:
         msg = "Onbekende fout bij het aanroepen van een aggregation met melding: " + str(err)
@@ -165,7 +165,7 @@ def mergeMissing(soort):
 
         for aggr in aggr_lst:
             logger.info("Calling aggregation: " + str(aggr))
-            collection.aggregate(aggr)
+            collection.aggregate(aggr, allowDiskUse=True)
 
             df_gen = pd.DataFrame(list(collection.aggregate(aggr)))            
             if not df_gen.empty and 'key' in df_gen.columns:

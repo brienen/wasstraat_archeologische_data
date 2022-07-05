@@ -24,10 +24,7 @@ from airflow.operators.dummy import DummyOperator
 from airflow.operators.python import PythonOperator
 
 import shared.config as config
-#import wasstraat.loadToDatabase_functions as loadToDatabase
 
-rootDir = str(config.AIRFLOW_INPUTDIR)
-tmpDir = str(config.AIRFLOW_TEMPDIR)
 
 def loadAll():
     import wasstraat.loadToDatabase_functions as loadToDatabase
@@ -39,14 +36,13 @@ with DAG(
     start_date=datetime(2021, 1, 1),
     schedule_interval=None,
     catchup=False,
-    dagrun_timeout=timedelta(minutes=60),
+    dagrun_timeout=timedelta(minutes=300),
     template_searchpath="/opt/airflow"
 ) as dag:
     Start_cycle = DummyOperator(
         task_id='Start_cycle',
     )
 
-    #def importImages(rootDir, mongo_uri, db_files, db_staging):   
     LoadToDatabase_postgres = PythonOperator(
         task_id='LoadToDatabase_postgres',
         python_callable=loadAll

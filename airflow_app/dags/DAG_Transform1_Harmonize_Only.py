@@ -27,22 +27,19 @@ import shared.config as config
 import tasks_transform1_harmonize
 import wasstraat.mongoUtils as mongoUtils
 
-rootDir = str(config.AIRFLOW_INPUTDIR)
-tmpDir = str(config.AIRFLOW_TEMPDIR)
 
 with DAG(
     dag_id='DAG_Transform1_Harmonize_Only',
     start_date=datetime(2021, 1, 1),
     schedule_interval=None,
     catchup=False,
-    dagrun_timeout=timedelta(minutes=60),
+    dagrun_timeout=timedelta(minutes=300),
     template_searchpath="/opt/airflow"
 ) as dag:
     Start_cycle = DummyOperator(
         task_id='Start_cycle',
     )
 
-    #def importImages(rootDir, mongo_uri, db_files, db_staging):   
     Drop_SingleStore = PythonOperator(
         task_id='Drop_SingleStore',
         python_callable=mongoUtils.dropSingleStore

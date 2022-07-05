@@ -30,14 +30,19 @@ def convertToInt(d, attr, force):
 def convertToBool(d, attr):
     if attr in d:
         s = str(d[attr]).lower()
-        d[attr] = 1 if d[attr] in ['1', 'true', 'ja'] else 0
+        d[attr] = convertToBool(d[attr])
 
+def convertToBool(attr):
+    return 1 if str(attr).lower() in ['1', 'true', 'ja', 'j', 'yes', 'y'] else 0
 
 def convertToDate(d, attr, force):
     if attr in d:
-        d[attr] = pd.to_datetime(d[attr], dayfirst=True, cache=True, errors='coerce' if force else 'ignore')
+        d[attr] = convertToDate(d[attr], force)
         if (d[attr] is pd.NaT): 
             del d[attr] 
+
+def convertToDate(attr, force):
+    return pd.to_datetime(attr, dayfirst=True, cache=True, errors='coerce' if force else 'ignore')
 
 
 

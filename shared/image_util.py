@@ -1,5 +1,6 @@
 # Import the os module, for the os.walk function
 import os
+import re
 import shared.config as config
 import io
  
@@ -11,7 +12,7 @@ import logging
 logger = logging.getLogger()
 
 # Prevent error message when reading large files, see https://stackoverflow.com/questions/25705773/image-cropping-tool-python 
-Image.MAX_IMAGE_PIXELS = None
+#Image.MAX_IMAGE_PIXELS = None
 
 
 def adjustImage(image: Image, size, postcard=False): 
@@ -67,6 +68,10 @@ def adjustAndSaveFile(fullfilename, fs, collection):
         if 'Sfeerfoto' in fullfilename:
             return None
 
+        # Get projectcd
+        projectcd = fullfilename.replace(config.AIRFLOW_INPUT_IMAGES + '/','')
+        projectcd = re.search('^([A-Z0-9]+).*', projectcd).group(1)
+
         # First read image and make 3 versions with different sizes. And put them in a list 
         image = Image.open(fullfilename, 'r')
         mime_type = magic.from_file(fullfilename, mime=True)
@@ -78,12 +83,14 @@ def adjustAndSaveFile(fullfilename, fs, collection):
             lzw = True
 
         lst_images = []
+        image_dict_big = image.copy()
         image_dict_big = {
-            'image': adjustImage(image, config.IMAGE_SIZE_BIGGEST if not lzw else config.IMAGE_SIZE_LZW) # grayscale images can have more pixels
+            'image': adjustImage(image_dict_big, config.IMAGE_SIZE_BIGGEST if not lzw else config.IMAGE_SIZE_LZW) # grayscale images can have more pixels
         }
         lst_images.append(image_dict_big)
+        image_dict_med = image.copy()
         image_dict_med = {
-            'image': adjustImage(image, config.IMAGE_SIZE_MIDDLE, postcard=True)
+            'image': adjustImage(image_dict_med, config.IMAGE_SIZE_MIDDLE, postcard=True)
         }
         lst_images.append(image_dict_med)
         img_sml = image_dict_med['image'].copy()
@@ -102,12 +109,12 @@ def adjustAndSaveFile(fullfilename, fs, collection):
             img['image'].save(b, "JPEG")
             b.seek(0)
 
-            img['uuid'] = fs.put(b, content_type=mime_type, height=height, width=width, filename=filename, dir=dir, fullfilename=fullfilename)
+            img['uuid'] = fs.put(b, content_type=mime_type, height=height, width=width, filename=filename, dir=dir, fullfilename=fullfilename, projectcd=projectcd)
 
         # Insert a record with metadata
         return collection.insert_one({
             'fileName': filename, 'fullFileName': fullfilename, 'imageUUID': str(image_dict_big['uuid']), 'imageMiddleUUID': str(image_dict_med['uuid']), 'imageThumbUUID': str(image_dict_sml['uuid']),
-            'fileType': file_extension.lower(), 'directory': dir, 'mime_type': mime_type 
+            'fileType': file_extension.lower(), 'directory': dir, 'mime_type': mime_type, 'projectcd': projectcd 
             }).inserted_id  
 
     except Exception as err:

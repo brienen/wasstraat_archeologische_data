@@ -15,6 +15,7 @@ services:
     build: 
       dockerfile: ./services/postgres/Dockerfile
       context: .
+    restart: unless-stopped
 
   airflow:
     container_name: "wasstraat_airflow"
@@ -30,7 +31,15 @@ services:
       - postgres
       - mongo
     volumes:
-       - ./data/input/basefiles:/input
+      # Production settings
+       - /Volumes/Extreme SSD/Depot Projecten:/input/projecten
+       - /Volumes/Extreme SSD/Depot Projecten:/input/images
+      # Testing settings
+      # - ./data/input/basefiles/projectdatabase/digidepot:/input/projecten
+      # - ./data/input/basefiles/projectdatabase/digidepot:/input/images
+       - ./data/input/basefiles/projectdatabase/Delf-IT:/input/delfit
+       - ./data/input/basefiles/projectdatabase/magazijnlijst:/input/magazijnlijst
+       - ./data/input/basefiles/projectdatabase/digifotos:/input/digifotos
        - ./airflow_app/dags:/opt/airflow/dags
        - ./airflow_app/scripts:/opt/airflow/scripts
        - ./data/wasstraat_config:/opt/airflow/config
@@ -74,6 +83,7 @@ services:
     volumes:
       - wasstraat_mongo_volume:/data/db
       - /Users/arjen/stack/Wasstraat/backup:/backup
+    restart: unless-stopped
 
   jupyter:
     container_name: wasstraat_jupyter

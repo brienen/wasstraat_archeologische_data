@@ -4,6 +4,7 @@ import pandas as pd
 import numpy as np
 import sqlalchemy
 import wasstraat.meta as meta
+import wasstraat.archutils as ut
 
 
 from sqlalchemy.orm import sessionmaker
@@ -100,6 +101,10 @@ def transferToDB(objecttype, soort, table, connection):
                 df_load[column] = df_load[column].apply(lambda x: pd.to_numeric(x, errors='coerce', downcast='integer'))
             if 'DOUBLE' in str(column_def['type']):
                 df_load[column] = df_load[column].apply(lambda x: pd.to_numeric(x, errors='coerce', downcast='float'))
+            if 'BOOL' in str(column_def['type']):
+                df_load[column] = df_load[column].apply(lambda x: ut.convertToBool(x))
+            if 'DATE' in str(column_def['type']):
+                df_load[column] = df_load[column].apply(lambda x: ut.convertToDate(x, True))
 
             
 

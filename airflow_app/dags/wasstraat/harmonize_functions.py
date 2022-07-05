@@ -23,12 +23,16 @@ def fixProjectNames():
         myclient = pymongo.MongoClient(str(config.MONGO_URI))
         stagingdb = myclient[str(config.DB_STAGING)]
         stagingcollection = stagingdb[config.COLL_STAGING_OUD]
+        plaatjescollection = stagingdb[config.COLL_PLAATJES]
 
         stagingcollection.update_many({"mdbfile" : {"$regex" : "DC027_Voorstraat"}}, { "$set": { "project": "DC027" } })
         stagingcollection.update_many({"mdbfile" : {"$regex" : "DC018_Nieuw"}}, { "$set": { "project": "DC018" } })
         stagingcollection.update_many({"mdbfile" : {"$regex" : "DC024_Stadskantoor"}}, { "$set": { "project": "DC024" } })
         stagingcollection.update_many({"mdbfile" : {"$regex" : "DC032_Hoogheem"}}, { "$set": { "project": "DC032" } })
         stagingcollection.update_many({"mdbfile" : {"$regex" : "DC039_Schutter"}}, { "$set": { "project": "DC039" } })
+
+        stagingcollection.update_many({'project': {'$not': {"$type": 2}}}, [{ "$set": { "project": { "$toString": "$project" } } }])
+        plaatjescollection.update_many({'projectcd': {'$not': {"$type": 2}}}, [{ "$set": { "projectcd": { "$toString": "$projectcd" } } }])
 
 
     except Exception as err:

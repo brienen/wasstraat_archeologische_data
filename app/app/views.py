@@ -345,7 +345,7 @@ class ArchMenselijk_BotView(ArchArtefactView_Abstr):
 
     list_title = "Menselijk Bot"
     related_views = []
-    menselijk_materiaal_fieldset = [("Leervelden", {"columns": [
+    menselijk_materiaal_fieldset = [("Velden menselijk bot", {"columns": [
             {"fields": ["doos_delft", "doos_lumc", "linkerarm", "linkerbeen", "rechterarm", "rechterbeen", "schedel", "wervelkolom", "skeletelementen"], "grid":6},        
             {"fields": ["breedte_kist_hoofdeinde", "breedte_kist_voeteinde", "lengte_kist", "kist_waargenomen", "primair_graf", "secundair_graf", "plaats"], "grid":6},        
         ]},     

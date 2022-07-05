@@ -28,15 +28,12 @@ import tasks_extract
 import wasstraat.mongoUtils as mongoUtils
 
 
-rootDir = str(config.AIRFLOW_INPUTDIR)
-tmpDir = str(config.AIRFLOW_TEMPDIR)
-
 with DAG(
     dag_id='Extract_only',
     start_date=datetime(2021, 1, 1),
     schedule_interval=None,
     catchup=False,
-    dagrun_timeout=timedelta(minutes=60),
+    dagrun_timeout=timedelta(minutes=300),
     template_searchpath="/opt/airflow"
 ) as dag:
     Start_Extract_only = DummyOperator(
@@ -45,7 +42,6 @@ with DAG(
     End_Extract_only = DummyOperator(
         task_id='End_Extract_only',
     )
-    #def importImages(rootDir, mongo_uri, db_files, db_staging):   
     Drop_Staging_Database = PythonOperator(
         task_id='Drop_Staging_Database',
         python_callable=mongoUtils.dropStaging
