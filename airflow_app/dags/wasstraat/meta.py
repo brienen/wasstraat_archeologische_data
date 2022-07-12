@@ -241,7 +241,7 @@ wasstraat_model = {
             { '$addFields': {'key_project': { '$concat': [ "P", "$projectcd"]}}}, 
             { '$addFields': {'key_project_type': { '$concat': [ "$fototype", "P", "$projectcd"]}}}
         ]],
-        EXTRA_FIELDS: ['projectcd', 'putnr', 'vondstnr', 'artefactnr', 'fotonr', 'fototype', 'soort']
+        EXTRA_FIELDS: ['projectcd', 'putnr', 'vondstnr', 'artefactnr', 'fotonr', 'fotosoort', 'soort']
   },
   "Fotobeschrijving": {
         STAGING_COLLECTION: config.COLL_STAGING_OUD,

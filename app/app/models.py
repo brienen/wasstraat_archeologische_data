@@ -17,6 +17,8 @@ import enum
 
 from sqlalchemy_utils import observes
 
+from shared import const
+
 
 mindate = datetime.date(datetime.MINYEAR, 1, 1)
 metadata = Model.metadata
@@ -747,6 +749,16 @@ class Textiel(Artefact):
 
 
 
+
+
+class DiscrFotosoortEnum(enum.Enum): 
+    Objectfoto = const.OBJECTFOTO
+    Opgravingsfoto = const.OPGRAVINGSFOTO
+    Velddocument = const.VELDDOCUMENT
+    Overige_afbeelding = const.OVERIGE_AFBEELDING
+    Afbeelding = const.AFBEELDING
+
+
 class Foto(WasstraatModel):
     __tablename__ = 'Def_Foto'
 
@@ -761,15 +773,8 @@ class Foto(WasstraatModel):
     mime_type = Column(String(20))
     fototype = Column(String(1))
     projectcd = Column(String(12))
-    putnr = Column(Integer)
-    vondstnr = Column(Integer)
-    subnr = Column(Integer)
-    fotonr = Column(Integer)
     photo = Column(ImageColumn(size=(1500, 1000, True), thumbnail_size=(300, 200, True)))
-    materiaal = Column(String(1024))
-    omschrijving = Column(Text)
-    datum = Column(Date)
-    richting = Column(String(20))
+    fotosoort =  Column(Enum(DiscrFotosoortEnum), index=True)
  
     @renders('custom')
     def photo_img(self):
@@ -803,6 +808,49 @@ class Foto(WasstraatModel):
             return Markup('<a href="' + url_for('ArchFotoView.show',pk=str(self.primary_key)) +\
              '" class="thumbnail"><img src="//:0" alt="Photo" class="img-responsive"></a>')
 
+
+    projectID = Column(ForeignKey('Def_Project.primary_key'), index=True)
+    project = relationship('Project', backref="fotos", lazy="joined")
+    __table_args__ = (Index('ix_Foto_fototype_fileName', "fototype", "fileName"), )
+
+    __mapper_args__ = {
+        'polymorphic_on': fotosoort,
+        'polymorphic_identity': DiscrFotosoortEnum.Afbeelding
+    }
+
+    @renders('custom')
+    def koppeling(self): 
+        if self.project:
+            return Markup('<a href="' + url_for('ArchProjectView.show',pk=str(self.project.primary_key)) + '">Project: '+self.project.projectcd+'</a>')
+        else:
+            return 'Onbekend'
+
+    def __repr__(self):
+        if self.imageThumbUUID:
+            return Markup('<a href="' + url_for('ArchFotoView.show',pk=str(self.primary_key)) +\
+             '" class="thumbnail"><img src="/gridfs/getimage/' + self.imageThumbUUID +\
+              '" alt="Photo" class="img-rounded img-responsive"></a>')
+        else:
+            return Markup('<a href="' + url_for('ArchFotoView.show',pk=str(self.primary_key)) +\
+             '" class="thumbnail"><img src="//:0" alt="Photo" class="img-responsive"></a>')
+
+
+class Objectfoto(Foto):
+    __tablename__ = 'Def_Foto'
+    __table_args__ = {'extend_existing': True}
+    __mapper_args__ = {'polymorphic_identity': DiscrFotosoortEnum.Objectfoto}
+
+    putnr = Column(Integer)
+    vondstnr = Column(Integer)
+    subnr = Column(Integer)
+    fotonr = Column(Integer)
+    materiaal = Column(String(1024))
+    omschrijving = Column(Text)
+    datum = Column(Date)
+    richting = Column(String(20))
+    artefactID = Column(ForeignKey('Def_Artefact.primary_key'), index=True)
+    artefact = relationship('Artefact', backref="fotos", lazy="joined")
+
     @renders('custom')
     def koppeling(self): 
         project = self.projectcd if self.projectcd else 'Onbekend Project'
@@ -814,21 +862,23 @@ class Foto(WasstraatModel):
         else:
             return 'Onbekend'
 
-    projectID = Column(ForeignKey('Def_Project.primary_key'), index=True)
-    project = relationship('Project')
-    artefactID = Column(ForeignKey('Def_Artefact.primary_key'), index=True)
-    artefact = relationship('Artefact', backref="fotos", lazy="joined")
-    __table_args__ = (Index('ix_Foto_fototype_fileName', "fototype", "fileName"), )
+
+class Opgravingsfoto(Foto):
+    __tablename__ = 'Def_Foto'
+    __table_args__ = {'extend_existing': True}
+    __mapper_args__ = {'polymorphic_identity': DiscrFotosoortEnum.Opgravingsfoto}
+
+class Velddocument(Foto):
+    __tablename__ = 'Def_Foto'
+    __table_args__ = {'extend_existing': True}
+    __mapper_args__ = {'polymorphic_identity': DiscrFotosoortEnum.Velddocument}
+class Overige_afbeelding(Foto):
+    __tablename__ = 'Def_Foto'
+    __table_args__ = {'extend_existing': True}
+    __mapper_args__ = {'polymorphic_identity': DiscrFotosoortEnum.Overige_afbeelding}
 
 
-    def __repr__(self):
-        if self.imageThumbUUID:
-            return Markup('<a href="' + url_for('ArchFotoView.show',pk=str(self.primary_key)) +\
-             '" class="thumbnail"><img src="/gridfs/getimage/' + self.imageThumbUUID +\
-              '" alt="Photo" class="img-rounded img-responsive"></a>')
-        else:
-            return Markup('<a href="' + url_for('ArchFotoView.show',pk=str(self.primary_key)) +\
-             '" class="thumbnail"><img src="//:0" alt="Photo" class="img-responsive"></a>')
+
 
 
 table_foto = metadata.tables['Def_Foto']

@@ -11,6 +11,7 @@ import wasstraat.mongoUtils as mongoUtil
 # Import app code
 # Absolute imports for Hydrogen (Jupyter Kernel) compatibility
 import shared.config as config
+import shared.const as const
 import logging
 logger = logging.getLogger("airflow.task")
 
@@ -168,15 +169,15 @@ def extractImagedataFromFileNames():
                 if proj in re.split('/| ', dr):
                     dr_dict.update({'projectcd': proj})
             
-            if 'Object' in dr:
-                dr_dict.update({'fototype': 'H'})
+            if 'objectfoto' in dr.lower() or 'h object' in dr.lower():
+                dr_dict.update({'fotosoort': const.OBJECTFOTO})
                 dr_dict.update({'materiaal': dr.split('/')[-1]})
-            elif 'Opgravingsfoto' in dr:
-                dr_dict.update({'fototype': 'G'})
-            elif 'Sfeerfoto' in dr:
-                dr_dict.update({'fototype': 'F'})
+            elif 'opgravingsfoto' in dr.lower():
+                dr_dict.update({'fotosoort': const.OPGRAVINGSFOTO})
+            elif 'velddocument' in dr.lower():
+                dr_dict.update({'fotosoort': const.VELDDOCUMENT})
             else:
-                dr_dict.update({'fototype': 'N'})
+                dr_dict.update({'fotosoort': const.OVERIGE_AFBEELDING})
 
             file_dict.update({dr: dr_dict})
           

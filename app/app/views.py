@@ -8,7 +8,7 @@ from flask_appbuilder.models.sqla.filters import FilterEqual, FilterGreater
 from fab_addon_geoalchemy.models import GeoSQLAInterface
 
 from app import db, appbuilder
-from models import Aardewerk, Stelling, Doos, Artefact, Foto, Spoor, Project,Put, Vondst, Vlak, DiscrArtefactsoortEnum, Dierlijk_Bot, Glas, Hout, Bouwaardewerk, Kleipijp, Leer, Menselijk_Bot, Metaal, Munt, Schelp, Steen, Textiel, Vulling
+from models import Aardewerk, Stelling, Doos, Artefact, Foto, Spoor, Project,Put, Vondst, Vlak, DiscrArtefactsoortEnum, DiscrFotosoortEnum, Dierlijk_Bot, Glas, Hout, Bouwaardewerk, Kleipijp, Leer, Menselijk_Bot, Metaal, Munt, Schelp, Steen, Textiel, Vulling, Opgravingsfoto, Objectfoto, Velddocument, Overige_afbeelding
 from widgets import MediaListWidget
 from baseviews import WSModelView, WSGeoModelView
 import util as util
@@ -21,7 +21,7 @@ import logging
 logger = logging.getLogger()
 
 
-flds_migratie_info = ("Migratie-informatie", {"fields": ["soort","brondata","herkomst"],"expanded": False})
+flds_migratie_info = ("Migratie-informatie", {"fields": ["soort","brondata","uuid"],"expanded": False})
 
 class ArtefactChartView(GroupByChartView):
     datamodel = SQLAInterface(Artefact)
@@ -67,34 +67,20 @@ class ArchFotoView(WSModelView):
     datamodel = SQLAInterface(Foto)
     list_widget = MediaListWidget
     list_title = "Foto's"
-    # base_permissions = ['can_add', 'can_show']
     list_columns = ["fileName", 'koppeling', 'photo_img_thumbnail']
-    show_columns = ["project", "fototype", 'omschrijving', 'materiaal', 'richting', 'datum', "vondstnr", "subnr", "fotonr", "artefact", "fileName", 'directory', 'photo_img', 'photo']
+    show_columns = ["project", "fototype", "fileName", 'directory', 'koppeling', 'photo_img']
     add_template = 'widgets/add_photo.html'
-    #edit_form_extra_fields = {
-    #    'photo': StringField('Foto', render_kw={'readonly': True})
-    #}
-    fieldsets = [
-        ("Projectvelden", {"fields": ["project", "artefact"]}),
-        ("Fotovelden", {"fields": ["fileName", "directory", "fotonr", "fileType", 'mime_type', 'photo']}),
-        (
-            "Migratie-informatie",
-            {
-                "fields": [
-                    "imageUUID",
-                    "imageMiddleUUID",
-                    "imageThumbUUID",
-                    "soort",
-                ],
-                "expanded": False,
-            },
-        ),
-    ]
-    #show_fieldsets = fieldsets
-    edit_fieldsets = fieldsets
+    show_fieldsets = [
+        ("Projectvelden", {"columns": [
+            {"fields": ["project", "fotosoort"], "grid":6},        
+            {"fields": ["fileName", "directory", "fileType", 'mime_type'], "grid":6},        
+        ]}),        
+        ("Foto", {"fields": ["photo_img"], "grid":12, "fulldisplay": True}),
+        flds_migratie_info]
     base_order = ('fileName','asc')
-    search_exclude_columns = ['artefact']
- 
+
+
+
     @action("5linkskantelen", "Kantelen Linksom", "Geselecteerde foto's linksom kantelen?", "fa-rocket")
     def linkskantelen(self, items):
         if isinstance(items, list):
@@ -122,19 +108,62 @@ class ArchFotoView(WSModelView):
         return redirect(self.get_redirect())
 
 
+    view_mapper = dict()
+    @hooks.before_request(only=["edit", "show"])
+    def Request_Handler(self):
+        '''
+        Request mappert that makes sure the detail view and update view with all details of the inherited class are shown. 
+        Necessary for inheritance.
+        '''
+        path = request.path 
+        lst_path = path[1:].split('/')
+
+        foto = db.session.query(Foto).get(int(lst_path[2]))
+        expected_route = self.view_mapper.get(foto.fotosoort.value)
+
+        if expected_route and str(expected_route).lower() != lst_path[0]:
+            return redirect(url_for(f'{expected_route}.{lst_path[1]}', pk=str(lst_path[2])))
+        else:
+            return None
+
 
 class ArchOpgravingFotoView(ArchFotoView):
-    base_filters = [['fototype', FilterEqual, 'G']]
+    datamodel = SQLAInterface(Opgravingsfoto)
+    base_filters = [['fotosoort', FilterEqual, DiscrFotosoortEnum.Opgravingsfoto.value]]
     list_title = "Opgravingsfoto's"
+    ArchFotoView.view_mapper.update({DiscrFotosoortEnum.Opgravingsfoto.value: 'ArchOpgravingFotoView'})
 
-class ArchArtefactFotoView(ArchFotoView):
-    base_filters = [['fototype', FilterEqual, 'H']]
+class ArchObjectFotoView(ArchFotoView):
+    datamodel = SQLAInterface(Objectfoto)
+    base_filters = [['fotosoort', FilterEqual, DiscrFotosoortEnum.Objectfoto.value]]
     list_title = "Artefactfoto's"
+    search_exclude_columns = ['artefact']
+    show_columns = ["project", "fototype", 'omschrijving', 'materiaal', 'richting', 'datum', "vondstnr", "subnr", "fotonr", "artefact", "fileName", 'directory', 'photo_img']
+    show_fieldsets = [
+        ("Projectvelden", {"columns": [
+            {"fields": ["project", "fotosoort", 'omschrijving', 'materiaal', 'richting', 'datum', "vondstnr", "subnr", "fotonr", "artefact"], "grid":6},        
+            {"fields": ["fileName", "directory", "fileType", 'mime_type'], "grid":6},        
+        ]}),        
+        ("Foto", {"fields": ["photo_img"], "grid":12, "fulldisplay": True}),
+        flds_migratie_info]
 
-class ArchNietFotoView(ArchFotoView):
-    base_filters = [['fototype', FilterEqual, 'N']]
-    list_title = "Foto's zonder duiding"
+    ArchFotoView.view_mapper.update({DiscrFotosoortEnum.Objectfoto.value: 'ArchObjectFotoView'})
+    #edit_fieldsets = show_fieldsets
+    #add_fieldsets = util.removeFieldFromFieldset(show_fieldsets, "fotosoort")
 
+
+class ArchVelddocumentView(ArchFotoView):
+    datamodel = SQLAInterface(Velddocument)
+    base_filters = [['fotosoort', FilterEqual, DiscrFotosoortEnum.Velddocument.value]]
+    list_title = "Velddocumenten"
+    ArchFotoView.view_mapper.update({DiscrFotosoortEnum.Velddocument.value: 'ArchVelddocumentView'})
+
+
+class ArchOverigeAfbeeldingenView(ArchFotoView):
+    datamodel = SQLAInterface(Overige_afbeelding)
+    base_filters = [['fotosoort', FilterEqual, DiscrFotosoortEnum.Overige_afbeelding.value]]
+    list_title = "Overige Afbeeldingen"
+    ArchFotoView.view_mapper.update({DiscrFotosoortEnum.Overige_afbeelding.value: 'ArchOverigeAfbeeldingenView'})
 
 
 
@@ -145,7 +174,7 @@ class ArchArtefactView_Abstr(WSModelView):
     list_columns = ["artefactsoort", 'typevoorwerp', "datering", "subnr", "vondst", 'aantal_fotos']
     #list_widget = ListThumbnail
     list_title = "Artefacten"
-    related_views = [ArchArtefactFotoView]
+    related_views = [ArchObjectFotoView]
     search_exclude_columns = ['vondst', 'fotos', 'doos']
     show_fieldsets = [
         ("Projectvelden", {"columns": [
@@ -186,7 +215,7 @@ class ArchArtefactView_Abstr(WSModelView):
 
 class ArchArtefactView(ArchArtefactView_Abstr):
     datamodel = SQLAInterface(Artefact)
-    related_views = [ArchArtefactFotoView]
+    related_views = [ArchFotoView]
 
 
 class ArchArtefactMetFotoView(ArchArtefactView_Abstr):
@@ -563,8 +592,8 @@ class ArchProjectView(WSGeoModelView):
     #related_views = [ArchPutView, ArchVondstView, ArchArtefactView]
     base_order = ("projectcd", "asc")
     list_title = "Projecten"
-    related_views = [ArchArtefactView, ArchDoosView, ArchPutView, ArchSpoorView, ArchVondstView, ArchOpgravingFotoView]
-    search_exclude_columns = ["location", "artefacten"] 
+    related_views = [ArchArtefactView, ArchDoosView, ArchPutView, ArchSpoorView, ArchVondstView, ArchOpgravingFotoView, ArchVelddocumentView, ArchObjectFotoView, ArchOverigeAfbeeldingenView]
+    search_exclude_columns = ["location", "artefacten", "fotos"] 
 
     show_fieldsets = [
         ("Projectvelden", {"fields": ["projectcd", "projectnaam", "jaar", "toponiem", "trefwoorden", "location"]}),
@@ -576,7 +605,7 @@ class ArchProjectView(WSGeoModelView):
 
 class MasterView(MultipleView):
     #datamodel = SQLAInterface(Artefact)
-    views = [ArchArtefactView, ArchNietFotoView]
+    views = [ArchArtefactView]
 
 
 
@@ -610,10 +639,14 @@ appbuilder.add_view(ArchHoutView,"Hout",icon="fa-dashboard",category="Artefacten
 #### Depot
 appbuilder.add_view(ArchDoosView, "Dozen", icon="fa-dashboard",category="Depot",)
 appbuilder.add_view(ArchStellingView,"Stellingen",icon="fa-dashboard",category="Depot",)
+
+
+#### Media
 appbuilder.add_view(ArchFotoView,"Alle Foto's",icon="fa-dashboard",category="Media",)
-appbuilder.add_view(ArchArtefactFotoView,"Artefactfoto's",icon="fa-dashboard",category="Media")
+appbuilder.add_view(ArchObjectFotoView,"Artefactfoto's",icon="fa-dashboard",category="Media")
 appbuilder.add_view(ArchOpgravingFotoView,"Opgravingsfoto's",icon="fa-dashboard",category="Media")
-appbuilder.add_view(ArchNietFotoView,"Foto's zonder duiding",icon="fa-dashboard",category="Media")
+appbuilder.add_view(ArchVelddocumentView,"Velddocumenten",icon="fa-dashboard",category="Media")
+appbuilder.add_view(ArchOverigeAfbeeldingenView,"Overige Afbeeldingen",icon="fa-dashboard",category="Media")
 appbuilder.add_view(MasterView,"Mappen Foto's",icon="fa-dashboard",category="Media")
 
 appbuilder.add_view(ArtefactChartView,"Telling Artefacten",icon="fa-dashboard",category="Statistieken")

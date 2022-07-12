@@ -36,7 +36,7 @@ with DAG(
     start_date=datetime(2021, 1, 1),
     schedule_interval=None,
     catchup=False,
-    dagrun_timeout=timedelta(minutes=300),
+    dagrun_timeout=timedelta(minutes=480),
     template_searchpath="/opt/airflow"
 ) as dag:
     first = DummyOperator(
