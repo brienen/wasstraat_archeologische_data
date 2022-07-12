@@ -13,7 +13,7 @@ RUN mkdir extra
 USER airflow
 RUN pip install --upgrade pip
 RUN pip install psycopg2-binary
-RUN pip install matplotlib altair shapely geopandas raven passlib[bcrypt] tenacity pymongo pillow-simd python-magic roman pandas opentelemetry-api openpyxl geoalchemy2 simplejson nltk editdistance
+RUN pip install matplotlib altair shapely geopandas raven passlib[bcrypt] tenacity pymongo pillow python-magic roman pandas opentelemetry-api openpyxl geoalchemy2 simplejson nltk editdistance
 RUN mkdir tmp
 # COPY SQL SCRIPT
 COPY scripts/airflow/check_init.sql ./extra/check_init.sql
