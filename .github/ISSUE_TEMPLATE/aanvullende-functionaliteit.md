@@ -2,7 +2,7 @@
 name: Aanvullende Functionaliteit
 about: Suggest an idea for this project
 title: ''
-labels: ''
+labels: bug
 assignees: ''
 
 ---
