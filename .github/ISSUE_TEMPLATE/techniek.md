@@ -2,7 +2,7 @@
 name: Techniek
 about: Technische zaken die al dan niet geregeld moeten worden
 title: ''
-labels: ''
+labels: techniek
 assignees: ''
 
 ---
