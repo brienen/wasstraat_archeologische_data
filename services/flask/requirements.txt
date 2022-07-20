@@ -1,0 +1,21 @@
+###### Requirements without Version Specifiers ######
+redis 
+flask_caching 
+flask_dropzone 
+python-magic 
+geopandas 
+pandas 
+numpy 
+folium 
+flask-appbuilder 
+pillow 
+Flask-Migrate 
+psycopg2-binary 
+pymongo 
+sqlacodegen 
+flask_debugtoolbar 
+pandas_datareader 
+geoalchemy2 
+typing_extensions
+
+###### Requirements with Version Specifiers ######

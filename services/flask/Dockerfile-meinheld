@@ -2,7 +2,8 @@ FROM tiangolo/meinheld-gunicorn-flask:python3.8
 
 RUN apt-get update && apt-get -y upgrade && apt-get clean
 RUN pip install --upgrade --no-cache-dir pip
-RUN pip install --no-cache-dir redis flask_caching flask_dropzone python-magic geopandas pandas numpy folium flask-appbuilder pillow Flask-Migrate psycopg2-binary pymongo sqlacodegen flask_debugtoolbar pandas_datareader geoalchemy2 typing_extensions
+COPY ./services/flask/requirements.txt /tmp/requirements.txt
+RUN pip install --no-cache-dir -r /tmp/requirements.txt
 
 # Fix for Github: https://github.com/tiangolo/meinheld-gunicorn-docker/issues/22 Error: class uri 'egg:meinheld#gunicorn_worker' invalid or not found #22
 RUN pip install  --no-cache-dir greenlet==0.4.16

@@ -3,6 +3,7 @@ from flask import Flask, request, redirect, url_for, make_response, abort, Bluep
 #from werkzeug import secure_filename
 from werkzeug.utils import secure_filename
 from werkzeug.datastructures import  FileStorage
+from werkzeug import Response
 
 from pymongo import MongoClient
 from bson.objectid import ObjectId
@@ -34,10 +35,9 @@ def getimage(oid):
     try:
         FS = GridFS(client[config.DB_FILES])
         # Convert the string to an ObjectId instance
-        file_object = FS.get(ObjectId(oid))
-        response = make_response(file_object.read())
-        response.mimetype = file_object.content_type
-        return response
+        #file_object = FS.get(ObjectId(oid))
+        file = FS.get(ObjectId(oid))
+        return Response(file, mimetype=file.content_type, direct_passthrough=True)
     except NoFile:
         abort(404)
 

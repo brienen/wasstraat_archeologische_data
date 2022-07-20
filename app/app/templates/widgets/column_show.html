@@ -12,10 +12,20 @@
                 <div class="table-responsive">
                     <table class="table table-bordered">
                     {% for item in fieldset_item[1].get('fields') %}
-                        <tr>
-                        <th class="col-lg-2 col-md-2 col-sm-2">{{label_columns.get(item)}}</th>
-                        <td><span style="white-space: pre-line">{{value_columns[include_columns.index(item)] if value_columns[include_columns.index(item)] is not none else ''}}</span></td>
-                        </tr>
+                        {% if fieldset_item[1].get('fulldisplay') == True %}
+                            {% set fulldisplay = True %}
+                        {% else %}
+                            {% set fulldisplay = False %}
+                        {% endif %}
+                        {% set v = value_columns[include_columns.index(item)] if value_columns[include_columns.index(item)] is not none else ''%}
+                        {% if fulldisplay %}
+                            {{formatter(v) if formatter else v}}
+                        {% else %}
+                            <tr>
+                            <th class="col-lg-2 col-md-2 col-sm-2">{{label_columns.get(item)}}</th>
+                            <td><span style="white-space: pre-line">{{value_columns[include_columns.index(item)] if value_columns[include_columns.index(item)] is not none else ''}}</span></td>
+                            </tr>
+                        {% endif %}
                     {% endfor %}
                     </table></div>
                 {% else %}

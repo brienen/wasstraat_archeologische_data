@@ -792,7 +792,7 @@ class Foto(WasstraatModel):
         if self.imageMiddleUUID:
             return Markup('<a href="' + url_for('ArchFotoView.show',pk=str(self.primary_key)) +\
              '"><img src="/gridfs/getimage/' + self.imageMiddleUUID +\
-              '" alt="Photo" class="img-rounded img-responsive" style="max-height:70vh"></a>')
+              '" alt="Photo" class="img-rounded img-responsive" style="max-height:50vh"></a>')
         else:
             return Markup('<a href="' + url_for('ArchFotoView.show',pk=str(self.primary_key)) +\
              '" class="thumbnail"><img src="//:0" alt="Photo" class="img-responsive"></a>')

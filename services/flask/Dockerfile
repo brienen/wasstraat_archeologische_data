@@ -20,7 +20,10 @@ RUN apt-get install -y libmagic-dev
 #ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
 RUN pip install --upgrade --no-cache-dir pip
-RUN pip install --no-cache-dir redis flask_caching gunicorn gevent psycogreen flask_dropzone python-magic geopandas pandas numpy folium flask-appbuilder pillow Flask-Migrate psycopg2-binary pymongo sqlacodegen flask_debugtoolbar pandas_datareader geoalchemy2 typing_extensions
+RUN pip install --no-cache-dir gunicorn gevent psycogreen 
+COPY ./services/flask/requirements.txt /tmp/requirements.txt
+RUN pip install --no-cache-dir -r /tmp/requirements.txt
+
 ENV PYTHONPATH=/app:/app/app
 
 WORKDIR /app/

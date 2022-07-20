@@ -117,7 +117,7 @@ wasstraat_model = {
             { "$addFields": {"stelling": "$brondata.stelling","inhoud":"$brondata.inhoud", "table":"$brondata.table", "soort": "stelling", "table": "$brondata.table"}},
             { "$merge": { "into": { "db": config.DB_ANALYSE, "coll": config.COLL_ANALYSE }, "on": "_id",  "whenMatched": "replace", "whenNotMatched": "insert" } }]],
         SET_KEYS_PIPELINES: [[ 
-            { '$match': {'table': "stellingen"}},
+            { '$match': {'soort': "stelling"}},
             { '$addFields': {'herkomst': ["magazijnlijst"], 'soort': 'Stelling'}},  	
             { '$addFields': {'key': { '$concat': ['S', "$stelling"]}, 'herkomst': ["stellingen"]}}	
         ]]
