@@ -51,6 +51,8 @@ function createROPointMap(map_id, latitude, longitude){
 	  var marker = L.marker([latitude, longitude], { icon: icon, draggable: false });
     marker.addTo(map);
     map.setView([latitude, longitude], 15);
+  } else {
+    map.setView([52.00667, 4.35556], 11);
   }
 }
 

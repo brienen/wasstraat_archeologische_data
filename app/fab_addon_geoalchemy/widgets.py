@@ -16,13 +16,22 @@ class LatLonWidget(Input):
         '<script type="text/javascript">createROPointMap("{fieldname}_map", '
         '{latitude}, {longitude});</script>')
 
+
     @classmethod
     def getROMap(cls, value, fieldname):
-        geom = to_shape(value)
-        latitude = geom.y
-        longitude = geom.x
+
+        if value:
+            geom = to_shape(value)
+            latitude = geom.y
+            longitude = geom.x
+        else:
+            latitude = 'null'
+            longitude = 'null'
+
         return cls._ro_template.format(latitude=latitude, longitude=longitude,
-                                       fieldname=fieldname)
+                                        fieldname='fieldname')
+        
+
 
     def __call__(self, field, **kwargs):
         log.debug("Instantiating LatLonWidget")
