@@ -122,10 +122,10 @@ def enhanceAllAttributes():
                         ut.logError(doc, "Afwijkende locatie", "Locatie van project heeft lege waarde, locatie van "+doc['projectcd']+" wordt genegeerd. ", 2)
                         del doc['xcoor_rd']
                         del doc['ycoor_rd']            
-                    elif int(doc['xcoor_rd']) > 100000 or int(doc['xcoor_rd']) < 60000  or int(doc['ycoor_rd']) > 600000 or int(doc['ycoor_rd']) < 300000:               
-                        ut.logError(doc, "Afwijkende locatie", "Locatie van project ligt meer dan 150km van Delft, locatie van "+doc['projectcd']+" wordt genegeerd. ", 2)
-                        del doc['xcoor_rd']
-                        del doc['ycoor_rd']            
+                    #elif int(doc['xcoor_rd']) > 100000 or int(doc['xcoor_rd']) < 60000  or int(doc['ycoor_rd']) > 600000 or int(doc['ycoor_rd']) < 300000:               
+                    #    ut.logError(doc, "Afwijkende locatie", "Locatie van project ligt meer dan 150km van Delft, locatie van "+doc['projectcd']+" wordt genegeerd. ", 2)
+                    #    del doc['xcoor_rd']
+                    #    del doc['ycoor_rd']            
                     else:    
                         doc['coor_wgs'] = {'type': "Point", 'coordinates': rd_to_wgs(doc['xcoor_rd'], doc['ycoor_rd'])}
                         doc['latitude'] = doc['coor_wgs']['coordinates'][0]

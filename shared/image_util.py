@@ -12,7 +12,7 @@ import logging
 logger = logging.getLogger()
 
 # Prevent error message when reading large files, see https://stackoverflow.com/questions/25705773/image-cropping-tool-python 
-#Image.MAX_IMAGE_PIXELS = None
+Image.MAX_IMAGE_PIXELS = None
 
 
 def adjustImage(image: Image, size, postcard=False): 
@@ -75,7 +75,26 @@ def adjustAndSaveFile(fullfilename, fs, collection):
         # First read image and make 3 versions with different sizes. And put them in a list 
         image = Image.open(fullfilename, 'r')
         mime_type = magic.from_file(fullfilename, mime=True)
-        
+
+        image_dict_sml, image_dict_med, image_dict_big = putImageInGrid(image, fullfilename, fs, dir, projectcd)    
+
+        # Insert a record with metadata
+        return collection.insert_one({
+            'fileName': filename, 'fullFileName': fullfilename, 'imageUUID': str(image_dict_big), 'imageMiddleUUID': str(image_dict_med), 'imageThumbUUID': str(image_dict_sml),
+            'fileType': file_extension.lower(), 'directory': dir, 'mime_type': 'image/jpeg', 'projectcd': projectcd 
+            }).inserted_id  
+
+    except Exception as err:
+        msg = "Onbekende fout bij het bewaren van image, met tekst: " + str(err)
+        logger.error(msg)    
+        raise Exception(msg) from err
+
+
+
+def putImageInGrid(image: Image, fullfilename, fs, dir, projectcd):
+    try:
+        filename, file_extension = os.path.splitext(fullfilename)
+
         # Grayscale images need special attention for not distoring
         lzw = False
         if 'lzw' in filename.lower() and 'tif' in file_extension.lower():
@@ -85,7 +104,8 @@ def adjustAndSaveFile(fullfilename, fs, collection):
         lst_images = []
         image_dict_big = image.copy()
         image_dict_big = {
-            'image': adjustImage(image_dict_big, config.IMAGE_SIZE_BIGGEST if not lzw else config.IMAGE_SIZE_LZW) # grayscale images can have more pixels
+            #'image': adjustImage(image_dict_big, config.IMAGE_SIZE_BIGGEST if not lzw else config.IMAGE_SIZE_LZW) # grayscale images can have more pixels
+            'image': adjustImage(image_dict_big, config.IMAGE_SIZE_BIGGEST) # grayscale images can have more pixels
         }
         lst_images.append(image_dict_big)
         image_dict_med = image.copy()
@@ -109,15 +129,11 @@ def adjustAndSaveFile(fullfilename, fs, collection):
             img['image'].save(b, "JPEG")
             b.seek(0)
 
-            img['uuid'] = fs.put(b, content_type=mime_type, height=height, width=width, filename=filename, dir=dir, fullfilename=fullfilename, projectcd=projectcd)
+            img['uuid'] = fs.put(b, content_type='image/jpeg', height=int(height), width=int(width), filename=filename, dir=dir, fullfilename=fullfilename, projectcd=projectcd)
 
-        # Insert a record with metadata
-        return collection.insert_one({
-            'fileName': filename, 'fullFileName': fullfilename, 'imageUUID': str(image_dict_big['uuid']), 'imageMiddleUUID': str(image_dict_med['uuid']), 'imageThumbUUID': str(image_dict_sml['uuid']),
-            'fileType': file_extension.lower(), 'directory': dir, 'mime_type': mime_type, 'projectcd': projectcd 
-            }).inserted_id  
+        return image_dict_sml['uuid'], image_dict_med['uuid'], image_dict_big['uuid']
 
     except Exception as err:
-        msg = "Onbekende fout bij het bewaren van image, met tekst: " + str(err)
+        msg = f"Onbekende fout bij het in grid plaatsen van image {fullfilename}, met tekst: {str(err)}" 
         logger.error(msg)    
         raise Exception(msg) from err

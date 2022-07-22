@@ -2,15 +2,14 @@ import copy
 
 from flask_appbuilder import GroupByChartView, MultipleView
 from flask_appbuilder.models.group import aggregate_count
-from flask_appbuilder.models.sqla.interface import SQLAInterface
-from flask_appbuilder.models.group import aggregate_count
 from flask_appbuilder.models.sqla.filters import FilterEqual, FilterGreater
-from fab_addon_geoalchemy.models import GeoSQLAInterface
 
 from app import db, appbuilder
 from models import Aardewerk, Stelling, Doos, Artefact, Foto, Spoor, Project,Put, Vondst, Vlak, DiscrArtefactsoortEnum, DiscrFotosoortEnum, Dierlijk_Bot, Glas, Hout, Bouwaardewerk, Kleipijp, Leer, Menselijk_Bot, Metaal, Munt, Schelp, Steen, Textiel, Vulling, Opgravingsfoto, Objectfoto, Velddocument, Overige_afbeelding
 from widgets import MediaListWidget
 from baseviews import WSModelView, WSGeoModelView
+from interface import WSSQLAInterface, WSGeoSQLAInterface
+
 import util as util
 
 from flask_appbuilder.actions import action
@@ -24,7 +23,7 @@ logger = logging.getLogger()
 flds_migratie_info = ("Migratie-informatie", {"fields": ["soort","brondata","uuid"],"expanded": False})
 
 class ArtefactChartView(GroupByChartView):
-    datamodel = SQLAInterface(Artefact)
+    datamodel = WSSQLAInterface(Artefact)
     chart_title = 'Telling Artefacten'
 
     definitions = [
@@ -43,7 +42,7 @@ class ArtefactChartView(GroupByChartView):
 ]
 
 class ArtefactLineChartView(GroupByChartView):
-    datamodel = SQLAInterface(Artefact)
+    datamodel = WSSQLAInterface(Artefact)
     chart_title = 'Datering Artefacten'
     chart_type = 'LineChart'
 
@@ -64,7 +63,7 @@ class ArtefactLineChartView(GroupByChartView):
 
 
 class ArchFotoView(WSModelView):
-    datamodel = SQLAInterface(Foto)
+    datamodel = WSSQLAInterface(Foto)
     list_widget = MediaListWidget
     list_title = "Foto's"
     list_columns = ["fileName", 'koppeling', 'photo_img_thumbnail']
@@ -128,13 +127,13 @@ class ArchFotoView(WSModelView):
 
 
 class ArchOpgravingFotoView(ArchFotoView):
-    datamodel = SQLAInterface(Opgravingsfoto)
+    datamodel = WSSQLAInterface(Opgravingsfoto)
     base_filters = [['fotosoort', FilterEqual, DiscrFotosoortEnum.Opgravingsfoto.value]]
     list_title = "Opgravingsfoto's"
     ArchFotoView.view_mapper.update({DiscrFotosoortEnum.Opgravingsfoto.value: 'ArchOpgravingFotoView'})
 
 class ArchObjectFotoView(ArchFotoView):
-    datamodel = SQLAInterface(Objectfoto)
+    datamodel = WSSQLAInterface(Objectfoto)
     base_filters = [['fotosoort', FilterEqual, DiscrFotosoortEnum.Objectfoto.value]]
     list_title = "Artefactfoto's"
     search_exclude_columns = ['artefact']
@@ -153,14 +152,14 @@ class ArchObjectFotoView(ArchFotoView):
 
 
 class ArchVelddocumentView(ArchFotoView):
-    datamodel = SQLAInterface(Velddocument)
+    datamodel = WSSQLAInterface(Velddocument)
     base_filters = [['fotosoort', FilterEqual, DiscrFotosoortEnum.Velddocument.value]]
     list_title = "Velddocumenten"
     ArchFotoView.view_mapper.update({DiscrFotosoortEnum.Velddocument.value: 'ArchVelddocumentView'})
 
 
 class ArchOverigeAfbeeldingenView(ArchFotoView):
-    datamodel = SQLAInterface(Overige_afbeelding)
+    datamodel = WSSQLAInterface(Overige_afbeelding)
     base_filters = [['fotosoort', FilterEqual, DiscrFotosoortEnum.Overige_afbeelding.value]]
     list_title = "Overige Afbeeldingen"
     ArchFotoView.view_mapper.update({DiscrFotosoortEnum.Overige_afbeelding.value: 'ArchOverigeAfbeeldingenView'})
@@ -169,7 +168,7 @@ class ArchOverigeAfbeeldingenView(ArchFotoView):
 
 
 class ArchArtefactView_Abstr(WSModelView):
-    datamodel = SQLAInterface(Artefact)
+    datamodel = WSSQLAInterface(Artefact)
     # base_permissions = ['can_add', 'can_show']
     list_columns = ["artefactsoort", 'typevoorwerp', "datering", "subnr", "vondst", 'aantal_fotos']
     #list_widget = ListThumbnail
@@ -214,14 +213,14 @@ class ArchArtefactView_Abstr(WSModelView):
        
 
 class ArchArtefactView(ArchArtefactView_Abstr):
-    datamodel = SQLAInterface(Artefact)
-    related_views = [ArchFotoView]
+    datamodel = WSSQLAInterface(Artefact)
+    #related_views = [ArchObjectFotoView]
 
 
 class ArchArtefactMetFotoView(ArchArtefactView_Abstr):
     base_filters = [['aantal_fotos', FilterGreater, 0]]
     list_title = "Artefacten met foto"
-    related_views = [ArchFotoView]
+    #related_views = [ArchObjectFotoView]
 
 
 '''
@@ -233,11 +232,11 @@ Nog niet
     vondstomstandigheden = Column(String(200))
     '''
 class ArchAardewerkView(ArchArtefactView_Abstr):
-    datamodel = SQLAInterface(Aardewerk)
+    datamodel = WSSQLAInterface(Aardewerk)
     base_filters = [['artefactsoort', FilterEqual, DiscrArtefactsoortEnum.Aardewerk.value]]
 
     list_title = "Aardewerk"
-    related_views = []
+    #related_views = [ArchObjectFotoView]
     aardewerk_fieldset = [("Aardewerkvelden", {"columns": [
             {"fields": ["baksel", "bakseltype", "categorie", "decoratie", "glazuur", "kleur", "oor", "productiewijze"], "grid":6},        
             {"fields": ["bodem", "diameter", "grootste_diameter", "max_diameter", "rand", "rand_bodem", "rand_diameter", "vorm"], "grid":6},        
@@ -260,11 +259,10 @@ Nog niet
 '''
 
 class ArchDierlijk_BotView(ArchArtefactView_Abstr):
-    datamodel = SQLAInterface(Dierlijk_Bot)
+    datamodel = WSSQLAInterface(Dierlijk_Bot)
     base_filters = [['artefactsoort', FilterEqual, DiscrArtefactsoortEnum.Dierlijk_Bot.value]]
 
     list_title = "Dierlijk Bot"
-    related_views = []
     aardewerk_fieldset = [("Botvelden", {"columns": [
             {"fields": ["diersoort", "bewerkingssporen", "brandsporen", "knaagsporen", "graf", "leeftijd", "pathologie", "symmetrie", "vergroeiing", "oriëntatie"], "grid":6},        
             {"fields": ["lengte", "maat1", "maat2", "maat3", "maat4", "skeletdeel", "slijtage", "slijtage_onderkaaks_DP4", "slijtage_onderkaaks_M1", "slijtage_onderkaaks_M2", "slijtage_onderkaaks_M3"], "grid":6},        
@@ -280,11 +278,10 @@ class ArchDierlijk_BotView(ArchArtefactView_Abstr):
 
 
 class ArchGlasView(ArchArtefactView_Abstr):
-    datamodel = SQLAInterface(Glas)
+    datamodel = WSSQLAInterface(Glas)
     base_filters = [['artefactsoort', FilterEqual, DiscrArtefactsoortEnum.Glas.value]]
 
     list_title = "Glas"
-    related_views = []
     aardewerk_fieldset = [("Glasvelden", {"columns": [
             {"fields": ["decoratie", "glassoort", "kleur", "vorm_bodem_voet", "vorm_versiering_cuppa", "vorm_versiering_oor_stam"], "grid":6},        
             {"fields": ["diameter_bodem", "diameter_rand", "grootste", "hoogte", "percentage_rand"], "grid":6},        
@@ -299,11 +296,10 @@ class ArchGlasView(ArchArtefactView_Abstr):
 
 
 class ArchHoutView(ArchArtefactView_Abstr):
-    datamodel = SQLAInterface(Hout)
+    datamodel = WSSQLAInterface(Hout)
     base_filters = [['artefactsoort', FilterEqual, DiscrArtefactsoortEnum.Hout.value]]
 
     list_title = "Hout"
-    related_views = []
     hout_fieldset = [("Houtvelden", {"columns": [
             {"fields": ["bewerkingssporen", "decoratie", "determinatieniveau", "gebruikssporen", "houtsoort", "houtsoortcd"], "grid":6},        
             {"fields": ["C14_datering", "dendrodatering", "jaarring_bast_spint", "puntlengte", "puntvorm", "stamcode"], "grid":6},        
@@ -318,11 +314,10 @@ class ArchHoutView(ArchArtefactView_Abstr):
 
 
 class ArchBouwaardewerkView(ArchArtefactView_Abstr):
-    datamodel = SQLAInterface(Bouwaardewerk)
+    datamodel = WSSQLAInterface(Bouwaardewerk)
     base_filters = [['artefactsoort', FilterEqual, DiscrArtefactsoortEnum.Bouwaardewerk.value]]
 
     list_title = "Bouwaardewerk"
-    related_views = []
     Bouwaardewerk_fieldset = [("Bouwaardewerkvelden", {"columns": [
             {"fields": ["baksel", "brandsporen", "gedraaid", "glazuur", "handgevormd", "kleur", "magering", "maker", "oor_steel", "productiewijze", "vorm"], "grid":6},        
             {"fields": ["bodem", "diameter_bodem", "grootste_diameter", "hoogte", "oppervlakte", "past_aan", "randdiameter", "randindex", "randpercentage", "subbaksel", "type_rand", "wanddikte"], "grid":6},        
@@ -336,11 +331,10 @@ class ArchBouwaardewerkView(ArchArtefactView_Abstr):
 
 
 class ArchKleipijpView(ArchArtefactView_Abstr):
-    datamodel = SQLAInterface(Kleipijp)
+    datamodel = WSSQLAInterface(Kleipijp)
     base_filters = [['artefactsoort', FilterEqual, DiscrArtefactsoortEnum.Kleipijp.value]]
 
     list_title = "Kleipijp"
-    related_views = []
     kleipijp_fieldset = []
     show_fieldsets = copy.deepcopy(ArchArtefactView_Abstr.show_fieldsets)    
     #show_fieldsets[len(show_fieldsets)-1:len(show_fieldsets)-1] = kleipijp_fieldset
@@ -351,11 +345,10 @@ class ArchKleipijpView(ArchArtefactView_Abstr):
 
 
 class ArchLeerView(ArchArtefactView_Abstr):
-    datamodel = SQLAInterface(Leer)
+    datamodel = WSSQLAInterface(Leer)
     base_filters = [['artefactsoort', FilterEqual, DiscrArtefactsoortEnum.Leer.value]]
 
     list_title = "Leer"
-    related_views = []
     leer_fieldset = [("Leervelden", {"columns": [
             {"fields": ["bewerkingssporen", "bewerking", "bovenleer", "decoratie", "kwaliteit", "leersoort", "toestand"], "grid":6},        
             {"fields": ["beschrijving_zool", "past_aan", "sluiting", "soort_sluiting", "type_bovenleer", "verbinding", "zool", "zoolvorm"], "grid":6},        
@@ -369,11 +362,10 @@ class ArchLeerView(ArchArtefactView_Abstr):
 
 
 class ArchMenselijk_BotView(ArchArtefactView_Abstr):
-    datamodel = SQLAInterface(Menselijk_Bot)
+    datamodel = WSSQLAInterface(Menselijk_Bot)
     base_filters = [['artefactsoort', FilterEqual, DiscrArtefactsoortEnum.Menselijk_Bot.value]]
 
     list_title = "Menselijk Bot"
-    related_views = []
     menselijk_materiaal_fieldset = [("Velden menselijk bot", {"columns": [
             {"fields": ["doos_delft", "doos_lumc", "linkerarm", "linkerbeen", "rechterarm", "rechterbeen", "schedel", "wervelkolom", "skeletelementen"], "grid":6},        
             {"fields": ["breedte_kist_hoofdeinde", "breedte_kist_voeteinde", "lengte_kist", "kist_waargenomen", "primair_graf", "secundair_graf", "plaats"], "grid":6},        
@@ -388,11 +380,10 @@ class ArchMenselijk_BotView(ArchArtefactView_Abstr):
 
 
 class ArchMetaalView(ArchArtefactView_Abstr):
-    datamodel = SQLAInterface(Metaal)
+    datamodel = WSSQLAInterface(Metaal)
     base_filters = [['artefactsoort', FilterEqual, DiscrArtefactsoortEnum.Metaal.value]]
 
     list_title = "Metaal"
-    related_views = []
     metaal_fieldset = [("Metaalvelden", {"columns": [
             {"fields": ["bewerking", "decoratie", "diverse"], "grid":6},        
             {"fields": ["metaalsoort", "oppervlak", "percentage"], "grid":6},        
@@ -406,11 +397,10 @@ class ArchMetaalView(ArchArtefactView_Abstr):
 
 
 class ArchMuntView(ArchArtefactView_Abstr):
-    datamodel = SQLAInterface(Munt)
+    datamodel = WSSQLAInterface(Munt)
     base_filters = [['artefactsoort', FilterEqual, DiscrArtefactsoortEnum.Munt.value]]
 
     list_title = "Munt"
-    related_views = []
     munt_fieldset = [("Muntvelden", {"columns": [
             {"fields": ["aard_verwerving", "verworven_van", "voorwaarden_verwerving", "ontwerper", "conditie", "inventaris", "kwaliteit", "plaats", "produktiewijze", "randafwerking", "rubriek", "signalement", "vindplaats", "vorm"], "grid":6},        
             {"fields": ["eenheid", "gelegenheid", "jaartal", "voorzijde_tekst", "keerzijde_tekst", "autoriteit", "land", "muntplaats", "muntsoort", "randschrift"], "grid":6},        
@@ -424,11 +414,10 @@ class ArchMuntView(ArchArtefactView_Abstr):
 
 
 class ArchSchelpView(ArchArtefactView_Abstr):
-    datamodel = SQLAInterface(Schelp)
+    datamodel = WSSQLAInterface(Schelp)
     base_filters = [['artefactsoort', FilterEqual, DiscrArtefactsoortEnum.Schelp.value]]
 
     list_title = "Schelp"
-    related_views = []
     schelp_fieldset = []
     show_fieldsets = copy.deepcopy(ArchArtefactView_Abstr.show_fieldsets)    
     #show_fieldsets[len(show_fieldsets)-1:len(show_fieldsets)-1] = schelp_fieldset
@@ -438,11 +427,10 @@ class ArchSchelpView(ArchArtefactView_Abstr):
 
 
 class ArchSteenlView(ArchArtefactView_Abstr):
-    datamodel = SQLAInterface(Steen)
+    datamodel = WSSQLAInterface(Steen)
     base_filters = [['artefactsoort', FilterEqual, DiscrArtefactsoortEnum.Steen.value]]
 
     list_title = "Steen"
-    related_views = []
     steen_fieldset = [("Steenvelden", {"columns": [
             {"fields": ["decoratie", "decoratie", "kleur", "steengroep", "steensoort", "subsoort"], "grid":6},        
             {"fields": ["diameter", "dikte", "grootste_diameter", "lengte", "past_aan"], "grid":6},        
@@ -456,11 +444,10 @@ class ArchSteenlView(ArchArtefactView_Abstr):
 
 
 class ArchTextielView(ArchArtefactView_Abstr):
-    datamodel = SQLAInterface(Textiel)
+    datamodel = WSSQLAInterface(Textiel)
     base_filters = [['artefactsoort', FilterEqual, DiscrArtefactsoortEnum.Textiel.value]]
 
     list_title = "Textiel"
-    related_views = []
     textiel_fieldset = []
     show_fieldsets = copy.deepcopy(ArchArtefactView_Abstr.show_fieldsets)    
     #show_fieldsets[len(show_fieldsets)-1:len(show_fieldsets)-1] = textiel_fieldset
@@ -470,7 +457,7 @@ class ArchTextielView(ArchArtefactView_Abstr):
 
 
 class ArchDoosView(WSModelView):
-    datamodel = SQLAInterface(Doos)
+    datamodel = WSSQLAInterface(Doos)
     # base_permissions = ['can_add', 'can_show']
     list_columns = ["project", "doosnr", "inhoud", 'stelling', 'vaknr', "aantalArtefacten"]
     search_exclude_columns = ['artefacten']
@@ -483,7 +470,7 @@ class ArchDoosView(WSModelView):
         flds_migratie_info]
 
 class ArchStellingView(WSModelView):
-    datamodel = SQLAInterface(Stelling)
+    datamodel = WSSQLAInterface(Stelling)
     # base_permissions = ['can_add', 'can_show']
     list_columns = ["stelling", "inhoud"]
     base_order = ("stelling", "asc")
@@ -498,7 +485,7 @@ class ArchStellingView(WSModelView):
 
 
 class ArchVondstView(WSModelView):
-    datamodel = SQLAInterface(Vondst)
+    datamodel = WSSQLAInterface(Vondst)
     # base_permissions = ['can_add', 'can_show']
     list_title = "Vondsten"
     list_columns = ["project", "put", 'spoor', 'vondstnr', 'inhoud', 'omstandigheden', 'vullingnr']
@@ -518,9 +505,8 @@ class ArchVondstView(WSModelView):
 
 
 class ArchVullingView(WSModelView):
-    datamodel = SQLAInterface(Vulling)
+    datamodel = WSSQLAInterface(Vulling)
     # base_permissions = ['can_add', 'can_show']
-    related_views = []
     list_title = "Vullingen"
     list_columns = ["project", "put", 'vlaknr', 'spoor', "vullingnr"]
     show_fieldsets = [
@@ -533,7 +519,7 @@ class ArchVullingView(WSModelView):
     add_fieldsets = show_fieldsets
 
 class ArchSpoorView(WSModelView):
-    datamodel = SQLAInterface(Spoor)
+    datamodel = WSSQLAInterface(Spoor)
     related_views = [ArchVullingView, ArchVondstView]
     list_columns = ["project", "put", "vlaknr", "spoornr", 'beschrijving']
     list_title = "Sporen"
@@ -553,7 +539,7 @@ class ArchSpoorView(WSModelView):
 
 
 class ArchVlakView(WSModelView):
-    datamodel = SQLAInterface(Vlak)
+    datamodel = WSSQLAInterface(Vlak)
     # base_permissions = ['can_add', 'can_show']
     related_views = [ArchSpoorView, ArchVondstView, ArchArtefactView]
     list_title = "Vlakken"
@@ -567,7 +553,7 @@ class ArchVlakView(WSModelView):
     add_fieldsets = show_fieldsets
 
 class ArchPutView(WSModelView):
-    datamodel = SQLAInterface(Put)
+    datamodel = WSSQLAInterface(Put)
     # base_permissions = ['can_add', 'can_show']
     related_views = [ArchVlakView, ArchSpoorView, ArchVondstView, ArchArtefactView]
     list_title = "Putten"
@@ -586,7 +572,7 @@ class ArchPutView(WSModelView):
 
 
 class ArchProjectView(WSGeoModelView):
-    datamodel = GeoSQLAInterface(Project)
+    datamodel = WSGeoSQLAInterface(Project)
     # base_permissions = ['can_add', 'can_show']
     list_columns = ["projectcd", "projectnaam", "jaar", "aantal_artefacten"]
     #related_views = [ArchPutView, ArchVondstView, ArchArtefactView]
@@ -604,7 +590,7 @@ class ArchProjectView(WSGeoModelView):
 
 
 class MasterView(MultipleView):
-    #datamodel = SQLAInterface(Artefact)
+    #datamodel = WSSQLAInterface(Artefact)
     views = [ArchArtefactView]
 
 

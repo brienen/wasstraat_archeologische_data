@@ -1,12 +1,14 @@
 from flask import url_for, Markup
 
 from flask_appbuilder import ModelView, RestCRUDView
-from flask_appbuilder.baseviews import BaseCRUDView
+from flask_appbuilder.baseviews import BaseCRUDView, BaseView
 from flask_appbuilder.widgets import ShowWidget, FormWidget, ListWidget
 from fab_addon_geoalchemy.views import GeoModelView
 
 from flask_appbuilder.actions import action
 from flask import redirect
+from inspect import isclass
+
 
 
 
@@ -136,8 +138,6 @@ class WSModelView(ModelView):
                 self.edit_columns = [
                     x for x in list_cols if x not in self.edit_exclude_columns
                 ]
-
-
 
 
 
