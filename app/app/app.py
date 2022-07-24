@@ -35,7 +35,7 @@ app.register_blueprint(gridfs)
 db = SQLA(app)
 appbuilder = AppBuilder(app, db.session, base_template='mybase.html', indexview=MyIndexView)
 migrate = Migrate(app, db) # this
-#init.init()
+init.initSequences()
 
 import models, modelevents, views, route  # noqa
 

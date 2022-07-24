@@ -1,13 +1,39 @@
 from models import Project, Artefact, Foto, Spoor, Vondst
 import shared.config as config
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy import create_engine, func, update
+from sqlalchemy import create_engine, func, update, inspect, MetaData
 from sqlalchemy import and_, or_
 
 import logging
 logger = logging.getLogger()
     
     
+def initSequences():
+    logger.info("Initializing Sequences of flask database...")
+    try:
+        engine = create_engine(config.SQLALCHEMY_DATABASE_URI)
+        inspector = inspect(engine)
+        seqs = inspector.get_sequence_names()
+
+        for table_name in inspector.get_table_names():
+            if 'Def_' in table_name:
+                with engine.connect() as con:
+                    rs = con.execute(f'SELECT MAX(primary_key) FROM public."{table_name}"')
+                    max_value = rs.first()
+                    max_value = max_value[0]+1 if max_value[0] else 1
+    
+                    seq = f"{table_name}_primary_key_seq"
+                    if seq in seqs:
+                        logger.info(f"Setting sequence {seq} to value {max_value}...")
+                        rs = con.execute(f'alter sequence public."{seq}" restart with {max_value};')
+                    else:
+                        logger.warning(f"Could not set sequence {seq} to value {max_value}...")
+
+    except Exception as e:
+        logger.error("Error while Initializing Sequences of flask database with message " + str(e))
+
+
+
 def init():
     logger.info("Initializing Redundant Data...")
     db = create_engine(config.SQLALCHEMY_DATABASE_URI)
@@ -63,9 +89,6 @@ def init():
             artf = session.query(Artefact).get(row[0])
             artf.spoordatering_vanaf = row[1]
             artf.spoordatering_tot = row[2]
-
-
-
 
         session.commit()
     except Exception as e:
