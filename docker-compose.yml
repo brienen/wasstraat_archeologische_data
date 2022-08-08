@@ -60,6 +60,7 @@ services:
 
 # Computation
   flask:
+    platform: linux/amd64
     container_name: "wasstraat_flask"
     env_file:
       - ./config/flask.env
