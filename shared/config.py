@@ -39,6 +39,7 @@ try:
    COLL_STAGING_NIEUW = os.getenv("COLL_STAGING_NIEUW")
    COLL_STAGING_MAGAZIJNLIJST = os.getenv("COLL_STAGING_MAGAZIJNLIJST")
    COLL_STAGING_DELFIT = os.getenv("COLL_STAGING_DELFIT")
+   COLL_STAGING_MONSTER = os.getenv("COLL_STAGING_MONSTER")
    COLL_STAGING_DIGIFOTOS = os.getenv("COLL_STAGING_DIGIFOTOS")
    COLL_ANALYSE_FOTO = os.getenv("COLL_ANALYSE_FOTO")
    COLL_ANALYSE_ARTEFACT = os.getenv("COLL_ANALYSE_ARTEFACT")
@@ -82,6 +83,7 @@ try:
    AIRFLOW_INPUT_DELFIT = os.getenv("AIRFLOW_INPUT_DELFIT") if os.getenv("AIRFLOW_INPUT_DELFIT") else "/input/delfit"
    AIRFLOW_INPUT_MAGAZIJNLIJST = os.getenv("AIRFLOW_INPUT_MAGAZIJNLIJST") if os.getenv("AIRFLOW_INPUT_MAGAZIJNLIJST") else "/input/magazijnlijst"
    AIRFLOW_INPUT_DIGIFOTOS = os.getenv("AIRFLOW_INPUT_DIGIFOTOS") if os.getenv("AIRFLOW_INPUT_DIGIFOTOS") else "/input/digifotos"
+   AIRFLOW_INPUT_MONSTER = os.getenv("AIRFLOW_INPUT_MONSTER") if os.getenv("AIRFLOW_INPUT_MONSTER") else "/input/monsterdatabase"
     
 except KeyError: 
    logger.error("Cannot read environment variables (ie. POSTGRES_DB, POSTGRES_USER, POSTGRES_PASSWORD) needed to connect to the database. Add them to your .env files")

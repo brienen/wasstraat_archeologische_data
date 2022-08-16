@@ -27,15 +27,14 @@ def convertToInt(d, attr, force):
             if 'numpy.int' in str(type(d[attr])): d[attr] = int(d[attr])
 
 # Conveniece methods
-def convertToBool(d, attr):
+def convertToBoolDoc(d, attr):
     if attr in d:
-        s = str(d[attr]).lower()
         d[attr] = convertToBool(d[attr])
 
 def convertToBool(attr):
     return 1 if str(attr).lower() in ['1', 'true', 'ja', 'j', 'yes', 'y'] else 0
 
-def convertToDate(d, attr, force):
+def convertToDateDoc(d, attr, force):
     if attr in d:
         d[attr] = convertToDate(d[attr], force)
         if (d[attr] is pd.NaT): 
@@ -63,15 +62,15 @@ def fixDatering(value):
         datlist = value.split(",")
         for dat in datlist:
             dat = str(dat)
-            if "LMEb" in dat:
+            if "LMEb".lower() in dat.lower():
                 datset.add(1200)
                 datset.add(1500)
                 continue
-            if "RT" in dat or 'romeins' in dat:
+            if "rt" in dat.lower() or 'romeins' in dat.lower() or dat.lower() == 'r':
                 datset.add(-1200)
                 datset.add(450)
                 continue
-            if "XIV C" in dat:
+            if "XIV C".lower() in dat.lower():
                 datset.add(1450)
                 datset.add(1475)
                 continue

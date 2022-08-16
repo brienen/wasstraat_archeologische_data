@@ -152,6 +152,44 @@ wasstraat_model = {
             { '$addFields': {'key_vondst': aggr_key_vondst}}
     ]]
   },
+  "Monster": {
+        STAGING_COLLECTION: config.COLL_STAGING_MONSTER,
+        HARMONIZE_PIPELINES: 'Monster',
+        MOVEANDMERGE_MOVE: True,
+        MOVEANDMERGE_MERGE: True,
+        SET_KEYS_PIPELINES: [[ 
+            { '$match': { 'soort': "Monster" } },
+            { '$addFields': {'key_doos': { '$concat': [ "P", "$projectcd", "D", {'$toString': "$doosnr"}] }}},
+            { '$addFields': {'key_project': { '$concat': [ "P", "$projectcd"]}}}, 
+            { '$addFields': {'key_put': { '$concat': [ "P", "$projectcd", 
+                            {'$concat': ["P", {'$toString': "$putnr" }]}]}}},  				
+            { '$addFields': {'key': { '$concat': [ "M", "$monstercd"]}}}, 
+            { '$addFields': {'key_spoor': { '$concat': [ "P", "$projectcd", 
+                {'$ifNull': [{'$concat': ["P", {'$toString': "$putnr" }]}, ""]},
+                {'$ifNull': [{'$concat': ["V", {'$toString': "$vlaknr"}]}, ""]}, "S", {'$toString': "$spoornr"}] }}},  		
+            { '$addFields': {'key_vondst': aggr_key_vondst}}
+    ]]
+  },
+  "Monster_Schelp": {
+        STAGING_COLLECTION: config.COLL_STAGING_MONSTER,
+        HARMONIZE_PIPELINES: 'Monster_Schelp',
+        MOVEANDMERGE_MOVE: True,
+        SET_KEYS_PIPELINES: [[ 
+            { '$match': { 'soort': "Monster_Schelp" } },
+            { '$addFields': {'key': { '$concat': [ "M", "$monstercd", "ID", {'$toString': "$Id"}] }}},
+            { '$addFields': {'key_monster': { '$concat': [ "M", "$monstercd"]}}}
+    ]]
+  },
+  "Monster_Botanie": {
+        STAGING_COLLECTION: config.COLL_STAGING_MONSTER,
+        HARMONIZE_PIPELINES: 'Monster_Botanie',
+        MOVEANDMERGE_MOVE: True,
+        SET_KEYS_PIPELINES: [[ 
+            { '$match': { 'soort': "Monster_Botanie" } },
+            { '$addFields': {'key': { '$concat': [ "M", "$monstercd", "ID", {'$toString': "$Id"}] }}},
+            { '$addFields': {'key_monster': { '$concat': [ "M", "$monstercd"]}}}
+    ]]
+  },
   "Standplaats": {
       STAGING_COLLECTION: config.COLL_STAGING_MAGAZIJNLIJST,
       HARMONIZE_PIPELINES: [[

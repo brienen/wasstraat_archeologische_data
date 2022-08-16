@@ -241,7 +241,7 @@ def mergeFotoinfo():
             'materiaal', 'putnr', 'vondstnr', 'fotonr', 'vondstkey_met_putnr',
             'key', 'key_project', 'key_project_type', 'key_vondst',
             'key_artefact', 'subnr', 'brondata',
-            'pad', 'spoornr', 'profiel', 'subnr', 'datum', 'omschrijving', 'vlaknr', 'richting', 'wasstraat']]
+            'pad', 'spoornr', 'profiel', 'subnr', 'datum', 'omschrijving', 'vlaknr', 'richting', 'wasstraat', 'fotosoort']]
 
 
         updates= [ pymongo.ReplaceOne({"_id": record['_id']}, record, upsert=True) for record in [v.dropna().to_dict() for k,v in df_merge.iterrows()]]  # 

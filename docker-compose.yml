@@ -32,9 +32,10 @@ services:
       - mongo
     volumes:
       # Production settings
-       #- /Volumes/Extreme SSD/Depot Projecten:/input/projecten
-       #- /Volumes/Extreme SSD/Depot Projecten:/input/images
+      # - /Volumes/Extreme SSD/Depot Projecten:/input/projecten
+      # - /Volumes/Extreme SSD/Depot Projecten:/input/images
       # Testing settings
+       - ./data/input/basefiles/projectdatabase/monsterdatabase:/input/monsterdatabase
        - ./data/input/basefiles/projectdatabase/digidepot:/input/projecten
        - ./data/input/basefiles/projectdatabase/digidepot:/input/images
        - ./data/input/basefiles/projectdatabase/Delf-IT:/input/delfit
@@ -60,7 +61,6 @@ services:
 
 # Computation
   flask:
-    platform: linux/amd64
     container_name: "wasstraat_flask"
     env_file:
       - ./config/flask.env
@@ -75,7 +75,7 @@ services:
       - redis
 
   mongo:
-    image: mongo:4.2    
+    image: mongo:4.2.21    
     container_name: "wasstraat_mongo"
     ports:
       - '27017:27017'

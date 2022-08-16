@@ -107,14 +107,14 @@ def enhanceAllAttributes():
                 ut.convertToInt(doc, 'spoodatering_tot', True) 
                 ut.convertToInt(doc, 'aantal', True) 
 
-                ut.convertToBool(doc, 'exposabel')
-                ut.convertToBool(doc, 'conserveren')
-                ut.convertToBool(doc, 'restauratie')
-                ut.convertToBool(doc, 'weggegooid')
-                ut.convertToBool(doc, 'uitgeleend')
+                ut.convertToBoolDoc(doc, 'exposabel')
+                ut.convertToBoolDoc(doc, 'conserveren')
+                ut.convertToBoolDoc(doc, 'restauratie')
+                ut.convertToBoolDoc(doc, 'weggegooid')
+                ut.convertToBoolDoc(doc, 'uitgeleend')
                 
 
-                ut.convertToDate(doc, 'datum', True)
+                ut.convertToDateDoc(doc, 'datum', True)
                 #doc['loadtime'] = pd.to_datetime(doc['loadtime'])
 
                 if 'xcoor_rd' in doc and doc['xcoor_rd'] != '':
@@ -190,7 +190,8 @@ def extractImagedataFromFileNames():
                 if not foto.get('fototype'):
                     foto['fototype'] = file_dict.get(foto.get('directory')).get('fototype')
 
-                foto['materiaal'] = file_dict.get(foto.get('directory')).get('materiaal')                
+                foto['materiaal'] = file_dict.get(foto.get('directory')).get('materiaal')  
+                foto['fotosoort'] = file_dict.get(foto.get('directory')).get('fotosoort')                
                 col.replace_one({'_id': foto['_id']}, foto)
 
             except Exception as exp2:

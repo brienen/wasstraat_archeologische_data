@@ -24,7 +24,7 @@ echo Loading from "$1" to collection "$Collection" in database "$DATABASE" and l
 
 DB_STAGING_URI=mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@${MONGO_SERVER}
 shopt -s globstar
-for mdbfile in "$1"/**/*.mdb
+for mdbfile in "$1"/**/*.{mdb,accdb}
 #for mdbfile in $FILES
 do
 	PROJECT_R=${mdbfile#$1"/"}
@@ -37,13 +37,13 @@ do
   
 
 	IFS=","
-  	TABLES=`mdb-tables -d, "$mdbfile"`
+  	TABLES=`mdb-tables -d , "$mdbfile"`
 	echo "$TABLES"
 	for TABLE in $TABLES
 	do
 	   	CSV="$WORKDIR"/opgraving"$PROJECT"."$TABLE".csv
 	    echo Reading "$TABLE" into "$CSV" and loading into Mongo database "$DATABASE" collection "$Collection"
-	    mdb-export "$mdbfile" "$CSV" "$TABLE" > "$CSV"  		
+	    mdb-export "$mdbfile" "$TABLE" > "$CSV"  		
 		LENGTE=`wc -l < $CSV`
 		let LENGTE=$LENGTE-1 # To correct for the header 
 		echo Length of tabel $CSV in file $mdbfile is: $LENGTE
@@ -73,8 +73,8 @@ do
 
 		mongoimport --host "$MONGO_SERVER" --password "$MONGO_INITDB_ROOT_PASSWORD" --username "$MONGO_INITDB_ROOT_USERNAME" --authenticationDatabase admin --db "$DATABASE"  --collection "$COLL_STAGING_METAINFO" --mode upsert --file "$METAINFO"
 
-		# rm "$CSV"
-	    # rm "$WORKDIR"/"$TABLE".meta.json
+		rm -f "$CSV"
+	    rm -f "$WORKDIR"/"$TABLE".meta.json
 	done
 done
  
