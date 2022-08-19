@@ -916,6 +916,54 @@ class Plaatsing(WasstraatModel):
     volgletter = Column(Text)
     
 
+class Monster(WasstraatModel):
+    __tablename__ = 'Def_Monster'
+
+    primary_key = Column(Integer, primary_key=True, autoincrement=True)
+    monstercd = Column(String(40), index=True)
+    projectID = Column(ForeignKey('Def_Project.primary_key', deferrable=True), index=True)
+    project = relationship('Project', lazy="joined", backref="monsters")
+    putID = Column(ForeignKey('Def_Put.primary_key', deferrable=True), index=True)
+    put = relationship('Put', backref="monsters")
+    vondstID = Column(ForeignKey('Def_Vondst.primary_key', deferrable=True), index=True)
+    vondst = relationship('Vondst', backref="monsters")
+    doosID = Column(ForeignKey('Def_Doos.primary_key', deferrable=True), index=True)
+    doos = relationship('Doos', backref="monsters")
+    determinatiedatum = Column(String(40), index=True)
+    gezeefd_volume = Column(Float)
+    zeefmaat = Column(Float)
+    opmerkingen = Column(Text)
+    karakterisering = Column(Text)
+    omstandigheden = Column(Text)
+
+    def __repr__(self):
+        projectcd = self.project.projectcd if self.project else "Onbekend Project"
+        vondstnr = ('Vondstnr ' + str(self.vondst.vondstnr)) + " " if self.vondst else ''
+        put = ('Put ' + str(self.put.putnr)) + " " if self.put else ''
+        opmerkingen = self.opmerkingen if self.opmerkingen else ''
+
+        return f"{opmerkingen} {vondstnr} {put} {projectcd}"
+
+
+
+
+class Monster_Schelp(WasstraatModel):
+    __tablename__ = 'Def_Monster_Schelp'
+
+    primary_key = Column(Integer, primary_key=True, autoincrement=True)
+    monsterID = Column(ForeignKey('Def_Monster.primary_key', deferrable=True), index=True)
+    monster = relationship('Monster', backref="schelpmateriaal")
+    aantal = Column(Integer)
+
+class Monster_Botanie(WasstraatModel):
+    __tablename__ = 'Def_Monster_Botanie'
+
+    primary_key = Column(Integer, primary_key=True, autoincrement=True)
+    monsterID = Column(ForeignKey('Def_Monster.primary_key', deferrable=True), index=True)
+    monster = relationship('Monster', backref="botaniemateriaal")
+    aantal = Column(Integer)
+    deel = Column(String(40))
+    staat = Column(String(40))
 
 
 

@@ -16,7 +16,7 @@ HARMONIZE_AGGR = [
     {"$match": {"table": {"$in" : ["XXX","YYY"]}}},
     {"$replaceRoot" : {"newRoot" : {"_id" : "$_id", "brondata" : "$$ROOT"}}},
     {"$addFields" : { 
-        "projectcd" : "$brondata.project"}}
+        "projectcd" : "$brondata.projectcd"}}
     ,{ "$merge": { "into": { "db": config.DB_ANALYSE, "coll": config.COLL_ANALYSE }, "on": "_id",  "whenMatched": "replace", "whenNotMatched": "insert"}}
 ]
 HARMONIZER = None

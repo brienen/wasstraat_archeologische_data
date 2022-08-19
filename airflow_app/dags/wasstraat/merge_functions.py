@@ -12,6 +12,7 @@ import wasstraat.util as util
 # Import app code
 # Absolute imports for Hydrogen (Jupyter Kernel) compatibility
 import shared.config as config
+import shared.const as const
 import logging
 logger = logging.getLogger("airflow.task")
 
@@ -22,11 +23,14 @@ ARTEFACT_NOT_MERGE_PROJECTS = ['DC112']
 ARTEFACT_NOT_MERGE_TABLES = ['ROMEINS AARDEWERK']
 
 ## Generic aggregation phase for getting rid of empty cells
+regx = re.compile(const.ONBEKEND_PROJECT, re.IGNORECASE)
 AGGR_PHASE_CLEAN_EMPTY = {'$replaceRoot': {'newRoot': {'$arrayToObject': {'$filter': {'input': {'$objectToArray': '$$ROOT'},
       'as': 'item',
       'cond': {'$and': [{'$ne': ['$$item.v', np.nan]},
         {'$ne': ['$$item.v', None]},
         {'$ne': ['$$item.v', np.nan]},
+        {'$ne': ['$$item.v', const.ONBEKEND_PROJECT]},
+        {'$ne': ['$$item.v', const.ONBEKEND_PROJECT.upper()]},
         {'$ne': ['$$item.v', '-']}]}}}}}}
 
 ## Aggregation pipeline to move records of a certain type

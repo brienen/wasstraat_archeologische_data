@@ -5,7 +5,7 @@ from flask_appbuilder.models.group import aggregate_count
 from flask_appbuilder.models.sqla.filters import FilterEqual, FilterGreater
 
 from app import db, appbuilder
-from models import Aardewerk, Stelling, Doos, Artefact, Foto, Spoor, Project,Put, Vondst, Vlak, DiscrArtefactsoortEnum, DiscrFotosoortEnum, Dierlijk_Bot, Glas, Hout, Bouwaardewerk, Kleipijp, Leer, Menselijk_Bot, Metaal, Munt, Schelp, Steen, Textiel, Vulling, Opgravingsfoto, Objectfoto, Velddocument, Overige_afbeelding
+from models import Aardewerk, Stelling, Doos, Artefact, Foto, Spoor, Project,Put, Vondst, Vlak, DiscrArtefactsoortEnum, DiscrFotosoortEnum, Dierlijk_Bot, Glas, Hout, Bouwaardewerk, Kleipijp, Leer, Menselijk_Bot, Metaal, Munt, Schelp, Steen, Textiel, Vulling, Opgravingsfoto, Objectfoto, Velddocument, Overige_afbeelding, Monster, Monster_Botanie, Monster_Schelp
 from widgets import MediaListWidget
 from baseviews import WSModelView, WSGeoModelView
 from interface import WSSQLAInterface, WSGeoSQLAInterface
@@ -568,6 +568,50 @@ class ArchPutView(WSModelView):
     search_exclude_columns = ["artefacten", "vondsten"] 
 
 
+class ArchMonster_BotanieView(WSModelView):
+    datamodel = WSSQLAInterface(Monster_Botanie)
+    # base_permissions = ['can_add', 'can_show']
+    list_title = "Botaniedeterminaties Monsters"
+    list_columns = ["aantal", 'deel', 'staat', 'monster']
+
+    show_fieldsets = [
+        ("Projectvelden", {"fields": ["monster"]}),
+        ("Inhoudvelden", {"fields": ["aantal", "deel", "staat"]}),
+        flds_migratie_info]
+    edit_fieldsets = show_fieldsets
+    add_fieldsets = show_fieldsets
+
+
+class ArchMonster_SchelpView(WSModelView):
+    datamodel = WSSQLAInterface(Monster_Schelp)
+    # base_permissions = ['can_add', 'can_show']
+    list_title = "Schelpdeterminaties Monsters"
+    list_columns = ["aantal", "monster"]
+
+    show_fieldsets = [
+        ("Projectvelden", {"fields": ["monster"]}),
+        ("Inhoudvelden", {"fields": ["aantal"]}),
+        flds_migratie_info]
+    edit_fieldsets = show_fieldsets
+    add_fieldsets = show_fieldsets
+
+
+
+class ArchMonsterView(WSModelView):
+    datamodel = WSSQLAInterface(Monster)
+    # base_permissions = ['can_add', 'can_show']
+    list_title = "Monsters"
+    list_columns = ["project", "put", 'vondst', 'opmerkingen', 'karakterisering', 'omstandigheden']
+
+    show_fieldsets = [
+        ("Projectvelden", {"fields": ["project", "put", "vondst"]}),
+        ("Inhoudvelden", {"fields": ["gezeefd_volume", "zeefmaat"]}),
+        ("Datering", {"fields": ['opmerkingen', 'karakterisering', 'omstandigheden']}),
+        flds_migratie_info]
+    edit_fieldsets = show_fieldsets
+    add_fieldsets = show_fieldsets
+    related_views = [ArchMonster_BotanieView, ArchMonster_SchelpView]
+    search_exclude_columns = ["artefacten"] 
 
 
 
@@ -578,7 +622,7 @@ class ArchProjectView(WSGeoModelView):
     #related_views = [ArchPutView, ArchVondstView, ArchArtefactView]
     base_order = ("projectcd", "asc")
     list_title = "Projecten"
-    related_views = [ArchArtefactView, ArchDoosView, ArchPutView, ArchSpoorView, ArchVondstView, ArchOpgravingFotoView, ArchVelddocumentView, ArchObjectFotoView, ArchOverigeAfbeeldingenView]
+    related_views = [ArchArtefactView, ArchDoosView, ArchPutView, ArchSpoorView, ArchVondstView, ArchMonsterView, ArchOpgravingFotoView, ArchVelddocumentView, ArchObjectFotoView, ArchOverigeAfbeeldingenView]
     search_exclude_columns = ["location", "artefacten", "fotos"] 
 
     show_fieldsets = [
@@ -595,6 +639,8 @@ class MasterView(MultipleView):
 
 
 
+
+
 db.create_all()
 
 appbuilder.add_view(ArchProjectView,"Projecten",icon="fa-dashboard",category="Projecten")
@@ -603,6 +649,9 @@ appbuilder.add_view(ArchVlakView,"Vlakken",icon="fa-dashboard",category="Project
 appbuilder.add_view(ArchVondstView,"Vondsten",icon="fa-dashboard",category="Projecten")
 appbuilder.add_view(ArchSpoorView,"Sporen",icon="fa-dashboard",category="Projecten")
 appbuilder.add_view(ArchVullingView,"Vullingen",icon="fa-dashboard",category="Projecten")
+appbuilder.add_view(ArchMonsterView,"Monsters",icon="fa-dashboard",category="Projecten")
+appbuilder.add_view(ArchMonster_BotanieView,"Botaniedeterminaties Monsters",icon="fa-dashboard",category="Projecten")
+appbuilder.add_view(ArchMonster_SchelpView,"Schelpdeterminaties Monsters",icon="fa-dashboard",category="Projecten")
  
 #### Artefacten
 appbuilder.add_view(ArchArtefactView,"Alle Artefacten",icon="fa-dashboard",category="Artefacten")

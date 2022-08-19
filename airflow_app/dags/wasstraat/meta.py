@@ -18,7 +18,7 @@ ARTEFACTSOORT = 'ARTEFACTSOORT'
 STAGING_COLLECTION = 'STAGING_COLLECTION'
 
 
-aggr_key_vondst = {'$concat': [ "P", "$projectcd", 
+aggr_key_vondst = {'$concat': [ "P", {'$toString': '$projectcd'}, 
                     {"$cond": ["$vondstkey_met_putnr", {'$concat': ["P", {'$toString': "$putnr" }]}, ""]},
                     {'$concat': ["V", {'$toString': "$vondstnr" }]}]}
 
@@ -155,16 +155,15 @@ wasstraat_model = {
   "Monster": {
         STAGING_COLLECTION: config.COLL_STAGING_MONSTER,
         HARMONIZE_PIPELINES: 'Monster',
-        MOVEANDMERGE_MOVE: True,
         MOVEANDMERGE_MERGE: True,
         SET_KEYS_PIPELINES: [[ 
-            { '$match': { 'soort': "Monster" } },
-            { '$addFields': {'key_doos': { '$concat': [ "P", "$projectcd", "D", {'$toString': "$doosnr"}] }}},
-            { '$addFields': {'key_project': { '$concat': [ "P", "$projectcd"]}}}, 
-            { '$addFields': {'key_put': { '$concat': [ "P", "$projectcd", 
+            { '$match': { 'soort': "Monster", 'projectcd': {'$exists': True} } },
+            { '$addFields': {'key_doos': { '$concat': [ "P", {'$toString': "$projectcd"}, "D", {'$toString': "$doosnr"}] }}},
+            { '$addFields': {'key_project': { '$concat': [ "P", {'$toString': "$projectcd"}]}}}, 
+            { '$addFields': {'key_put': { '$concat': [ "P", {'$toString': "$projectcd"}, 
                             {'$concat': ["P", {'$toString': "$putnr" }]}]}}},  				
-            { '$addFields': {'key': { '$concat': [ "M", "$monstercd"]}}}, 
-            { '$addFields': {'key_spoor': { '$concat': [ "P", "$projectcd", 
+            { '$addFields': {'key': { '$concat': [ "M", {'$toString': "$monstercd"}]}}}, 
+            { '$addFields': {'key_spoor': { '$concat': [ "P", {'$toString': "$projectcd"}, 
                 {'$ifNull': [{'$concat': ["P", {'$toString': "$putnr" }]}, ""]},
                 {'$ifNull': [{'$concat': ["V", {'$toString': "$vlaknr"}]}, ""]}, "S", {'$toString': "$spoornr"}] }}},  		
             { '$addFields': {'key_vondst': aggr_key_vondst}}
@@ -176,8 +175,8 @@ wasstraat_model = {
         MOVEANDMERGE_MOVE: True,
         SET_KEYS_PIPELINES: [[ 
             { '$match': { 'soort': "Monster_Schelp" } },
-            { '$addFields': {'key': { '$concat': [ "M", "$monstercd", "ID", {'$toString': "$Id"}] }}},
-            { '$addFields': {'key_monster': { '$concat': [ "M", "$monstercd"]}}}
+            { '$addFields': {'key': { '$concat': [ "M", {'$toString': "$monstercd"}, "ID", {'$toString': "$Id"}] }}},
+            { '$addFields': {'key_monster': { '$concat': [ "M", {'$toString': "$monstercd"}]}}}
     ]]
   },
   "Monster_Botanie": {
@@ -186,8 +185,8 @@ wasstraat_model = {
         MOVEANDMERGE_MOVE: True,
         SET_KEYS_PIPELINES: [[ 
             { '$match': { 'soort': "Monster_Botanie" } },
-            { '$addFields': {'key': { '$concat': [ "M", "$monstercd", "ID", {'$toString': "$Id"}] }}},
-            { '$addFields': {'key_monster': { '$concat': [ "M", "$monstercd"]}}}
+            { '$addFields': {'key': { '$concat': [ "M", {'$toString': "$monstercd"}, "ID", {'$toString': "$Id"}] }}},
+            { '$addFields': {'key_monster': { '$concat': [ "M", {'$toString': "$monstercd"}]}}}
     ]]
   },
   "Standplaats": {
@@ -211,7 +210,7 @@ wasstraat_model = {
             { '$match': { 'table': "OPGRAVINGEN" } },
             { '$replaceRoot': {'newRoot': {'_id': "$_id", 'brondata': "$$ROOT"}}},
             { '$addFields': {'projectcd': "$brondata.CODE", 'projectnaam': "$brondata.OPGRAVING", 'toponiem': "$brondata.TOPONIEM", 'xcoor_rd': "$brondata.XCOORD", 'ycoor_rd': "$brondata.YCOORD", 
-                'trefwoorden': "$brondata.TREFWOORDEN", 'jaar': "$brondata.JAAR", 'table': "$brondata.table", 'soort':"Project"}},
+                'trefwoorden': "$brondata.TREFWOORDEN", 'jaar': "$brondata.JAAR", 'table': "$brondata.table", 'project': '$brondata.CODENAAM', 'soort':"Project"}},
             { "$merge": { "into": { "db": config.DB_ANALYSE, "coll": config.COLL_ANALYSE }, "on": "_id",  "whenMatched": "replace", "whenNotMatched": "insert" } }
         ]],
         SET_KEYS_PIPELINES: [[ 

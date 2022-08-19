@@ -54,7 +54,7 @@ do
 
 		echo Reading data 
 		sed -i s/$/,"$TABLE","$PROJECT",opgraving"$PROJECT","$timestamp","${mdbfile//\//\\/}"/ "$CSV"
-		sed -i 1s/,"$TABLE","$PROJECT",opgraving"$PROJECT","$timestamp","${mdbfile//\//\\/}"/,table,project,bron,loadtime,mdbfile/ "$CSV"
+		sed -i 1s/,"$TABLE","$PROJECT",opgraving"$PROJECT","$timestamp","${mdbfile//\//\\/}"/,table,projectcd,bron,loadtime,mdbfile/ "$CSV"
 
 		# Remove Duplicate Columns https://stackoverflow.com/questions/15854720/deleting-duplicate-columns-from-csv-file
 		#awk -F, 'NR==1{for(i=1;i<=NF;i++)if(!($i in v)){ v[$i];t[i]}}{s=""; for(i=1;i<=NF;i++)if(i in t)s=s sprintf("%s,",$i);if(s){sub(/,$/,"",s);print s}} ' "$CSV"
@@ -64,7 +64,7 @@ do
 		echo Reading metainfo
 		METAINFO="$WORKDIR"/"$PROJECT"."$TABLE".meta.json
 		# Removing lines with GUID and everythimng bnetween ColumnWidth  and ColumnHidden to overcome encoding problem
-		mdb-prop "$mdbfile" "$TABLE" | sed '/GUID:/d' | sed '/DatasheetFontItalic/,+1d' | sed '/ColumnWidth/,/ColumnHidden/{//!d}' | sed -r 's/\\/\\\\/g ' | sed -r 's/\"/\\\"/g '  | sed -r '/name/a table: '"$TABLE"'' | sed -r '/name/a project: '"$PROJECT"'' | sed -r '/name/a teller: '"$LENGTE"'' | sed -r 's/^[\t]*([a-zA-Z0-9]+): (.*)/\"\1\": \"\2\",/' | sed -r 's/^$/}/' | tac | sed '/}/ {n; s/,$//}' | tac | sed -r 's/^\"name/{\"name/' | sed '/\":\|}/!d' > "$METAINFO"
+		mdb-prop "$mdbfile" "$TABLE" | sed '/GUID:/d' | sed '/DatasheetFontItalic/,+1d' | sed '/ColumnWidth/,/ColumnHidden/{//!d}' | sed -r 's/\\/\\\\/g ' | sed -r 's/\"/\\\"/g '  | sed -r '/name/a table: '"$TABLE"'' | sed -r '/name/a projectcd: '"$PROJECT"'' | sed -r '/name/a teller: '"$LENGTE"'' | sed -r 's/^[\t]*([a-zA-Z0-9]+): (.*)/\"\1\": \"\2\",/' | sed -r 's/^$/}/' | tac | sed '/}/ {n; s/,$//}' | tac | sed -r 's/^\"name/{\"name/' | sed '/\":\|}/!d' > "$METAINFO"
 		#ENCODING=`file -bi "$METAINFO" | awk -F'=' '{print $2 }'`
 		#echo Encoding is "$ENCODING" for file "$METAINFO"
 		#Setting encoding does not seem to ix errors
@@ -73,7 +73,7 @@ do
 
 		mongoimport --host "$MONGO_SERVER" --password "$MONGO_INITDB_ROOT_PASSWORD" --username "$MONGO_INITDB_ROOT_USERNAME" --authenticationDatabase admin --db "$DATABASE"  --collection "$COLL_STAGING_METAINFO" --mode upsert --file "$METAINFO"
 
-		rm -f "$CSV"
+		#rm -f "$CSV"
 	    rm -f "$WORKDIR"/"$TABLE".meta.json
 	done
 done

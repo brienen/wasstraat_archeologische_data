@@ -11,6 +11,7 @@ import wasstraat.harmonizer as harmonizer
 # Import app code
 # Absolute imports for Hydrogen (Jupyter Kernel) compatibility
 import shared.config as config
+import shared.const as const
 import wasstraat.mongoUtils as mongoUtil
 
 import logging
@@ -24,6 +25,7 @@ def fixProjectNames():
         stagingdb = myclient[str(config.DB_STAGING)]
         stagingcollection = stagingdb[config.COLL_STAGING_OUD]
         plaatjescollection = stagingdb[config.COLL_PLAATJES]
+        monstercollection = stagingdb[config.COLL_STAGING_MONSTER]
 
         stagingcollection.update_many({"mdbfile" : {"$regex" : "DC027_Voorstraat"}}, { "$set": { "project": "DC027" } })
         stagingcollection.update_many({"mdbfile" : {"$regex" : "DC018_Nieuw"}}, { "$set": { "project": "DC018" } })
@@ -34,9 +36,61 @@ def fixProjectNames():
         stagingcollection.update_many({'project': {'$not': {"$type": 2}}}, [{ "$set": { "project": { "$toString": "$project" } } }])
         plaatjescollection.update_many({'projectcd': {'$not': {"$type": 2}}}, [{ "$set": { "projectcd": { "$toString": "$projectcd" } } }])
 
+        monstercollection.update_many({"PROJECT": "DC 16"}, { "$set": { "PROJECT": "DC016" } })
+
 
     except Exception as err:
         msg = "Onbekende fout bij het fixen van projectcodes met melding: " + str(err)
+        logger.error(msg)    
+        raise Exception(msg) from err
+    finally:
+        myclient.close()
+
+
+def fixMonsterProjectcds():
+    """
+    Method to fix the old projectnames that are being used in the Monsterdatabase. Unknown projectcodes are set to "Unknowm"
+
+    Old projectnames are matched with the data from DeltIT Opgravingen, where both old and new values are found.
+    """
+    
+    try: 
+        logger.info("Starting fix of old projectcodes of Monster Database...")
+        myclient = pymongo.MongoClient(str(config.MONGO_URI))
+        analyseDb = myclient[str(config.DB_ANALYSE)]
+        analyseCol = analyseDb[config.COLL_ANALYSE]
+
+        # Fisrt set all projeccd to Unknown
+        analyseCol.update_many({'soort': 'Monster'}, { "$set": { "projectcd": None } })
+
+        #Then get all Monsters with an old code
+        df_monsters = pd.DataFrame(list(analyseCol.find({'soort': 'Monster', 'brondata.PROJECT': {'$exists': True}}, {'projectcd':0})))        
+        
+        df_project = pd.DataFrame(list(analyseCol.find({'soort': 'Project'}, {'projectcd':1, 'project': 1, '_id':0})))
+        df2_project = pd.concat([df_project['projectcd'], df_project['projectcd']], axis=1, ignore_index=True)
+        df2_project.columns = ['projectcd', 'project']
+
+        # Add projectcd and project as porject-field to make sure all occurences are matched
+        df_project.dropna(subset=['project'], inplace=True)
+        df_project = pd.concat([df_project, df2_project], ignore_index=True)
+        df_project.drop_duplicates(subset=['project'], inplace=True)
+        
+        # Set alle projectcd of monster database
+        df_monsters = df_monsters.merge(df_project, on=['project'], how='left')
+        df_monsters['projectcd'] = df_monsters['projectcd'].fillna(value = const.ONBEKEND_PROJECT)
+        
+        #Some projects were not found: report these
+        logger.warning(f"Not all old projectcodes of Monsterdatabase could be fixed. These could not be matched: {set(list(df_monsters[df_monsters.projectcd == const.ONBEKEND_PROJECT]['project']))}")
+        
+        if not df_monsters.empty:
+            # Update soort documents 
+            updates=[ pymongo.UpdateOne({'_id':row['_id']}, {'$set':{'projectcd': row['projectcd']}}) for index, row in df_monsters.iterrows()]  # 
+            analyseCol.bulk_write(updates)
+        else:
+            logger.warning(f"trying to update empty dataframe of monsters to fix old projeccodes.")
+
+    except Exception as err:
+        msg = "Onbekende fout bij het old projectcodes of Monster Database met melding: " + str(err)
         logger.error(msg)    
         raise Exception(msg) from err
     finally:
