@@ -483,6 +483,65 @@ class ArchStellingView(WSModelView):
     edit_fieldsets = show_fieldsets
 
 
+class ArchMonster_BotanieView(WSModelView):
+    datamodel = WSSQLAInterface(Monster_Botanie)
+    # base_permissions = ['can_add', 'can_show']
+    list_title = "Botaniedeterminaties Monsters"
+    list_columns = ["soort", "aantal", 'deel', 'staat', 'monster']
+
+    show_fieldsets = [
+        ("Projectvelden", {"fields": ["monster"]}),
+        ("Inhoudvelden", {"fields": ["soort", "aantal", "deel", "staat"]}),
+        flds_migratie_info]
+    edit_fieldsets = show_fieldsets
+    add_fieldsets = show_fieldsets
+
+
+class ArchMonster_SchelpView(WSModelView):
+    datamodel = WSSQLAInterface(Monster_Schelp)
+    # base_permissions = ['can_add', 'can_show']
+    list_title = "Schelpdeterminaties Monsters"
+    list_columns = ["soort", "aantal", "monster"]
+
+    show_fieldsets = [
+        ("Projectvelden", {"fields": ["monster"]}),
+        ("Inhoudvelden", {"fields": ["soort", "aantal"]}),
+        flds_migratie_info]
+    edit_fieldsets = show_fieldsets
+    add_fieldsets = show_fieldsets
+
+
+class ArchMonsterView(WSModelView):
+    datamodel = WSSQLAInterface(Monster)
+    # base_permissions = ['can_add', 'can_show']
+    list_title = "Monsters"
+    list_columns = ["monstercd", "project", "put", "spoor", 'vondst', 'opmerkingen', 'karakterisering', 'omstandigheden']
+
+    rwaarden_fieldset = [("R-waarden", {"columns": [
+            {"fields": ["r_analysewaardig_zo", "r_analysewaardig_bo", "r_concentratie_zo", "r_concentratie_bo"], "grid":6},        
+            {"fields": ["r_conservering_zo", "r_conservering_bo", "r_diversiteit_zo", "r_diversiteit_bo"], "grid":6},        
+        ]})]
+    waardering_fieldset = [("Waardering", {"columns": [
+            {"fields": ['B_stengel_mineraaliseerd', 'B_stengel_onverkoold', 'B_stengel_recent', 'B_stengel_verkoold', 'B_wortel_mineraaliseerd', 'B_wortel_onverkoold', 'B_wortel_recent', 'B_wortel_verkoold', 'B_zaden_cultuur_mineraaliseerd', 'B_zaden_cultuur_onverkoold', 'B_zaden_cultuur_recent', 'B_zaden_cultuur_verkoold', 'B_zaden_kaf_mineraaliseerd', 'B_zaden_kaf_onverkoold', 'B_zaden_kaf_recent', 'B_zaden_kaf_verkoold', 'B_zaden_wild_mineraaliseerd','B_zaden_wild_onverkoold', 'B_zaden_wild_recent', 'B_zaden_wild_verkoold'], "grid":4},        
+            {"fields": ['C_aardewerk', 'C_antraciet', 'C_bewerkt_hout', 'C_fabsteen', 'C_fosfaat', 'C_glas', 'C_huttenleem', 'C_kleipijp', 'C_lakzegel', 'C_leer', 'C_leisteen', 'C_metaal', 'C_mortel', 'C_natsteen', 'C_ovenslakken', 'C_overig', 'C_steenkool', 'C_textiel', 'C_turf', 'D_C14', 'D_hout', 'D_houtskool', 'D_tak_of_knop', 'D_te_determ', 'S_kokkel', 'S_molzoet_of_land', 'S_mossel', 'S_oester'], "grid":4},        
+            {"fields": ['Z_amfibiebot_O', 'Z_amfibiebot_V', 'Z_anders', 'Z_bot_groot_O', 'Z_bot_groot_V', 'Z_bot_klein_O', 'Z_bot_klein_V', 'Z_eierschaal_of_vel_O', 'Z_eierschaal_of_vel_V', 'Z_insekten_O', 'Z_insekten_V', 'Z_visgraat_of_bot_O', 'Z_visgraat_of_bot_V', 'Z_visschub_O', 'Z_visschub_V', 'Z_viswervel_O', 'Z_viswervel_V', 'Z_vliegepop_O', 'Z_vliegepop_V', 'Z_vogelbot_O', 'Z_vogelbot_V', 'Z_watervlo_ei_O', 'Z_watervlo_ei_V', 'Z_wormei_O', 'Z_wormei_V'], "grid":4},        
+        ]})]
+
+
+    show_fieldsets = [
+        ("Projectvelden", {"fields": ["monstercd", "project", "put", "spoor", "vondst", "doos"]}),
+        ("Inhoudvelden", {"fields": ["gezeefd_volume", "zeefmaat", "restvolume", 'datum_zeven']}),
+        ("Beschrijving", {"fields": ['opmerkingen', 'karakterisering', 'omstandigheden', "grondsoort"]}),
+        flds_migratie_info]
+    show_fieldsets[len(show_fieldsets)-1:len(show_fieldsets)-1] = rwaarden_fieldset
+    show_fieldsets[len(show_fieldsets)-1:len(show_fieldsets)-1] = waardering_fieldset
+    edit_fieldsets = show_fieldsets
+    add_fieldsets = show_fieldsets
+    related_views = [ArchMonster_BotanieView, ArchMonster_SchelpView]
+    search_exclude_columns = ["artefacten"] 
+
+
+
 
 class ArchVondstView(WSModelView):
     datamodel = WSSQLAInterface(Vondst)
@@ -498,7 +557,7 @@ class ArchVondstView(WSModelView):
         flds_migratie_info]
     edit_fieldsets = show_fieldsets
     add_fieldsets = show_fieldsets
-    related_views = [ArchArtefactView]
+    related_views = [ArchArtefactView, ArchMonsterView]
     search_exclude_columns = ["artefacten"] 
 
 
@@ -520,7 +579,7 @@ class ArchVullingView(WSModelView):
 
 class ArchSpoorView(WSModelView):
     datamodel = WSSQLAInterface(Spoor)
-    related_views = [ArchVullingView, ArchVondstView]
+    related_views = [ArchVullingView, ArchVondstView, ArchMonsterView]
     list_columns = ["project", "put", "vlaknr", "spoornr", 'beschrijving']
     list_title = "Sporen"
     show_fieldsets = [
@@ -555,7 +614,7 @@ class ArchVlakView(WSModelView):
 class ArchPutView(WSModelView):
     datamodel = WSSQLAInterface(Put)
     # base_permissions = ['can_add', 'can_show']
-    related_views = [ArchVlakView, ArchSpoorView, ArchVondstView, ArchArtefactView]
+    related_views = [ArchVlakView, ArchSpoorView, ArchVondstView, ArchArtefactView, ArchMonsterView]
     list_title = "Putten"
     list_columns = ["project", "putnr", 'beschrijving']
     show_fieldsets = [
@@ -568,62 +627,6 @@ class ArchPutView(WSModelView):
     search_exclude_columns = ["artefacten", "vondsten"] 
 
 
-class ArchMonster_BotanieView(WSModelView):
-    datamodel = WSSQLAInterface(Monster_Botanie)
-    # base_permissions = ['can_add', 'can_show']
-    list_title = "Botaniedeterminaties Monsters"
-    list_columns = ["soort", "aantal", 'deel', 'staat', 'monster']
-
-    show_fieldsets = [
-        ("Projectvelden", {"fields": ["monster"]}),
-        ("Inhoudvelden", {"fields": ["soort", "aantal", "deel", "staat"]}),
-        flds_migratie_info]
-    edit_fieldsets = show_fieldsets
-    add_fieldsets = show_fieldsets
-
-
-class ArchMonster_SchelpView(WSModelView):
-    datamodel = WSSQLAInterface(Monster_Schelp)
-    # base_permissions = ['can_add', 'can_show']
-    list_title = "Schelpdeterminaties Monsters"
-    list_columns = ["soort", "aantal", "monster"]
-
-    show_fieldsets = [
-        ("Projectvelden", {"fields": ["monster"]}),
-        ("Inhoudvelden", {"fields": ["soort", "aantal"]}),
-        flds_migratie_info]
-    edit_fieldsets = show_fieldsets
-    add_fieldsets = show_fieldsets
-
-
-class ArchMonsterView(WSModelView):
-    datamodel = WSSQLAInterface(Monster)
-    # base_permissions = ['can_add', 'can_show']
-    list_title = "Monsters"
-    list_columns = ["monstercd", "project", "put", 'vondst', 'opmerkingen', 'karakterisering', 'omstandigheden']
-
-    rwaarden_fieldset = [("R-waarden", {"columns": [
-            {"fields": ["r_analysewaardig_zo", "r_analysewaardig_bo", "r_concentratie_zo", "r_concentratie_bo"], "grid":6},        
-            {"fields": ["r_conservering_zo", "r_conservering_bo", "r_diversiteit_zo", "r_diversiteit_bo"], "grid":6},        
-        ]})]
-    waardering_fieldset = [("Waardering", {"columns": [
-            {"fields": ['B_stengel_mineraaliseerd', 'B_stengel_onverkoold', 'B_stengel_recent', 'B_stengel_verkoold', 'B_wortel_mineraaliseerd', 'B_wortel_onverkoold', 'B_wortel_recent', 'B_wortel_verkoold', 'B_zaden_cultuur_mineraaliseerd', 'B_zaden_cultuur_onverkoold', 'B_zaden_cultuur_recent', 'B_zaden_cultuur_verkoold', 'B_zaden_kaf_mineraaliseerd', 'B_zaden_kaf_onverkoold', 'B_zaden_kaf_recent', 'B_zaden_kaf_verkoold', 'B_zaden_wild_mineraaliseerd','B_zaden_wild_onverkoold', 'B_zaden_wild_recent', 'B_zaden_wild_verkoold'], "grid":4},        
-            {"fields": ['C_aardewerk', 'C_antraciet', 'C_bewerkt_hout', 'C_fabsteen', 'C_fosfaat', 'C_glas', 'C_huttenleem', 'C_kleipijp', 'C_lakzegel', 'C_leer', 'C_leisteen', 'C_metaal', 'C_mortel', 'C_natsteen', 'C_ovenslakken', 'C_overig', 'C_steenkool', 'C_textiel', 'C_turf', 'D_C14', 'D_hout', 'D_houtskool', 'D_tak_of_knop', 'D_te_determ', 'S_kokkel', 'S_molzoet_of_land', 'S_mossel', 'S_oester'], "grid":4},        
-            {"fields": ['Z_amfibiebot_O', 'Z_amfibiebot_V', 'Z_anders', 'Z_bot_groot_O', 'Z_bot_groot_V', 'Z_bot_klein_O', 'Z_bot_klein_V', 'Z_eierschaal_of_vel_O', 'Z_eierschaal_of_vel_V', 'Z_insekten_O', 'Z_insekten_V', 'Z_visgraat_of_bot_O', 'Z_visgraat_of_bot_V', 'Z_visschub_O', 'Z_visschub_V', 'Z_viswervel_O', 'Z_viswervel_V', 'Z_vliegepop_O', 'Z_vliegepop_V', 'Z_vogelbot_O', 'Z_vogelbot_V', 'Z_watervlo_ei_O', 'Z_watervlo_ei_V', 'Z_wormei_O', 'Z_wormei_V'], "grid":4},        
-        ]})]
-
-
-    show_fieldsets = [
-        ("Projectvelden", {"fields": ["monstercd", "project", "put", "vondst", "doos"]}),
-        ("Inhoudvelden", {"fields": ["gezeefd_volume", "zeefmaat", "restvolume", 'datum_zeven']}),
-        ("Beschrijving", {"fields": ['opmerkingen', 'karakterisering', 'omstandigheden', "grondsoort"]}),
-        flds_migratie_info]
-    show_fieldsets[len(show_fieldsets)-1:len(show_fieldsets)-1] = rwaarden_fieldset
-    show_fieldsets[len(show_fieldsets)-1:len(show_fieldsets)-1] = waardering_fieldset
-    edit_fieldsets = show_fieldsets
-    add_fieldsets = show_fieldsets
-    related_views = [ArchMonster_BotanieView, ArchMonster_SchelpView]
-    search_exclude_columns = ["artefacten"] 
 
 
 
