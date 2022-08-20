@@ -1,0 +1,8 @@
+           (none) = Column(String)
+      MONSTERCODE = Column(String)
+               Id = Column(String)
+         C_overig = Column(String)
+         Z_anders = Column(String)
+S_molzoet_of_land = Column(String)
+    D_tak_of_knop = Column(String)
+      D_te_determ = Column(String)
