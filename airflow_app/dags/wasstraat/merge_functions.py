@@ -139,6 +139,11 @@ def mergeSoort(soort):
     try:
         #Aggregate Pipelin
         collection = getAnalyseCollection()
+        # Merge Tekening into photo's
+        if soort == 'Tekening':
+            aggr.insert(-1, {'$match': {'imageUUID': {'$exists': True}}})
+            aggr.insert(-1, {'$addFields': {'soort': 'Foto'}})
+
         logger.info("Calling aggregation: " + str(aggr))
         collection.aggregate(aggr, allowDiskUse=True)
         

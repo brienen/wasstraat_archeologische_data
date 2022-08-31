@@ -35,9 +35,9 @@ services:
       # - /Volumes/Extreme SSD/Depot Projecten:/input/projecten
       # - /Volumes/Extreme SSD/Depot Projecten:/input/images
       # Testing settings
-       - ./data/input/basefiles/projectdatabase/monsterdatabase:/input/monsterdatabase
        - ./data/input/basefiles/projectdatabase/digidepot:/input/projecten
        - ./data/input/basefiles/projectdatabase/digidepot:/input/images
+       - ./data/input/basefiles/projectdatabase/monsterdatabase:/input/monsterdatabase
        - ./data/input/basefiles/projectdatabase/Delf-IT:/input/delfit
        - ./data/input/basefiles/projectdatabase/magazijnlijst:/input/magazijnlijst
        - ./data/input/basefiles/projectdatabase/digifotos:/input/digifotos

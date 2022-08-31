@@ -757,6 +757,8 @@ class DiscrFotosoortEnum(enum.Enum):
     Velddocument = const.VELDDOCUMENT
     Overige_afbeelding = const.OVERIGE_AFBEELDING
     Afbeelding = const.AFBEELDING
+    Objecttekening = const.OBJECTTEKENING
+    Overige_tekening = const.OVERIGE_TEKENING
 
 
 class Foto(WasstraatModel):
@@ -867,7 +869,6 @@ class Opgravingsfoto(Foto):
     __tablename__ = 'Def_Foto'
     __table_args__ = {'extend_existing': True}
     __mapper_args__ = {'polymorphic_identity': DiscrFotosoortEnum.Opgravingsfoto}
-
 class Velddocument(Foto):
     __tablename__ = 'Def_Foto'
     __table_args__ = {'extend_existing': True}
@@ -876,6 +877,14 @@ class Overige_afbeelding(Foto):
     __tablename__ = 'Def_Foto'
     __table_args__ = {'extend_existing': True}
     __mapper_args__ = {'polymorphic_identity': DiscrFotosoortEnum.Overige_afbeelding}
+class Objecttekening(Foto):
+    __tablename__ = 'Def_Foto'
+    __table_args__ = {'extend_existing': True}
+    __mapper_args__ = {'polymorphic_identity': DiscrFotosoortEnum.Objecttekening}
+class Overige_tekening(Foto):
+    __tablename__ = 'Def_Foto'
+    __table_args__ = {'extend_existing': True}
+    __mapper_args__ = {'polymorphic_identity': DiscrFotosoortEnum.Overige_tekening}
 
 
 

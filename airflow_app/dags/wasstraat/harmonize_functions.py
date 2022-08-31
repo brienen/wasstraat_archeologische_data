@@ -167,7 +167,7 @@ def parseFotobestanden():
                     doc['projectcd'] = matchObj.group(1)
                     doc['tekeningcd'] = matchObj.group(2) + str(int(matchObj.group(3))).zfill(3)
                     doc['fototype'] = 'T'
-                    doc['fotosoort'] = const.OBJECTTEKENING if  matchObj.group(2) == 'T' else const.OVERIGE_AFBEELDING
+                    doc['fotosoort'] = const.OBJECTTEKENING if  matchObj.group(2) == 'T' else const.OVERIGE_TEKENING
                     doc['soort'] = 'Tekening' 
                     analyseCol.replace_one({"_id": doc['_id']}, doc, upsert=True)
                     continue

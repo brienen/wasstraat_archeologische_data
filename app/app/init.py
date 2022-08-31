@@ -1,4 +1,4 @@
-from models import Project, Artefact, Foto, Spoor, Vondst
+from models import Project, Artefact, Foto, Spoor, Vondst, Objectfoto
 import shared.config as config
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine, func, update, inspect, MetaData
@@ -43,7 +43,7 @@ def init():
 
         # Set aantal foto's per artefact
         session.execute(update(Artefact).values(aantal_fotos=0))
-        rs = session.query(Artefact.primary_key, func.count(Foto.primary_key)).select_from(Foto).join(Foto.artefact).group_by(Artefact)        
+        rs = session.query(Artefact.primary_key, func.count(Objectfoto.primary_key)).select_from(Objectfoto).join(Objectfoto.artefact).group_by(Artefact)        
         for row in rs:
             artf = session.query(Artefact).get(row[0])
             artf.aantal_fotos = row[1] if row[1] else 0

@@ -5,7 +5,7 @@ from flask_appbuilder.models.group import aggregate_count
 from flask_appbuilder.models.sqla.filters import FilterEqual, FilterGreater
 
 from app import db, appbuilder
-from models import Aardewerk, Stelling, Doos, Artefact, Foto, Spoor, Project,Put, Vondst, Vlak, DiscrArtefactsoortEnum, DiscrFotosoortEnum, Dierlijk_Bot, Glas, Hout, Bouwaardewerk, Kleipijp, Leer, Menselijk_Bot, Metaal, Munt, Schelp, Steen, Textiel, Vulling, Opgravingsfoto, Objectfoto, Velddocument, Overige_afbeelding, Monster, Monster_Botanie, Monster_Schelp
+from models import Aardewerk, Stelling, Doos, Artefact, Foto, Spoor, Project,Put, Vondst, Vlak, DiscrArtefactsoortEnum, DiscrFotosoortEnum, Dierlijk_Bot, Glas, Hout, Bouwaardewerk, Kleipijp, Leer, Menselijk_Bot, Metaal, Munt, Schelp, Steen, Textiel, Vulling, Opgravingsfoto, Objectfoto, Velddocument, Overige_afbeelding, Monster, Monster_Botanie, Monster_Schelp, Objecttekening, Overige_tekening
 from widgets import MediaListWidget
 from baseviews import WSModelView, WSGeoModelView
 from interface import WSSQLAInterface, WSGeoSQLAInterface
@@ -163,6 +163,18 @@ class ArchOverigeAfbeeldingenView(ArchFotoView):
     base_filters = [['fotosoort', FilterEqual, DiscrFotosoortEnum.Overige_afbeelding.value]]
     list_title = "Overige Afbeeldingen"
     ArchFotoView.view_mapper.update({DiscrFotosoortEnum.Overige_afbeelding.value: 'ArchOverigeAfbeeldingenView'})
+
+class ArchObjecttekeningenView(ArchFotoView):
+    datamodel = WSSQLAInterface(Objecttekening)
+    base_filters = [['fotosoort', FilterEqual, DiscrFotosoortEnum.Objecttekening.value]]
+    list_title = "Objecttekeningen"
+    ArchFotoView.view_mapper.update({DiscrFotosoortEnum.Objecttekening.value: 'ArchObjecttekeningenView'})
+
+class ArchOverigetekeningenView(ArchFotoView):
+    datamodel = WSSQLAInterface(Overige_tekening)
+    base_filters = [['fotosoort', FilterEqual, DiscrFotosoortEnum.Overige_tekening.value]]
+    list_title = "Overige tekeningen"
+    ArchFotoView.view_mapper.update({DiscrFotosoortEnum.Overige_tekening.value: 'ArchOverigetekeningenView'})
 
 
 
@@ -637,7 +649,7 @@ class ArchProjectView(WSGeoModelView):
     #related_views = [ArchPutView, ArchVondstView, ArchArtefactView]
     base_order = ("projectcd", "asc")
     list_title = "Projecten"
-    related_views = [ArchArtefactView, ArchDoosView, ArchPutView, ArchSpoorView, ArchVondstView, ArchMonsterView, ArchOpgravingFotoView, ArchVelddocumentView, ArchObjectFotoView, ArchOverigeAfbeeldingenView]
+    related_views = [ArchArtefactView, ArchDoosView, ArchPutView, ArchSpoorView, ArchVondstView, ArchMonsterView, ArchOpgravingFotoView, ArchVelddocumentView, ArchObjectFotoView, ArchOverigeAfbeeldingenView, ArchObjecttekeningenView, ArchOverigetekeningenView]
     search_exclude_columns = ["location", "artefacten", "fotos"] 
 
     show_fieldsets = [
@@ -697,7 +709,11 @@ appbuilder.add_view(ArchObjectFotoView,"Artefactfoto's",icon="fa-dashboard",cate
 appbuilder.add_view(ArchOpgravingFotoView,"Opgravingsfoto's",icon="fa-dashboard",category="Media")
 appbuilder.add_view(ArchVelddocumentView,"Velddocumenten",icon="fa-dashboard",category="Media")
 appbuilder.add_view(ArchOverigeAfbeeldingenView,"Overige Afbeeldingen",icon="fa-dashboard",category="Media")
-appbuilder.add_view(MasterView,"Mappen Foto's",icon="fa-dashboard",category="Media")
+appbuilder.add_view(ArchObjecttekeningenView,"Objecttekeningen",icon="fa-dashboard",category="Media")
+appbuilder.add_view(ArchOverigetekeningenView,"Overige Tekeningen",icon="fa-dashboard",category="Media")
+#appbuilder.add_view(MasterView,"Mappen Foto's",icon="fa-dashboard",category="Media")
 
-appbuilder.add_view(ArtefactChartView,"Telling Artefacten",icon="fa-dashboard",category="Statistieken")
-appbuilder.add_view(ArtefactLineChartView,"Datering Artefacten",icon="fa-dashboard",category="Statistieken")
+
+
+#appbuilder.add_view(ArtefactChartView,"Telling Artefacten",icon="fa-dashboard",category="Statistieken")
+#appbuilder.add_view(ArtefactLineChartView,"Datering Artefacten",icon="fa-dashboard",category="Statistieken")

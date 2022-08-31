@@ -313,6 +313,8 @@ wasstraat_model = {
             { '$match': { 'soort': "Tekening" } },
             { '$addFields': {'key': { '$concat': [ "P", "$projectcd", 
                 {'$concat': ["T", {'$toString': "$tekeningcd"}]}]}}},  		
+            { '$addFields': {'key_tekening': { '$concat': [ "P", "$projectcd", 
+                {'$concat': ["T", {'$toString': "$tekeningcd"}]}]}}},  		
             { '$addFields': {'key_artefact': { '$concat': [ "P", "$projectcd", 
                 { '$ifNull': [{'$concat': ["P", {'$toString': "$putnr" }]}, ""]},
                 {'$concat': ["V", {'$toString': "$vondstnr" }]},
