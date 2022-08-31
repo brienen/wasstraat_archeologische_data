@@ -48,13 +48,13 @@ def enhanceAllAttributes():
         
 
         #loop over all docs in Collection
-        #for doc in analyseCol.find({"projectcd": "MD108"}):
+        #for doc in analyseCol.find({"soort": "Monster"}):
         #for doc in analyseCol.find({"datering": {"$exists": True}}):
         for doc in analyseCol.find():
             
             try: 
                 # Set all projectcd to capital letters and remove zeros in number
-                if 'projectcd' in doc:
+                if 'projectcd' in doc and doc['projectcd']:
                     matchObj = re.match( r'([a-zA-Z]+)-?([0-9]*)', doc['projectcd'], re.M|re.I)
                     if matchObj:
                         deel1 = matchObj.group(1).upper()
@@ -82,6 +82,14 @@ def enhanceAllAttributes():
                 #clean Type Voorwerp
                 if 'typevoorwerp' in doc:
                     doc['typevoorwerp'] =  str(doc['typevoorwerp']).replace('?', '').strip().title()  
+
+                #clean Type Voorwerp
+                if 'tekeningcd' in doc:
+                    doc['tekeningcd'] = str(doc['tekeningcd']).replace('?', '').replace('!', '').replace('-', '').strip()
+                    matchObj = re.match( r'^([A-Z])([0-9]+)$', doc['tekeningcd'], re.M|re.I)
+                    if matchObj:
+                        doc['tekeningcd'] = matchObj.group(1) + str(int(matchObj.group(2))).zfill(3)
+
 
                 ut.convertToInt(doc, 'putnr', True) 
                 ut.convertToInt(doc, 'vondstnr', True) 

@@ -37,7 +37,7 @@ wasstraat_model = {
             { '$group':{'_id': {"projectcd" : "$projectcd", 'putnr': "$putnr"}}},
             { '$unwind': "$_id"},
             { '$project': {'_id': 0, 'projectcd': "$_id.projectcd", 'putnr': "$_id.putnr"}},       
-            { '$addFields': {'brondata.table': 'generated_put', 'brondata.project': '$projectcd', 'soort': 'Put'}}
+            { '$addFields': {'brondata.table': 'generated_put', 'brondata.projectcd': '$projectcd', 'soort': 'Put'}}
         ]]
   },
   "Vlak": {
@@ -54,7 +54,7 @@ wasstraat_model = {
             { '$group':{'_id': {"projectcd" : "$projectcd", 'putnr': "$putnr", 'vlaknr': "$vlaknr"}}},
             { '$unwind': "$_id"},
             { '$project': {'_id': 0, 'projectcd': "$_id.projectcd", 'putnr': "$_id.putnr", 'vlaknr': "$_id.vlaknr"}},
-            { '$addFields': {'brondata.table': 'generated_vlak', 'brondata.project': '$projectcd', 'soort': 'Vlak'}}
+            { '$addFields': {'brondata.table': 'generated_vlak', 'brondata.projectcd': '$projectcd', 'soort': 'Vlak'}}
         ]]
   },
   "Spoor": {
@@ -78,7 +78,7 @@ wasstraat_model = {
             { '$group':{'_id': {'projectcd':"$projectcd", 'putnr':"$putnr", 'spoornr':"$spoornr", 'vlaknr':"$vlaknr"}, 'aard': {'$max': "$aard"}}},  
             { '$unwind': "$_id"},
             { '$project': {'_id': 0, 'projectcd': "$_id.projectcd", 'putnr': "$_id.putnr", 'spoornr': "$_id.spoornr", 'vlaknr': "$_id.vlaknr"}},
-            { '$addFields': {'brondata.table': 'generated_spoor', 'brondata.project': '$projectcd', 'soort': 'Spoor'}}
+            { '$addFields': {'brondata.table': 'generated_spoor', 'brondata.projectcd': '$projectcd', 'soort': 'Spoor'}}
         ]]
   },
   "Vulling": {
@@ -105,7 +105,7 @@ wasstraat_model = {
        #     { '$group':{'_id': {'projectcd':"$projectcd", 'putnr':"$putnr", 'spoornr':"$spoornr", 'vlaknr':"$vlaknr", 'vullingnr':"$vullingnr"}}},  
        #     { '$unwind': "$_id"},
        #     { '$project': {'_id': 0, 'projectcd': "$_id.projectcd", 'putnr': "$_id.putnr", 'spoornr': "$_id.spoornr", 'vlaknr': "$_id.vlaknr", 'vullingnr': "$_id.vullingnr"}},
-      #      { '$addFields': {'brondata.table': 'generated_vulling', 'brondata.project': '$projectcd', 'soort': 'Vulling'}}
+      #      { '$addFields': {'brondata.table': 'generated_vulling', 'brondata.projectcd': '$projectcd', 'soort': 'Vulling'}}
       #  ]]
         
   },
@@ -149,6 +149,8 @@ wasstraat_model = {
                              {'$concat': ["V", {'$toString': "$vondstnr" }]},
                              {'$concat': ["A", {'$toString': "$subnr"}]},  		
                 {'$ifNull': [{'$concat': ["S", {'$toString': "$splitid" }]}, ""]}]}}},
+            { '$addFields': {'key_tekening': { '$concat': [ "P", "$projectcd", 
+                {'$concat': ["T", {'$toString': "$tekeningcd"}]}]}}},  		
             { '$addFields': {'key_vondst': aggr_key_vondst}}
     ]]
   },
@@ -217,6 +219,14 @@ wasstraat_model = {
             { '$match': { 'soort': "Project" } },
             { '$addFields': {'key': { '$concat': [ "P", "$projectcd"]}}}
         ]]
+        #,MOVEANDMERGE_GENERATE_MISSING_PIPELINES: [[
+        #    { '$match': {'projectcd': { '$exists': {"$toBool": 1} }}},
+        #    { '$group':{'_id': {"projectcd" : "$projectcd"}}},
+        #    { '$unwind': "$_id"},
+        #    { '$project': {'_id': 0, 'projectcd': "$_id.projectcd"}},       
+        #    { '$addFields': {'brondata.table': 'generated_project', 'brondata.projectcd': '$projectcd', 'soort': 'Project'}}
+        #]]
+
   },
   "Vindplaats": {
         STAGING_COLLECTION: config.COLL_STAGING_DELFIT,
@@ -252,7 +262,7 @@ wasstraat_model = {
             { '$group':{'_id': {"projectcd" : "$projectcd", 'putnr': "$putnr", 'vondstnr': "$vondstnr"}}},
             { '$unwind': "$_id"},
             { '$project': {'_id': 0, 'projectcd': "$_id.projectcd", 'putnr': "$_id.putnr", 'vondstnr': "$_id.vondstnr"}},       
-            { '$addFields': {'brondata.table': 'generated_vondst', 'brondata.project': '$projectcd', 'soort': 'Vondst'}}
+            { '$addFields': {'brondata.table': 'generated_vondst', 'brondata.projectcd': '$projectcd', 'soort': 'Vondst'}}
         ]]
   },
   "Foto": {
@@ -295,6 +305,32 @@ wasstraat_model = {
         HARMONIZE_PIPELINES: 'Fotokoppel',
         SET_KEYS_PIPELINES: [[]] 
   },
+  "Tekening": {
+        STAGING_COLLECTION: config.COLL_STAGING_OUD,
+        HARMONIZE_PIPELINES: 'Tekening',
+        MOVEANDMERGE_MERGE: True,
+        SET_KEYS_PIPELINES: [[ 
+            { '$match': { 'soort': "Tekening" } },
+            { '$addFields': {'key': { '$concat': [ "P", "$projectcd", 
+                {'$concat': ["T", {'$toString': "$tekeningcd"}]}]}}},  		
+            { '$addFields': {'key_artefact': { '$concat': [ "P", "$projectcd", 
+                { '$ifNull': [{'$concat': ["P", {'$toString': "$putnr" }]}, ""]},
+                {'$concat': ["V", {'$toString': "$vondstnr" }]},
+                {'$concat': ["A", {'$toString': "$subnr"}]}]}}},  		
+            { '$addFields': {'key_subnr': { '$concat': [ "P", "$projectcd", 
+                { '$ifNull': [{'$concat': ["P", {'$toString': "$putnr" }]}, ""]},
+                {'$concat': ["V", {'$toString': "$vondstnr" }]},
+                {'$concat': ["A", {'$toString': "$subnr"}]}]}}},  		
+            { '$addFields': {'key_vondst': { '$concat': [ "P", "$projectcd", 
+                { '$ifNull': [{'$concat': ["P", {'$toString': "$putnr" }]}, ""]},
+                { '$concat': ["V", {'$toString': "$vondstnr" }]}]}}},  		
+            { '$addFields': {'key_project': { '$concat': [ "P", "$projectcd"]}}}, 
+            { '$addFields': {'key_put': { '$concat': [ "P", "$projectcd", {'$concat': ["P", {'$toString': "$putnr" }]}] }}},
+            { '$addFields': {'key_spoor': { '$concat': [ "P", "$projectcd", 
+                {'$ifNull': [{'$concat': ["P", {'$toString': "$putnr" }]}, ""]},
+                {'$ifNull': [{'$concat': ["V", {'$toString': "$vlaknr"}]}, ""]}, "S", {'$toString': "$spoornr"}] }}},  		
+        ]]
+  },
   "Plaatsing": {
         STAGING_COLLECTION: config.COLL_STAGING_MAGAZIJNLIJST,
         HARMONIZE_PIPELINES: [[
@@ -335,7 +371,7 @@ wasstraat_model = {
                 { '$group':{'_id': {"projectcd" : "$projectcd", 'doosnr': "$doosnr"}}},
                 { '$unwind': "$_id"},
                 { '$project': {'_id': 0, 'projectcd': "$_id.projectcd", 'doosnr': "$_id.doosnr"}},
-                { '$addFields': {'brondata.table': 'generated_Doos', 'brondata.project': '$projectcd', 'soort': 'Doos'}}
+                { '$addFields': {'brondata.table': 'generated_Doos', 'brondata.projectcd': '$projectcd', 'soort': 'Doos'}}
             ]
         ],
         EXTRA_FIELDS: ['key_stelling']

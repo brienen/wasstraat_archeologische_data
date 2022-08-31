@@ -120,7 +120,7 @@ IMG_UPLOAD_URL = "/static/uploads/"
 IMG_SIZE = (300, 200, True)
 IMAGE_BIG_SIZE = (5000, 5000)
 
-IMAGE_EXTENSIONS = [".jpg",".jpeg", ".gif",".png",".tif", ".psd"]
+IMAGE_EXTENSIONS = [".jpg",".jpeg", ".gif",".png",".tif", ".psd", ".pdf"]
 IMAGE_SIZE_THUMB = (300, 200)
 IMAGE_SIZE_MIDDLE = (1500, 1000)
 IMAGE_SIZE_BIGGEST = (7000, 7000)

@@ -18,7 +18,7 @@ analyseCol = analyseDb[config.COLL_ANALYSE]
 analyseColClean = analyseDb[config.COLL_ANALYSE_CLEAN]
 metaCollection = stagingDb['Kolominformatie']
 
-AIRFLOW_WASSTRAAT_CONFIG = "./wasstraat_config/Wasstraat_Config_Harmonize.xlsx"
+AIRFLOW_WASSTRAAT_CONFIG = "./wasstraat_config/Wasstraat_Config_HarmonizeV3.xlsx"
 SUGGESTIE_XL = "./wasstraat_config/Wasstraat_Attribuut_Suggestie.xlsx"
 
 xl = pd.read_excel(AIRFLOW_WASSTRAAT_CONFIG, None);

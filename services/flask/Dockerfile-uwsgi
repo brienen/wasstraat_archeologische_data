@@ -6,7 +6,7 @@ ENV PYTHONUNBUFFERED 1
 
 
 RUN apt-get update && apt-get -y upgrade && apt-get clean
-RUN apt-get install -y libmagic-dev gcc gdal-bin libgdal-dev g++
+RUN apt-get install -y libmagic-dev gcc gdal-bin libgdal-dev g++ poppler-utils
 
 #ARG UNAME=flask
 #ARG UID=1000

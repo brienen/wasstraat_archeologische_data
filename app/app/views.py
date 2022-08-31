@@ -170,7 +170,7 @@ class ArchOverigeAfbeeldingenView(ArchFotoView):
 class ArchArtefactView_Abstr(WSModelView):
     datamodel = WSSQLAInterface(Artefact)
     # base_permissions = ['can_add', 'can_show']
-    list_columns = ["artefactsoort", 'typevoorwerp', "datering", "subnr", "vondst", 'aantal_fotos']
+    list_columns = ["artefactsoort", 'typevoorwerp', "datering", "subnr", "vondst", 'project','aantal_fotos']
     #list_widget = ListThumbnail
     list_title = "Artefacten"
     related_views = [ArchObjectFotoView]

@@ -1,7 +1,7 @@
 FROM jupyter/datascience-notebook:aarch64-ubuntu-22.04
 
 USER root 
-RUN apt-get update && apt-get upgrade -y && apt-get install -y libmagic-dev gdal-bin libgdal-dev g++
+RUN apt-get update && apt-get upgrade -y && apt-get install -y libmagic-dev gdal-bin libgdal-dev g++ poppler-utils
 USER jovyan
 
 RUN python -m pip install --upgrade pip

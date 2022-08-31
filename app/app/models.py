@@ -427,7 +427,7 @@ class Artefact(WasstraatModel):
 
     def __repr__(self):
         if self.project:
-            projectcd = self.project.projectcd if self.project else "Onbekend Project, "
+            projectcd = self.project.projectcd if self.project and self.project.projectcd else "Onbekend Project, "
             subnr = str(self.subnr) if self.subnr else ''
             artefactsoort = (str(self.artefactsoort.value)) if self.artefactsoort else ''
             return f"{artefactsoort} {self.typevoorwerp} {subnr} {projectcd}"

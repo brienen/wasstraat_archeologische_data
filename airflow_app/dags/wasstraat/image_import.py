@@ -4,6 +4,7 @@ import re
 import shared.config as config
 import pymongo
 from pymongo import WriteConcern, InsertOne
+from pdf2image import convert_from_path, convert_from_bytes
 import gridfs
 
 # Import app code
@@ -15,7 +16,7 @@ logger = logging.getLogger("airflow.task")
 
 def getImageNamesFromDir(dir):
     lst = [os.path.join(dp, f) for dp, dn, filenames in os.walk(dir) for f in filenames if os.path.splitext(f)[1].lower() in config.IMAGE_EXTENSIONS] 
-    lst = [file for file in lst if ("velddocument" in file.lower() or "fotos" in file.lower())]
+    lst = [file for file in lst if ("velddocument" in file.lower() or "fotos" in file.lower() or "tekening" in file.lower())]
     lst = list(set(lst))
     return lst
 
@@ -41,9 +42,9 @@ def importImages(index, of):
             filedirname = file['filename']   
             logger.info('Processing and loading image file: %s' % filedirname)
 
-            # If file is Tif look if there is a jpg-version already. if so skip
+            # If file is Tif or pdf look if there is a jpg-version already. if so skip
             filename, file_extension = os.path.splitext(filedirname)
-            if 'tif' in file_extension:
+            if 'tif' in file_extension or 'pdf' in file_extension:
                 regex = re.compile(re.escape(filename + ".jpg"))
                 result = col.find_one({'filename': regex })
                 if result:

@@ -3,6 +3,7 @@ import os
 import re
 import shared.config as config
 import io
+import pdf2image
  
 import magic
 from PIL import Image, ExifTags, ImageOps
@@ -73,7 +74,11 @@ def adjustAndSaveFile(fullfilename, fs, collection):
         projectcd = re.search('^([A-Z0-9]+).*', projectcd).group(1)
 
         # First read image and make 3 versions with different sizes. And put them in a list 
-        image = Image.open(fullfilename, 'r')
+        if 'pdf' in file_extension.lower():
+            images = pdf2image.convert_from_path(fullfilename)
+            image = images[0]
+        else:
+            image = Image.open(fullfilename, 'r')
         mime_type = magic.from_file(fullfilename, mime=True)
 
         image_dict_sml, image_dict_med, image_dict_big = putImageInGrid(image, fullfilename, fs, dir, projectcd)    

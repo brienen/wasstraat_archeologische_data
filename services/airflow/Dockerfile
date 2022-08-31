@@ -7,14 +7,14 @@ RUN wget -qO - https://www.mongodb.org/static/pgp/server-4.2.asc | apt-key add -
 #RUN wget -qO - https://www.mongodb.org/static/pgp/server-4.4.asc | apt-key add -
 RUN echo "deb [ arch=arm64 ] https://repo.mongodb.org/apt/ubuntu bionic/mongodb-org/4.2 multiverse" | tee /etc/apt/sources.list.d/mongodb-org-4.2.list
 #RUN echo "deb [ arch=amd64 ] https://repo.mongodb.org/apt/ubuntu focal/mongodb-org/4.4 multiverse" | tee /etc/apt/sources.list.d/mongodb-org-4.4.list
-RUN apt-get update && apt-get -y upgrade && apt-get install -y mongodb-org-shell mongodb-org-tools
+RUN apt-get update && apt-get -y upgrade && apt-get install -y mongodb-org-shell mongodb-org-tools poppler-utils
 RUN mkdir extra
 
 RUN apt-get install -y gdal-bin libgdal-dev g++
 USER airflow
 RUN pip install --upgrade pip
 RUN pip install psycopg2-binary
-RUN pip install matplotlib altair shapely geopandas raven passlib[bcrypt] tenacity pymongo pillow python-magic roman pandas opentelemetry-api openpyxl geoalchemy2 simplejson nltk editdistance
+RUN pip install matplotlib altair shapely geopandas raven passlib[bcrypt] tenacity pymongo pillow python-magic roman pandas opentelemetry-api openpyxl geoalchemy2 simplejson nltk editdistance pdf2image
 RUN mkdir tmp
 
 # COPY SQL SCRIPT

@@ -49,18 +49,21 @@ git stage .
 git commit -m "$3"
 git push --all
 git push --tags
-docker-compose build postgres flask airflow
-docker tag wasstraat_flask:latest wasstraat_flask:$2 
-docker tag wasstraat_flask:latest brienen/wasstraat_flask:$2 
-docker push brienen/wasstraat_flask:$2
+#docker-compose build postgres flask airflow
+docker buildx build --platform linux/amd64,linux/arm64 --builder mybuilder -f ./services/flask/Dockerfile -t brienen/wasstraat_flask:$2 --push .
+#docker tag brienen/wasstraat_flask:$2 wasstraat_flask:$2 
+#docker tag brienen/wasstraat_flask:$2 wasstraat_flask:latest
+#docker push brienen/wasstraat_flask:$2
 
-docker tag wasstraat_postgres:latest wasstraat_postgres:$2 
-docker tag wasstraat_postgres:latest brienen/wasstraat_postgres:$2 
-docker push brienen/wasstraat_postgres:$2
+docker buildx build --platform linux/amd64,linux/arm64 --builder mybuilder -f ./services/postgres/Dockerfile -t brienen/wasstraat_postgres:$2 --push .
+#docker tag wasstraat_postgres:latest wasstraat_postgres:$2 
+#docker tag wasstraat_postgres:latest brienen/wasstraat_postgres:$2 
+#docker push brienen/wasstraat_postgres:$2
 
-docker tag wasstraat_airflow:latest wasstraat_airflow:$2 
-docker tag wasstraat_airflow:latest brienen/wasstraat_airflow:$2 
-docker push brienen/wasstraat_airflow:$2
+#docker buildx build --platform linux/amd64,linux/arm64 --builder mybuilder -f ./services/airflow/Dockerfile -t brienen/wasstraat_airflow:$2 --push .
+#docker tag wasstraat_airflow:latest wasstraat_airflow:$2 
+#docker tag wasstraat_airflow:latest brienen/wasstraat_airflow:$2 
+#docker push brienen/wasstraat_airflow:$2
 ;;
 
 backup)

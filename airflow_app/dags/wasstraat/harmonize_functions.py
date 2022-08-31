@@ -33,10 +33,14 @@ def fixProjectNames():
         stagingcollection.update_many({"mdbfile" : {"$regex" : "DC032_Hoogheem"}}, { "$set": { "project": "DC032" } })
         stagingcollection.update_many({"mdbfile" : {"$regex" : "DC039_Schutter"}}, { "$set": { "project": "DC039" } })
 
-        stagingcollection.update_many({'project': {'$not': {"$type": 2}}}, [{ "$set": { "project": { "$toString": "$project" } } }])
+        stagingcollection.update_many({'projectcd': {'$not': {"$type": 2}}}, [{ "$set": { "projectcd": { "$toString": "$projectcd" } } }])
         plaatjescollection.update_many({'projectcd': {'$not': {"$type": 2}}}, [{ "$set": { "projectcd": { "$toString": "$projectcd" } } }])
 
-        monstercollection.update_many({"PROJECT": "DC 16"}, { "$set": { "PROJECT": "DC016" } })
+        monstercollection.update_many({"PROJECT": {"$regex" : "DC 16"}}, { "$set": { "PROJECT": "DC016" } })
+        monstercollection.update_many({"PROJECT": {"$regex" : "SCHE"}}, { "$set": { "PROJECT": "DC039" } })
+        monstercollection.update_many({"PROJECT": {"$regex" : "PPG"}}, { "$set": { "PROJECT": "DC067" } })
+        monstercollection.update_many({"PROJECT": {"$regex" : "BM"}}, { "$set": { "PROJECT": "DC046" } })
+        monstercollection.update_many({"PROJECT": {"$regex" : "MB2000"}}, { "$set": { "PROJECT": "MD032" } })
 
 
     except Exception as err:
@@ -154,8 +158,20 @@ def parseFotobestanden():
                     if matchObj.group(7) is not None: doc['fotonr'] = matchObj.group(7).lstrip("0")
                     doc['fototype'] = 'H'
                     doc['soort'] = 'Foto' 
-                    analyseCol.insert_one(doc)
+                    doc['fotosoort'] = const.OBJECTFOTO
+                    analyseCol.replace_one({"_id": doc['_id']}, doc, upsert=True)
                     continue
+
+                matchObj = re.match( r'^([a-zA-Z0-9]+)_([A-Z])([0-9]+).*\.[a-z]{3}$', doc['fileName'], re.M|re.I)
+                if matchObj:
+                    doc['projectcd'] = matchObj.group(1)
+                    doc['tekeningcd'] = matchObj.group(2) + str(int(matchObj.group(3))).zfill(3)
+                    doc['fototype'] = 'T'
+                    doc['fotosoort'] = const.OBJECTTEKENING if  matchObj.group(2) == 'T' else const.OVERIGE_AFBEELDING
+                    doc['soort'] = 'Tekening' 
+                    analyseCol.replace_one({"_id": doc['_id']}, doc, upsert=True)
+                    continue
+
 
             # Graaffoto's extraheren (Bevatten altijd een _F en beginnen met projectcode)
                 matchObj = re.match( r'^([a-zA-Z0-9]+)_F(\d+)(_(\w+))?\.[a-z]{3}$', doc['fileName'], re.M|re.I)
@@ -165,7 +181,8 @@ def parseFotobestanden():
                     doc['fotonr'] = matchObj.group(2).lstrip("0")
                     if matchObj.group(4) is not None: doc['fotosubnr'] = matchObj.group(4).lstrip("0")
                     doc['soort'] = 'Foto' 
-                    analyseCol.insert_one(doc)
+                    doc['fotosoort'] = const.OPGRAVINGSFOTO
+                    analyseCol.replace_one({"_id": doc['_id']}, doc, upsert=True)
                     continue
 
             # Graaffoto's extraheren (Bevatten altijd een _F en beginnen met projectcode)
@@ -175,15 +192,17 @@ def parseFotobestanden():
                     doc['fototype'] = 'G' 
                     doc['fotonr'] = matchObj.group(2).lstrip("0")
                     if matchObj.group(4) is not None: doc['fotosubnr'] = matchObj.group(4).lstrip("0")
+                    doc['fotosoort'] = const.OVERIGE_AFBEELDING
                     doc['soort'] = 'Foto' 
-                    analyseCol.insert_one(doc)
+                    analyseCol.replace_one({"_id": doc['_id']}, doc, upsert=True)
                     continue
 
                 # Non classified photos
                 else:
                     doc['fototype'] = 'N' 
                     doc['soort'] = 'Foto' 
-                    analyseCol.insert_one(doc)
+                    doc['fotosoort'] = const.OVERIGE_AFBEELDING
+                    analyseCol.replace_one({"_id": doc['_id']}, doc, upsert=True)
             except Exception as err:
                 msg = "Unknown error while collecting image info with message: " + str(err)
                 logger.error(msg)    

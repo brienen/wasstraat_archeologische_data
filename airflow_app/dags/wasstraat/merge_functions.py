@@ -36,8 +36,8 @@ AGGR_PHASE_CLEAN_EMPTY = {'$replaceRoot': {'newRoot': {'$arrayToObject': {'$filt
 ## Aggregation pipeline to move records of a certain type
 AGGREGATE_MOVE = [
     {'$match': { 'soort': "XXX" } },
-    {'$addFields': {'wasstraat.tables': ['$brondata.table'],
-        'wasstraat.projects': ['$projectcd'], 
+    {'$addFields': {
+        'wasstraat': [{'projectcd': '$brondata.projectcd', 'table': '$brondata.table'}], 
         'brondata': ['$brondata']}},
     { "$merge": { "into": { "db": config.DB_ANALYSE, "coll": config.COLL_ANALYSE_CLEAN }, "on": "_id",  "whenMatched": "replace", "whenNotMatched": "insert" } }
     ]
@@ -47,12 +47,10 @@ AGGREGATE_MERGE = [{'$match': {'soort': 'XXX'}},
  {'$group': {
     'doc': {'$mergeObjects': '$$ROOT'},
     'brondata': {'$addToSet': '$$ROOT.brondata'},
-    'tables': {'$addToSet': '$$ROOT.brondata.table'},
-    'projects': {'$addToSet': '$$ROOT.brondata.project'}}},
+    'wasstraat': {'$addToSet': {'projectcd': '$$ROOT.brondata.projectcd', 'table': '$$ROOT.brondata.table'}}}},
  {'$project': {'doc.brondata': 0}},
  {'$addFields': {'doc.brondata': '$brondata',
-    'doc.wasstraat.tables': '$tables',
-    'doc.wasstraat.projects': '$projects'}},
+    'doc.wasstraat': '$wasstraat'}},
  {'$replaceRoot': {'newRoot': '$doc'}},
  {'$addFields': {'brondata_count': {'$size': '$brondata'}}},
  { "$merge": { "into": { "db": config.DB_ANALYSE, "coll": config.COLL_ANALYSE_CLEAN }, "on": "_id",  "whenMatched": "replace", "whenNotMatched": "insert" } }
@@ -201,7 +199,7 @@ Convenience methodes to retrieve table and project data from bson (non json) fie
 mergeFotoInfo uses these values 
 '''
 regexTable = re.compile(r'\'table\': \'(.*?)\'') # regex to replace Object
-regexProject = re.compile(r'\'project\': \'(.*?)\'') # regex to replace Object
+regexProject = re.compile(r'\'projectcd\': \'(.*?)\'') # regex to replace Object
 def getTable(brondata):  
     try:
         return regexTable.search(str(brondata)).group(1)
@@ -238,8 +236,8 @@ def mergeFotoinfo():
         df_merge = df_merge.merge(df_fotobeschr, how="left", on=["abcd-nr", "projectcd"], suffixes=("", "_beschr"))
         df_merge['soort'] = 'Foto'
         df_merge['brondata'] = df_merge.apply(lambda x: [x['brondata'], x['brondata_beschr']], axis=1)
-        df_merge['wasstraat'] = df_merge.apply(lambda x: {"projects": [getProject(elem) for elem in x['brondata'] if getProject(elem)], "tables": [getTable(elem) for elem in x['brondata'] if getTable(elem)]}, axis=1)  
-        df_merge['materiaal'] = df_merge.apply(lambda x: util.firstValue(x['materiaal'], x['materiaalgroep']) ,axis=1)
+        df_merge['wasstraat'] = df_merge.apply(lambda x: [{'projectcd': x['projectcd'], 'table': getTable(elem)} for elem in x['brondata'] if getTable(elem)], axis=1)  
+        df_merge['materiaal'] = df_merge.apply(lambda x: util.firstValue(x['materiaal'], x['materiaalgroep']) if 'materiaal' in df_merge.columns else x['materiaalgroep'],axis=1)
         df_merge = df_merge[['_id', 'fileName', 'imageUUID', 'imageMiddleUUID', 'imageThumbUUID',
             'fileType', 'directory', 'mime_type', 'fototype', 'soort', 'projectcd',
             'materiaal', 'putnr', 'vondstnr', 'fotonr', 'vondstkey_met_putnr',

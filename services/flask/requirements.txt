@@ -17,5 +17,6 @@ flask_debugtoolbar
 pandas_datareader 
 geoalchemy2 
 typing_extensions
+pdf2image
 
 ###### Requirements with Version Specifiers ######

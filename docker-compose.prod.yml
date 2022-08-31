@@ -3,11 +3,20 @@ version: "3"
 # All available services
 services:
   flask:
-    image: brienen/wasstraat_flask:0.5.2
+    image: brienen/wasstraat_flask:0.5.5
     environment: 
       - env=prod
       - FLASK_DEBUG=0
       - PORT=5000
     ports:
       - 5000:5000
-        
+
+  postgres:
+    image: brienen/wasstraat_postgres:0.5.2
+    container_name: "wasstraat_postgres"
+    ports:
+      - "5432:5432"
+    volumes:
+      - wasstraat_postgres_volume:/data/postgres
+      - /Users/arjen/stack/Wasstraat/backup:/backup
+    restart: unless-stopped
