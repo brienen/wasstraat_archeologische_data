@@ -757,6 +757,7 @@ class DiscrFotosoortEnum(enum.Enum):
     Velddocument = const.VELDDOCUMENT
     Overige_afbeelding = const.OVERIGE_AFBEELDING
     Afbeelding = const.AFBEELDING
+    Tekening = const.TEKENING
     Objecttekening = const.OBJECTTEKENING
     Overige_tekening = const.OVERIGE_TEKENING
 
@@ -877,11 +878,37 @@ class Overige_afbeelding(Foto):
     __tablename__ = 'Def_Foto'
     __table_args__ = {'extend_existing': True}
     __mapper_args__ = {'polymorphic_identity': DiscrFotosoortEnum.Overige_afbeelding}
-class Objecttekening(Foto):
+
+
+class Tekening(Foto):
+    __tablename__ = 'Def_Foto'
+    __table_args__ = {'extend_existing': True}
+    __mapper_args__ = {'polymorphic_identity': DiscrFotosoortEnum.Tekening}
+
+    putID = Column(ForeignKey('Def_Put.primary_key', deferrable=True), index=True)
+    put = relationship('Put', lazy="joined", backref="tekeningen")
+    spoorID = Column(ForeignKey('Def_Spoor.primary_key', deferrable=True), index=True)
+    spoor = relationship('Spoor', backref="tekeningen")
+    vondstID = Column(ForeignKey('Def_Vondst.primary_key', deferrable=True), index=True)
+    vondst = relationship('Vondst', backref="tekeningen")
+    materiaal = Column(String(1024))
+    omschrijving = Column(Text)
+    datum = Column(Date)
+    coupe = Column(Boolean)
+    details = Column(String(1024))
+    microfilm = Column(String(1024))
+    periode = Column(String(1024))
+    profiel = Column(String(1024))
+    schaal = Column(Integer)
+    soort = Column(String(80))
+    volgnr = Column(Integer)
+
+
+class Objecttekening(Tekening):
     __tablename__ = 'Def_Foto'
     __table_args__ = {'extend_existing': True}
     __mapper_args__ = {'polymorphic_identity': DiscrFotosoortEnum.Objecttekening}
-class Overige_tekening(Foto):
+class Overige_tekening(Tekening):
     __tablename__ = 'Def_Foto'
     __table_args__ = {'extend_existing': True}
     __mapper_args__ = {'polymorphic_identity': DiscrFotosoortEnum.Overige_tekening}

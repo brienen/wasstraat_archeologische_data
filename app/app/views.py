@@ -164,16 +164,28 @@ class ArchOverigeAfbeeldingenView(ArchFotoView):
     list_title = "Overige Afbeeldingen"
     ArchFotoView.view_mapper.update({DiscrFotosoortEnum.Overige_afbeelding.value: 'ArchOverigeAfbeeldingenView'})
 
+# Fields for tekening
+tekeningvelden = ("Tekeningvelden", {"columns": [
+            {"fields": ["put", "spoor", "vondst", "volgnr", "datum", "soort"], "grid":6},        
+            {"fields": ["materiaal", "omschrijving", "coupe", 'details', 'microfilm', 'periode', 'profiel','schaal'], "grid":6},        
+        ]})        
+
 class ArchObjecttekeningenView(ArchFotoView):
     datamodel = WSSQLAInterface(Objecttekening)
     base_filters = [['fotosoort', FilterEqual, DiscrFotosoortEnum.Objecttekening.value]]
     list_title = "Objecttekeningen"
+    show_fieldsets = ArchFotoView.show_fieldsets.copy()
+    show_fieldsets[1] = ('Tekening', show_fieldsets[1][1])
+    show_fieldsets.insert(1, tekeningvelden)
     ArchFotoView.view_mapper.update({DiscrFotosoortEnum.Objecttekening.value: 'ArchObjecttekeningenView'})
 
 class ArchOverigetekeningenView(ArchFotoView):
     datamodel = WSSQLAInterface(Overige_tekening)
     base_filters = [['fotosoort', FilterEqual, DiscrFotosoortEnum.Overige_tekening.value]]
     list_title = "Overige tekeningen"
+    show_fieldsets = ArchFotoView.show_fieldsets.copy()
+    show_fieldsets[1] = ('Tekening', show_fieldsets[1][1])
+    show_fieldsets.insert(1, tekeningvelden)
     ArchFotoView.view_mapper.update({DiscrFotosoortEnum.Overige_tekening.value: 'ArchOverigetekeningenView'})
 
 
