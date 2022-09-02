@@ -900,7 +900,6 @@ class Tekening(Foto):
     periode = Column(String(1024))
     profiel = Column(String(1024))
     schaal = Column(Integer)
-    soort = Column(String(80))
     volgnr = Column(Integer)
 
 

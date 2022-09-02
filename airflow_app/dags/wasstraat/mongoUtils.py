@@ -64,6 +64,24 @@ def dropFileStore():
         myclient.close()
 
 
+
+def dropProjectsStore():
+    try: 
+        myclient = pymongo.MongoClient(str(config.MONGO_URI))
+        db = myclient[config.DB_STAGING]
+        col = db[config.COLL_STAGING_OUD]
+
+        logger.info("Deleting: " + str(config.COLL_STAGING_OUD))
+        col.drop()
+
+    except Exception as err:
+        msg = f"Fout bij het verwijderen van collection {config.COLL_STAGING_OUD} uit database {config.DB_STAGING} met melding: " + str(err)
+        logger.error(msg)    
+    finally:
+        myclient.close()
+
+
+
 def dropSingleStore():
     try: 
         myclient = pymongo.MongoClient(str(config.MONGO_URI))
