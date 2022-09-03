@@ -166,7 +166,7 @@ class ArchOverigeAfbeeldingenView(ArchFotoView):
 
 # Fields for tekening
 tekeningvelden = ("Tekeningvelden", {"columns": [
-            {"fields": ["put", "spoor", "vondst", "volgnr", "datum", "soort"], "grid":6},        
+            {"fields": ["volgnr", "datum", "soort"], "grid":6},        
             {"fields": ["materiaal", "omschrijving", "coupe", 'details', 'microfilm', 'periode', 'profiel','schaal'], "grid":6},        
         ]})        
 

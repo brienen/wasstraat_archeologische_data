@@ -885,12 +885,12 @@ class Tekening(Foto):
     __table_args__ = {'extend_existing': True}
     __mapper_args__ = {'polymorphic_identity': DiscrFotosoortEnum.Tekening}
 
-    putID = Column(ForeignKey('Def_Put.primary_key', deferrable=True), index=True)
-    put = relationship('Put', lazy="joined", backref="tekeningen")
-    spoorID = Column(ForeignKey('Def_Spoor.primary_key', deferrable=True), index=True)
-    spoor = relationship('Spoor', backref="tekeningen")
-    vondstID = Column(ForeignKey('Def_Vondst.primary_key', deferrable=True), index=True)
-    vondst = relationship('Vondst', backref="tekeningen")
+    #putID = Column(ForeignKey('Def_Put.primary_key', deferrable=True), index=True)
+    #put = relationship('Put', lazy="joined", backref="tekeningen")
+    #spoorID = Column(ForeignKey('Def_Spoor.primary_key', deferrable=True), index=True)
+    #spoor = relationship('Spoor', backref="tekeningen")
+    #vondstID = Column(ForeignKey('Def_Vondst.primary_key', deferrable=True), index=True)
+    #vondst = relationship('Vondst', backref="tekeningen")
     materiaal = Column(String(1024))
     omschrijving = Column(Text)
     datum = Column(Date)

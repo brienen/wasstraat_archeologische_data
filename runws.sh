@@ -70,7 +70,7 @@ backup)
 DT=$(date +"%Y-%m-%d_%H-%M-%S")
 echo "Backing up Postgres and Mongo with timestamp $DT"
 docker-compose stop flask airflow
-docker exec -u postgres -w /backup wasstraat_postgres bash -c "pg_dump -v -F t -f postgres_$DT.tar flask"
+#docker exec -u postgres -w /backup wasstraat_postgres bash -c "pg_dump -v -F t -f postgres_$DT.tar flask"
 docker exec -w /backup wasstraat_mongo bash -c "mongodump --uri mongodb://\$MONGO_INITDB_ROOT_USERNAME:\$MONGO_INITDB_ROOT_PASSWORD@localhost:27017/\$DB_STAGING?authSource=admin --out mongo_$DT"
 docker exec -w /backup wasstraat_mongo bash -c "mongodump --uri mongodb://\$MONGO_INITDB_ROOT_USERNAME:\$MONGO_INITDB_ROOT_PASSWORD@localhost:27017/\$DB_FILES?authSource=admin --out mongo_$DT"
 docker exec -w /backup wasstraat_mongo bash -c "mongodump --uri mongodb://\$MONGO_INITDB_ROOT_USERNAME:\$MONGO_INITDB_ROOT_PASSWORD@localhost:27017/\$DB_ANALYSE?authSource=admin --out mongo_$DT"
