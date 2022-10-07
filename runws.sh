@@ -16,11 +16,6 @@ echo "Starting in accept mode"
 docker-compose -f docker-compose.yml -f docker-compose.acc.yml up -d
 ;;
 
-meinheld)
-echo "Starting in meinheld mode"
-docker-compose -f docker-compose.yml -f docker-compose.acc-meinheld.yml up -d
-;;
-
 uwsgi)
 echo "Starting in uwsgi mode"
 docker-compose -f docker-compose.yml -f docker-compose.acc-uwsgi.yml up -d
@@ -51,11 +46,12 @@ git push --all
 git push --tags
 #docker-compose build postgres flask airflow
 docker buildx build --platform linux/amd64,linux/arm64 --builder mybuilder -f ./services/flask/Dockerfile -t brienen/wasstraat_flask:$2 --push .
+#docker buildx build --platform linux/amd64,linux/arm64 --builder mybuilder -f ./services/flask/Dockerfile-uwsgi -t brienen/wasstraat_flask-uwsgi:$2 --push .
 #docker tag brienen/wasstraat_flask:$2 wasstraat_flask:$2 
 #docker tag brienen/wasstraat_flask:$2 wasstraat_flask:latest
 #docker push brienen/wasstraat_flask:$2
 
-docker buildx build --platform linux/amd64,linux/arm64 --builder mybuilder -f ./services/postgres/Dockerfile -t brienen/wasstraat_postgres:$2 --push .
+#docker buildx build --platform linux/amd64,linux/arm64 --builder mybuilder -f ./services/postgres/Dockerfile -t brienen/wasstraat_postgres:$2 --push .
 #docker tag wasstraat_postgres:latest wasstraat_postgres:$2 
 #docker tag wasstraat_postgres:latest brienen/wasstraat_postgres:$2 
 #docker push brienen/wasstraat_postgres:$2
@@ -87,5 +83,5 @@ docker exec -w /backup wasstraat_mongo bash -c "mongorestore --drop --uri mongod
 
 
 *)
-echo "Sorry, onbekend commando. Gebruik: release, dev, app, acc, uwsg, meinheld, prod, start, backup, restore of stop" ;;
+echo "Sorry, onbekend commando. Gebruik: release, dev, app, acc, uwsg, prod, start, backup, restore of stop" ;;
 esac

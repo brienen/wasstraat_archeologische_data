@@ -11,6 +11,7 @@ data/postgres/*
 !data/postgres/.gitkeep 
 app/app/static/uploads/*
 !app/app/static/uploads/.gitkeep 
+app/uwsgi-2.0.20/
 
 # Geen .env bestanden in Github, zitten vaak wachtwoorden in 
 *.env

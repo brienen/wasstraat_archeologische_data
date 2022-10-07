@@ -11,6 +11,6 @@ timeout = 120
 keepalive = 5
 threads = 50
 workers = (multiprocessing.cpu_count() * 2) + 1
-preload_app=True
+preload_app=False
 max_requests = 1000
 max_requests_jitter = 100

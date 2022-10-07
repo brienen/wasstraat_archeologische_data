@@ -1,4 +1,5 @@
-FROM python:3.10-slim-bullseye
+#FROM python:3.10-slim-bullseye
+FROM python:3.9.13-bullseye
 
 # set environment variables
 ENV PYTHONDONTWRITEBYTECODE 1
@@ -32,9 +33,9 @@ COPY ./shared /app/app/shared
 ENV STATIC_PATH /app/app/static
 ENV STATIC_INDEX 1
 
-EXPOSE 5000
+EXPOSE 5001
 
 CMD gunicorn --worker-class gevent \
-  --bind 0.0.0.0:5000 \ 
+  --bind 0.0.0.0:5001 \ 
   --config ./gunicorn.conf.py \
   patched_app:app

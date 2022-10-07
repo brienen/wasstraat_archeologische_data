@@ -68,7 +68,7 @@ services:
       - ./config/mongo.env
       - ./config/redis.env
     ports:
-      - '5000:5000'
+      - '5001:5001'
     depends_on:
       - postgres
       - mongo
@@ -107,6 +107,16 @@ services:
        - ./config/airflow_db.env
        - ./config/mongo.env
        - ./config/postgres.env
+
+  apache:
+    container_name: wasstraat_apache
+    build: 
+      dockerfile: ./services/apache/Dockerfile
+      context: .
+    volumes:
+      - /Users/arjen/stack2/Wasstraat/files:/usr/local/apache2/htdocs
+    ports:
+      - '5000:5000'
 
 volumes:
     wasstraat_postgres_volume:

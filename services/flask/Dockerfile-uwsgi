@@ -32,13 +32,8 @@ COPY ./shared /app/app/shared
 ENV STATIC_PATH /app/app/static
 ENV STATIC_INDEX 1
 
-EXPOSE 5000
+EXPOSE 5001
 
-CMD uwsgi --master \
-  --single-interpreter \
-  --workers 2 \
-  --gevent 200 \
-  --protocol http \
-  --socket 0.0.0.0:$PORT \
-  --gevent-monkey-patch \
+CMD uwsgi --http 0.0.0.0:5001 \
+  --ini uwsgi.ini \ 
   --module patched_app:app
