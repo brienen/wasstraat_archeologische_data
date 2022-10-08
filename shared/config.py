@@ -84,7 +84,9 @@ try:
    AIRFLOW_INPUT_MAGAZIJNLIJST = os.getenv("AIRFLOW_INPUT_MAGAZIJNLIJST") if os.getenv("AIRFLOW_INPUT_MAGAZIJNLIJST") else "/input/magazijnlijst"
    AIRFLOW_INPUT_DIGIFOTOS = os.getenv("AIRFLOW_INPUT_DIGIFOTOS") if os.getenv("AIRFLOW_INPUT_DIGIFOTOS") else "/input/digifotos"
    AIRFLOW_INPUT_MONSTER = os.getenv("AIRFLOW_INPUT_MONSTER") if os.getenv("AIRFLOW_INPUT_MONSTER") else "/input/monsterdatabase"
-    
+
+   AIRFLOW_OUTPUT_MEDIA = os.getenv("AIRFLOW_OUTPUT_MEDIA") if os.getenv("AIRFLOW_OUTPUT_MEDIA") else "/output/archeomedia"
+
 except KeyError: 
    logger.error("Cannot read environment variables (ie. POSTGRES_DB, POSTGRES_USER, POSTGRES_PASSWORD) needed to connect to the database. Add them to your .env files")
 

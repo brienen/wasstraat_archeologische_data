@@ -60,6 +60,8 @@ docker buildx build --platform linux/amd64,linux/arm64 --builder mybuilder -f ./
 #docker tag wasstraat_airflow:latest wasstraat_airflow:$2 
 #docker tag wasstraat_airflow:latest brienen/wasstraat_airflow:$2 
 #docker push brienen/wasstraat_airflow:$2
+
+docker buildx build --platform linux/amd64,linux/arm64 --builder mybuilder -f ./services/apache/Dockerfile -t brienen/wasstraat_apache:$2 --push .
 ;;
 
 backup)

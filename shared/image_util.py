@@ -4,6 +4,8 @@ import re
 import shared.config as config
 import io
 import pdf2image
+import pathlib
+
  
 import magic
 from PIL import Image, ExifTags, ImageOps
@@ -62,6 +64,9 @@ def adjustAndSaveFile(fullfilename, fs, collection):
     try:
         filename, file_extension = os.path.splitext(fullfilename)
         dir, filename = os.path.split(fullfilename)
+        if config.AIRFLOW_INPUT_IMAGES in dir:
+            dir = re.sub('^' + config.AIRFLOW_INPUT_IMAGES, '', dir)
+
         if file_extension.lower() not in config.IMAGE_EXTENSIONS:
             return None
 
@@ -98,11 +103,12 @@ def adjustAndSaveFile(fullfilename, fs, collection):
 
 def putImageInGrid(image: Image, fullfilename, fs, dir, projectcd):
     try:
-        filename, file_extension = os.path.splitext(fullfilename)
+        basename = os.path.basename(fullfilename)
+        basename_noext, file_extension = os.path.splitext(basename)
 
         # Grayscale images need special attention for not distoring
         lzw = False
-        if 'lzw' in filename.lower() and 'tif' in file_extension.lower():
+        if 'lzw' in basename.lower() and 'tif' in file_extension.lower():
             image = ImageOps.grayscale(image)
             lzw = True
 
@@ -125,18 +131,23 @@ def putImageInGrid(image: Image, fullfilename, fs, dir, projectcd):
         }
         lst_images.append(image_dict_sml)
 
+        #Set dir and Create dir if not exists before saving file
+        if config.AIRFLOW_INPUT_IMAGES in dir:
+            dir = re.sub('^' + config.AIRFLOW_INPUT_IMAGES, '', dir)
+        pathlib.Path(os.path.join(config.AIRFLOW_OUTPUT_MEDIA, dir.lstrip('/\\'))).mkdir(parents=True, exist_ok=True) 
+
         # Loop over all versions and store them in the filestore
-        for img in lst_images:
-            width = str(img['image'].size[0])
-            height = str(img['image'].size[1])
+        file_id_sml = os.path.join(dir, basename_noext + '-sml.jpg')
+        image_dict_sml['image'].save(os.path.join(config.AIRFLOW_OUTPUT_MEDIA, file_id_sml.lstrip('/\\')))
+
+        file_id_med = os.path.join(dir, basename_noext + '-med.jpg')
+        image_dict_med['image'].save(os.path.join(config.AIRFLOW_OUTPUT_MEDIA, file_id_med.lstrip('/\\')))
+
+        file_id = os.path.join(dir, basename_noext + '.jpg')
+        image_dict_big['image'].save(os.path.join(config.AIRFLOW_OUTPUT_MEDIA, file_id.lstrip('/\\')))
+
         
-            b = io.BytesIO()
-            img['image'].save(b, "JPEG")
-            b.seek(0)
-
-            img['uuid'] = fs.put(b, content_type='image/jpeg', height=int(height), width=int(width), filename=filename, dir=dir, fullfilename=fullfilename, projectcd=projectcd)
-
-        return image_dict_sml['uuid'], image_dict_med['uuid'], image_dict_big['uuid']
+        return file_id_sml, file_id_med, file_id
 
     except Exception as err:
         msg = f"Onbekende fout bij het in grid plaatsen van image {fullfilename}, met tekst: {str(err)}" 

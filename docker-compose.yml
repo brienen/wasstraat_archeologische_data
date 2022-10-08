@@ -41,6 +41,7 @@ services:
        - ./data/input/basefiles/projectdatabase/Delf-IT:/input/delfit
        - ./data/input/basefiles/projectdatabase/magazijnlijst:/input/magazijnlijst
        - ./data/input/basefiles/projectdatabase/digifotos:/input/digifotos
+       - /Users/arjen/stack2/Wasstraat/files/archeomedia:/output/archeomedia
        - ./airflow_app/dags:/opt/airflow/dags
        - ./airflow_app/scripts:/opt/airflow/scripts
        - ./data/wasstraat_config:/opt/airflow/config
@@ -73,6 +74,9 @@ services:
       - postgres
       - mongo
       - redis
+    volumes:
+      - /Users/arjen/stack2/Wasstraat/files/archeomedia:/output/archeomedia
+
 
   mongo:
     image: mongo:4.2.21    
@@ -99,6 +103,8 @@ services:
       - ./airflow_app/dags:/opt/wasstraat/
       - ./data/input/basefiles:/home/jovyan/basefiles
       - ./shared:/home/jovyan/shared/
+      - ./data/input/basefiles/projectdatabase/digidepot:/input/images
+      - /Users/arjen/stack2/Wasstraat/files/archeomedia:/output/archeomedia
     environment:
       JUPYTER_ENABLE_LAB: "yes"
     command: "start-notebook.sh --NotebookApp.token='' --NotebookApp.password=''"

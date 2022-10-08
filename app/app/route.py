@@ -1,13 +1,10 @@
 import os
-import pymongo
-import gridfs
-
 from urllib.parse import urlparse
 from flask_appbuilder import BaseView, expose, has_access
 from flask import abort, Blueprint, flash, render_template, request, session, url_for
 from app import appbuilder
 from app import db
-from models import Foto, Artefact, Project, Objectfoto, Velddocument, Opgravingsfoto, Overige_afbeelding
+from models import Foto, Artefact, Project, Objectfoto, Velddocument, Opgravingsfoto, Overige_afbeelding, Overige_tekening, Objecttekening
 from shared import const
 import shared.config as config
 import shared.image_util as image_util
@@ -27,21 +24,16 @@ class UploadView(BaseView):
 
         strReq = str(request)
         logger.info(f'Request: {strReq}')
-        dir = "Handmatige upload"
+        dir = "Onbekend Project" + os.sep
 
         if request.method == 'POST':
-            myclient = pymongo.MongoClient(str(app.config['MONGO_URI']))
-            filesdb = myclient[str(app.config['DB_FILES'])]
-            fs = gridfs.GridFS(filesdb)
-
             try:
                 valid_images = config.IMAGE_EXTENSIONS
                 for key, f in request.files.items():
                     if key.startswith('file'):
 
-                        #f.save(os.path.join('the/path/to/save', f.filename))
-                        #f = request.files.get('file')
-                        filename, file_extension = os.path.splitext(f.filename)
+                        filename = f.filename
+                        filename_noext, file_extension = os.path.splitext(filename)
                         if file_extension.lower() not in valid_images:
                             continue
                     
@@ -54,37 +46,53 @@ class UploadView(BaseView):
                             if 'project' in urlp.query:
                                 projectID = int(urlp.query.split("=")[1])
                                 project = db.session.query(Project).get(projectID)
+                                dir = os.sep + project.projectcd + '_' + project.projectnaam + os.sep 
 
                                 if 'objectfoto' in urlp.path.lower():
                                     foto = Objectfoto()
+                                    dir = dir + 'objectfoto' + os.sep 
                                 elif 'opgravingfoto' in urlp.path.lower():
                                     foto = Opgravingsfoto()
+                                    dir = dir + 'opgravingfoto' + os.sep 
                                 elif 'velddocument' in urlp.path.lower():
                                     foto = Velddocument()
+                                    dir = dir + 'velddocument' + os.sep 
+                                elif 'objecttekening' in urlp.path.lower():
+                                    foto = Objecttekening()
+                                    dir = dir + 'objecttekening' + os.sep 
+                                elif 'overigetekening' in urlp.path.lower():
+                                    foto = Overige_tekening()
+                                    dir = dir + 'overigetekening' + os.sep 
                                 elif 'overige' in urlp.path.lower():
                                     foto = Overige_afbeelding()                                        
+                                    dir = dir + 'overige' + os.sep 
                                 else:
                                     foto = Foto()
+                                    dir = dir + 'overige' + os.sep 
+
                                 foto.project = project
                             elif 'artefact' in urlp.query:
                                 foto = Objectfoto()
                                 foto.artefactID = int(urlp.query.split("=")[1])
                                 foto.artefact = db.session.query(Artefact).get(foto.artefactID)
                                 foto.project = foto.artefact.project                                    
+                                dir = dir + 'objectfoto' + os.sep 
                             else:
                                 foto = Foto()
+                                dir = dir + 'overige' + os.sep 
+
                         else:
                             foto = Foto()
+                            dir = dir + 'overige' + os.sep 
 
 
                         image = Image.open(request.files['file'].stream)
 
 
-                        imageThumbUUID, imageMiddleUUID, imageUUID = image_util.putImageInGrid(image, filename, fs, dir, "project")
+                        imageThumbUUID, imageMiddleUUID, imageUUID = image_util.putImageInGrid(image, filename, None, dir, "project")
                         foto.fileName = f.filename
                         foto.mime_type = 'image/jpeg'
-                        foto.directory = 'Handmatige Upload'
-                        foto.directory = request.path
+                        foto.directory = dir
                         foto.imageUUID = str(imageUUID)
                         foto.imageMiddleUUID = str(imageMiddleUUID)
                         foto.imageThumbUUID = str(imageThumbUUID)
@@ -96,9 +104,6 @@ class UploadView(BaseView):
                 logger.error('Error while saving image with message: ' + str(err))
                 db.session.rollback()
                 raise
-            finally:                
-                #db.session.close()
-                myclient.close()
 
         redirect_page = page_hist[-3]
         return redirect(redirect_page, code=302)

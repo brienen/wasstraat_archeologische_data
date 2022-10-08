@@ -782,8 +782,8 @@ class Foto(WasstraatModel):
     @renders('custom')
     def photo_img(self):
         if self.imageUUID:
-            return Markup('<a href=/gridfs/getimage/' + self.imageUUID +\
-             '><img src="/gridfs/getimage/' + self.imageMiddleUUID +\
+            return Markup('<a href="/archeomedia' + self.imageUUID +\
+             '"><img src="/archeomedia' + self.imageMiddleUUID +\
               '" alt="Photo" class="img-rounded img-responsive"></a>')
         else:
             return Markup('<a href="' + url_for('ArchFotoView.show',pk=str(self.primary_key)) +\
@@ -794,7 +794,7 @@ class Foto(WasstraatModel):
     def photo_img_middle(self):
         if self.imageMiddleUUID:
             return Markup('<a href="' + url_for('ArchFotoView.show',pk=str(self.primary_key)) +\
-             '"><img src="/gridfs/getimage/' + self.imageMiddleUUID +\
+             '"><img src="/archeomedia' + self.imageMiddleUUID +\
               '" alt="Photo" class="img-rounded img-responsive" style="max-height:50vh"></a>')
         else:
             return Markup('<a href="' + url_for('ArchFotoView.show',pk=str(self.primary_key)) +\
@@ -805,7 +805,7 @@ class Foto(WasstraatModel):
     def photo_img_thumbnail(self):
         if self.imageThumbUUID:
             return Markup('<a href="' + url_for('ArchFotoView.show',pk=str(self.primary_key)) +\
-             '" class="thumbnail"><img src="/gridfs/getimage/' + self.imageThumbUUID +\
+             '" class="thumbnail"><img src="/archeomedia' + self.imageThumbUUID +\
               '" alt="Photo" class="img-rounded img-responsive"></a>')
         else:
             return Markup('<a href="' + url_for('ArchFotoView.show',pk=str(self.primary_key)) +\
@@ -831,7 +831,7 @@ class Foto(WasstraatModel):
     def __repr__(self):
         if self.imageThumbUUID:
             return Markup('<a href="' + url_for('ArchFotoView.show',pk=str(self.primary_key)) +\
-             '" class="thumbnail"><img src="/gridfs/getimage/' + self.imageThumbUUID +\
+             '" class="thumbnail"><img src="/archeomedia' + self.imageThumbUUID +\
               '" alt="Photo" class="img-rounded img-responsive"></a>')
         else:
             return Markup('<a href="' + url_for('ArchFotoView.show',pk=str(self.primary_key)) +\

@@ -1,76 +1,21 @@
-import pymongo
-import gridfs
-import magic
 import PIL
 import io
+import os
 from PIL import Image, ExifTags
 import logging
 import copy
 from models import Foto
-from gridfs import GridFS
-from gridfs.errors import NoFile
-from bson.objectid import ObjectId
 import shared.config as config
-
-
+import shared.image_util as image_util
 
 logger = logging.getLogger()
 
 
-
-
-
-def putImage(fs, image, filename, content_type, size=None, postcard=False):
-    if size:
-        image.thumbnail(size, Image.BICUBIC)
-
-    # if size of picture does not fit paste it on a blank picture
-    if postcard:
-        img_w, img_h = image.size
-
-        mode = image.mode
-        if len(mode) == 1:  # L, 1
-            new_background = (255)
-        if len(mode) == 3:  # RGB
-            new_background = (255, 255, 255)
-        if len(mode) == 4:  # RGBA, CMYK
-            new_background = (255, 255, 255, 255)
-        background = Image.new(mode, size, new_background)
-
-        bg_w, bg_h = background.size
-        offset = ((bg_w - img_w) // 2, (bg_h - img_h) // 2)
-        background.paste(image, offset)
-        image = background
-        
-
-    b = io.BytesIO()
-    image.save(b, "JPEG")
-    b.seek(0)
-
-    return fs.put(b, content_type='image/jpeg', height=int(image.height), width=int(image.width), filename=filename, dir='', fullFilename='')
-
-
 def rotateImage(foto: Foto, degrees=90):
-    myclient = pymongo.MongoClient(str(config.MONGO_URI))
-    filesdb = myclient[str(config.DB_FILES)]
-    fs = gridfs.GridFS(filesdb)
-
-
     try:
-        uuid_old = foto.imageUUID
-        uuid_middle_old = foto.imageMiddleUUID       
-        uuid_thumb_old = foto.imageThumbUUID       
-
-        file_object = fs.get(ObjectId(foto.imageUUID))
-        image = Image.open(io.BytesIO(file_object.read()))
+        image = Image.open(os.path.join(config.AIRFLOW_OUTPUT_MEDIA, foto.imageUUID.lstrip('/\\')))
         image = image.rotate(degrees, expand = 1) 
-        foto.imageUUID = str(putImage(fs, image, file_object.name, file_object.content_type))
-        foto.imageMiddleUUID = str(putImage(fs, image, file_object.name, file_object.content_type, size=config.IMAGE_SIZE_MIDDLE, postcard=True))
-        foto.imageThumbUUID = str(putImage(fs, image, file_object.name, file_object.content_type, size=config.IMAGE_SIZE_THUMB, postcard=True))
-
-        fs.delete(ObjectId(uuid_old))
-        fs.delete(ObjectId(uuid_middle_old))
-        fs.delete(ObjectId(uuid_thumb_old))
+        image_util.putImageInGrid(image, foto.fileName, None, foto.directory, '')
 
     except Exception as err:
         print(err)
