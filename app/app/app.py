@@ -32,7 +32,7 @@ appbuilder = AppBuilder(app, db.session, base_template='mybase.html', indexview=
 migrate = Migrate(app, db) # this
 init.initSequences()
 
-import models, modelevents, views, route  # noqa
+import models, modelevents, views, route, api  # noqa
 
 @app.before_request
 def before_request_callback():

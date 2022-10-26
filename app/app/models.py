@@ -33,6 +33,28 @@ class WasstraatModel(Model):
     brondata = Column(Text)
     uuid = Column('_id', String)
 
+class ABR(WasstraatModel):
+    __tablename__ = 'Def_ABR'
+
+    primary_key = Column(Integer, primary_key=True, autoincrement=True)
+    concept = Column(String(256))
+    code = Column(String(80))
+    label = Column(String(256))
+    note = Column(Text)
+    beginjaar = Column(Integer)
+    eindjaar = Column(Integer)
+    bron = Column(String(256))
+    opmerkingen = Column(Text)
+    uri = Column(String(256))
+    uris = Column(Text)
+    parentID = Column(ForeignKey('Def_ABR.primary_key', deferrable=True), index=True)
+    parent = relationship('ABR', remote_side=[primary_key], backref="children", lazy="joined", join_depth=1)
+
+    def __repr__(self):
+        return self.concept + f" ({self.code}) " if self.code else ""
+
+
+
 class Stelling(WasstraatModel):
     __tablename__ = 'Def_Stelling'
 
@@ -104,12 +126,13 @@ class Project(Model): # Inherit from Model for cannot use Abstract class Wasstra
     def artefacten_observer(self, artefacten):
         self.aantal_artefacten = len(artefacten)
 
+    @staticmethod
+    def getDescription(p):
+        return str(p.projectcd) + f' ({p.projectnaam if p.projectnaam and p.projectnaam != "" else "Zonder naam"})'
 
     def __repr__(self):
-        if self.projectcd:
-            return str(self.projectcd) + ' (' + str(self.projectnaam) + ')'
-        else:
-            return None
+        return Project.getDescription(self)
+
 
 class Doos(WasstraatModel):
     __tablename__ = 'Def_Doos'
@@ -128,11 +151,17 @@ class Doos(WasstraatModel):
     projectID = Column(ForeignKey('Def_Project.primary_key'), index=True)
     project = relationship('Project', lazy="joined")
 
+
+    @staticmethod
+    def getDescription(doos):
+        projectcd = doos.project.projectcd if doos.project else "Onbekend Project, "
+        stelling = ', Stelling: ' + str(doos.stelling) if doos.stelling else ''
+        vaknr = ', Vaknr: ' + str(doos.vaknr) if doos.stelling else ''
+        return f'Doosnr: {doos.doosnr} ({projectcd}){stelling}{vaknr}'
+
+
     def __repr__(self):
-        projectcd = self.project.projectcd if self.project else "Onbekend Project, "
-        stelling = ', Stelling: ' + str(self.stelling) if self.stelling else ''
-        vaknr = ', Vaknr: ' + str(self.vaknr) if self.stelling else ''
-        return str(self.doosnr) + ' ('+ str(projectcd) + ') ' + stelling + vaknr
+        return Doos.getDescription(self)
 
     @hybrid_method
     def aantalArtefacten(self):
@@ -149,6 +178,14 @@ class Put(WasstraatModel):
     datum_gewijzigd = Column(Text)
     projectID = Column(ForeignKey('Def_Project.primary_key', deferrable=True), index=True)
     project = relationship('Project', lazy="joined")
+
+    @staticmethod
+    def getDescription(v):
+        projectcd = v.project.projectcd if v.project else "Onbekend Project, "
+        beschr = str(v.beschrijving) if v.beschrijving else ""
+
+        return projectcd + ' Put ' + str(v.putnr) + ' ' + beschr
+
 
     def __repr__(self):
         projectcd = self.project.projectcd if self.project else "Onbekend Project, "
@@ -215,6 +252,14 @@ class Spoor(WasstraatModel):
     vlakID = Column(ForeignKey('Def_Vlak.primary_key', deferrable=True), index=True)
     vlak = relationship('Vlak')
 
+    @staticmethod
+    def getDescription(v):
+        projectcd = v.project.projectcd if v.project else "Onbekend Project, "
+        put = (' Put ' + str(v.put.putnr)) + " " if v.put else ''
+        aard = str(v.aard) if str(v.aard) else ""
+
+        return projectcd + put + ' Spoor ' + str(v.spoornr) + ' ' + aard
+
     def __repr__(self):
         projectcd = self.project.projectcd if self.project else "Onbekend Project, "
         put = (' Put ' + str(self.put.putnr)) + " " if self.put else ''
@@ -243,6 +288,19 @@ class Vondst(WasstraatModel):
     put = relationship('Put', lazy="joined", backref="vondsten")
     spoorID = Column(ForeignKey('Def_Spoor.primary_key', deferrable=True), index=True)
     spoor = relationship('Spoor', backref="vondsten")
+
+    @staticmethod
+    def getDescription(v):
+        projectcd = v.project.projectcd if v.project else "Onbekend Project"
+        vondstnr = ('Vondstnr ' + str(v.vondstnr)) + " " if v.vondstnr else ''
+        put = ('Put ' + str(v.put.putnr)) + " " if v.put else ''
+        omstandigheden = v.omstandigheden if v.omstandigheden else ''
+
+        return f"{vondstnr} {omstandigheden} {put} {projectcd}"
+
+    def __repr__(self):
+        return Vondst.getDescription(self)
+
 
     def __repr__(self):
         projectcd = self.project.projectcd if self.project else "Onbekend Project"
@@ -337,7 +395,7 @@ class Artefact(WasstraatModel):
     putnr = Column(Integer)
     subnr = Column(Integer) 
     restauratie = Column(Boolean)
-    abr_materiaal = Column(String(1024))
+    abrcode_materiaal = Column(String(1024))
     aantal = Column(Integer)
     afmetingen = Column(String(1024))
     catalogus = Column(String(1024))
@@ -365,6 +423,11 @@ class Artefact(WasstraatModel):
     vondst = relationship('Vondst', backref="artefacten")
     doosID = Column(ForeignKey('Def_Doos.primary_key', deferrable=True), index=True)
     doos = relationship('Doos', backref="artefacten")
+    abr_materiaal_id = Column(Integer, ForeignKey('Def_ABR.primary_key', deferrable=True), index=True)
+    abr_materiaal = relationship("ABR", foreign_keys=[abr_materiaal_id])
+    sub_abr_materiaal_id = Column(Integer, ForeignKey('Def_ABR.primary_key', deferrable=True), index=True)
+    sub_abr_materiaal = relationship("ABR", foreign_keys=[sub_abr_materiaal_id])
+
     artefactsoort =  Column(Enum(DiscrArtefactsoortEnum), index=True)
 
     datering_vanaf = Column(Integer, default=None, index=True)

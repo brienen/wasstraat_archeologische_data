@@ -4,10 +4,14 @@ from flask_appbuilder import ModelView, RestCRUDView
 from flask_appbuilder.baseviews import BaseCRUDView, BaseView
 from flask_appbuilder.widgets import ShowWidget, FormWidget, ListWidget
 from fab_addon_geoalchemy.views import GeoModelView
+from flask_appbuilder.fieldwidgets import Select2AJAXWidget, Select2SlaveAJAXWidget
+from flask_appbuilder.fields import AJAXSelectField
+
 
 from flask_appbuilder.actions import action
 from flask import redirect
 from inspect import isclass
+import copy
 
 
 
@@ -55,6 +59,7 @@ formatters_columns = {
     'fotos': lambda x: Markup(fotoFormatter(x)) if x else ''
 }
 
+
 def flatten(t):
     return [item for sublist in t for item in sublist]
 
@@ -66,6 +71,75 @@ class ColumnFormWidget(FormWidget):
 class MyListWidget(ListWidget):
     template = 'widgets/list.html'
 
+
+def fieldDefinitionFactory(field, datamodel):
+    extra_field_definitions = {
+        "abr_materiaal": AJAXSelectField(
+            "ABR-materiaal",
+            description="Kies materiaal uit ABR-hoofdcategorieën",
+            datamodel=datamodel,
+            col_name="abr_materiaal",
+            widget=Select2AJAXWidget(
+                endpoint="/api/v1/abrmaterialen/hoofdmateriaal"
+            ),
+        ),
+        "sub_abr_materiaal": AJAXSelectField(
+            "ABR-submateriaal",
+            description="Kies materiaal uit subcategorie van ABR-hoofdcategorie",
+            datamodel=datamodel,
+            col_name="sub_abr_materiaal",
+            widget=Select2SlaveAJAXWidget(
+                master_id="abr_materiaal",
+                endpoint="/api/v1/abrmaterialen/submateriaal?q=(parentid:{{ID}})",
+            )),
+        "project": AJAXSelectField(
+            "Project",
+            description="Kies project",
+            datamodel=datamodel,
+            col_name="project",
+            widget=Select2AJAXWidget(
+                endpoint="/api/v1/projecten"
+            ),
+        ),
+        "put": AJAXSelectField(
+            "Put",
+            description="kies put binnen project",
+            datamodel=datamodel,
+            col_name="put",
+            widget=Select2SlaveAJAXWidget(
+                master_id="project",
+                endpoint="/api/v1/putten?q=(projectid:{{ID}})",
+            )),
+        "vondst": AJAXSelectField(
+            "Vondst",
+            description="kies vondst binnen project",
+            datamodel=datamodel,
+            col_name="vondst",
+            widget=Select2SlaveAJAXWidget(
+                master_id="project",
+                endpoint="/api/v1/vondsten?q=(projectid:{{ID}})",
+            )),
+        "spoor": AJAXSelectField(
+            "Spoor",
+            description="kies spoor binnen project",
+            datamodel=datamodel,
+            col_name="spoor",
+            widget=Select2SlaveAJAXWidget(
+                master_id="project",
+                endpoint="/api/v1/sporen?q=(projectid:{{ID}})",
+            )),
+        "doos": AJAXSelectField(
+            "doos",
+            description="kies doos binnen project",
+            datamodel=datamodel,
+            col_name="doos",
+            widget=Select2SlaveAJAXWidget(
+                master_id="project",
+                endpoint="/api/v1/dozen?q=(projectid:{{ID}})",
+            )),
+        }
+    defintion = copy.copy(extra_field_definitions[field])
+    return defintion 
 
 
 class WSModelView(ModelView):
@@ -140,7 +214,18 @@ class WSModelView(ModelView):
                     x for x in list_cols if x not in self.edit_exclude_columns
                 ]
 
-
+        api_lst = ['project', 'put', 'vondst', 'spoor', 'doos']
+        if 'project' in self.edit_columns:
+            for mytype in [x for x in self.edit_columns if x in api_lst]:
+                self.edit_form_extra_fields.update({
+                    mytype: fieldDefinitionFactory(mytype, self.datamodel),
+                })
+        if 'project' in self.add_columns:
+            for mytype in [x for x in self.add_columns if x in api_lst]:
+                self.add_form_extra_fields.update({
+                    mytype: fieldDefinitionFactory(mytype, self.datamodel),
+                })
+             
 
 
 class WSGeoModelView(GeoModelView):
@@ -160,3 +245,9 @@ class WSGeoModelView(GeoModelView):
         else:
             self.datamodel.delete(items)
         return redirect(self.get_redirect())
+
+
+
+
+
+

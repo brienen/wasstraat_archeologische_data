@@ -1,0 +1,14 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "../Flask-AppBuilder"
+		},
+		{
+			"path": "../Jupyter"
+		}
+	],
+	"settings": {}
+}

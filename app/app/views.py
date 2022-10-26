@@ -3,11 +3,14 @@ import copy
 from flask_appbuilder import GroupByChartView, MultipleView
 from flask_appbuilder.models.group import aggregate_count
 from flask_appbuilder.models.sqla.filters import FilterEqual, FilterGreater
+from flask_appbuilder.fields import AJAXSelectField
+from flask_appbuilder.fieldwidgets import Select2AJAXWidget, Select2SlaveAJAXWidget
+from flask_appbuilder import ModelView
 
 from app import db, appbuilder
-from models import Aardewerk, Stelling, Doos, Artefact, Foto, Spoor, Project,Put, Vondst, Vlak, DiscrArtefactsoortEnum, DiscrFotosoortEnum, Dierlijk_Bot, Glas, Hout, Bouwaardewerk, Kleipijp, Leer, Menselijk_Bot, Metaal, Munt, Schelp, Steen, Textiel, Vulling, Opgravingsfoto, Objectfoto, Velddocument, Overige_afbeelding, Monster, Monster_Botanie, Monster_Schelp, Objecttekening, Overige_tekening
+from models import Aardewerk, Stelling, Doos, Artefact, Foto, Spoor, Project,Put, Vondst, Vlak, DiscrArtefactsoortEnum, DiscrFotosoortEnum, Dierlijk_Bot, Glas, Hout, Bouwaardewerk, Kleipijp, Leer, Menselijk_Bot, Metaal, Munt, Schelp, Steen, Textiel, Vulling, Opgravingsfoto, Objectfoto, Velddocument, Overige_afbeelding, Monster, Monster_Botanie, Monster_Schelp, Objecttekening, Overige_tekening, ABR
 from widgets import MediaListWidget
-from baseviews import WSModelView, WSGeoModelView
+from baseviews import WSModelView, WSGeoModelView, fieldDefinitionFactory
 from interface import WSSQLAInterface, WSGeoSQLAInterface
 
 import util as util
@@ -193,6 +196,7 @@ class ArchOverigetekeningenView(ArchFotoView):
 
 class ArchArtefactView_Abstr(WSModelView):
     datamodel = WSSQLAInterface(Artefact)
+
     # base_permissions = ['can_add', 'can_show']
     list_columns = ["artefactsoort", 'typevoorwerp', "datering", "subnr", "vondst", 'project','aantal_fotos']
     #list_widget = ListThumbnail
@@ -201,7 +205,7 @@ class ArchArtefactView_Abstr(WSModelView):
     search_exclude_columns = ['vondst', 'fotos', 'doos']
     show_fieldsets = [
         ("Projectvelden", {"columns": [
-            {"fields": ["project", "vondst", "subnr", "aantal", "abr_materiaal", "artefactsoort", "typevoorwerp", "typecd", "functievoorwerp", "versiering", "beschrijving", "opmerkingen", "doos"], "grid":6},        
+            {"fields": ["project", "vondst", "subnr", "aantal", "artefactsoort", "abr_materiaal", "sub_abr_materiaal", "typevoorwerp", "typecd", "functievoorwerp", "versiering", "beschrijving", "opmerkingen", "doos"], "grid":6},        
             {"fields": ["fotos"], "grid":6, "fulldisplay": True},        
         ]}),        
         ("Algemene Artefactvelden", {"columns": [
@@ -213,8 +217,14 @@ class ArchArtefactView_Abstr(WSModelView):
             {"fields": ["vondstdatering_vanaf", "vondstdatering_tot", "spoordatering_vanaf", "spoordatering_tot"], "grid":6},        
         ]}),
     flds_migratie_info]
-    edit_fieldsets = show_fieldsets
+    edit_fieldsets = util.removeFieldFromFieldset(show_fieldsets, "fotos")
     add_fieldsets = util.removeFieldFromFieldset(show_fieldsets, "artefactsoort")
+
+    add_form_extra_fields = {
+        "abr_materiaal": fieldDefinitionFactory('abr_materiaal', datamodel),
+        "sub_abr_materiaal": fieldDefinitionFactory('sub_abr_materiaal', datamodel)
+        }
+    edit_form_extra_fields = add_form_extra_fields
 
     view_mapper = dict()
     @hooks.before_request(only=["edit", "show"])
@@ -269,8 +279,10 @@ class ArchAardewerkView(ArchArtefactView_Abstr):
     show_fieldsets = copy.deepcopy(ArchArtefactView_Abstr.show_fieldsets)    
     show_fieldsets[len(show_fieldsets)-1:len(show_fieldsets)-1] = aardewerk_fieldset
     add_fieldsets = util.removeFieldFromFieldset(show_fieldsets, "artefactsoort")
-    edit_fieldsets = show_fieldsets
+    edit_fieldsets = util.removeFieldFromFieldset(show_fieldsets, "fotos")
+    #edit_fieldsets = show_fieldsets
     ArchArtefactView_Abstr.view_mapper.update({DiscrArtefactsoortEnum.Aardewerk.value: 'ArchAardewerkView'})
+    add_form_extra_fields = copy.deepcopy(ArchArtefactView_Abstr.add_form_extra_fields)    
 
 '''
 Nog niet
@@ -492,6 +504,9 @@ class ArchDoosView(WSModelView):
         ("Hoofdvelden", {"fields": ["project", "doosnr", "inhoud", "aantalArtefacten"]}),
         ("Locatie", {"fields": ["stelling", "vaknr", "volgletter", "uitgeleend"]}),
         flds_migratie_info]
+    add_fieldsets = util.removeFieldFromFieldset(show_fieldsets, "aantalArtefacten")
+    edit_fieldsets = add_fieldsets
+
 
 class ArchStellingView(WSModelView):
     datamodel = WSSQLAInterface(Stelling)
@@ -676,11 +691,54 @@ class MasterView(MultipleView):
     #datamodel = WSSQLAInterface(Artefact)
     views = [ArchArtefactView]
 
+class ABRView(WSModelView):
+    datamodel = WSSQLAInterface(ABR)
+    list_columns = ["concept", "code", "parent", 'note']
+    title="Archeologisch Basisregister"
 
 
+class TestView(WSModelView):
+    datamodel = WSSQLAInterface(Aardewerk)
+    base_filters = [['artefactsoort', FilterEqual, DiscrArtefactsoortEnum.Aardewerk.value]]
+
+    list_columns = ["artefactsoort", 'typevoorwerp', "datering", "subnr", "vondst", 'project','aantal_fotos']
+    #list_widget = ListThumbnail
+    list_title = "Artefacten"
+    search_exclude_columns = ['vondst', 'fotos', 'doos']
+    show_fieldsets = [
+        ("Test", {"fields": ["abr_materiaal", "sub_abr_materiaal"],"expanded": True})]
+
+    add_fieldsets = show_fieldsets
+    edit_fieldsets = show_fieldsets
+
+    add_form_extra_fields = {
+        "abr_materiaal": AJAXSelectField(
+            "ABR-materiaal",
+            description="Kies materiaal uit ABR-hoofdcategorieën",
+            datamodel=datamodel,
+            col_name="abr_materiaal",
+            widget=Select2AJAXWidget(
+                endpoint="/api/v1/abrmaterialen/hoofdmateriaal" 
+            ),
+        ),
+        "sub_abr_materiaal": AJAXSelectField(
+            "ABR-submateriaal kiezen",
+            description="Kies materiaal uit subcategorie van ABR-hoofdcategorie",
+            datamodel=datamodel,
+            col_name="sub_abr_materiaal",
+            widget=Select2SlaveAJAXWidget(
+                master_id="abr_materiaal",
+                endpoint="/api/v1/abrmaterialen/submateriaal?q=(parentid:{{ID}})",
+            )),
+        }
+    edit_form_extra_fields = add_form_extra_fields
 
 
 db.create_all()
+
+appbuilder.add_view(ABRView,"Archeologisch Basisregister",icon="fa-dashboard",category="Beheer")
+appbuilder.add_view(TestView,"Test",icon="fa-dashboard",category="Beheer")
+
 
 appbuilder.add_view(ArchProjectView,"Projecten",icon="fa-dashboard",category="Projecten")
 appbuilder.add_view(ArchPutView,"Putten",icon="fa-dashboard",category="Projecten")
