@@ -590,7 +590,7 @@ class ArchSpoorView(WSModelView):
 class ArchVlakView(WSModelView):
     datamodel = WSSQLAInterface(Vlak)
     # base_permissions = ['can_add', 'can_show']
-    related_views = [ArchSpoorView, ArchVondstView, ArchArtefactView]
+    # related_views = [ArchSpoorView, ArchVondstView, ArchArtefactView]
     list_title = "Vlakken"
     list_columns = ["project", "put", 'vlaknr', 'beschrijving']
     show_fieldsets = [

@@ -72,6 +72,7 @@ class MyListWidget(ListWidget):
     template = 'widgets/list.html'
 
 
+select2_style = "width:400px"
 def fieldDefinitionFactory(field, datamodel):
     extra_field_definitions = {
         "abr_materiaal": AJAXSelectField(
@@ -80,7 +81,8 @@ def fieldDefinitionFactory(field, datamodel):
             datamodel=datamodel,
             col_name="abr_materiaal",
             widget=Select2AJAXWidget(
-                endpoint="/api/v1/abrmaterialen/hoofdmateriaal"
+                endpoint="/api/v1/abrmaterialen/hoofdmateriaal",
+                style=select2_style
             ),
         ),
         "sub_abr_materiaal": AJAXSelectField(
@@ -91,6 +93,7 @@ def fieldDefinitionFactory(field, datamodel):
             widget=Select2SlaveAJAXWidget(
                 master_id="abr_materiaal",
                 endpoint="/api/v1/abrmaterialen/submateriaal?q=(parentid:{{ID}})",
+                style=select2_style
             )),
         "project": AJAXSelectField(
             "Project",
@@ -98,7 +101,8 @@ def fieldDefinitionFactory(field, datamodel):
             datamodel=datamodel,
             col_name="project",
             widget=Select2AJAXWidget(
-                endpoint="/api/v1/projecten"
+                endpoint="/api/v1/projecten",
+                style=select2_style
             ),
         ),
         "put": AJAXSelectField(
@@ -109,6 +113,7 @@ def fieldDefinitionFactory(field, datamodel):
             widget=Select2SlaveAJAXWidget(
                 master_id="project",
                 endpoint="/api/v1/putten?q=(projectid:{{ID}})",
+                style=select2_style
             )),
         "vondst": AJAXSelectField(
             "Vondst",
@@ -118,6 +123,7 @@ def fieldDefinitionFactory(field, datamodel):
             widget=Select2SlaveAJAXWidget(
                 master_id="project",
                 endpoint="/api/v1/vondsten?q=(projectid:{{ID}})",
+                style=select2_style
             )),
         "spoor": AJAXSelectField(
             "Spoor",
@@ -127,6 +133,7 @@ def fieldDefinitionFactory(field, datamodel):
             widget=Select2SlaveAJAXWidget(
                 master_id="project",
                 endpoint="/api/v1/sporen?q=(projectid:{{ID}})",
+                style=select2_style
             )),
         "doos": AJAXSelectField(
             "doos",
@@ -136,6 +143,7 @@ def fieldDefinitionFactory(field, datamodel):
             widget=Select2SlaveAJAXWidget(
                 master_id="project",
                 endpoint="/api/v1/dozen?q=(projectid:{{ID}})",
+                style=select2_style
             )),
         }
     defintion = copy.copy(extra_field_definitions[field])
