@@ -4,7 +4,7 @@ from flask_appbuilder import ModelView, RestCRUDView
 from flask_appbuilder.baseviews import BaseCRUDView, BaseView
 from flask_appbuilder.widgets import ShowWidget, FormWidget, ListWidget
 from fab_addon_geoalchemy.views import GeoModelView
-from flask_appbuilder.fieldwidgets import Select2AJAXWidget, Select2SlaveAJAXWidget
+from flask_appbuilder.fieldwidgets import Select2AJAXWidget, Select2SlaveAJAXWidget, Select2ManyWidget
 from flask_appbuilder.fields import AJAXSelectField
 
 
@@ -85,6 +85,16 @@ def fieldDefinitionFactory(field, datamodel):
                 style=select2_style
             ),
         ),
+        "abr_extras": AJAXSelectField(
+            "ABR-materiaal",
+            description="Kies materiaal uit ABR-hoofdcategorieën",
+            datamodel=datamodel,
+            col_name="abr_extras",
+            widget=Select2AJAXWidget(
+                endpoint="/api/v1/abrmaterialen/hoofdmateriaal",
+                style=select2_style
+            ),
+        ),
         "sub_abr_materiaal": AJAXSelectField(
             "ABR-submateriaal",
             description="Kies materiaal uit subcategorie van ABR-hoofdcategorie",
@@ -150,6 +160,13 @@ def fieldDefinitionFactory(field, datamodel):
     return defintion 
 
 
+class Select2Many400Widget(Select2ManyWidget):
+
+    def __call__(self, field, **kwargs):
+        kwargs['style'] = select2_style
+        return super(Select2Many400Widget, self).__call__(field, **kwargs)
+
+
 class WSModelView(ModelView):
     formatters_columns = formatters_columns
 
@@ -175,6 +192,7 @@ class WSModelView(ModelView):
             Extended to allow for multiple grids of columns to be shown. 
         """
         super(BaseCRUDView, self)._init_properties()
+
         # Reset init props
         self.related_views = self.related_views or []
         self._related_views = self._related_views or []

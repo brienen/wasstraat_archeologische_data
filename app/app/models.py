@@ -51,7 +51,7 @@ class ABR(WasstraatModel):
     parent = relationship('ABR', remote_side=[primary_key], backref="children", lazy="joined", join_depth=1)
 
     def __repr__(self):
-        return self.concept + f" ({self.code}) " if self.code else ""
+        return self.concept + (f" ({self.code}) " if self.code else "")
 
 
 
@@ -376,6 +376,25 @@ class DiscrArtefactsoortEnum(enum.Enum):
     Textiel = "Textiel"
 
 
+class ABRLink(Model):
+    __tablename__ = 'Def_ABRLink'
+
+    artefactsoort =  Column(Enum(DiscrArtefactsoortEnum), primary_key=True, index=True)
+    abr_materiaal_id = Column(Integer, ForeignKey('Def_ABR.primary_key', deferrable=True), index=True)
+    abr_materiaal = relationship("ABR", foreign_keys=[abr_materiaal_id])
+
+    def __repr__(self):
+        return self.artefactsoort.value
+
+
+
+assoc_artefact_abr = Table('Def_artefact_abr', Model.metadata,
+                                      Column('id', Integer, primary_key=True),
+                                      Column('abr_materiaal_id', Integer, ForeignKey('Def_ABR.primary_key')),
+                                      Column('artefact_id', Integer, ForeignKey('Def_Artefact.primary_key'))
+)
+
+
 class Artefact(WasstraatModel):
     __tablename__ = 'Def_Artefact'
 
@@ -429,6 +448,9 @@ class Artefact(WasstraatModel):
     sub_abr_materiaal = relationship("ABR", foreign_keys=[sub_abr_materiaal_id])
 
     artefactsoort =  Column(Enum(DiscrArtefactsoortEnum), index=True)
+    abrlink_id = Column(Enum(DiscrArtefactsoortEnum), ForeignKey('Def_ABRLink.artefactsoort', deferrable=True), index=True)
+    abrlink = relationship('ABRLink')
+    abr_extras = relationship('ABR', secondary=assoc_artefact_abr, backref='artefacten')
 
     datering_vanaf = Column(Integer, default=None, index=True)
     datering_tot = Column(Integer, default=None, index=True)

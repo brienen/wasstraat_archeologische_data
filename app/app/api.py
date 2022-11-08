@@ -1,7 +1,7 @@
 from flask_appbuilder import ModelRestApi
 from flask_appbuilder.api import BaseApi, expose, rison
 from flask import make_response
-from flask_appbuilder.security.decorators import protect
+from flask_appbuilder.security.decorators import protect, has_access
 from caching import cache
 
 from app import db, appbuilder
@@ -16,6 +16,7 @@ class ABRMaterialenApi(BaseApi):
 
     @expose('/hoofdmateriaal')
     @rison()
+    @has_access
     @cache.cached()
     def getabr(self, **kwargs):
         result = db.session.query(ABR).filter_by(parentID='31').all()
@@ -31,8 +32,7 @@ def queryabr(parentid):
     bottomq = bottomq.join(topq, ABR.parentID == topq.c.primary_key)
 
     recursive_q = topq.union(bottomq)
-    result = db.session.query(recursive_q)
-    return make_response([{"id": row.primary_key, "text": outputABR(row)} for row in result], 200)
+    return make_response([{"id": row.primary_key, "text": outputABR(row)} for row in db.session.query(recursive_q)], 200)
 
 
 class ABRSubmaterialenApi(BaseApi):
@@ -40,6 +40,7 @@ class ABRSubmaterialenApi(BaseApi):
 
     @expose('/submateriaal')
     @rison()
+    @has_access
     def getabr(self, **kwargs):
         if 'parentid' in kwargs['rison']:
             parentid = int(kwargs['rison']['parentid'])
@@ -56,6 +57,7 @@ class ProjectenApi(BaseApi):
 
     @expose('/')
     @rison()
+    @has_access
     @cache.cached()
     def getprojecten(self, **kwargs):
         result = db.session.query(Project).order_by(Project.projectcd.asc())
@@ -69,6 +71,7 @@ class PutApi(BaseApi):
 
     @expose('/')
     @rison()
+    @has_access
     def getPutten(self, **kwargs):
         if 'projectid' in kwargs['rison']:
             projectid = int(kwargs['rison']['projectid'])
@@ -85,6 +88,7 @@ class SpoorApi(BaseApi):
 
     @expose('/')
     @rison()
+    @has_access
     def getSporen(self, **kwargs):
         if 'projectid' in kwargs['rison']:
             projectid = int(kwargs['rison']['projectid'])
@@ -101,6 +105,7 @@ class VondstApi(BaseApi):
 
     @expose('/')
     @rison()
+    @has_access
     def getVondsten(self, **kwargs):
         if 'projectid' in kwargs['rison']:
             projectid = int(kwargs['rison']['projectid'])
@@ -116,6 +121,7 @@ class DoosApi(BaseApi):
 
     @expose('/')
     @rison()
+    @has_access
     def getDozen(self, **kwargs):
         if 'projectid' in kwargs['rison']:
             projectid = int(kwargs['rison']['projectid'])

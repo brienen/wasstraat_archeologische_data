@@ -3,7 +3,8 @@ version: "3"
 # All available services
 services:
   flask:
-    entrypoint: 'flask run --host=0.0.0.0 --port=5001'
+    entrypoint: 'bash -c "while true; do sleep 1; done"' #'flask run --host=0.0.0.0 --port=5001'
+    #entrypoint: 'flask run --host=0.0.0.0 --port=5001'
     environment: 
       #- FLASK_APP=app/app.py
       - env=dev
@@ -17,7 +18,8 @@ services:
       #- ./examples/polymorph:/app
       #- ./data/images:/images
       # - ./app:/app
-      - /Users/arjen/Dropbox/Development/Flask-AppBuilder/examples/related_fields:/app
+      - /Users/arjen/Dropbox/Development/Flask-AppBuilder/examples/crud_rest_api:/app
+      - ./data/input/basefiles/projectdatabase/referentietabellen:/input/referentietabellen
       # - ./shared:/app/app/shared/
 
    

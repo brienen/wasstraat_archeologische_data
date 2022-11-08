@@ -4,26 +4,30 @@ from flask_appbuilder import GroupByChartView, MultipleView
 from flask_appbuilder.models.group import aggregate_count
 from flask_appbuilder.models.sqla.filters import FilterEqual, FilterGreater
 from flask_appbuilder.fields import AJAXSelectField
-from flask_appbuilder.fieldwidgets import Select2AJAXWidget, Select2SlaveAJAXWidget
+from flask_appbuilder.fieldwidgets import Select2ManyWidget
 from flask_appbuilder import ModelView
 
 from app import db, appbuilder
-from models import Aardewerk, Stelling, Doos, Artefact, Foto, Spoor, Project,Put, Vondst, Vlak, DiscrArtefactsoortEnum, DiscrFotosoortEnum, Dierlijk_Bot, Glas, Hout, Bouwaardewerk, Kleipijp, Leer, Menselijk_Bot, Metaal, Munt, Schelp, Steen, Textiel, Vulling, Opgravingsfoto, Objectfoto, Velddocument, Overige_afbeelding, Monster, Monster_Botanie, Monster_Schelp, Objecttekening, Overige_tekening, ABR
+from models import Aardewerk, Stelling, Doos, Artefact, Foto, Spoor, Project,Put, Vondst, Vlak, DiscrArtefactsoortEnum, DiscrFotosoortEnum, Dierlijk_Bot, Glas, Hout, Bouwaardewerk, Kleipijp, Leer, Menselijk_Bot, Metaal, Munt, Schelp, Steen, Textiel, Vulling, Opgravingsfoto, Objectfoto, Velddocument, Overige_afbeelding, Monster, Monster_Botanie, Monster_Schelp, Objecttekening, Overige_tekening, ABR, ABRLink
 from widgets import MediaListWidget
-from baseviews import WSModelView, WSGeoModelView, fieldDefinitionFactory
+from baseviews import WSModelView, WSGeoModelView, fieldDefinitionFactory, Select2Many400Widget
 from interface import WSSQLAInterface, WSGeoSQLAInterface
+from filters import HierarchicalABRFilter
 
 import util as util
 
 from flask_appbuilder.actions import action
 from flask import redirect, request, url_for
 import flask_appbuilder.hooks as hooks
+from wtforms import widgets
 
 import logging
 logger = logging.getLogger()
 
 
 flds_migratie_info = ("Migratie-informatie", {"fields": ["soort","brondata","uuid"],"expanded": False})
+abr_materiaalfilter = ['uri', HierarchicalABRFilter, 'https://data.cultureelerfgoed.nl/term/id/abr/2dcb88e1-e777-4cff-babc-d97485b42b10']
+abr_artefactsoortfilter = ['uri', HierarchicalABRFilter, 'https://data.cultureelerfgoed.nl/term/id/abr/22cbb070-6542-48f0-8afe-7d98d398cc0b']
 
 class ArtefactChartView(GroupByChartView):
     datamodel = WSSQLAInterface(Artefact)
@@ -200,6 +204,7 @@ class ArchArtefactView_Abstr(WSModelView):
     # base_permissions = ['can_add', 'can_show']
     artf_fieldset = None
     discrartefactsoort = None
+    label_columns = {'abr_materiaal':'Materiaalsoort hoofdmateriaal (ABR)', 'sub_abr_materiaal':'Sub-materiaalsoort hoofdmateriaal (ABR)', 'abr_extras':'Materiaalsoort overige materialen (ABR)'}
     list_columns = ["artefactsoort", 'typevoorwerp', "datering", "subnr", "vondst", 'project','aantal_fotos']
     #list_widget = ListThumbnail
     list_title = "Artefacten"
@@ -207,7 +212,7 @@ class ArchArtefactView_Abstr(WSModelView):
     search_exclude_columns = ['vondst', 'fotos', 'doos']
     show_fieldsets = [
         ("Projectvelden", {"columns": [
-            {"fields": ["project", "vondst", "subnr", "aantal", "artefactsoort", "abr_materiaal", "sub_abr_materiaal", "typevoorwerp", "typecd", "functievoorwerp", "versiering", "beschrijving", "opmerkingen", "doos"], "grid":6},        
+            {"fields": ["project", "vondst", "subnr", "aantal", "artefactsoort", "abr_materiaal", "sub_abr_materiaal", "abr_extras", "typevoorwerp", "typecd", "functievoorwerp", "versiering", "beschrijving", "opmerkingen", "doos"], "grid":6},        
             {"fields": ["fotos"], "grid":6, "fulldisplay": True},        
         ]}),        
         ("Algemene Artefactvelden", {"columns": [
@@ -224,9 +229,15 @@ class ArchArtefactView_Abstr(WSModelView):
 
     add_form_extra_fields = {
         "abr_materiaal": fieldDefinitionFactory('abr_materiaal', datamodel),
-        "sub_abr_materiaal": fieldDefinitionFactory('sub_abr_materiaal', datamodel)
+        "sub_abr_materiaal": fieldDefinitionFactory('sub_abr_materiaal', datamodel),
+        #"abr_extras": widgets.Select("abr_extras", widget=Select2Many400Widget)
         }
     edit_form_extra_fields = add_form_extra_fields
+    search_form_query_rel_fields = {'abr_extras': [abr_materiaalfilter]}
+    add_form_query_rel_fields = search_form_query_rel_fields
+    edit_form_query_rel_fields = search_form_query_rel_fields
+
+
 
     view_mapper = dict()
     @hooks.before_request(only=["edit", "show"])
@@ -642,53 +653,61 @@ class MasterView(MultipleView):
     #datamodel = WSSQLAInterface(Artefact)
     views = [ArchArtefactView]
 
-class ABRView(WSModelView):
+
+class ABRMaterialenView(WSModelView):
     datamodel = WSSQLAInterface(ABR)
     list_columns = ["concept", "code", "parent", 'note']
-    title="Archeologisch Basisregister"
+    list_title="Materialen uit Archeologisch Basisregister"
+    base_filters = [abr_materiaalfilter]
+    search_exclude_columns = ['artefacten', 'children', 'uris', 'uuid', 'herkomst', 'brondata']
+    search_form_query_rel_fields = {'parent': base_filters}
+    add_form_query_rel_fields = {'parent': base_filters}
+    edit_form_query_rel_fields = {'parent': base_filters}
 
-
-class TestView(WSModelView):
-    datamodel = WSSQLAInterface(Aardewerk)
-    base_filters = [['artefactsoort', FilterEqual, DiscrArtefactsoortEnum.Aardewerk.value]]
-
-    list_columns = ["artefactsoort", 'typevoorwerp', "datering", "subnr", "vondst", 'project','aantal_fotos']
-    #list_widget = ListThumbnail
-    list_title = "Artefacten"
-    search_exclude_columns = ['vondst', 'fotos', 'doos']
     show_fieldsets = [
-        ("Test", {"fields": ["abr_materiaal", "sub_abr_materiaal"],"expanded": True})]
-
-    add_fieldsets = show_fieldsets
+        ("ABR-velden", {"fields": ["concept", "code", "parent", 'note']}),
+        flds_migratie_info
+    ]
     edit_fieldsets = show_fieldsets
+    add_fieldsets = show_fieldsets
 
-    add_form_extra_fields = {
-        "abr_materiaal": AJAXSelectField(
-            "ABR-materiaal",
-            description="Kies materiaal uit ABR-hoofdcategorieën",
-            datamodel=datamodel,
-            col_name="abr_materiaal",
-            widget=Select2AJAXWidget(
-                endpoint="/api/v1/abrmaterialen/hoofdmateriaal" 
-            ),
-        ),
-        "sub_abr_materiaal": AJAXSelectField(
-            "ABR-submateriaal kiezen",
-            description="Kies materiaal uit subcategorie van ABR-hoofdcategorie",
-            datamodel=datamodel,
-            col_name="sub_abr_materiaal",
-            widget=Select2SlaveAJAXWidget(
-                master_id="abr_materiaal",
-                endpoint="/api/v1/abrmaterialen/submateriaal?q=(parentid:{{ID}})",
-            )),
-        }
-    edit_form_extra_fields = add_form_extra_fields
+
+
+class ABRLinkView(WSModelView):
+    datamodel = WSSQLAInterface(ABRLink)
+    list_columns = ["artefactsoort", "abr_materiaal"]
+    show_fieldsets = ("Linkvelden", {"fields": ["artefactsoort", "abr_materiaal"]}),
+    edit_fieldsets = show_fieldsets
+    add_fieldsets = show_fieldsets
+
+    title="Links naar ABR voor materialen"
+
+
+class ABRArtefactsoortenView(WSModelView):
+    datamodel = WSSQLAInterface(ABR)
+    list_columns = ["concept", "code", "parent", 'note']
+    list_title="Artefactsoorten uit Archeologisch Basisregister"
+    base_filters = [abr_artefactsoortfilter]
+    search_exclude_columns = ['artefacten', 'children', 'uris', 'uuid', 'herkomst', 'brondata']
+    search_form_query_rel_fields = {'parent': base_filters}
+    add_form_query_rel_fields = {'parent': base_filters}
+    edit_form_query_rel_fields = {'parent': base_filters}
+
+    show_fieldsets = [
+        ("ABR-velden", {"fields": ["concept", "code", "parent", 'note']}),
+        flds_migratie_info
+    ]
+    edit_fieldsets = show_fieldsets
+    add_fieldsets = show_fieldsets
+
+
 
 
 db.create_all()
 
-appbuilder.add_view(ABRView,"Archeologisch Basisregister",icon="fa-dashboard",category="Beheer")
-appbuilder.add_view(TestView,"Test",icon="fa-dashboard",category="Beheer")
+appbuilder.add_view(ABRMaterialenView,"Materialen uit ABR",icon="fa-dashboard",category="Beheer")
+appbuilder.add_view(ABRArtefactsoortenView,"Artefactsoorten uit ABR",icon="fa-dashboard",category="Beheer")
+appbuilder.add_view(ABRLinkView,"Links naar ABR voor materialen",icon="fa-dashboard",category="Beheer")
 
 
 appbuilder.add_view(ArchProjectView,"Projecten",icon="fa-dashboard",category="Projecten")
