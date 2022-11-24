@@ -44,7 +44,9 @@ def fotoFormatter(fotos):
             </div>'''
 
 
-
+# <a href="#" data-toggle="tooltip" title="" data-original-title="Another tooltip">have a</a>
+def abrFormatter(abr):
+    return f'<a href="#" data-toggle="tooltip" title="{str(abr.note if abr.note else "<Geen beschrijving>")}">{str(abr)}</a>'
 
 formatters_columns = {
     'project': lambda x: Markup(f'<a href="/archprojectview/show/{str(x.primary_key)}">{str(x)}</a>') if x and not type(x) == str else x,
@@ -56,6 +58,9 @@ formatters_columns = {
     'foto': lambda x: Markup(f'<a href="/archfotoview/show/{str(x.primary_key)}">{str(x)}</a>') if x and not type(x) == str else x,
     'stelling': lambda x: Markup(f'<a href="/archstellingview/show/{str(x.primary_key)}">{str(x)}</a>') if x and not type(x) == str else x,
     'monster': lambda x: Markup(f'<a href="/archmonsterview/show/{str(x.primary_key)}">{str(x)}</a>') if x and not type(x) == str else x,
+    'abr_materiaal': lambda x: Markup(abrFormatter(x)) if x and not type(x) == str else x,
+    'abr_submateriaal': lambda x: Markup(abrFormatter(x)) if x and not type(x) == str else x,
+    'abr_extras': lambda x: Markup([abrFormatter(item) for item in x]) if x and not type(x) == str else x,
     'uri': lambda x: Markup(f'<a href="{str(x)}">{str(x)}</a>'),
     'fotos': lambda x: Markup(fotoFormatter(x)) if x else ''
 }
