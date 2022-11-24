@@ -72,8 +72,13 @@ def setPrimaryKeys(soort, col='analyse'):
 
         df = pd.DataFrame(list(collection.find({'soort': soort})))
         df.drop(['ID', 'index', 'level_0'], inplace=True, errors='ignore')
-        df.reset_index(inplace=True)
-        df['ID'] = df['index']
+        if 'primary_key' in df.columns:
+            df['ID'] = df['primary_key']
+            df = df.drop(['primary_key'], axis=1)
+        else:
+            df.reset_index(inplace=True)
+            df.index = df.index + 1
+            df['ID'] = df['index']
         
         if not df.empty:
             # Update soort documents 
@@ -93,7 +98,7 @@ def setPrimaryKeys(soort, col='analyse'):
 
 
 
-def setReferences(soort, col='analyse', key='key'):
+def setReferences(soort, col='analyse', key='key', refkey=None):
     try:
         if (col == 'analyse'):
             collection = getAnalyseCollection()
@@ -120,13 +125,17 @@ def setReferences(soort, col='analyse', key='key'):
             return
 
         # Find all references to type soort
-        df_ref = pd.DataFrame(list(collection.find({"key_"+soort_lw: {"$exists": True}}, projection={'key_'+soort_lw:1})))
+        if refkey:
+            df_ref = pd.DataFrame(list(collection.find({'key_'+refkey: {"$exists": True}}, projection={'key_'+refkey:1})))
+            df_ref = df_ref.rename(columns={'key_'+refkey: 'key_'+soort_lw})
+        else:
+            df_ref = pd.DataFrame(list(collection.find({"key_"+soort_lw: {"$exists": True}}, projection={'key_'+soort_lw:1})))
         if df_ref.size < 1:
             logger.warning("Er zjn geen referentie met key_"+soort_lw+" gevonden naar documents van het type " +soort )
             return
             
         # Merge dataframes to connect ID's en UUID's to referencing docs
-        df_merge = pd.merge(df_ref, df_soort, how='left', on='key_'+soort_lw).rename(columns={'ID': soort_lw + 'ID'})
+        df_merge = pd.merge(df_ref, df_soort, how='left', on='key_'+soort_lw).rename(columns={'ID': (soort_lw if not refkey else refkey) + 'ID'})
         
         # Update soort documents 
         updates=[ UpdateOne({'_id':x['_id']}, {'$set':x}) for x in [v.dropna().to_dict() for k,v in df_merge.iterrows()]] # 

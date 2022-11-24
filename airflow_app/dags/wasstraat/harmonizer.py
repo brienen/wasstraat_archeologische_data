@@ -70,7 +70,7 @@ def initAttributes(xl):
     return { obj:getAttributes(copy.deepcopy(aggr), xl[obj]) for obj in lst_objecten if obj in xl.keys() }
 
 
-def createAggr(soort, tabellen, tabellen_Ignore, xl, attrs, abr_materiaal):
+def createAggr(soort, tabellen, tabellen_Ignore, xl, attrs, abr_materiaal, abr_submateriaal):
     aggr = copy.deepcopy(HARMONIZE_AGGR)
 
     idx_addfields = 3
@@ -96,6 +96,8 @@ def createAggr(soort, tabellen, tabellen_Ignore, xl, attrs, abr_materiaal):
     # Add ABR if available
     if util.not_empty(abr_materiaal):
         aggr[idx_addfields]['$addFields']['abr_materiaal'] = abr_materiaal
+    if util.not_empty(abr_submateriaal):
+        aggr[idx_addfields]['$addFields']['abr_submateriaal'] = abr_submateriaal
 
     return aggr
    
@@ -106,7 +108,7 @@ def loadHarmonizer():
     
     df = xl['Objecten']    
     df['Object'] = df['Object'].apply(lambda x: x.strip())
-    df['aggr'] = df.apply(lambda x: createAggr(x['Object'], x['Tabellen'], df[df.Object == 'Ignore']['Tabellen'].values[0], xl, attrs, x['ABR-materiaal']), axis=1)   
+    df['aggr'] = df.apply(lambda x: createAggr(x['Object'], x['Tabellen'], df[df.Object == 'Ignore']['Tabellen'].values[0], xl, attrs, x['ABR-materiaal'], x['ABR-submateriaal']), axis=1)   
     
     HARMONIZER = df    
     return HARMONIZER

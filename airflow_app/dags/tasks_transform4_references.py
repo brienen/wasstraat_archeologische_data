@@ -40,8 +40,20 @@ def getSetReferencesTaskGroup():
             python_callable=references_functions.setReferences,
             op_kwargs={'soort': 'Artefact', 'col': 'analyseclean', 'key': 'key_subnr'}
         )
-
         curr >> tsk_iamge >> last
+        tsk_abr_materiaal = PythonOperator(
+            task_id=f'Set_Reference_ABR_Materiaal',
+            python_callable=references_functions.setReferences,
+            op_kwargs={'soort': 'ABR', 'col': 'analyseclean', 'refkey': 'abr_materiaal'}
+        )
+        curr >> tsk_abr_materiaal >> last
+        tsk_abr_submateriaal = PythonOperator(
+            task_id=f'Set_Reference_ABR_SubMateriaal',
+            python_callable=references_functions.setReferences,
+            op_kwargs={'soort': 'ABR', 'col': 'analyseclean', 'refkey': 'abr_submateriaal'}
+        )
+        curr >> tsk_abr_submateriaal >> last
 
+    
 
     return tg1

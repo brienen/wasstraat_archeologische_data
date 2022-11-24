@@ -136,6 +136,8 @@ wasstraat_model = {
             { '$match': { 'soort': "Artefact" } },
             { '$addFields': {'key_doos': { '$concat': [ "P", "$projectcd", "D", {'$toString': "$doosnr"}] }}},
             { '$addFields': {'key_project': { '$concat': [ "P", "$projectcd"]}}}, 
+            { '$addFields': {'key_abr_materiaal': {'$ifNull': [{'$concat': ["A", {'$toString': "$abr_materiaal" }]}, None]}}}, 
+            { '$addFields': {'key_abr_submateriaal': {'$ifNull': [{'$concat': ["A", {'$toString': "$abr_submateriaal" }]}, None]}}}, 
             { '$addFields': {'key_put': { '$concat': [ "P", "$projectcd", 
                             {'$concat': ["P", {'$toString': "$putnr" }]}]}}},  				
             { '$addFields': {'key_plaatsing': "$key_doos"}},
@@ -209,7 +211,7 @@ wasstraat_model = {
   "Project": {
         STAGING_COLLECTION: config.COLL_STAGING_DELFIT,
         HARMONIZE_PIPELINES: [[ 
-            { '$match': { 'table': "OPGRAVINGEN" } },
+            { '$match': { 'table': "OPGRAVINGEN", 'CODE': { '$regex': '^D', '$options': 'i'  } } },
             { '$replaceRoot': {'newRoot': {'_id': "$_id", 'brondata': "$$ROOT"}}},
             { '$addFields': {'projectcd': "$brondata.CODE", 'projectnaam': "$brondata.OPGRAVING", 'toponiem': "$brondata.TOPONIEM", 'xcoor_rd': "$brondata.XCOORD", 'ycoor_rd': "$brondata.YCOORD", 
                 'trefwoorden': "$brondata.TREFWOORDEN", 'jaar': "$brondata.JAAR", 'table': "$brondata.table", 'project': '$brondata.CODENAAM', 'soort':"Project"}},
@@ -298,6 +300,15 @@ wasstraat_model = {
             { '$addFields': {'key_vondst': { '$concat': [ "P", "$projectcd", 
                 { '$ifNull': [{'$concat': ["P", {'$toString': "$putnr" }]}, ""]},
                 { '$concat': ["V", {'$toString': "$vondstnr" }]}]}}}  		
+        ]]
+  },
+  "ABR": {
+        STAGING_COLLECTION: config.COLL_STAGING_REFERENTIETABELLEN,
+        HARMONIZE_PIPELINES: 'ABR',
+        MOVEANDMERGE_MOVE: True,
+        SET_KEYS_PIPELINES: [[ 
+            { '$match': { 'soort': "ABR" } },
+            { '$addFields': {'key': { '$concat': [ "A",  {'$toString': "$uri" }]}}}  		
         ]]
   },
   "Fotokoppel": {

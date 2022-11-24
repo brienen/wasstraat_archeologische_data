@@ -56,6 +56,7 @@ formatters_columns = {
     'foto': lambda x: Markup(f'<a href="/archfotoview/show/{str(x.primary_key)}">{str(x)}</a>') if x and not type(x) == str else x,
     'stelling': lambda x: Markup(f'<a href="/archstellingview/show/{str(x.primary_key)}">{str(x)}</a>') if x and not type(x) == str else x,
     'monster': lambda x: Markup(f'<a href="/archmonsterview/show/{str(x.primary_key)}">{str(x)}</a>') if x and not type(x) == str else x,
+    'uri': lambda x: Markup(f'<a href="{str(x)}">{str(x)}</a>'),
     'fotos': lambda x: Markup(fotoFormatter(x)) if x else ''
 }
 
@@ -73,13 +74,14 @@ class MyListWidget(ListWidget):
 
 
 select2_style = "width:400px"
-def fieldDefinitionFactory(field, datamodel):
+def fieldDefinitionFactory(field, datamodel, validators=[]):
     extra_field_definitions = {
         "abr_materiaal": AJAXSelectField(
             "ABR-materiaal",
             description="Kies materiaal uit ABR-hoofdcategorieën",
             datamodel=datamodel,
             col_name="abr_materiaal",
+            validators=validators,
             widget=Select2AJAXWidget(
                 endpoint="/api/v1/abrmaterialen/hoofdmateriaal",
                 style=select2_style
@@ -90,16 +92,18 @@ def fieldDefinitionFactory(field, datamodel):
             description="Kies materiaal uit ABR-hoofdcategorieën",
             datamodel=datamodel,
             col_name="abr_extras",
+            validators=validators,
             widget=Select2AJAXWidget(
                 endpoint="/api/v1/abrmaterialen/hoofdmateriaal",
                 style=select2_style
             ),
         ),
-        "sub_abr_materiaal": AJAXSelectField(
+        "abr_submateriaal": AJAXSelectField(
             "ABR-submateriaal",
             description="Kies materiaal uit subcategorie van ABR-hoofdcategorie",
             datamodel=datamodel,
-            col_name="sub_abr_materiaal",
+            col_name="abr_submateriaal",
+            validators=validators,
             widget=Select2SlaveAJAXWidget(
                 master_id="abr_materiaal",
                 endpoint="/api/v1/abrmaterialen/submateriaal?q=(parentid:{{ID}})",
@@ -110,6 +114,7 @@ def fieldDefinitionFactory(field, datamodel):
             description="Kies project",
             datamodel=datamodel,
             col_name="project",
+            validators=validators,
             widget=Select2AJAXWidget(
                 endpoint="/api/v1/projecten",
                 style=select2_style
@@ -120,6 +125,7 @@ def fieldDefinitionFactory(field, datamodel):
             description="kies put binnen project",
             datamodel=datamodel,
             col_name="put",
+            validators=validators,
             widget=Select2SlaveAJAXWidget(
                 master_id="project",
                 endpoint="/api/v1/putten?q=(projectid:{{ID}})",
@@ -130,6 +136,7 @@ def fieldDefinitionFactory(field, datamodel):
             description="kies vondst binnen project",
             datamodel=datamodel,
             col_name="vondst",
+            validators=validators,
             widget=Select2SlaveAJAXWidget(
                 master_id="project",
                 endpoint="/api/v1/vondsten?q=(projectid:{{ID}})",
@@ -140,6 +147,7 @@ def fieldDefinitionFactory(field, datamodel):
             description="kies spoor binnen project",
             datamodel=datamodel,
             col_name="spoor",
+            validators=validators,
             widget=Select2SlaveAJAXWidget(
                 master_id="project",
                 endpoint="/api/v1/sporen?q=(projectid:{{ID}})",
@@ -150,6 +158,7 @@ def fieldDefinitionFactory(field, datamodel):
             description="kies doos binnen project",
             datamodel=datamodel,
             col_name="doos",
+            validators=validators,
             widget=Select2SlaveAJAXWidget(
                 master_id="project",
                 endpoint="/api/v1/dozen?q=(projectid:{{ID}})",

@@ -41,6 +41,7 @@ try:
    COLL_STAGING_DELFIT = os.getenv("COLL_STAGING_DELFIT")
    COLL_STAGING_MONSTER = os.getenv("COLL_STAGING_MONSTER")
    COLL_STAGING_DIGIFOTOS = os.getenv("COLL_STAGING_DIGIFOTOS")
+   COLL_STAGING_REFERENTIETABELLEN = os.getenv("COLL_STAGING_REFERENTIETABELLEN") if os.getenv("COLL_STAGING_REFERENTIETABELLEN") else 'Staging_Referentietabellen'
    COLL_ANALYSE_FOTO = os.getenv("COLL_ANALYSE_FOTO")
    COLL_ANALYSE_ARTEFACT = os.getenv("COLL_ANALYSE_ARTEFACT")
    COLL_ANALYSE_PROJECT = os.getenv("COLL_ANALYSE_PROJECT")
@@ -86,6 +87,8 @@ try:
    AIRFLOW_INPUT_MONSTER = os.getenv("AIRFLOW_INPUT_MONSTER") if os.getenv("AIRFLOW_INPUT_MONSTER") else "/input/monsterdatabase"
 
    AIRFLOW_OUTPUT_MEDIA = os.getenv("AIRFLOW_OUTPUT_MEDIA") if os.getenv("AIRFLOW_OUTPUT_MEDIA") else "/output/archeomedia"
+
+   FILE_ABREXCEL = os.getenv("FILE_ABREXCEL") if os.getenv("FILE_ABREXCEL") else '/input/referentietabellen/abr_versie_01122018_input.xlsx'
 
 except KeyError: 
    logger.error("Cannot read environment variables (ie. POSTGRES_DB, POSTGRES_USER, POSTGRES_PASSWORD) needed to connect to the database. Add them to your .env files")

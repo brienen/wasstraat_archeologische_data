@@ -9,6 +9,7 @@ from airflow.operators.python import PythonOperator
 
 import shared.config as config
 from wasstraat.image_import import importImages, getAndStoreImageFilenames
+from wasstraat.extract_referentietabellen import extractAllRefs
 
 NUM_PROCESSOR = 8
 
@@ -49,6 +50,10 @@ def getExtractTaskGroup():
             task_id='GetAndStoreImageFilenames',
             python_callable=getAndStoreImageFilenames,
         )
+        Extract_Referentietabellen = PythonOperator(
+            task_id='Extract_Referentietabellen',
+            python_callable=extractAllRefs,
+        )
         first >> GetAndStoreImageFilenames
         i=0
         while i < NUM_PROCESSOR:
@@ -64,6 +69,6 @@ def getExtractTaskGroup():
             i += 1
         
         
-        first >> [Extract_Data_From_Projecten, Extract_Data_From_DelfIT, Extract_Data_From_Magazijnlijst, Extract_Data_From_DigiFotolijst, Extract_Data_From_MonsterDB] >> last
+        first >> [Extract_Data_From_Projecten, Extract_Data_From_DelfIT, Extract_Data_From_Magazijnlijst, Extract_Data_From_DigiFotolijst, Extract_Data_From_MonsterDB, Extract_Referentietabellen] >> last
         
     return tg1

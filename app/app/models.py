@@ -18,6 +18,7 @@ import enum
 from sqlalchemy_utils import observes
 
 from shared import const
+from util import isEmpty
 
 
 mindate = datetime.date(datetime.MINYEAR, 1, 1)
@@ -51,7 +52,12 @@ class ABR(WasstraatModel):
     parent = relationship('ABR', remote_side=[primary_key], backref="children", lazy="joined", join_depth=1)
 
     def __repr__(self):
-        return self.concept + (f" ({self.code}) " if self.code else "")
+        if isEmpty(self.code) and isEmpty(self.concept):
+            return ''
+        else:
+            code = f'({self.code})' if self.code else ''
+            concept = self.concept if self.concept else 'Onbenoemd Concept'
+            return f'{concept} {code}'.strip()
 
 
 
@@ -376,17 +382,6 @@ class DiscrArtefactsoortEnum(enum.Enum):
     Textiel = "Textiel"
 
 
-class ABRLink(Model):
-    __tablename__ = 'Def_ABRLink'
-
-    artefactsoort =  Column(Enum(DiscrArtefactsoortEnum), primary_key=True, index=True)
-    abr_materiaal_id = Column(Integer, ForeignKey('Def_ABR.primary_key', deferrable=True), index=True)
-    abr_materiaal = relationship("ABR", foreign_keys=[abr_materiaal_id])
-
-    def __repr__(self):
-        return self.artefactsoort.value
-
-
 
 assoc_artefact_abr = Table('Def_artefact_abr', Model.metadata,
                                       Column('id', Integer, primary_key=True),
@@ -442,14 +437,12 @@ class Artefact(WasstraatModel):
     vondst = relationship('Vondst', backref="artefacten")
     doosID = Column(ForeignKey('Def_Doos.primary_key', deferrable=True), index=True)
     doos = relationship('Doos', backref="artefacten")
-    abr_materiaal_id = Column(Integer, ForeignKey('Def_ABR.primary_key', deferrable=True), index=True)
-    abr_materiaal = relationship("ABR", foreign_keys=[abr_materiaal_id])
-    sub_abr_materiaal_id = Column(Integer, ForeignKey('Def_ABR.primary_key', deferrable=True), index=True)
-    sub_abr_materiaal = relationship("ABR", foreign_keys=[sub_abr_materiaal_id])
+    abr_materiaalID = Column(Integer, ForeignKey('Def_ABR.primary_key', deferrable=True), index=True)
+    abr_materiaal = relationship("ABR", foreign_keys=[abr_materiaalID])
+    abr_submateriaalID = Column(Integer, ForeignKey('Def_ABR.primary_key', deferrable=True), index=True)
+    abr_submateriaal = relationship("ABR", foreign_keys=[abr_submateriaalID])
 
     artefactsoort =  Column(Enum(DiscrArtefactsoortEnum), index=True)
-    abrlink_id = Column(Enum(DiscrArtefactsoortEnum), ForeignKey('Def_ABRLink.artefactsoort', deferrable=True), index=True)
-    abrlink = relationship('ABRLink')
     abr_extras = relationship('ABR', secondary=assoc_artefact_abr, backref='artefacten')
 
     datering_vanaf = Column(Integer, default=None, index=True)

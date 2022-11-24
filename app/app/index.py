@@ -43,7 +43,7 @@ class MyIndexView(IndexView):
         logger.info('Rendering template: setting projectinfo...')
 
         start_coords = (52.00667, 4.35556) # Delft
-        foliummap = folium.Map(location=start_coords, zoom_start=11)
+        foliummap = folium.Map(location=start_coords, zoom_start=12)
         folium.TileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', attr='Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community', name='Esri Terrain').add_to(foliummap)
         folium.TileLayer('https://mapwarper.net/maps/tile/35760/{z}/{x}/{y}.png', attr='Mapwarp', name='Delft 1652').add_to(foliummap)
         folium.TileLayer('Stamen Terrain').add_to(foliummap)
