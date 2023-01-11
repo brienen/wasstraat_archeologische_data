@@ -5,7 +5,7 @@ from flask_appbuilder.security.decorators import protect, has_access
 from caching import cache
 
 from app import db, appbuilder
-from models import ABR, Project, Vondst, Spoor, Put, Doos, Vlak
+from models import ABR, Project, Vondst, Spoor, Put, Doos, Vlak, Artefact
 
 
 def outputABR(row):
@@ -58,8 +58,13 @@ class ProjectenApi(BaseApi):
     @expose('/')
     @rison()
     @has_access
-    @cache.cached()
+    #@cache.cached()
     def getprojecten(self, **kwargs):
+        if 'projectid' in kwargs['rison']:
+            projectid = int(kwargs['rison']['projectid'])
+            result = db.session.query(Project).filter(Project.primary_key == projectid)
+            return make_response([{"id": row.primary_key, "text": Project.getDescription(row)} for row in result], 200)
+
         result = db.session.query(Project).order_by(Project.projectcd.asc())
         return make_response([{"id": row.primary_key, "text": Project.getDescription(row)} for row in result], 200)
 
@@ -132,3 +137,25 @@ class DoosApi(BaseApi):
 
 appbuilder.add_api(DoosApi)
 
+
+class ArtefactApi(BaseApi):
+    resource_name = "artefacten"
+
+    @expose('/')
+    @rison()
+    @has_access
+    def getArtefacten(self, **kwargs):
+        if 'projectid' in kwargs['rison']:
+            projectid = int(kwargs['rison']['projectid'])
+            result = db.session.query(Artefact).filter(Artefact.projectID == projectid).order_by(Artefact.subnr.asc())
+            return make_response([{"id": row.primary_key, "text": Artefact.getDescription(row)} for row in result], 200)
+
+        if 'artefactid' in kwargs['rison']:
+            artefactid = int(kwargs['rison']['artefactid'])
+            result = db.session.query(Artefact).filter(Artefact.primary_key == artefactid)
+            return make_response([{"id": row.primary_key, "text": Artefact.getDescription(row)} for row in result], 200)
+
+
+        return self.response_400(message="Please put projectid")
+
+appbuilder.add_api(ArtefactApi)

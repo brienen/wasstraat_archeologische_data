@@ -149,7 +149,7 @@ def loadAll():
 
             # Truncate all tables
             logger.info("Deleting all data from " + str(lst_tables))
-            connection.execute('TRUNCATE "Def_artefact_abr", ' + ','.join(lst) + ';')
+            connection.execute('TRUNCATE "Def_artefact_abr", "Def_Bruikleen", ' + ','.join(lst) + ';')
 
             # Set table_lst to avoid relational integrity issues
             # Then load new data

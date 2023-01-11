@@ -503,14 +503,26 @@ class Artefact(WasstraatModel):
     def fotos_observer(self, fotos):
         self.aantal_fotos = len(fotos)
 
-    def __repr__(self):
-        if self.project:
-            projectcd = self.project.projectcd if self.project and self.project.projectcd else "Onbekend Project, "
-            subnr = str(self.subnr) if self.subnr else ''
-            artefactsoort = (str(self.artefactsoort.value)) if self.artefactsoort else ''
-            return f"{artefactsoort} {self.typevoorwerp} {subnr} {projectcd}"
+    @staticmethod
+    def getDescription(p):
+        if p.project:
+            projectcd = p.project.projectcd if p.project and p.project.projectcd else "Onbekend Project, "
+            subnr = str(p.subnr) if p.subnr else ''
+            artefactsoort = (str(p.artefactsoort.value)) if p.artefactsoort else ''
+            return f"{artefactsoort} {p.typevoorwerp} {subnr} {projectcd}"
         else:
-            return ''
+            return '<Onbekend>'
+
+
+    def __repr__(self):
+        return Artefact.getDescription(self)
+        #if self.project:
+        #    projectcd = self.project.projectcd if self.project and self.project.projectcd else "Onbekend Project, "
+        #    subnr = str(self.subnr) if self.subnr else ''
+        #    artefactsoort = (str(self.artefactsoort.value)) if self.artefactsoort else ''
+        #    return f"{artefactsoort} {self.typevoorwerp} {subnr} {projectcd}"
+        #else:
+        #    return ''
 
     @hybrid_method
     def vindplaats(self):
@@ -542,6 +554,7 @@ class Artefact(WasstraatModel):
             return ""
 
 
+        
     __mapper_args__ = {
         'polymorphic_on': artefactsoort,
         'polymorphic_identity': DiscrArtefactsoortEnum.Onbekend
@@ -1168,5 +1181,40 @@ class Monster_Botanie(WasstraatModel):
     soort = Column(String(80))
     determinatie = Column(String(250))
 
+
+
+class Partij(WasstraatModel):
+    __tablename__ = 'Def_Partij'
+
+    primary_key = Column(Integer, primary_key=True, autoincrement=True)
+    naam = Column(String(250), nullable=False)
+    adres = Column(String(512))
+    contactpersoon = Column(String(250))
+    telefoon = Column(String(250))
+    email = Column(String(250))
+        
+    def __repr__(self):
+        return self.naam
+            
+
+class Bruikleen(WasstraatModel):
+    __tablename__ = 'Def_Bruikleen'
+
+    primary_key = Column(Integer, primary_key=True, autoincrement=True)
+    datum_uitgeleend = Column(Date, nullable=False)
+    datum_retour = Column(Date)
+    projectID = Column(ForeignKey('Def_Project.primary_key', deferrable=True), index=True, nullable=False)
+    project = relationship('Project', lazy="joined", backref="bruiklenen")
+    artefactID = Column(ForeignKey('Def_Artefact.primary_key', deferrable=True), index=True, nullable=False)
+    artefact = relationship('Artefact', backref="bruiklenen")
+    partijID = Column(ForeignKey('Def_Partij.primary_key', deferrable=True), index=True, nullable=False)
+    partij = relationship('Partij', backref="bruiklenen")
+
+    def __repr__(self):
+        return f"{self.artefact} aan: {self.partij} dd: {self.datum_uitgeleend} {self.datum_retour if self.datum_retour else ''}"
+
+
+
+    
 
 

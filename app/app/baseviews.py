@@ -58,6 +58,7 @@ formatters_columns = {
     'foto': lambda x: Markup(f'<a href="/archfotoview/show/{str(x.primary_key)}">{str(x)}</a>') if x and not type(x) == str else x,
     'stelling': lambda x: Markup(f'<a href="/archstellingview/show/{str(x.primary_key)}">{str(x)}</a>') if x and not type(x) == str else x,
     'monster': lambda x: Markup(f'<a href="/archmonsterview/show/{str(x.primary_key)}">{str(x)}</a>') if x and not type(x) == str else x,
+    'partij': lambda x: Markup(f'<a href="/archpartijview/show/{str(x.primary_key)}">{str(x)}</a>') if x and not type(x) == str else x,
     'abr_materiaal': lambda x: Markup(abrFormatter(x)) if x and not type(x) == str else x,
     'abr_submateriaal': lambda x: Markup(abrFormatter(x)) if x and not type(x) == str else x,
     'abr_extras': lambda x: Markup([abrFormatter(item) for item in x]) if x and not type(x) == str else x,
@@ -127,7 +128,7 @@ def fieldDefinitionFactory(field, datamodel, validators=[]):
         ),
         "put": AJAXSelectField(
             "Put",
-            description="kies put binnen project",
+            description="Kies put binnen project",
             datamodel=datamodel,
             col_name="put",
             validators=validators,
@@ -138,7 +139,7 @@ def fieldDefinitionFactory(field, datamodel, validators=[]):
             )),
         "vondst": AJAXSelectField(
             "Vondst",
-            description="kies vondst binnen project",
+            description="Kies vondst binnen project",
             datamodel=datamodel,
             col_name="vondst",
             validators=validators,
@@ -149,7 +150,7 @@ def fieldDefinitionFactory(field, datamodel, validators=[]):
             )),
         "spoor": AJAXSelectField(
             "Spoor",
-            description="kies spoor binnen project",
+            description="Kies spoor binnen project",
             datamodel=datamodel,
             col_name="spoor",
             validators=validators,
@@ -160,7 +161,7 @@ def fieldDefinitionFactory(field, datamodel, validators=[]):
             )),
         "doos": AJAXSelectField(
             "doos",
-            description="kies doos binnen project",
+            description="Kies doos binnen project",
             datamodel=datamodel,
             col_name="doos",
             validators=validators,
@@ -169,6 +170,28 @@ def fieldDefinitionFactory(field, datamodel, validators=[]):
                 endpoint="/api/v1/dozen?q=(projectid:{{ID}})",
                 style=select2_style
             )),
+        "artefact": AJAXSelectField(
+            "artefact",
+            description="Kies artefact binnen project",
+            datamodel=datamodel,
+            col_name="artefact",
+            validators=validators,
+            widget=Select2SlaveAJAXWidget(
+                master_id="project",
+                endpoint="/api/v1/artefacten?q=(projectid:{{ID}})",
+                style=select2_style
+            )),
+        #"artefact": AJAXSelectField(
+        #    "Artefact",
+        #    description="Kies artefact",
+        #    datamodel=datamodel,
+        #    col_name="artefact",
+        #    validators=validators,
+        #    widget=Select2AJAXWidget(
+        #        endpoint="/api/v1/artefacten",
+        #        style=select2_style
+        #    )),
+
         }
     defintion = copy.copy(extra_field_definitions[field])
     return defintion 

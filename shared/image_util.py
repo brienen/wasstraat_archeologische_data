@@ -5,6 +5,7 @@ import shared.config as config
 import io
 import pdf2image
 import pathlib
+import shutil
 
  
 import magic
@@ -79,19 +80,20 @@ def adjustAndSaveFile(fullfilename, fs, collection):
         projectcd = re.search('^([A-Z0-9]+).*', projectcd).group(1)
 
         # First read image and make 3 versions with different sizes. And put them in a list 
+        mime_type = 'image/jpeg'
         if 'pdf' in file_extension.lower():
             images = pdf2image.convert_from_path(fullfilename)
             image = images[0]
+            image_dict_sml, image_dict_med, image_dict_big = putImageInGrid(image, fullfilename, fs, dir, projectcd, pdf=True)    
+            mime_type = 'application/pdf'
         else:
             image = Image.open(fullfilename, 'r')
-        mime_type = magic.from_file(fullfilename, mime=True)
-
-        image_dict_sml, image_dict_med, image_dict_big = putImageInGrid(image, fullfilename, fs, dir, projectcd)    
+            image_dict_sml, image_dict_med, image_dict_big = putImageInGrid(image, fullfilename, fs, dir, projectcd)    
 
         # Insert a record with metadata
         return collection.insert_one({
             'fileName': filename, 'fullFileName': fullfilename, 'imageUUID': str(image_dict_big), 'imageMiddleUUID': str(image_dict_med), 'imageThumbUUID': str(image_dict_sml),
-            'fileType': file_extension.lower(), 'directory': dir, 'mime_type': 'image/jpeg', 'projectcd': projectcd 
+            'fileType': file_extension.lower(), 'directory': dir, 'mime_type': mime_type, 'projectcd': projectcd 
             }).inserted_id  
 
     except Exception as err:
@@ -101,7 +103,7 @@ def adjustAndSaveFile(fullfilename, fs, collection):
 
 
 
-def putImageInGrid(image: Image, fullfilename, fs, dir, projectcd):
+def putImageInGrid(image: Image, fullfilename, fs, dir, projectcd, pdf=False):
     try:
         basename = os.path.basename(fullfilename)
         basename_noext, file_extension = os.path.splitext(basename)
@@ -143,10 +145,15 @@ def putImageInGrid(image: Image, fullfilename, fs, dir, projectcd):
         file_id_med = os.path.join(dir, basename_noext + '-med.jpg')
         image_dict_med['image'].save(os.path.join(config.AIRFLOW_OUTPUT_MEDIA, file_id_med.lstrip('/\\')))
 
-        file_id = os.path.join(dir, basename_noext + '.jpg')
-        image_dict_big['image'].save(os.path.join(config.AIRFLOW_OUTPUT_MEDIA, file_id.lstrip('/\\')))
-
-        
+        if not pdf: 
+            file_id = os.path.join(dir, basename_noext + '.jpg')
+            image_dict_big['image'].save(os.path.join(config.AIRFLOW_OUTPUT_MEDIA, file_id.lstrip('/\\')))
+        else:
+            file_id = os.path.join(dir, basename_noext + '.pdf')
+            filename_to = os.path.join(config.AIRFLOW_OUTPUT_MEDIA, file_id.lstrip('/\\'))
+            if not fullfilename == filename_to:
+                shutil.copy(fullfilename, filename_to)
+    
         return file_id_sml, file_id_med, file_id
 
     except Exception as err:

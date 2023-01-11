@@ -3,12 +3,13 @@ import copy
 from flask_appbuilder import GroupByChartView, MultipleView
 from flask_appbuilder.models.group import aggregate_count
 from flask_appbuilder.models.sqla.filters import FilterEqual, FilterGreater
-from flask_appbuilder.fields import AJAXSelectField
-from flask_appbuilder.fieldwidgets import Select2ManyWidget
+from flask_appbuilder.fields import AJAXSelectField, QuerySelectField
+from flask_appbuilder.fieldwidgets import Select2ManyWidget, Select2Widget
 from flask_appbuilder import ModelView
+from wtforms import StringField
 
 from app import db, appbuilder
-from models import Aardewerk, Stelling, Doos, Artefact, Foto, Spoor, Project,Put, Vondst, Vlak, DiscrArtefactsoortEnum, DiscrFotosoortEnum, Dierlijk_Bot, Glas, Hout, Bouwaardewerk, Kleipijp, Leer, Menselijk_Bot, Metaal, Munt, Schelp, Steen, Textiel, Vulling, Opgravingsfoto, Objectfoto, Velddocument, Overige_afbeelding, Monster, Monster_Botanie, Monster_Schelp, Objecttekening, Overige_tekening, ABR
+from models import Aardewerk, Stelling, Doos, Artefact, Foto, Spoor, Project,Put, Vondst, Vlak, DiscrArtefactsoortEnum, DiscrFotosoortEnum, Dierlijk_Bot, Glas, Hout, Bouwaardewerk, Kleipijp, Leer, Menselijk_Bot, Metaal, Munt, Schelp, Steen, Textiel, Vulling, Opgravingsfoto, Objectfoto, Velddocument, Overige_afbeelding, Monster, Monster_Botanie, Monster_Schelp, Objecttekening, Overige_tekening, ABR, Partij, Bruikleen
 from widgets import MediaListWidget
 from baseviews import WSModelView, WSGeoModelView, fieldDefinitionFactory, Select2Many400Widget
 from interface import WSSQLAInterface, WSGeoSQLAInterface
@@ -23,7 +24,8 @@ from flask_appbuilder.actions import action
 from flask import redirect, request, url_for
 import flask_appbuilder.hooks as hooks
 from wtforms import widgets
-from wtforms.validators import ValidationError
+import wtforms.validators as validators
+
 
 import logging
 logger = logging.getLogger()
@@ -71,6 +73,69 @@ class ArtefactLineChartView(GroupByChartView):
         'group_by_label': 'Datum tot'
     }
 ]
+
+
+
+
+class ArchBruikleenView(WSModelView):
+    datamodel = WSSQLAInterface(Bruikleen)
+    list_columns = ["project", "artefact", "partij", "datum_uitgeleend", 'datum_retour']
+    list_title="Bruiklenen"
+    search_exclude_columns = ['artefact']
+
+    show_fieldsets = [
+        ("Bruikleenvelden", {"fields": ["project", "artefact", "partij", "datum_uitgeleend", 'datum_retour']}),
+        flds_migratie_info
+    ]
+    edit_fieldsets = show_fieldsets
+    add_fieldsets = show_fieldsets
+    add_form_extra_fields = {
+        "artefact": fieldDefinitionFactory('artefact', datamodel),
+        }
+    edit_form_extra_fields = add_form_extra_fields
+    
+    @hooks.before_request(only=["add", "edit"])
+    def Request_Handler(self):
+    #    '''
+    #    Request mappert that makes sure the detail view and update view with all details of the inherited class are shown. 
+    #    Necessary for inheritance.
+    #    '''
+        if '_flt_0_artefact' in request.args.keys():
+            artefactid = int(request.args['_flt_0_artefact'])
+            artf = db.session.query(Artefact).filter(Artefact.primary_key == artefactid).one()
+
+            self.add_form_extra_fields['artefact'].kwargs['widget'].endpoint = f"/api/v1/artefacten?q=(artefactid:{artefactid})"
+            self.add_form_extra_fields['project'].kwargs['widget'].endpoint = f"/api/v1/projecten?q=(projectid:{artf.projectID})"
+            self.edit_form_extra_fields = self.add_form_extra_fields
+        else:
+            self.add_form_extra_fields['artefact'].kwargs['widget'].endpoint = "/api/v1/artefacten?q=(projectid:{{ID}})"
+            self.add_form_extra_fields['project'].kwargs['widget'].endpoint = "/api/v1/projecten"
+            self.edit_form_extra_fields = self.add_form_extra_fields
+
+        return None
+
+    
+class ArchPartijView(WSModelView):
+    datamodel = WSSQLAInterface(Partij)
+    list_columns = ["naam", "adres", "contactpersoon", 'email', 'telefoon']
+    list_title="Partijen met bruiklenen"
+
+    show_fieldsets = [
+        ("Partijvelden", {"fields": ["naam", "adres", "contactpersoon", 'email', 'telefoon']}),
+        flds_migratie_info
+    ]
+    edit_fieldsets = show_fieldsets
+    add_fieldsets = show_fieldsets
+    related_views = [ArchBruikleenView]
+    
+    validators_columns = {
+        'email':[validators.Email(message='Voer een geldig emailadres in.')],
+        'telefoon':[validators.Regexp(r'^[\+\(\s.\-\/\d\)]{5,30}$', message='Voer een geldig telefoonnummer in.')]
+    }
+
+
+
+
 
 
 class ArchFotoView(WSModelView):
@@ -222,7 +287,7 @@ class ArchArtefactView_Abstr(WSModelView):
     list_columns = ["artefactsoort", 'typevoorwerp', "datering", "subnr", "vondst", 'project','aantal_fotos']
     #list_widget = ListThumbnail
     list_title = "Artefacten"
-    related_views = [ArchObjectFotoView]
+    related_views = [ArchObjectFotoView, ArchBruikleenView]
     search_exclude_columns = ['vondst', 'fotos', 'doos']
     show_fieldsets = [
         ("Projectvelden", {"columns": [
@@ -683,7 +748,9 @@ class ABRMaterialenView(WSModelView):
     ]
     edit_fieldsets = show_fieldsets
     add_fieldsets = show_fieldsets
-
+    validators_columns = {
+        'uri':[validators.URL(message='Voer een geldige URL in.')],
+    }
 
 
 
@@ -704,9 +771,14 @@ class ABRArtefactsoortenView(WSModelView):
     ]
     edit_fieldsets = show_fieldsets
     add_fieldsets = show_fieldsets
+    validators_columns = {
+        'uri':[validators.URL(message='Voer een geldige URL in.')],
+    }
+
+    
 
 
-
+    
 
 db.create_all()
 
@@ -745,6 +817,8 @@ appbuilder.add_view(ArchHoutView,"Hout",icon="fa-dashboard",category="Artefacten
 #### Depot
 appbuilder.add_view(ArchDoosView, "Dozen", icon="fa-dashboard",category="Depot",)
 appbuilder.add_view(ArchStellingView,"Stellingen",icon="fa-dashboard",category="Depot",)
+appbuilder.add_view(ArchBruikleenView,"Bruiklenen",icon="fa-dashboard",category="Depot",)
+appbuilder.add_view(ArchPartijView,"Partijen met bruiklenen",icon="fa-dashboard",category="Depot",)
 
 
 #### Media

@@ -10,11 +10,21 @@ import shared.config as config
 import shared.image_util as image_util
 from PIL import Image, ExifTags, ImageOps
 from flask import redirect
+import pdf2image
 
 import logging
 logger = logging.getLogger()
 
 from flask import current_app as app
+
+
+def makeRelative(path: str):
+    if path.startswith(os.sep):
+        return path[1:]
+    else:
+        return path 
+
+
 
 class UploadView(BaseView):
 
@@ -24,7 +34,7 @@ class UploadView(BaseView):
 
         strReq = str(request)
         logger.info(f'Request: {strReq}')
-        dir = "Onbekend Project" + os.sep
+        dir = os.sep + "Onbekend Project" + os.sep
 
         if request.method == 'POST':
             try:
@@ -86,12 +96,23 @@ class UploadView(BaseView):
                             dir = dir + 'overige' + os.sep 
 
 
-                        image = Image.open(request.files['file'].stream)
+                        mime_type = 'image/jpeg'
+                        filetype = '.jpg'
+                        fullfilename = os.path.join(config.AIRFLOW_OUTPUT_MEDIA, makeRelative(dir), filename)
+                        if 'pdf' in file_extension.lower():
+                            mime_type = 'application/pdf'
+                            filetype = '.pdf'
+                            f.save(fullfilename)
+                            images = pdf2image.convert_from_path(fullfilename)
+                            image = images[0]
+                            imageThumbUUID, imageMiddleUUID, imageUUID = image_util.putImageInGrid(image, fullfilename, None, dir, "project", pdf=True)
+                        else:
+                            image = Image.open(request.files['file'].stream)
+                            imageThumbUUID, imageMiddleUUID, imageUUID = image_util.putImageInGrid(image, fullfilename, None, dir, "project")
 
-
-                        imageThumbUUID, imageMiddleUUID, imageUUID = image_util.putImageInGrid(image, filename, None, dir, "project")
                         foto.fileName = f.filename
-                        foto.mime_type = 'image/jpeg'
+                        foto.mime_type = mime_type
+                        foto.fileType = filetype
                         foto.directory = dir
                         foto.imageUUID = str(imageUUID)
                         foto.imageMiddleUUID = str(imageMiddleUUID)

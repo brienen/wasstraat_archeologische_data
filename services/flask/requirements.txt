@@ -18,5 +18,6 @@ pandas_datareader
 geoalchemy2 
 typing_extensions
 pdf2image
+PyPDF2
 
 ###### Requirements with Version Specifiers ######

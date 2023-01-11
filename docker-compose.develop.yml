@@ -18,7 +18,7 @@ services:
       #- ./data/images:/images
       - ./app:/app
       # - /Users/arjen/Dropbox/Development/Flask-AppBuilder/examples/related_fields:/app
-      - /Users/arjen/Dropbox/Development/Flask-AppBuilder/flask_appbuilder:/app/app/flask_appbuilder
+      # - /Users/arjen/Dropbox/Development/Flask-AppBuilder/flask_appbuilder:/app/app/flask_appbuilder
       - ./shared:/app/app/shared/
 
    
