@@ -73,6 +73,7 @@ def run_migrations_online():
     and associate a connection with the context.
 
     """
+    print(current_app.extensions['migrate'].configure_args)
 
     # this callback is used to prevent an auto-migration from being generated
     # when there are no changes to the schema
@@ -97,7 +98,8 @@ def run_migrations_online():
             process_revision_directives=process_revision_directives,
             include_object=include_object, 
             compare_type=True,
-            **current_app.extensions['migrate'].configure_args
+            **{'render_as_batch': True}
+            #**current_app.extensions['migrate'].configure_args
         )
 
         with context.begin_transaction():

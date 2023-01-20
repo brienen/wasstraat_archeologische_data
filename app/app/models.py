@@ -842,74 +842,75 @@ class Textiel(Artefact):
 
 
 
-class DiscrFotosoortEnum(enum.Enum): 
+class DiscrBestandsoortEnum(enum.Enum): 
     Objectfoto = const.OBJECTFOTO
     Opgravingsfoto = const.OPGRAVINGSFOTO
     Velddocument = const.VELDDOCUMENT
     Overige_afbeelding = const.OVERIGE_AFBEELDING
-    Afbeelding = const.AFBEELDING
+    Bestand = const.BESTAND
     Tekening = const.TEKENING
     Objecttekening = const.OBJECTTEKENING
     Overige_tekening = const.OVERIGE_TEKENING
+    Rapportage = const.RAPPORTAGE
 
 
-class Foto(WasstraatModel):
-    __tablename__ = 'Def_Foto'
+class Bestand(WasstraatModel):
+    __tablename__ = 'Def_Bestand'
 
     primary_key = Column(Integer, primary_key=True, autoincrement=True)
     directory = Column(Text)
     fileName = Column(String(1024), index=True)
     fileSize = Column(Integer)
     fileType = Column(String(32))
-    imageUUID = Column(String(1024))
-    imageMiddleUUID = Column(String(1024))
-    imageThumbUUID = Column(String(1024))
+    imageID = Column(String(1024))
+    imageMiddleID = Column(String(1024))
+    imageThumbID = Column(String(1024))
     mime_type = Column(String(20))
     fototype = Column(String(1))
     projectcd = Column(String(12))
-    photo = Column(ImageColumn(size=(1500, 1000, True), thumbnail_size=(300, 200, True)))
-    fotosoort =  Column(Enum(DiscrFotosoortEnum), index=True)
+    #photo = Column(ImageColumn(size=(1500, 1000, True), thumbnail_size=(300, 200, True)))
+    bestandsoort =  Column(Enum(DiscrBestandsoortEnum), index=True)
  
     @renders('custom')
-    def photo_img(self):
-        if self.imageUUID:
-            return Markup('<a href="/archeomedia' + self.imageUUID +\
-             '"><img src="/archeomedia' + self.imageMiddleUUID +\
-              '" alt="Photo" class="img-rounded img-responsive"></a>')
+    def show_bestand(self):
+        if self.imageID:
+            return Markup('<a href="/archeomedia' + self.imageID +\
+             '"><img src="/archeomedia' + self.imageMiddleID +\
+              '" alt="Bestand" class="img-rounded img-responsive"></a>')
         else:
-            return Markup('<a href="' + url_for('ArchFotoView.show',pk=str(self.primary_key)) +\
-             '" class="thumbnail"><img src="//:0" alt="Photo" class="img-responsive"></a>')
+            return Markup('<a href="' + url_for('ArchBestandView.show',pk=str(self.primary_key)) +\
+             '" class="thumbnail"><img src="//:0" alt="Bestand" class="img-responsive"></a>')
 
 
     @renders('custom')
-    def photo_img_middle(self):
-        if self.imageMiddleUUID:
-            return Markup('<a href="' + url_for('ArchFotoView.show',pk=str(self.primary_key)) +\
-             '"><img src="/archeomedia' + self.imageMiddleUUID +\
-              '" alt="Photo" class="img-rounded img-responsive" style="max-height:50vh"></a>')
+    def show_bestand_middle(self):
+        if self.imageMiddleID:
+            return Markup('<a href="' + url_for('ArchBestandView.show',pk=str(self.primary_key)) +\
+             '"><img src="/archeomedia' + self.imageMiddleID +\
+              '" alt="Bestand" class="img-rounded img-responsive" style="max-height:50vh"></a>')
         else:
-            return Markup('<a href="' + url_for('ArchFotoView.show',pk=str(self.primary_key)) +\
-             '" class="thumbnail"><img src="//:0" alt="Photo" class="img-responsive"></a>')
+            return Markup('<a href="' + url_for('ArchBestandView.show',pk=str(self.primary_key)) +\
+             '" class="thumbnail"><img src="//:0" alt="Bestand" class="img-responsive"></a>')
 
 
     @renders('custom')
-    def photo_img_thumbnail(self):
-        if self.imageThumbUUID:
-            return Markup('<a href="' + url_for('ArchFotoView.show',pk=str(self.primary_key)) +\
-             '" class="thumbnail"><img src="/archeomedia' + self.imageThumbUUID +\
-              '" alt="Photo" class="img-rounded img-responsive"></a>')
+    def show_bestand_thumbnail(self):
+        if self.imageThumbID:
+            return Markup('<a href="' + url_for('ArchBestandView.show',pk=str(self.primary_key)) +\
+             '" class="thumbnail"><img src="/archeomedia' + self.imageThumbID +\
+              '" alt="Bestand" class="img-rounded img-responsive"></a>')
         else:
-            return Markup('<a href="' + url_for('ArchFotoView.show',pk=str(self.primary_key)) +\
-             '" class="thumbnail"><img src="//:0" alt="Photo" class="img-responsive"></a>')
+            return Markup('<a href="' + url_for('ArchBestandView.show',pk=str(self.primary_key)) +\
+             '" class="thumbnail"><img src="//:0" alt="Bestand" class="img-responsive"></a>')
 
 
     projectID = Column(ForeignKey('Def_Project.primary_key'), index=True)
     project = relationship('Project', backref="fotos", lazy="joined")
-    __table_args__ = (Index('ix_Foto_fototype_fileName', "fototype", "fileName"), )
+    __table_args__ = (Index('ix_Bestand_bestandstype_fileName', "fototype", "fileName"), )
 
     __mapper_args__ = {
-        'polymorphic_on': fotosoort,
-        'polymorphic_identity': DiscrFotosoortEnum.Afbeelding
+        'polymorphic_on': bestandsoort,
+        'polymorphic_identity': DiscrBestandsoortEnum.Bestand
     }
 
     @renders('custom')
@@ -920,19 +921,19 @@ class Foto(WasstraatModel):
             return 'Onbekend'
 
     def __repr__(self):
-        if self.imageThumbUUID:
-            return Markup('<a href="' + url_for('ArchFotoView.show',pk=str(self.primary_key)) +\
-             '" class="thumbnail"><img src="/archeomedia' + self.imageThumbUUID +\
-              '" alt="Photo" class="img-rounded img-responsive"></a>')
+        if self.imageThumbID:
+            return Markup('<a href="' + url_for('ArchBestandView.show',pk=str(self.primary_key)) +\
+             '" class="thumbnail"><img src="/archeomedia' + self.imageThumbID +\
+              '" alt="Bestand" class="img-rounded img-responsive"></a>')
         else:
-            return Markup('<a href="' + url_for('ArchFotoView.show',pk=str(self.primary_key)) +\
-             '" class="thumbnail"><img src="//:0" alt="Photo" class="img-responsive"></a>')
+            return Markup('<a href="' + url_for('ArchBestandView.show',pk=str(self.primary_key)) +\
+             '" class="thumbnail"><img src="//:0" alt="Bestand" class="img-responsive"></a>')
 
 
-class Objectfoto(Foto):
-    __tablename__ = 'Def_Foto'
+class Objectfoto(Bestand):
+    __tablename__ = 'Def_Bestand'
     __table_args__ = {'extend_existing': True}
-    __mapper_args__ = {'polymorphic_identity': DiscrFotosoortEnum.Objectfoto}
+    __mapper_args__ = {'polymorphic_identity': DiscrBestandsoortEnum.Objectfoto}
 
     putnr = Column(Integer)
     vondstnr = Column(Integer)
@@ -957,24 +958,24 @@ class Objectfoto(Foto):
             return 'Onbekend'
 
 
-class Opgravingsfoto(Foto):
-    __tablename__ = 'Def_Foto'
+class Opgravingsfoto(Bestand):
+    __tablename__ = 'Def_Bestand'
     __table_args__ = {'extend_existing': True}
-    __mapper_args__ = {'polymorphic_identity': DiscrFotosoortEnum.Opgravingsfoto}
-class Velddocument(Foto):
-    __tablename__ = 'Def_Foto'
+    __mapper_args__ = {'polymorphic_identity': DiscrBestandsoortEnum.Opgravingsfoto}
+class Velddocument(Bestand):
+    __tablename__ = 'Def_Bestand'
     __table_args__ = {'extend_existing': True}
-    __mapper_args__ = {'polymorphic_identity': DiscrFotosoortEnum.Velddocument}
-class Overige_afbeelding(Foto):
-    __tablename__ = 'Def_Foto'
+    __mapper_args__ = {'polymorphic_identity': DiscrBestandsoortEnum.Velddocument}
+class Overige_afbeelding(Bestand):
+    __tablename__ = 'Def_Bestand'
     __table_args__ = {'extend_existing': True}
-    __mapper_args__ = {'polymorphic_identity': DiscrFotosoortEnum.Overige_afbeelding}
+    __mapper_args__ = {'polymorphic_identity': DiscrBestandsoortEnum.Overige_afbeelding}
 
 
-class Tekening(Foto):
-    __tablename__ = 'Def_Foto'
+class Tekening(Bestand):
+    __tablename__ = 'Def_Bestand'
     __table_args__ = {'extend_existing': True}
-    __mapper_args__ = {'polymorphic_identity': DiscrFotosoortEnum.Tekening}
+    __mapper_args__ = {'polymorphic_identity': DiscrBestandsoortEnum.Tekening}
 
     #putID = Column(ForeignKey('Def_Put.primary_key', deferrable=True), index=True)
     #put = relationship('Put', lazy="joined", backref="tekeningen")
@@ -995,19 +996,23 @@ class Tekening(Foto):
 
 
 class Objecttekening(Tekening):
-    __tablename__ = 'Def_Foto'
+    __tablename__ = 'Def_Bestand'
     __table_args__ = {'extend_existing': True}
-    __mapper_args__ = {'polymorphic_identity': DiscrFotosoortEnum.Objecttekening}
+    __mapper_args__ = {'polymorphic_identity': DiscrBestandsoortEnum.Objecttekening}
 class Overige_tekening(Tekening):
-    __tablename__ = 'Def_Foto'
+    __tablename__ = 'Def_Bestand'
     __table_args__ = {'extend_existing': True}
-    __mapper_args__ = {'polymorphic_identity': DiscrFotosoortEnum.Overige_tekening}
+    __mapper_args__ = {'polymorphic_identity': DiscrBestandsoortEnum.Overige_tekening}
+class Rapportage(Bestand):
+    __tablename__ = 'Def_Bestand'
+    __table_args__ = {'extend_existing': True}
+    __mapper_args__ = {'polymorphic_identity': DiscrBestandsoortEnum.Rapportage}
 
 
 
 
 
-table_foto = metadata.tables['Def_Foto']
+table_foto = metadata.tables['Def_Bestand']
 #select_foto_zonder = select([table_foto]).where(table_foto.c.artefact == None).alias()
 #select_foto_zonder = select([table_foto.c.primary_key]).alias()
 #class Foto_Ongekoppeld(WasstraatModel):

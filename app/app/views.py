@@ -9,7 +9,7 @@ from flask_appbuilder import ModelView
 from wtforms import StringField
 
 from app import db, appbuilder
-from models import Aardewerk, Stelling, Doos, Artefact, Foto, Spoor, Project,Put, Vondst, Vlak, DiscrArtefactsoortEnum, DiscrFotosoortEnum, Dierlijk_Bot, Glas, Hout, Bouwaardewerk, Kleipijp, Leer, Menselijk_Bot, Metaal, Munt, Schelp, Steen, Textiel, Vulling, Opgravingsfoto, Objectfoto, Velddocument, Overige_afbeelding, Monster, Monster_Botanie, Monster_Schelp, Objecttekening, Overige_tekening, ABR, Partij, Bruikleen
+from models import Bestand, Rapportage, Aardewerk, Stelling, Doos, Artefact, Spoor, Project,Put, Vondst, Vlak, DiscrArtefactsoortEnum, DiscrBestandsoortEnum, Dierlijk_Bot, Glas, Hout, Bouwaardewerk, Kleipijp, Leer, Menselijk_Bot, Metaal, Munt, Schelp, Steen, Textiel, Vulling, Opgravingsfoto, Objectfoto, Velddocument, Overige_afbeelding, Monster, Monster_Botanie, Monster_Schelp, Objecttekening, Overige_tekening, ABR, Partij, Bruikleen
 from widgets import MediaListWidget
 from baseviews import WSModelView, WSGeoModelView, fieldDefinitionFactory, Select2Many400Widget
 from interface import WSSQLAInterface, WSGeoSQLAInterface
@@ -138,34 +138,33 @@ class ArchPartijView(WSModelView):
 
 
 
-class ArchFotoView(WSModelView):
-    datamodel = WSSQLAInterface(Foto)
+class ArchBestandView(WSModelView):
+    datamodel = WSSQLAInterface(Bestand)
     list_widget = MediaListWidget
-    list_title = "Foto's"
-    list_columns = ["fileName", 'koppeling', 'photo_img_thumbnail']
-    show_columns = ["project", "fototype", "fileName", 'directory', 'koppeling', 'photo_img']
+    list_title = "Bestanden"
+    list_columns = ["fileName", 'koppeling', 'show_bestand_thumbnail']
+    show_columns = ["project", "fototype", "fileName", 'directory', 'koppeling', 'show_bestand']
     add_template = 'widgets/add_photo.html'
     show_fieldsets = [
         ("Projectvelden", {"columns": [
-            {"fields": ["project", "fotosoort"], "grid":6},        
+            {"fields": ["project", "bestandsoort"], "grid":6},        
             {"fields": ["fileName", "directory", "fileType", 'mime_type'], "grid":6},        
         ]}),        
-        ("Foto", {"fields": ["photo_img"], "grid":12, "fulldisplay": True}),
+        ("Afbeelding", {"fields": ["show_bestand"], "grid":12, "fulldisplay": True}),
         flds_migratie_info]
     base_order = ('fileName','asc')
-
 
 
     @action("5linkskantelen", "Kantelen Linksom", "Geselecteerde foto's linksom kantelen?", "fa-rocket")
     def linkskantelen(self, items):
         if isinstance(items, list):
             for foto in items:
-                foto = foto_util.rotateImage(foto, 90)
+                foto = foto_util.rotateBestand(foto, 90)
                 self.datamodel.edit(foto, raise_exception=True)
 
             self.update_redirect()
         else:
-            foto = foto_util.rotateImage(items, 90)
+            foto = foto_util.rotateBestand(items, 90)
             self.datamodel.edit(foto)
         return redirect(self.get_redirect())
 
@@ -173,12 +172,12 @@ class ArchFotoView(WSModelView):
     def rechtskantelen(self, items):
         if isinstance(items, list):
             for foto in items:
-                foto = foto_util.rotateImage(foto, -90)
+                foto = foto_util.rotateBestand(foto, -90)
                 self.datamodel.edit(foto, raise_exception=True)
 
             self.update_redirect()
         else:
-            foto = foto_util.rotateImage(items, -90)
+            foto = foto_util.rotateBestand(items, -90)
             self.datamodel.edit(foto)
         return redirect(self.get_redirect())
 
@@ -193,8 +192,8 @@ class ArchFotoView(WSModelView):
         path = request.path 
         lst_path = path[1:].split('/')
 
-        foto = db.session.query(Foto).get(int(lst_path[2]))
-        expected_route = self.view_mapper.get(foto.fotosoort.value)
+        bestand = db.session.query(Bestand).get(int(lst_path[2]))
+        expected_route = self.view_mapper.get(bestand.bestandsoort.value)
 
         if expected_route and str(expected_route).lower() != lst_path[0]:
             return redirect(url_for(f'{expected_route}.{lst_path[1]}', pk=str(lst_path[2])))
@@ -202,43 +201,51 @@ class ArchFotoView(WSModelView):
             return None
 
 
-class ArchOpgravingFotoView(ArchFotoView):
+class ArchOpgravingFotoView(ArchBestandView):
     datamodel = WSSQLAInterface(Opgravingsfoto)
-    base_filters = [['fotosoort', FilterEqual, DiscrFotosoortEnum.Opgravingsfoto.value]]
+    base_filters = [['bestandsoort', FilterEqual, DiscrBestandsoortEnum.Opgravingsfoto.value]]
     list_title = "Opgravingsfoto's"
-    ArchFotoView.view_mapper.update({DiscrFotosoortEnum.Opgravingsfoto.value: 'ArchOpgravingFotoView'})
+    ArchBestandView.view_mapper.update({DiscrBestandsoortEnum.Opgravingsfoto.value: 'ArchOpgravingFotoView'})
 
-class ArchObjectFotoView(ArchFotoView):
+class ArchObjectFotoView(ArchBestandView):
     datamodel = WSSQLAInterface(Objectfoto)
-    base_filters = [['fotosoort', FilterEqual, DiscrFotosoortEnum.Objectfoto.value]]
+    base_filters = [['bestandsoort', FilterEqual, DiscrBestandsoortEnum.Objectfoto.value]]
     list_title = "Artefactfoto's"
     search_exclude_columns = ['artefact']
-    show_columns = ["project", "fototype", 'omschrijving', 'materiaal', 'richting', 'datum', "vondstnr", "subnr", "fotonr", "artefact", "fileName", 'directory', 'photo_img']
+    show_columns = ["project", "fototype", 'omschrijving', 'materiaal', 'richting', 'datum', "vondstnr", "subnr", "fotonr", "artefact", "fileName", 'directory', 'show_bestand']
     show_fieldsets = [
         ("Projectvelden", {"columns": [
-            {"fields": ["project", "fotosoort", 'omschrijving', 'materiaal', 'richting', 'datum', "vondstnr", "subnr", "fotonr", "artefact"], "grid":6},        
+            {"fields": ["project", "bestandsoort", 'omschrijving', 'materiaal', 'richting', 'datum', "vondstnr", "subnr", "fotonr", "artefact"], "grid":6},        
             {"fields": ["fileName", "directory", "fileType", 'mime_type'], "grid":6},        
         ]}),        
-        ("Foto", {"fields": ["photo_img"], "grid":12, "fulldisplay": True}),
+        ("Foto", {"fields": ["show_bestand"], "grid":12, "fulldisplay": True}),
         flds_migratie_info]
 
-    ArchFotoView.view_mapper.update({DiscrFotosoortEnum.Objectfoto.value: 'ArchObjectFotoView'})
+    ArchBestandView.view_mapper.update({DiscrBestandsoortEnum.Objectfoto.value: 'ArchObjectFotoView'})
     #edit_fieldsets = show_fieldsets
-    #add_fieldsets = foto_util.removeFieldFromFieldset(show_fieldsets, "fotosoort")
+    #add_fieldsets = foto_util.removeFieldFromFieldset(show_fieldsets, "bestandsoort")
 
 
-class ArchVelddocumentView(ArchFotoView):
+class ArchVelddocumentView(ArchBestandView):
     datamodel = WSSQLAInterface(Velddocument)
-    base_filters = [['fotosoort', FilterEqual, DiscrFotosoortEnum.Velddocument.value]]
+    base_filters = [['bestandsoort', FilterEqual, DiscrBestandsoortEnum.Velddocument.value]]
     list_title = "Velddocumenten"
-    ArchFotoView.view_mapper.update({DiscrFotosoortEnum.Velddocument.value: 'ArchVelddocumentView'})
+    ArchBestandView.view_mapper.update({DiscrBestandsoortEnum.Velddocument.value: 'ArchVelddocumentView'})
 
 
-class ArchOverigeAfbeeldingenView(ArchFotoView):
+class ArchOverigeAfbeeldingenView(ArchBestandView):
     datamodel = WSSQLAInterface(Overige_afbeelding)
-    base_filters = [['fotosoort', FilterEqual, DiscrFotosoortEnum.Overige_afbeelding.value]]
+    base_filters = [['bestandsoort', FilterEqual, DiscrBestandsoortEnum.Overige_afbeelding.value]]
     list_title = "Overige Afbeeldingen"
-    ArchFotoView.view_mapper.update({DiscrFotosoortEnum.Overige_afbeelding.value: 'ArchOverigeAfbeeldingenView'})
+    ArchBestandView.view_mapper.update({DiscrBestandsoortEnum.Overige_afbeelding.value: 'ArchOverigeAfbeeldingenView'})
+
+
+class ArchRapportageView(ArchBestandView):
+    datamodel = WSSQLAInterface(Rapportage)
+    base_filters = [['bestandsoort', FilterEqual, DiscrBestandsoortEnum.Rapportage.value]]
+    list_title = "Documentatie"
+    ArchBestandView.view_mapper.update({DiscrBestandsoortEnum.Rapportage.value: 'ArchRapportageView'})
+
 
 # Fields for tekening
 tekeningvelden = ("Tekeningvelden", {"columns": [
@@ -246,23 +253,23 @@ tekeningvelden = ("Tekeningvelden", {"columns": [
             {"fields": ["materiaal", "omschrijving", "coupe", 'details', 'microfilm', 'periode', 'profiel','schaal'], "grid":6},        
         ]})        
 
-class ArchObjecttekeningenView(ArchFotoView):
+class ArchObjecttekeningenView(ArchBestandView):
     datamodel = WSSQLAInterface(Objecttekening)
-    base_filters = [['fotosoort', FilterEqual, DiscrFotosoortEnum.Objecttekening.value]]
+    base_filters = [['bestandsoort', FilterEqual, DiscrBestandsoortEnum.Objecttekening.value]]
     list_title = "Objecttekeningen"
-    show_fieldsets = ArchFotoView.show_fieldsets.copy()
+    show_fieldsets = ArchBestandView.show_fieldsets.copy()
     show_fieldsets[1] = ('Tekening', show_fieldsets[1][1])
     show_fieldsets.insert(1, tekeningvelden)
-    ArchFotoView.view_mapper.update({DiscrFotosoortEnum.Objecttekening.value: 'ArchObjecttekeningenView'})
+    ArchBestandView.view_mapper.update({DiscrBestandsoortEnum.Objecttekening.value: 'ArchObjecttekeningenView'})
 
-class ArchOverigetekeningenView(ArchFotoView):
+class ArchOverigetekeningenView(ArchBestandView):
     datamodel = WSSQLAInterface(Overige_tekening)
-    base_filters = [['fotosoort', FilterEqual, DiscrFotosoortEnum.Overige_tekening.value]]
+    base_filters = [['bestandsoort', FilterEqual, DiscrBestandsoortEnum.Overige_tekening.value]]
     list_title = "Overige tekeningen"
-    show_fieldsets = ArchFotoView.show_fieldsets.copy()
+    show_fieldsets = ArchBestandView.show_fieldsets.copy()
     show_fieldsets[1] = ('Tekening', show_fieldsets[1][1])
     show_fieldsets.insert(1, tekeningvelden)
-    ArchFotoView.view_mapper.update({DiscrFotosoortEnum.Overige_tekening.value: 'ArchOverigetekeningenView'})
+    ArchBestandView.view_mapper.update({DiscrBestandsoortEnum.Overige_tekening.value: 'ArchOverigetekeningenView'})
 
 
 
@@ -716,7 +723,7 @@ class ArchProjectView(WSGeoModelView):
     #related_views = [ArchPutView, ArchVondstView, ArchArtefactView]
     base_order = ("projectcd", "asc")
     list_title = "Projecten"
-    related_views = [ArchArtefactView, ArchDoosView, ArchPutView, ArchSpoorView, ArchVondstView, ArchMonsterView, ArchOpgravingFotoView, ArchVelddocumentView, ArchObjectFotoView, ArchOverigeAfbeeldingenView, ArchObjecttekeningenView, ArchOverigetekeningenView]
+    related_views = [ArchArtefactView, ArchDoosView, ArchPutView, ArchSpoorView, ArchVondstView, ArchMonsterView, ArchOpgravingFotoView, ArchVelddocumentView, ArchObjectFotoView, ArchOverigeAfbeeldingenView, ArchObjecttekeningenView, ArchOverigetekeningenView, ArchRapportageView]
     search_exclude_columns = ["location", "artefacten", "fotos"] 
 
     show_fieldsets = [
@@ -822,13 +829,14 @@ appbuilder.add_view(ArchPartijView,"Partijen met bruiklenen",icon="fa-dashboard"
 
 
 #### Media
-appbuilder.add_view(ArchFotoView,"Alle Foto's",icon="fa-dashboard",category="Media",)
+appbuilder.add_view(ArchBestandView,"Alle Bestanden",icon="fa-dashboard",category="Media",)
 appbuilder.add_view(ArchObjectFotoView,"Artefactfoto's",icon="fa-dashboard",category="Media")
 appbuilder.add_view(ArchOpgravingFotoView,"Opgravingsfoto's",icon="fa-dashboard",category="Media")
 appbuilder.add_view(ArchVelddocumentView,"Velddocumenten",icon="fa-dashboard",category="Media")
 appbuilder.add_view(ArchOverigeAfbeeldingenView,"Overige Afbeeldingen",icon="fa-dashboard",category="Media")
 appbuilder.add_view(ArchObjecttekeningenView,"Objecttekeningen",icon="fa-dashboard",category="Media")
 appbuilder.add_view(ArchOverigetekeningenView,"Overige Tekeningen",icon="fa-dashboard",category="Media")
+appbuilder.add_view(ArchRapportageView,"Rapportages",icon="fa-dashboard",category="Media")
 #appbuilder.add_view(MasterView,"Mappen Foto's",icon="fa-dashboard",category="Media")
 
 

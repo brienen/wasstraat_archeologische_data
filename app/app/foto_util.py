@@ -4,7 +4,7 @@ import os
 from PIL import Image, ExifTags
 import logging
 import copy
-from models import Foto
+from models import Bestand
 import shared.config as config
 import shared.image_util as image_util
 
@@ -16,9 +16,9 @@ import pdf2image
 logger = logging.getLogger()
 
 
-def rotateImage(foto: Foto, degrees=90):
+def rotateBestand(bestand: Bestand, degrees=90):
     try:
-        fullfilename = os.path.join(config.AIRFLOW_OUTPUT_MEDIA, foto.imageUUID.lstrip('/\\'))
+        fullfilename = os.path.join(config.AIRFLOW_OUTPUT_MEDIA, bestand.imageID.lstrip('/\\'))
         if fullfilename.lower().endswith('pdf'): 
             reader = PdfReader(fullfilename)
             writer = PdfWriter()
@@ -30,14 +30,14 @@ def rotateImage(foto: Foto, degrees=90):
 
             images = pdf2image.convert_from_path(fullfilename)
             image = images[0]
-            image_util.putImageInGrid(image, fullfilename, None, foto.directory, '', pdf=True)
+            image_util.putImageInGrid(image, fullfilename, None, bestand.directory, '', pdf=True)
         else:
             image = Image.open(fullfilename)
             image = image.rotate(degrees, expand = 1) 
-            image_util.putImageInGrid(image, fullfilename, None, foto.directory, '')
+            image_util.putImageInGrid(image, fullfilename, None, bestand.directory, '')
 
     except Exception as err:
         print(err)
         logger.warning('Error while rotating image with message: ' + str(err))
 
-    return foto
+    return bestand

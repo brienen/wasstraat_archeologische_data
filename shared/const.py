@@ -2,11 +2,13 @@ OBJECTFOTO = "Objectfoto"
 OPGRAVINGSFOTO = "Opgravingsfoto"
 VELDDOCUMENT = "Velddocument"
 OVERIGE_AFBEELDING = "Overige_afbeelding"
-AFBEELDING = "Afbeelding"
+BESTAND = "Bestand"
 TEKENING = "Tekening"
 OBJECTTEKENING = "Objecttekening"
 OVERIGE_TEKENING = "Overige_tekening"
+RAPPORTAGE = "Rapportage"
 ONBEKEND_PROJECT = 'Unknown'
+AFBEELDING = "Afbeelding"
 
 
 ABR_URI_MATERIALEN = 'https://data.cultureelerfgoed.nl/term/id/abr/2dcb88e1-e777-4cff-babc-d97485b42b10'
@@ -26,3 +28,5 @@ ABR_URI_DIERLIJK_BOT = 'https://data.cultureelerfgoed.nl/term/id/abr/87a15ea6-0e
 ABR_URI_BOUWAARDEWERK= 'https://data.cultureelerfgoed.nl/term/id/abr/e9c85dbc-f215-4249-ba1f-7d84a22eaa82'
 ABR_URI_SCHELP = 'https://data.cultureelerfgoed.nl/term/id/abr/ea0bcd79-31b9-4645-9783-add79577de3e'
 ABR_URI_TEXTIEL = 'https://data.cultureelerfgoed.nl/term/id/abr/d386b3f4-7aa9-4fe6-a64d-2b659fe6b197'
+
+BESTANDSOORTEN = ['Tekening', 'Foto', 'Rapport']

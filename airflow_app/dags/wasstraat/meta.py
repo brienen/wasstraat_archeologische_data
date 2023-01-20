@@ -447,6 +447,14 @@ def getGenerateMissingPipelines(soort):
 
 
 def getVeldnamen(soort):    
+    if soort == 'Bestand':
+        set_foto = set(getVeldnamen('Foto'))
+        logger.info(f'foto fields: {set_foto}')
+        set_tekening = set(getVeldnamen('Tekening'))
+        logger.info(f'tekening fields: {set_tekening}')
+
+        return list(set_foto.union(set_tekening))
+
     keyset = set([])
     lst_pipelines = []
 

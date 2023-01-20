@@ -116,6 +116,11 @@ def moveSoort(soort):
     try:
         #Aggregate Pipelin
         collection = getAnalyseCollection()
+        if soort in const.BESTANDSOORTEN:
+            aggr.insert(-1, {'$match': {'imageID': {'$exists': True}}})
+            aggr.insert(-1, {'$addFields': {'soort': 'Bestand'}})
+            aggr.insert(-1, {'$addFields': {'bestandsoort_XX': soort}})
+
         logger.info("Calling aggregation: " + str(aggr))
         collection.aggregate(aggr, allowDiskUse=True)
         
@@ -140,9 +145,10 @@ def mergeSoort(soort):
         #Aggregate Pipelin
         collection = getAnalyseCollection()
         # Merge Tekening into photo's
-        if soort == 'Tekening':
-            aggr.insert(-1, {'$match': {'imageUUID': {'$exists': True}}})
-            aggr.insert(-1, {'$addFields': {'soort': 'Foto'}})
+        if soort in const.BESTANDSOORTEN:
+            aggr.insert(-1, {'$match': {'imageID': {'$exists': True}}})
+            aggr.insert(-1, {'$addFields': {'soort': 'Bestand'}})
+            aggr.insert(-1, {'$addFields': {'bestandsoort_XX': soort}})
 
         logger.info("Calling aggregation: " + str(aggr))
         collection.aggregate(aggr, allowDiskUse=True)
@@ -239,16 +245,17 @@ def mergeFotoinfo():
         # Merge dataframes to get a complete Photo-dataframe
         df_merge = df_foto.merge(df_fotokoppel, how="left", right_on="bestandsnaam", left_on="fileName", suffixes=("", "_koppel"))
         df_merge = df_merge.merge(df_fotobeschr, how="left", on=["abcd-nr", "projectcd"], suffixes=("", "_beschr"))
-        df_merge['soort'] = 'Foto'
+        df_merge['soort'] = 'Bestand'
+        df_merge['bestandsoort_XX'] = 'Foto'
         df_merge['brondata'] = df_merge.apply(lambda x: [x['brondata'], x['brondata_beschr']], axis=1)
         df_merge['wasstraat'] = df_merge.apply(lambda x: [{'projectcd': x['projectcd'], 'table': getTable(elem)} for elem in x['brondata'] if getTable(elem)], axis=1)  
         df_merge['materiaal'] = df_merge.apply(lambda x: util.firstValue(x['materiaal'], x['materiaalgroep']) if 'materiaal' in df_merge.columns else x['materiaalgroep'],axis=1)
-        df_merge = df_merge[['_id', 'fileName', 'imageUUID', 'imageMiddleUUID', 'imageThumbUUID',
+        df_merge = df_merge[['_id', 'fileName', 'imageID', 'imageMiddleID', 'imageThumbID',
             'fileType', 'directory', 'mime_type', 'fototype', 'soort', 'projectcd',
             'materiaal', 'putnr', 'vondstnr', 'fotonr', 'vondstkey_met_putnr',
             'key', 'key_project', 'key_project_type', 'key_vondst',
             'key_artefact', 'subnr', 'brondata',
-            'pad', 'spoornr', 'profiel', 'subnr', 'datum', 'omschrijving', 'vlaknr', 'richting', 'wasstraat', 'fotosoort']]
+            'pad', 'spoornr', 'profiel', 'subnr', 'datum', 'omschrijving', 'vlaknr', 'richting', 'wasstraat', 'bestandsoort', 'bestandsoort_XX']]
 
 
         updates= [ pymongo.ReplaceOne({"_id": record['_id']}, record, upsert=True) for record in [v.dropna().to_dict() for k,v in df_merge.iterrows()]]  # 

@@ -1,6 +1,6 @@
 from sqlalchemy import event
 from sqlalchemy.orm import Session
-from models import Artefact, Objectfoto, Foto
+from models import Artefact, Objectfoto
 
 
 

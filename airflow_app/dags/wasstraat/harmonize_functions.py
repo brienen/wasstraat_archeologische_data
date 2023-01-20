@@ -158,7 +158,7 @@ def parseFotobestanden():
                     if matchObj.group(7) is not None: doc['fotonr'] = matchObj.group(7).lstrip("0")
                     doc['fototype'] = 'H'
                     doc['soort'] = 'Foto' 
-                    doc['fotosoort'] = const.OBJECTFOTO
+                    doc['bestandsoort'] = const.OBJECTFOTO
                     analyseCol.replace_one({"_id": doc['_id']}, doc, upsert=True)
                     continue
 
@@ -167,7 +167,7 @@ def parseFotobestanden():
                     doc['projectcd'] = matchObj.group(1)
                     doc['tekeningcd'] = matchObj.group(2) + str(int(matchObj.group(3))).zfill(3)
                     doc['fototype'] = 'T'
-                    doc['fotosoort'] = const.OBJECTTEKENING if  matchObj.group(2) == 'T' else const.OVERIGE_TEKENING
+                    doc['bestandsoort'] = const.OBJECTTEKENING if  matchObj.group(2) == 'T' else const.OVERIGE_TEKENING
                     doc['soort'] = 'Tekening' 
                     analyseCol.replace_one({"_id": doc['_id']}, doc, upsert=True)
                     continue
@@ -181,7 +181,7 @@ def parseFotobestanden():
                     doc['fotonr'] = matchObj.group(2).lstrip("0")
                     if matchObj.group(4) is not None: doc['fotosubnr'] = matchObj.group(4).lstrip("0")
                     doc['soort'] = 'Foto' 
-                    doc['fotosoort'] = const.OPGRAVINGSFOTO
+                    doc['bestandsoort'] = const.OPGRAVINGSFOTO
                     analyseCol.replace_one({"_id": doc['_id']}, doc, upsert=True)
                     continue
 
@@ -192,7 +192,7 @@ def parseFotobestanden():
                     doc['fototype'] = 'G' 
                     doc['fotonr'] = matchObj.group(2).lstrip("0")
                     if matchObj.group(4) is not None: doc['fotosubnr'] = matchObj.group(4).lstrip("0")
-                    doc['fotosoort'] = const.OVERIGE_AFBEELDING
+                    doc['bestandsoort'] = const.OVERIGE_AFBEELDING
                     doc['soort'] = 'Foto' 
                     analyseCol.replace_one({"_id": doc['_id']}, doc, upsert=True)
                     continue
@@ -201,7 +201,7 @@ def parseFotobestanden():
                 else:
                     doc['fototype'] = 'N' 
                     doc['soort'] = 'Foto' 
-                    doc['fotosoort'] = const.OVERIGE_AFBEELDING
+                    doc['bestandsoort'] = const.OVERIGE_AFBEELDING
                     analyseCol.replace_one({"_id": doc['_id']}, doc, upsert=True)
             except Exception as err:
                 msg = "Unknown error while collecting image info with message: " + str(err)

@@ -92,7 +92,7 @@ def adjustAndSaveFile(fullfilename, fs, collection):
 
         # Insert a record with metadata
         return collection.insert_one({
-            'fileName': filename, 'fullFileName': fullfilename, 'imageUUID': str(image_dict_big), 'imageMiddleUUID': str(image_dict_med), 'imageThumbUUID': str(image_dict_sml),
+            'fileName': filename, 'fullFileName': fullfilename, 'imageID': str(image_dict_big), 'imageMiddleID': str(image_dict_med), 'imageThumbID': str(image_dict_sml),
             'fileType': file_extension.lower(), 'directory': dir, 'mime_type': mime_type, 'projectcd': projectcd 
             }).inserted_id  
 

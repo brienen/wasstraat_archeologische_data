@@ -14,9 +14,9 @@
         {% set pk = pks[loop.index-1] %}
         <div class="col-sm-12 col-md-4 col-lg-3">
         <div class="thumbnail">
-          {{ item['photo_img_thumbnail'] }}  
+          {{ item['show_bestand_thumbnail'] }}  
           <div class="caption">
-        {% for col_name in include_columns if col_name != 'photo_img_thumbnail' %}
+        {% for col_name in include_columns if col_name != 'show_bestand_thumbnail' %}
             {% set col_label = label_columns.get(include_columns[loop.index -1]) %}
             {% set value = item[col_name] %}
             <dt>{{col_label}}</dt>

@@ -41,6 +41,7 @@ def setWKT(x,y):
 
 def getFields(col, soort):
     lst_fields = meta.getVeldnamen(soort)
+    logger.info(f'lstfields {lst_fields}')
     set_fields = set(lst_fields)
 
     df = pd.DataFrame(list(col.find({'soort': soort})))
@@ -141,7 +142,7 @@ def loadAll():
             dict_tables = metadata.tables.keys()
             lst_tables = [x for x in list(dict_tables) if x.startswith('Def_')]
             logger.info("Loading all data for " + str(lst_tables))
-            lst_tables = ['Def_ABR', 'Def_Project', 'Def_Put', 'Def_Vondst', 'Def_Spoor', 'Def_Stelling', 'Def_Doos', 'Def_Standplaats', 'Def_Plaatsing', 'Def_Vlak', 'Def_Vindplaats', 'Def_Artefact', 'Def_Foto', 'Def_Vulling', 'Def_Monster', 'Def_Monster_Botanie', 'Def_Monster_Schelp']
+            lst_tables = ['Def_ABR', 'Def_Project', 'Def_Put', 'Def_Vondst', 'Def_Spoor', 'Def_Stelling', 'Def_Doos', 'Def_Standplaats', 'Def_Plaatsing', 'Def_Vlak', 'Def_Vindplaats', 'Def_Artefact', 'Def_Bestand', 'Def_Vulling', 'Def_Monster', 'Def_Monster_Botanie', 'Def_Monster_Schelp']
             
             # To make a comma separated string with substrings between double quotes
             f = lambda x: "\""+str(x)+"\""

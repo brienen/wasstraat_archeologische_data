@@ -4,7 +4,7 @@ from flask_appbuilder import BaseView, expose, has_access
 from flask import abort, Blueprint, flash, render_template, request, session, url_for
 from app import appbuilder
 from app import db
-from models import Foto, Artefact, Project, Objectfoto, Velddocument, Opgravingsfoto, Overige_afbeelding, Overige_tekening, Objecttekening
+from models import Bestand, Artefact, Project, Objectfoto, Velddocument, Opgravingsfoto, Overige_afbeelding, Overige_tekening, Objecttekening
 from shared import const
 import shared.config as config
 import shared.image_util as image_util
@@ -77,7 +77,7 @@ class UploadView(BaseView):
                                     foto = Overige_afbeelding()                                        
                                     dir = dir + 'overige' + os.sep 
                                 else:
-                                    foto = Foto()
+                                    foto = Bestand()
                                     dir = dir + 'overige' + os.sep 
 
                                 foto.project = project
@@ -88,11 +88,11 @@ class UploadView(BaseView):
                                 foto.project = foto.artefact.project                                    
                                 dir = dir + 'objectfoto' + os.sep 
                             else:
-                                foto = Foto()
+                                foto = Bestand()
                                 dir = dir + 'overige' + os.sep 
 
                         else:
-                            foto = Foto()
+                            foto = Bestand()
                             dir = dir + 'overige' + os.sep 
 
 
@@ -105,18 +105,18 @@ class UploadView(BaseView):
                             f.save(fullfilename)
                             images = pdf2image.convert_from_path(fullfilename)
                             image = images[0]
-                            imageThumbUUID, imageMiddleUUID, imageUUID = image_util.putImageInGrid(image, fullfilename, None, dir, "project", pdf=True)
+                            imageThumbID, imageMiddleID, imageID = image_util.putImageInGrid(image, fullfilename, None, dir, "project", pdf=True)
                         else:
                             image = Image.open(request.files['file'].stream)
-                            imageThumbUUID, imageMiddleUUID, imageUUID = image_util.putImageInGrid(image, fullfilename, None, dir, "project")
+                            imageThumbID, imageMiddleID, imageID = image_util.putImageInGrid(image, fullfilename, None, dir, "project")
 
                         foto.fileName = f.filename
                         foto.mime_type = mime_type
                         foto.fileType = filetype
                         foto.directory = dir
-                        foto.imageUUID = str(imageUUID)
-                        foto.imageMiddleUUID = str(imageMiddleUUID)
-                        foto.imageThumbUUID = str(imageThumbUUID)
+                        foto.imageID = str(imageID)
+                        foto.imageMiddleID = str(imageMiddleID)
+                        foto.imageThumbID = str(imageThumbID)
                         db.session.add(foto)
                         db.session.commit()
 

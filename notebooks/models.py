@@ -737,9 +737,9 @@ class Foto(WasstraatModel):
     fileName = Column(String(1024), index=True)
     fileSize = Column(Integer)
     fileType = Column(String(32))
-    imageUUID = Column(String(1024))
-    imageMiddleUUID = Column(String(1024))
-    imageThumbUUID = Column(String(1024))
+    imageID = Column(String(1024))
+    imageMiddleID = Column(String(1024))
+    imageThumbID = Column(String(1024))
     mime_type = Column(String(20))
     fototype = Column(String(1))
     projectcd = Column(String(12))
@@ -755,9 +755,9 @@ class Foto(WasstraatModel):
  
     @renders('custom')
     def photo_img(self):
-        if self.imageMiddleUUID:
-            return Markup('<a href=/gridfs/getimage/' + self.imageUUID +\
-             '><img src="/gridfs/getimage/' + self.imageMiddleUUID +\
+        if self.imageMiddleID:
+            return Markup('<a href=/gridfs/getimage/' + self.imageID +\
+             '><img src="/gridfs/getimage/' + self.imageMiddleID +\
               '" alt="Photo" class="img-rounded img-responsive"></a>')
         else:
             return Markup('<a href="' + url_for('ArchFotoView.show',pk=str(self.primary_key)) +\
@@ -766,9 +766,9 @@ class Foto(WasstraatModel):
 
     @renders('custom')
     def photo_img_middle(self):
-        if self.imageMiddleUUID:
+        if self.imageMiddleID:
             return Markup('<a href="' + url_for('ArchFotoView.show',pk=str(self.primary_key)) +\
-             '"><img src="/gridfs/getimage/' + self.imageMiddleUUID +\
+             '"><img src="/gridfs/getimage/' + self.imageMiddleID +\
               '" alt="Photo" class="img-rounded img-responsive" style="max-height:70vh"></a>')
         else:
             return Markup('<a href="' + url_for('ArchFotoView.show',pk=str(self.primary_key)) +\
@@ -777,9 +777,9 @@ class Foto(WasstraatModel):
 
     @renders('custom')
     def photo_img_thumbnail(self):
-        if self.imageThumbUUID:
+        if self.imageThumbID:
             return Markup('<a href="' + url_for('ArchFotoView.show',pk=str(self.primary_key)) +\
-             '" class="thumbnail"><img src="/gridfs/getimage/' + self.imageThumbUUID +\
+             '" class="thumbnail"><img src="/gridfs/getimage/' + self.imageThumbID +\
               '" alt="Photo" class="img-rounded img-responsive"></a>')
         else:
             return Markup('<a href="' + url_for('ArchFotoView.show',pk=str(self.primary_key)) +\

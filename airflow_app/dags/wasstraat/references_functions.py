@@ -12,6 +12,7 @@ import simplejson
 # Import app code
 # Absolute imports for Hydrogen (Jupyter Kernel) compatibility
 import shared.config as config
+import shared.const as const
 import logging
 logger = logging.getLogger("airflow.task")
 
@@ -111,8 +112,8 @@ def setReferences(soort, col='analyse', key='key', refkey=None):
         
         # Find all main entries for type soort
         soort_query = {'soort': soort}
-        if soort == 'Tekening':
-            soort_query = {'soort': 'Foto', 'tekeningcd': {'$exists': True}}
+        if soort in const.BESTANDSOORTEN:
+            soort_query = {'soort': 'Bestand', 'bestandsoort': soort}
 
         df_soort = pd.DataFrame(list(collection.find(soort_query, projection={key:1, 'ID':1})))
         df_soort = df_soort.rename(columns={'_id': soort_lw+'UUID', 'index':soort_lw+'ID', key:'key_'+soort_lw})

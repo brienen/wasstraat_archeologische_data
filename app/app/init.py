@@ -1,4 +1,4 @@
-from models import Project, Artefact, Foto, Spoor, Vondst, Objectfoto
+from models import Project, Artefact, Spoor, Vondst, Objectfoto
 import shared.config as config
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine, func, update, inspect, MetaData
