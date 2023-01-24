@@ -15,7 +15,6 @@ import copy
 
 
 
-
 def fotoFormatter(fotos):
     indicators = ""
     slides = ""

@@ -4,7 +4,7 @@ from flask_appbuilder import BaseView, expose, has_access
 from flask import abort, Blueprint, flash, render_template, request, session, url_for
 from app import appbuilder
 from app import db
-from models import Bestand, Artefact, Project, Objectfoto, Velddocument, Opgravingsfoto, Overige_afbeelding, Overige_tekening, Objecttekening
+from models import Bestand, Artefact, Project, Objectfoto, Veldtekening , Opgravingsfoto, Overige_foto, Overige_tekening, Objecttekening
 from shared import const
 import shared.config as config
 import shared.image_util as image_util
@@ -65,7 +65,7 @@ class UploadView(BaseView):
                                     foto = Opgravingsfoto()
                                     dir = dir + 'opgravingfoto' + os.sep 
                                 elif 'velddocument' in urlp.path.lower():
-                                    foto = Velddocument()
+                                    foto = Veldtekening ()
                                     dir = dir + 'velddocument' + os.sep 
                                 elif 'objecttekening' in urlp.path.lower():
                                     foto = Objecttekening()
@@ -74,7 +74,7 @@ class UploadView(BaseView):
                                     foto = Overige_tekening()
                                     dir = dir + 'overigetekening' + os.sep 
                                 elif 'overige' in urlp.path.lower():
-                                    foto = Overige_afbeelding()                                        
+                                    foto = Overige_foto()                                        
                                     dir = dir + 'overige' + os.sep 
                                 else:
                                     foto = Bestand()

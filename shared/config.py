@@ -42,6 +42,7 @@ try:
    COLL_STAGING_MONSTER = os.getenv("COLL_STAGING_MONSTER")
    COLL_STAGING_DIGIFOTOS = os.getenv("COLL_STAGING_DIGIFOTOS")
    COLL_STAGING_REFERENTIETABELLEN = os.getenv("COLL_STAGING_REFERENTIETABELLEN") if os.getenv("COLL_STAGING_REFERENTIETABELLEN") else 'Staging_Referentietabellen'
+   COLL_STAGING_RAPPORTEN = os.getenv("COLL_STAGING_RAPPORTEN") if os.getenv("COLL_STAGING_RAPPORTEN") else 'Staging_Rapporten'
    COLL_ANALYSE_FOTO = os.getenv("COLL_ANALYSE_FOTO")
    COLL_ANALYSE_ARTEFACT = os.getenv("COLL_ANALYSE_ARTEFACT")
    COLL_ANALYSE_PROJECT = os.getenv("COLL_ANALYSE_PROJECT")
@@ -85,6 +86,8 @@ try:
    AIRFLOW_INPUT_MAGAZIJNLIJST = os.getenv("AIRFLOW_INPUT_MAGAZIJNLIJST") if os.getenv("AIRFLOW_INPUT_MAGAZIJNLIJST") else "/input/magazijnlijst"
    AIRFLOW_INPUT_DIGIFOTOS = os.getenv("AIRFLOW_INPUT_DIGIFOTOS") if os.getenv("AIRFLOW_INPUT_DIGIFOTOS") else "/input/digifotos"
    AIRFLOW_INPUT_MONSTER = os.getenv("AIRFLOW_INPUT_MONSTER") if os.getenv("AIRFLOW_INPUT_MONSTER") else "/input/monsterdatabase"
+   AIRFLOW_INPUT_RAPPORTEN = os.getenv("AIRFLOW_INPUT_RAPPORTEN") if os.getenv("AIRFLOW_INPUT_RAPPORTEN") else "/input/rapporten"
+
 
    AIRFLOW_OUTPUT_MEDIA = os.getenv("AIRFLOW_OUTPUT_MEDIA") if os.getenv("AIRFLOW_OUTPUT_MEDIA") else "/output/archeomedia"
 

@@ -6,6 +6,7 @@ import pymongo
 from pymongo import WriteConcern, InsertOne
 from pdf2image import convert_from_path, convert_from_bytes
 import gridfs
+import random
 
 # Import app code
 import shared.image_util as image_util
@@ -16,9 +17,9 @@ logger = logging.getLogger("airflow.task")
 
 def getImageNamesFromDir(dir):
     lst = [os.path.join(dp, f) for dp, dn, filenames in os.walk(dir) for f in filenames if os.path.splitext(f)[1].lower() in config.IMAGE_EXTENSIONS] 
-    lst = [file for file in lst if ("velddocument" in file.lower() or "fotos" in file.lower() or "tekening" in file.lower())]
+    lst = [file for file in lst if ("velddocument" in file.lower() or "fotos" in file.lower() or "tekening" in file.lower() or "DAN" in file or "DAR" in file)]
     lst = list(set(lst))
-    return lst
+    return lst 
 
 
 def importImages(index, of):   
@@ -71,7 +72,8 @@ def importImages(index, of):
 
 
 def getAndStoreImageFilenames():
-    lst_filenames = getImageNamesFromDir(config.AIRFLOW_INPUT_IMAGES)
+    lst_filenames = getImageNamesFromDir(config.AIRFLOW_INPUT_IMAGES) + getImageNamesFromDir(config.AIRFLOW_INPUT_RAPPORTEN)
+    random.shuffle(lst_filenames) # Shuffle to make sure not all big files are at the end
     logger.info(f'Found {len(lst_filenames)} unique image files for processing...')
 
     try: 

@@ -1,7 +1,16 @@
 
 from flask_appbuilder.models.filters import BaseFilter
+from flask_babel import lazy_gettext
 from app import appbuilder, db
-from models import ABR
+from models import ABR, Bestand
+
+
+class FilterBestandIN(BaseFilter):
+    name = lazy_gettext("IN")
+
+    def apply(self, query, value):
+        #flt = {"%s_%s" % (self.column_name, "in"): value}
+        return query.filter(Bestand.bestandsoort.in_(value))
 
 
 class HierarchicalABRFilter(BaseFilter):

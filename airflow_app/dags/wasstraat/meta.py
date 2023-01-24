@@ -1,4 +1,5 @@
 import shared.config as config
+import shared.const as const
 import wasstraat.harmonizer as harmonizer
 import copy
 import wasstraat.util as util
@@ -151,6 +152,14 @@ wasstraat_model = {
                              {'$concat': ["V", {'$toString': "$vondstnr" }]},
                              {'$concat': ["A", {'$toString': "$subnr"}]},  		
                 {'$ifNull': [{'$concat': ["S", {'$toString': "$splitid" }]}, ""]}]}}},
+            { '$addFields': {'key_foto1': { '$concat': [ "P", "$projectcd", "M", "$artefactsoort",
+                {'$ifNull': [{'$concat': ["P", {'$toString': "$putnr" }]}, ""]},
+                             {'$concat': ["V", {'$toString': "$vondstnr" }]},
+                             {'$concat': ["A", {'$toString': "$subnr"}]}]}}},
+            { '$addFields': {'key_foto2': { '$concat': [ "P", "$projectcd",
+                {'$ifNull': [{'$concat': ["P", {'$toString': "$putnr" }]}, ""]},
+                             {'$concat': ["V", {'$toString': "$vondstnr" }]},
+                             {'$concat': ["A", {'$toString': "$subnr"}]}]}}},
             { '$addFields': {'key_tekening': { '$concat': [ "P", "$projectcd", 
                 {'$concat': ["T", {'$toString': "$tekeningcd"}]}]}}},  		
             { '$addFields': {'key_vondst': aggr_key_vondst}}
@@ -287,6 +296,14 @@ wasstraat_model = {
             { '$addFields': {'key_vondst': { '$concat': [ "P", "$projectcd", 
                 { '$ifNull': [{'$concat': ["P", {'$toString': "$putnr" }]}, ""]},
                 { '$concat': ["V", {'$toString': "$vondstnr" }]}]}}},  		
+            { '$addFields': {'key_foto1': { '$concat': [ "P", "$projectcd", "M", "$artefactsoort",
+                {'$ifNull': [{'$concat': ["P", {'$toString': "$putnr" }]}, ""]},
+                             {'$concat': ["V", {'$toString': "$vondstnr" }]},
+                             {'$concat': ["A", {'$toString': "$subnr"}]}]}}},
+            { '$addFields': {'key_foto2': { '$concat': [ "P", "$projectcd",
+                {'$ifNull': [{'$concat': ["P", {'$toString': "$putnr" }]}, ""]},
+                             {'$concat': ["V", {'$toString': "$vondstnr" }]},
+                             {'$concat': ["A", {'$toString': "$subnr"}]}]}}},
             { '$addFields': {'key_project': { '$concat': [ "P", "$projectcd"]}}}, 
             { '$addFields': {'key_project_type': { '$concat': [ "$fototype", "P", "$projectcd"]}}}
         ]],
@@ -342,6 +359,17 @@ wasstraat_model = {
             { '$addFields': {'key_spoor': { '$concat': [ "P", "$projectcd", 
                 {'$ifNull': [{'$concat': ["P", {'$toString': "$putnr" }]}, ""]},
                 {'$ifNull': [{'$concat': ["V", {'$toString': "$vlaknr"}]}, ""]}, "S", {'$toString': "$spoornr"}] }}},  		
+        ]]
+  },
+  "Rapport": {
+        STAGING_COLLECTION: config.COLL_STAGING_RAPPORTEN,
+        HARMONIZE_PIPELINES: 'Rapport',
+        MOVEANDMERGE_MERGE: True,
+        SET_KEYS_PIPELINES: [[ 
+            { '$match': { 'soort': "Rapport" } },
+            { '$addFields': {'key': {'$concat': ["R", {'$toString': "$rapportnr"}]}}},  		
+            { '$addFields': {'key_rapport': {'$concat': ["R", {'$toString': "$rapportnr"}]}}},  		
+            { '$addFields': {'key_project': { '$concat': [ "P", "$projectcd"]}}}, 
         ]]
   },
   "Plaatsing": {
@@ -408,7 +436,8 @@ def addToMetaLike(soort_add, soort_like):
         logger.error(msg)   
         raise Exception(msg) from err
 
-lst_artefactsoort = ['Aardewerk', 'Dierlijk_Bot', 'Glas', 'Leer', 'Steen', 'Kleipijp', 'Menselijk_Bot', 'Hout', 'Bouwaardewerk', 'Metaal', 'Munt', 'Schelp', 'Onbekend', 'Textiel']
+#lst_artefactsoort = ['Aardewerk', 'Dierlijk_Bot', 'Glas', 'Leer', 'Steen', 'Kleipijp', 'Menselijk_Bot', 'Hout', 'Bouwaardewerk', 'Metaal', 'Munt', 'Schelp', 'Onbekend', 'Textiel']
+lst_artefactsoort = [const.ARTF_AARDEWERK, const.ARTF_DIELRIJK_BOT, const.ARTF_GLAS, const.ARTF_LEER, const.ARTF_STEEN, const.ARTF_KLEIPIJP, const.ARTF_MENSELIJK_BOT, const.ARTF_HOUT, const.ARTF_BOUWAARDEWERK, const.ARTF_METAAL, const.ARTF_MUNT, const.ARTF_SCHELP, const.ARTF_ONBEKEND, const.ARTF_TEXTIEL]
 [addToMetaLike(soort, 'Artefact') for soort in lst_artefactsoort]  
 
 
@@ -449,11 +478,10 @@ def getGenerateMissingPipelines(soort):
 def getVeldnamen(soort):    
     if soort == 'Bestand':
         set_foto = set(getVeldnamen('Foto'))
-        logger.info(f'foto fields: {set_foto}')
         set_tekening = set(getVeldnamen('Tekening'))
-        logger.info(f'tekening fields: {set_tekening}')
+        set_rapport = set(getVeldnamen('Rapport'))
 
-        return list(set_foto.union(set_tekening))
+        return list(set_foto.union(set_tekening).union(set_rapport))
 
     keyset = set([])
     lst_pipelines = []

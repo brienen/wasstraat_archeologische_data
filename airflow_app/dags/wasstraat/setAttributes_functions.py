@@ -90,6 +90,17 @@ def enhanceAllAttributes():
                     if matchObj:
                         doc['tekeningcd'] = matchObj.group(1) + str(int(matchObj.group(2))).zfill(3)
 
+                #clean Type Voorwerp
+                if 'rapportnr' in doc:
+                    doc['rapportnr'] = str(doc['rapportnr']).replace(' ', '')
+                    if str(doc['rapportnr']).isdigit(): # Some DAR-numbers do not contain DAR in front of code
+                        if 'DARnr' in doc['brondata'].keys():
+                            doc['rapportnr'] = 'DAR' + doc['rapportnr']
+                        elif 'DANnr' in doc['brondata'].keys():
+                            doc['rapportnr'] = 'DAN' + doc['rapportnr']
+                        else:
+                            doc['rapportnr'] = ''
+
 
                 ut.convertToInt(doc, 'putnr', True) 
                 ut.convertToInt(doc, 'vondstnr', True) 
@@ -107,6 +118,7 @@ def enhanceAllAttributes():
                 ut.convertToInt(doc, 'jaarvanaf', True) 
                 ut.convertToInt(doc, 'jaartot', True) 
                 ut.convertToInt(doc, 'jaar', True) 
+                ut.convertToInt(doc, 'jaar_uitgave', True) 
                 ut.convertToInt(doc, 'artefactdatering_vanaf', True) 
                 ut.convertToInt(doc, 'artefactdatering_tot', True) 
                 ut.convertToInt(doc, 'vondstdatering_vanaf', True) 
@@ -120,6 +132,10 @@ def enhanceAllAttributes():
                 ut.convertToBoolDoc(doc, 'restauratie')
                 ut.convertToBoolDoc(doc, 'weggegooid')
                 ut.convertToBoolDoc(doc, 'uitgeleend')
+                ut.convertToBoolDoc(doc, 'definitief')
+                ut.convertToBoolDoc(doc, 'rob')
+                ut.convertToBoolDoc(doc, 'kb')
+                ut.convertToBoolDoc(doc, 'archief')
                 
 
                 ut.convertToDateDoc(doc, 'datum', True)

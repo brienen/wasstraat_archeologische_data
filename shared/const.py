@@ -1,14 +1,40 @@
+TEK_VELDTEKENING = "Veldtekening"
+BESTAND = "Bestand"
+ONBEKEND_PROJECT = 'Unknown'
+
+# Voor oude zooi
 OBJECTFOTO = "Objectfoto"
 OPGRAVINGSFOTO = "Opgravingsfoto"
 VELDDOCUMENT = "Velddocument"
 OVERIGE_AFBEELDING = "Overige_afbeelding"
-BESTAND = "Bestand"
 TEKENING = "Tekening"
 OBJECTTEKENING = "Objecttekening"
 OVERIGE_TEKENING = "Overige_tekening"
-RAPPORTAGE = "Rapportage"
 ONBEKEND_PROJECT = 'Unknown'
 AFBEELDING = "Afbeelding"
+
+BESTAND = "Bestand"
+BESTAND_OVERIGE = "Bestand_Overige"
+TEKENING = "Tekening"
+TEK_BOUWTEKENING = "Bouwtekeningen_Topografie_Geologie"
+TEK_VELDTEKENING = "Veldtekeningen"
+TEK_OVERZICHTSTEKENING =  "Overzichtstekeningen"
+TEK_OBJECTTEKENING = "Objecttekening_op_millimeter_papier_of_film"
+TEK_UITWERKINGSTEKENING = "Uitwerkingstekeningen"
+TEK_VELDTEKENING_PUBL = "Veldtekening_Publiceerbaar"
+TEK_OBJECTTEKENING_PUBL = "Objecttekening_publiceerbaar"
+TEK_OVERIGE = "Overige_tekening"
+FOTO = "Foto"
+FOTO_SFEERFOTO = "Sfeerfoto"
+FOTO_OPGRAVINGSFOTO = "Opgravingsfoto"
+FOTO_OBJECTFOTO = "Objectfoto"
+FOTO_OVERIGE = "Overige_afbeelding"
+RAPPORTAGE = "Rapportage"
+RAPP_ARCHEOLOGISCHE_RAPPORTAGE = "Archeologische_Rapportage"
+RAPP_ARCHEOLOGISCHE_NOTITIE = "Archeologische_Notitie"
+RAPP_CONSERVERINGSRAPPORT = "Conserveringsrapport"
+RAPP_OVERIGE_RAPPORTAGE = "Overige_Rapportage"
+
 
 
 ABR_URI_MATERIALEN = 'https://data.cultureelerfgoed.nl/term/id/abr/2dcb88e1-e777-4cff-babc-d97485b42b10'
@@ -30,3 +56,19 @@ ABR_URI_SCHELP = 'https://data.cultureelerfgoed.nl/term/id/abr/ea0bcd79-31b9-464
 ABR_URI_TEXTIEL = 'https://data.cultureelerfgoed.nl/term/id/abr/d386b3f4-7aa9-4fe6-a64d-2b659fe6b197'
 
 BESTANDSOORTEN = ['Tekening', 'Foto', 'Rapport']
+
+#Artefactsoorten ['Aardewerk', 'Dierlijk_Bot', 'Glas', 'Leer', 'Steen', 'Kleipijp', 'Menselijk_Bot', 'Hout', 'Bouwaardewerk', 'Metaal', 'Munt', 'Schelp', 'Onbekend', 'Textiel']
+ARTF_AARDEWERK = "Aardewerk"
+ARTF_DIELRIJK_BOT = "Dierlijk_Bot"
+ARTF_GLAS = "Glas"
+ARTF_HOUT = "Hout"
+ARTF_BOUWAARDEWERK = "Bouwaardewerk"
+ARTF_KLEIPIJP = "Kleipijp"
+ARTF_LEER = "Leer"
+ARTF_MENSELIJK_BOT = "Menselijk_Bot"
+ARTF_METAAL = "Metaal"
+ARTF_MUNT = "Munt"
+ARTF_ONBEKEND = "Onbekend"
+ARTF_SCHELP = "Schelp"
+ARTF_STEEN = "Steen"
+ARTF_TEXTIEL = "Textiel"

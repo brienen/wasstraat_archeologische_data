@@ -158,50 +158,103 @@ def parseFotobestanden():
                     if matchObj.group(7) is not None: doc['fotonr'] = matchObj.group(7).lstrip("0")
                     doc['fototype'] = 'H'
                     doc['soort'] = 'Foto' 
-                    doc['bestandsoort'] = const.OBJECTFOTO
+                    doc['bestandsoort'] = const.FOTO_OBJECTFOTO
+
+                    strFN = str(doc['fullFileName']).lower()
+                    if 'aardewerk' in strFN:
+                        doc['artefactsoort'] = const.ARTF_AARDEWERK
+                    elif 'bot' in strFN and 'menselijk' in strFN:
+                        doc['artefactsoort'] = const.ARTF_MENSELIJK_BOT
+                    elif 'bot' in strFN and 'dierlijk' in strFN:
+                        doc['artefactsoort'] = const.ARTF_DIELRIJK_BOT
+                    elif 'glas' in strFN:
+                        doc['artefactsoort'] = const.ARTF_GLAS
+                    elif 'leer' in strFN:
+                        doc['artefactsoort'] = const.ARTF_LEER
+                    elif 'steen' in strFN:
+                        doc['artefactsoort'] = const.ARTF_STEEN
+                    elif 'kleipijp' in strFN:
+                        doc['artefactsoort'] = const.ARTF_KLEIPIJP
+                    elif 'hout/':
+                        doc['artefactsoort'] = const.ARTF_HOUT
+                    elif 'bouwaardewerk' in strFN:
+                        doc['artefactsoort'] = const.ARTF_BOUWAARDEWERK
+                    elif 'metaal' in strFN:
+                        doc['artefactsoort'] = const.ARTF_METAAL
+                    elif 'munt' in strFN:
+                        doc['artefactsoort'] = const.ARTF_MUNT
+                    elif 'schelp' in strFN:
+                        doc['artefactsoort'] = const.ARTF_SCHELP
+                    elif 'textiel' in strFN:
+                        doc['artefactsoort'] = const.ARTF_TEXTIEL
+
                     analyseCol.replace_one({"_id": doc['_id']}, doc, upsert=True)
                     continue
 
-                matchObj = re.match( r'^([a-zA-Z0-9]+)_([A-Z])([0-9]+).*\.[a-z]{3}$', doc['fileName'], re.M|re.I)
+
+                # Match Tekeningen
+                matchObj = re.match( r'^([a-zA-Z0-9]+)_([ABCDEPT])(\d+).*\.[a-z]{3}$', doc['fileName'], re.M|re.I) 
                 if matchObj:
                     doc['projectcd'] = matchObj.group(1)
                     doc['tekeningcd'] = matchObj.group(2) + str(int(matchObj.group(3))).zfill(3)
-                    doc['fototype'] = 'T'
-                    doc['bestandsoort'] = const.OBJECTTEKENING if  matchObj.group(2) == 'T' else const.OVERIGE_TEKENING
                     doc['soort'] = 'Tekening' 
+                    
+                    tektype = matchObj.group(2)
+                    doc['fototype'] = tektype
+                    if tektype == 'A':
+                        doc['bestandsoort'] = const.TEK_BOUWTEKENING
+                    elif tektype == 'B':
+                        doc['bestandsoort'] = const.TEK_VELDTEKENING
+                    elif tektype == 'C':
+                        doc['bestandsoort'] = const.TEK_OVERZICHTSTEKENING
+                    elif tektype == 'D':
+                        doc['bestandsoort'] = const.TEK_OBJECTTEKENING
+                    elif tektype == 'E':
+                        doc['bestandsoort'] = const.TEK_UITWERKINGSTEKENING
+                    elif tektype == 'P':
+                        doc['bestandsoort'] = const.TEK_VELDTEKENING_PUBL
+                    elif tektype == 'T':
+                        doc['bestandsoort'] = const.TEK_OBJECTTEKENING_PUBL
+                    else:
+                        doc['bestandsoort'] = const.TEK_OVERIGE
+
                     analyseCol.replace_one({"_id": doc['_id']}, doc, upsert=True)
                     continue
 
-
-            # Graaffoto's extraheren (Bevatten altijd een _F en beginnen met projectcode)
-                matchObj = re.match( r'^([a-zA-Z0-9]+)_F(\d+)(_(\w+))?\.[a-z]{3}$', doc['fileName'], re.M|re.I)
+                # Match projectFoto's
+                matchObj = re.match( r'^([a-zA-Z0-9]+)_([FG])(\d+).*\.[a-z]{3}$', doc['fileName'], re.M|re.I)
                 if matchObj:
                     doc['projectcd'] = matchObj.group(1)       
-                    doc['fototype'] = 'F' 
-                    doc['fotonr'] = matchObj.group(2).lstrip("0")
-                    if matchObj.group(4) is not None: doc['fotosubnr'] = matchObj.group(4).lstrip("0")
+                    doc['fotonr'] = matchObj.group(3).lstrip("0")
                     doc['soort'] = 'Foto' 
-                    doc['bestandsoort'] = const.OPGRAVINGSFOTO
+                    
+                    fototype = matchObj.group(2)
+                    doc['fototype'] = fototype
+                    if fototype == 'F':
+                        doc['bestandsoort'] = const.FOTO_SFEERFOTO
+                    elif fototype == 'G':
+                        doc['bestandsoort'] = const.FOTO_OPGRAVINGSFOTO
+                    else:
+                        doc['bestandsoort'] = const.FOTO_OVERIGE
+
                     analyseCol.replace_one({"_id": doc['_id']}, doc, upsert=True)
                     continue
 
-            # Graaffoto's extraheren (Bevatten altijd een _F en beginnen met projectcode)
-                matchObj = re.match( r'^([a-zA-Z0-9]+)_G(\d+)(_(\w+))?\.[a-z]{3}$', doc['fileName'], re.M|re.I)
+
+            # Rapporten hebben allemaal filenaam die begint met DAR of DAN
+                matchObj = re.match( r'^(DAN|DAR)\s*([0-9]{2,3}).*', doc['rapportnr'], re.M|re.I)
                 if matchObj:
-                    doc['projectcd'] = matchObj.group(1)       
-                    doc['fototype'] = 'G' 
-                    doc['fotonr'] = matchObj.group(2).lstrip("0")
-                    if matchObj.group(4) is not None: doc['fotosubnr'] = matchObj.group(4).lstrip("0")
-                    doc['bestandsoort'] = const.OVERIGE_AFBEELDING
-                    doc['soort'] = 'Foto' 
+                    doc['rapportnr'] = matchObj.group(1) + matchObj.group(2)        
+                    doc['soort'] = 'Rapport' 
+                    doc['fototype'] = 'R' 
+                    doc['bestandsoort'] = const.RAPP_ARCHEOLOGISCHE_RAPPORTAGE if 'DAR' in str(doc['rapportnr']) else const.RAPP_ARCHEOLOGISCHE_NOTITIE
                     analyseCol.replace_one({"_id": doc['_id']}, doc, upsert=True)
                     continue
-
                 # Non classified photos
                 else:
                     doc['fototype'] = 'N' 
-                    doc['soort'] = 'Foto' 
-                    doc['bestandsoort'] = const.OVERIGE_AFBEELDING
+                    doc['soort'] = 'Bestand' 
+                    doc['bestandsoort'] = const.BESTAND_OVERIGE
                     analyseCol.replace_one({"_id": doc['_id']}, doc, upsert=True)
             except Exception as err:
                 msg = "Unknown error while collecting image info with message: " + str(err)

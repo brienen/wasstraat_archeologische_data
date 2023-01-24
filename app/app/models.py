@@ -19,6 +19,7 @@ from sqlalchemy_utils import observes
 
 from shared import const
 from util import isEmpty
+from util import create_named_tuple
 
 
 mindate = datetime.date(datetime.MINYEAR, 1, 1)
@@ -839,19 +840,56 @@ class Textiel(Artefact):
     __mapper_args__ = {'polymorphic_identity': DiscrArtefactsoortEnum.Textiel}
 
 
+'''
+TEK_BOUWTEKENING = "Bouwtekeningen, Topografie en Geologie"
+TEK_VELDTEKENING = "Veldtekeningen"
+TEK_OVERZICHTSTEKENING =  "Overzichtstekeningen"
+TEK_OBJECTTEKENING = "Objecttekening op millimeter papier/film"
+TEK_UITWERKINGSTEKENING = "Uitwerkingstekeningen"
+TEK_VELDTEKENING_PUBL = "Veldtekening Publiceerbaar"
+TEK_OBJECTTEKENING_PUBL = "Objecttekening publiceerbaar"
+TEK_OVERIGE = "Overige tekening"
+FOTO_SFEERFOTO = "Sfeerfoto"
+FOTO_OPGRAVINGSFOTO = "Opgravingsfoto"
+FOTO_OBJECTFOTO = "Objectfoto"
+FOTO_OVERIGE = "Overige afbeelding"
+RAPPORTAGE = "Rapportage"
+RAPP_ARCHEOLOGISCHE_RAPPORTAGE = "Archeologische Rapportage"
+RAPP_ARCHEOLOGISCHE_NOTITIE = "Archeologische Notitie"
+RAPP_CONSERVERINGSRAPPORT = "Conserveringsrapport"
+RAPP_OVERIGE_RAPPORTAGE = "Overige Rapportage"
+BESTAND = "Bestand"'''
+
+# First create tuple to later create Enum
+bestand_tupels = create_named_tuple(
+    const.BESTAND,
+    const.BESTAND_OVERIGE,
+    const.TEKENING,
+    const.TEK_BOUWTEKENING, 
+    const.TEK_VELDTEKENING, 
+    const.TEK_OVERZICHTSTEKENING,
+    const.TEK_OBJECTTEKENING,
+    const.TEK_UITWERKINGSTEKENING,
+    const.TEK_VELDTEKENING_PUBL,
+    const.TEK_OBJECTTEKENING_PUBL,
+    const.TEK_OVERIGE,
+    const.FOTO,
+    const.FOTO_SFEERFOTO,
+    const.FOTO_OPGRAVINGSFOTO,
+    const.FOTO_OBJECTFOTO,
+    const.FOTO_OVERIGE,
+    const.RAPPORTAGE,
+    const.RAPP_ARCHEOLOGISCHE_RAPPORTAGE,
+    const.RAPP_ARCHEOLOGISCHE_NOTITIE,
+    const.RAPP_CONSERVERINGSRAPPORT,
+    const.RAPP_OVERIGE_RAPPORTAGE
+    )
 
 
 
-class DiscrBestandsoortEnum(enum.Enum): 
-    Objectfoto = const.OBJECTFOTO
-    Opgravingsfoto = const.OPGRAVINGSFOTO
-    Velddocument = const.VELDDOCUMENT
-    Overige_afbeelding = const.OVERIGE_AFBEELDING
-    Bestand = const.BESTAND
-    Tekening = const.TEKENING
-    Objecttekening = const.OBJECTTEKENING
-    Overige_tekening = const.OVERIGE_TEKENING
-    Rapportage = const.RAPPORTAGE
+
+
+
 
 
 class Bestand(WasstraatModel):
@@ -868,8 +906,7 @@ class Bestand(WasstraatModel):
     mime_type = Column(String(20))
     fototype = Column(String(1))
     projectcd = Column(String(12))
-    #photo = Column(ImageColumn(size=(1500, 1000, True), thumbnail_size=(300, 200, True)))
-    bestandsoort =  Column(Enum(DiscrBestandsoortEnum), index=True)
+    bestandsoort =  Column(Enum(*bestand_tupels._asdict().values(), name='enumbestandsoorten'), index=True)
  
     @renders('custom')
     def show_bestand(self):
@@ -910,7 +947,7 @@ class Bestand(WasstraatModel):
 
     __mapper_args__ = {
         'polymorphic_on': bestandsoort,
-        'polymorphic_identity': DiscrBestandsoortEnum.Bestand
+        'polymorphic_identity': const.BESTAND
     }
 
     @renders('custom')
@@ -930,10 +967,17 @@ class Bestand(WasstraatModel):
              '" class="thumbnail"><img src="//:0" alt="Bestand" class="img-responsive"></a>')
 
 
+'''
+Alle foto's 
+    foto_opgravingsfoto =const.FOTO_OPGRAVINGSFOTO
+    foto_objectfoto = const.FOTO_OBJECTFOTO
+    foto_overige = const.FOTO_OVERIGE
+'''
+
 class Objectfoto(Bestand):
     __tablename__ = 'Def_Bestand'
     __table_args__ = {'extend_existing': True}
-    __mapper_args__ = {'polymorphic_identity': DiscrBestandsoortEnum.Objectfoto}
+    __mapper_args__ = {'polymorphic_identity': const.FOTO_OBJECTFOTO}
 
     putnr = Column(Integer)
     vondstnr = Column(Integer)
@@ -957,25 +1001,64 @@ class Objectfoto(Bestand):
         else:
             return 'Onbekend'
 
-
 class Opgravingsfoto(Bestand):
     __tablename__ = 'Def_Bestand'
     __table_args__ = {'extend_existing': True}
-    __mapper_args__ = {'polymorphic_identity': DiscrBestandsoortEnum.Opgravingsfoto}
-class Velddocument(Bestand):
+    __mapper_args__ = {'polymorphic_identity': const.FOTO_OPGRAVINGSFOTO}
+class Overige_foto(Bestand):
     __tablename__ = 'Def_Bestand'
     __table_args__ = {'extend_existing': True}
-    __mapper_args__ = {'polymorphic_identity': DiscrBestandsoortEnum.Velddocument}
-class Overige_afbeelding(Bestand):
-    __tablename__ = 'Def_Bestand'
-    __table_args__ = {'extend_existing': True}
-    __mapper_args__ = {'polymorphic_identity': DiscrBestandsoortEnum.Overige_afbeelding}
+    __mapper_args__ = {'polymorphic_identity': const.FOTO_OVERIGE}
 
 
+
+
+'''
+Alle tekeningen
+    tek_bouwtekening = const.TEK_BOUWTEKENING 
+    tek_veldtekening = const.TEK_VELDTEKENING
+    tek_overzichtstekening = const.TEK_OVERZICHTSTEKENING
+    tek_objecttekening = const.TEK_OBJECTTEKENING
+    tek_uitwerkingstekening = const.TEK_UITWERKINGSTEKENING
+    tek_veldtekening_publ = const.TEK_VELDTEKENING_PUBL
+    tek_objecttekening_publ = const.TEK_OBJECTTEKENING_PUBL
+    tek_overige = const.TEK_OVERIGE
+'''
 class Tekening(Bestand):
     __tablename__ = 'Def_Bestand'
     __table_args__ = {'extend_existing': True}
-    __mapper_args__ = {'polymorphic_identity': DiscrBestandsoortEnum.Tekening}
+    __mapper_args__ = {'polymorphic_identity': const.TEKENING}
+class Bouwtekening(Tekening):
+    __tablename__ = 'Def_Bestand'
+    __table_args__ = {'extend_existing': True}
+    __mapper_args__ = {'polymorphic_identity': const.TEK_BOUWTEKENING}
+class Veldtekening(Tekening):
+    __tablename__ = 'Def_Bestand'
+    __table_args__ = {'extend_existing': True}
+    __mapper_args__ = {'polymorphic_identity': const.TEK_VELDTEKENING}
+class Veldtekening_Publ(Tekening):
+    __tablename__ = 'Def_Bestand'
+    __table_args__ = {'extend_existing': True}
+    __mapper_args__ = {'polymorphic_identity': const.TEK_VELDTEKENING_PUBL}
+class Overzichtstekening(Tekening):
+    __tablename__ = 'Def_Bestand'
+    __table_args__ = {'extend_existing': True}
+    __mapper_args__ = {'polymorphic_identity': const.TEK_OVERZICHTSTEKENING}
+class Uitwerkingstekening(Tekening):
+    __tablename__ = 'Def_Bestand'
+    __table_args__ = {'extend_existing': True}
+    __mapper_args__ = {'polymorphic_identity': const.TEK_UITWERKINGSTEKENING}
+class Overige_tekening(Tekening):
+    __tablename__ = 'Def_Bestand'
+    __table_args__ = {'extend_existing': True}
+    __mapper_args__ = {'polymorphic_identity': const.TEK_OVERIGE}
+
+
+class Objecttekening(Tekening):
+    __tablename__ = 'Def_Bestand'
+    __table_args__ = {'extend_existing': True}
+    __mapper_args__ = {'polymorphic_identity': const.TEK_OBJECTTEKENING}
+    # zie voor relaties https://docs.sqlalchemy.org/en/13/orm/extensions/declarative/mixins.html
 
     #putID = Column(ForeignKey('Def_Put.primary_key', deferrable=True), index=True)
     #put = relationship('Put', lazy="joined", backref="tekeningen")
@@ -994,19 +1077,61 @@ class Tekening(Bestand):
     schaal = Column(Integer)
     volgnr = Column(Integer)
 
+class Objecttekening_publ(Objecttekening):
+    __tablename__ = 'Def_Bestand'
+    __table_args__ = {'extend_existing': True}
+    __mapper_args__ = {'polymorphic_identity': const.TEK_OBJECTTEKENING_PUBL}
 
-class Objecttekening(Tekening):
-    __tablename__ = 'Def_Bestand'
-    __table_args__ = {'extend_existing': True}
-    __mapper_args__ = {'polymorphic_identity': DiscrBestandsoortEnum.Objecttekening}
-class Overige_tekening(Tekening):
-    __tablename__ = 'Def_Bestand'
-    __table_args__ = {'extend_existing': True}
-    __mapper_args__ = {'polymorphic_identity': DiscrBestandsoortEnum.Overige_tekening}
+'''
+Alle rapportages
+    rapp_archeologische_rapportage = const.RAPP_ARCHEOLOGISCHE_RAPPORTAGE
+    rapp_archeologische_notitie = const.RAPP_ARCHEOLOGISCHE_NOTITIE
+    rapp_conserveringsrapport = const.RAPP_CONSERVERINGSRAPPORT
+    rapp_overige_rapportage = const.RAPP_OVERIGE_RAPPORTAGE
+'''
+
+
 class Rapportage(Bestand):
     __tablename__ = 'Def_Bestand'
     __table_args__ = {'extend_existing': True}
-    __mapper_args__ = {'polymorphic_identity': DiscrBestandsoortEnum.Rapportage}
+    __mapper_args__ = {'polymorphic_identity': const.RAPPORTAGE}
+
+    # zie voor relaties https://docs.sqlalchemy.org/en/13/orm/extensions/declarative/mixins.html
+
+    #putID = Column(ForeignKey('Def_Put.primary_key', deferrable=True), index=True)
+    #put = relationship('Put', lazy="joined", backref="tekeningen")
+    #spoorID = Column(ForeignKey('Def_Spoor.primary_key', deferrable=True), index=True)
+    #spoor = relationship('Spoor', backref="tekeningen")
+    #vondstID = Column(ForeignKey('Def_Vondst.primary_key', deferrable=True), index=True)
+    #vondst = relationship('Vondst', backref="tekeningen")
+    titel = Column(String(1024))
+    type_onderzoek = Column(String(1024))
+    periode_uitvoering = Column(String(80))
+    jaar_uitgave = Column(Integer)
+    auteur = Column(String(512))
+    definitief = Column(Boolean)
+    rob = Column(Boolean)
+    kb = Column(Boolean)
+    archief = Column(Boolean)
+    ciscode = Column(String(1024))
+
+
+class Archeologische_Rapportage (Rapportage):
+    __tablename__ = 'Def_Bestand'
+    __table_args__ = {'extend_existing': True}
+    __mapper_args__ = {'polymorphic_identity': const.RAPP_ARCHEOLOGISCHE_RAPPORTAGE}
+class Archeologische_Notitie (Rapportage):
+    __tablename__ = 'Def_Bestand'
+    __table_args__ = {'extend_existing': True}
+    __mapper_args__ = {'polymorphic_identity': const.RAPP_ARCHEOLOGISCHE_NOTITIE}
+class Conserveringsrapport (Rapportage):
+    __tablename__ = 'Def_Bestand'
+    __table_args__ = {'extend_existing': True}
+    __mapper_args__ = {'polymorphic_identity': const.RAPP_CONSERVERINGSRAPPORT}
+class Overige_Rapportage (Rapportage):
+    __tablename__ = 'Def_Bestand'
+    __table_args__ = {'extend_existing': True}
+    __mapper_args__ = {'polymorphic_identity': const.RAPP_OVERIGE_RAPPORTAGE}
 
 
 

@@ -254,7 +254,7 @@ def mergeFotoinfo():
             'fileType', 'directory', 'mime_type', 'fototype', 'soort', 'projectcd',
             'materiaal', 'putnr', 'vondstnr', 'fotonr', 'vondstkey_met_putnr',
             'key', 'key_project', 'key_project_type', 'key_vondst',
-            'key_artefact', 'subnr', 'brondata',
+            'key_artefact', 'subnr', 'brondata', 'key_foto1', 'key_foto2',
             'pad', 'spoornr', 'profiel', 'subnr', 'datum', 'omschrijving', 'vlaknr', 'richting', 'wasstraat', 'bestandsoort', 'bestandsoort_XX']]
 
 

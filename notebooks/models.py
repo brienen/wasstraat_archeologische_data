@@ -12,6 +12,7 @@ from sqlalchemy import select, func
 from sqlalchemy.ext.hybrid import hybrid_property, hybrid_method
 from flask_appbuilder.models.mixins import ImageColumn
 import enum
+import shared.const as const
 
 from sqlalchemy_utils import observes
 
@@ -295,22 +296,21 @@ class Vulling(WasstraatModel):
         return projectcd + put + vondstnr + spoornr + vulnr
 
 
-
 class DiscrArtefactsoortEnum(enum.Enum): 
-    Aardewerk = "Aardewerk"
-    Dierlijk_Bot = "Dierlijk_Bot"
-    Glas = "Glas"
-    Hout = "Hout"
-    Bouwaardewerk = "Bouwaardewerk"
-    Kleipijp = "Kleipijp"
-    Leer = "Leer"
-    Menselijk_Bot = "Menselijk_Bot"
-    Metaal = "Metaal"
-    Munt = "Munt"
-    Onbekend = "Onbekend"
-    Schelp = "Schelp"
-    Steen = "Steen"
-    Textiel = "Textiel"
+    Aardewerk = const.ARTF_AARDEWERK
+    Dierlijk_Bot = const.ARTF_DIELRIJK_BOT
+    Glas = const.ARTF_GLAS
+    Hout = const.ARTF_HOUT
+    Bouwaardewerk = const.ARTF_BOUWAARDEWERK
+    Kleipijp = const.ARTF_KLEIPIJP
+    Leer = const.ARTF_LEER
+    Menselijk_Bot = const.ARTF_MENSELIJK_BOT
+    Metaal = const.ARTF_METAAL
+    Munt = const.ARTF_MUNT
+    Onbekend = const.ARTF_ONBEKEND
+    Schelp = const.ARTF_SCHELP
+    Steen = const.ARTF_STEEN
+    Textiel = const.ARTF_TEXTIEL
 
 
 class Artefact(WasstraatModel):

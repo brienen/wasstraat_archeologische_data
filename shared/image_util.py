@@ -76,8 +76,18 @@ def adjustAndSaveFile(fullfilename, fs, collection):
             return None
 
         # Get projectcd
+        rapportnr = None
         projectcd = fullfilename.replace(config.AIRFLOW_INPUT_IMAGES + '/','')
-        projectcd = re.search('^([A-Z0-9]+).*', projectcd).group(1)
+        projectcd_srch = re.search('^([A-Z0-9]+).*', projectcd)
+        if projectcd_srch:
+            projectcd = re.search('^([A-Z0-9]+).*', projectcd).group(1)
+        elif 'DAR' in filename or "DAN" in filename:
+            projectcd = None
+            dir = '/rapportage'
+            rapportnr, file_extension = os.path.splitext(filename)
+        else:
+            raise Exception(f"Error while reading {fullfilename}: geen projectcode en ook geen rapportage (DAN of DAR in de naam).")
+
 
         # First read image and make 3 versions with different sizes. And put them in a list 
         mime_type = 'image/jpeg'
@@ -91,10 +101,17 @@ def adjustAndSaveFile(fullfilename, fs, collection):
             image_dict_sml, image_dict_med, image_dict_big = putImageInGrid(image, fullfilename, fs, dir, projectcd)    
 
         # Insert a record with metadata
-        return collection.insert_one({
-            'fileName': filename, 'fullFileName': fullfilename, 'imageID': str(image_dict_big), 'imageMiddleID': str(image_dict_med), 'imageThumbID': str(image_dict_sml),
-            'fileType': file_extension.lower(), 'directory': dir, 'mime_type': mime_type, 'projectcd': projectcd 
-            }).inserted_id  
+        if projectcd:
+            return collection.insert_one({
+                'fileName': filename, 'fullFileName': fullfilename, 'imageID': str(image_dict_big), 'imageMiddleID': str(image_dict_med), 'imageThumbID': str(image_dict_sml),
+                'fileType': file_extension.lower(), 'directory': dir, 'mime_type': mime_type, 'projectcd': projectcd 
+                }).inserted_id  
+        else:
+            return collection.insert_one({
+                'fileName': filename, 'fullFileName': fullfilename, 'imageID': str(image_dict_big), 'imageMiddleID': str(image_dict_med), 'imageThumbID': str(image_dict_sml),
+                'fileType': file_extension.lower(), 'directory': dir, 'mime_type': mime_type, 'rapportnr': rapportnr 
+                }).inserted_id  
+
 
     except Exception as err:
         msg = "Onbekende fout bij het bewaren van image, met tekst: " + str(err)

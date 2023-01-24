@@ -46,6 +46,10 @@ def getExtractTaskGroup():
             task_id='Extract_Data_From_MonsterDB',
             bash_command="${AIRFLOW_HOME}/scripts/importMDB.sh %s %s " % (config.AIRFLOW_INPUT_MONSTER, config.COLL_STAGING_MONSTER)
         )
+        Extract_Data_From_RapportaneDBs = BashOperator(
+            task_id='Extract_Data_From_RapportaneDBs',
+            bash_command="${AIRFLOW_HOME}/scripts/importMDB.sh %s %s " % (config.AIRFLOW_INPUT_RAPPORTEN, config.COLL_STAGING_RAPPORTEN)
+        )
         GetAndStoreImageFilenames = PythonOperator(
             task_id='GetAndStoreImageFilenames',
             python_callable=getAndStoreImageFilenames,
@@ -69,6 +73,6 @@ def getExtractTaskGroup():
             i += 1
         
         
-        first >> [Extract_Data_From_Projecten, Extract_Data_From_DelfIT, Extract_Data_From_Magazijnlijst, Extract_Data_From_DigiFotolijst, Extract_Data_From_MonsterDB, Extract_Referentietabellen] >> last
+        first >> [Extract_Data_From_Projecten, Extract_Data_From_DelfIT, Extract_Data_From_Magazijnlijst, Extract_Data_From_DigiFotolijst, Extract_Data_From_MonsterDB, Extract_Data_From_RapportaneDBs, Extract_Referentietabellen] >> last
         
     return tg1

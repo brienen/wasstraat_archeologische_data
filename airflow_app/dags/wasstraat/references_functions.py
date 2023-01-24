@@ -99,7 +99,7 @@ def setPrimaryKeys(soort, col='analyse'):
 
 
 
-def setReferences(soort, col='analyse', key='key', refkey=None):
+def setReferences(soort, col='analyseclean', key='key', refkey=None):
     try:
         if (col == 'analyse'):
             collection = getAnalyseCollection()
@@ -107,36 +107,43 @@ def setReferences(soort, col='analyse', key='key', refkey=None):
             collection = getAnalyseCleanCollection()
         else:
             raise ValueError('Error: Herkent de collectie niet met naam ' + col)
-
         soort_lw = soort.lower()
-        
+
         # Find all main entries for type soort
         soort_query = {'soort': soort}
         if soort in const.BESTANDSOORTEN:
             soort_query = {'soort': 'Bestand', 'bestandsoort': soort}
 
-        df_soort = pd.DataFrame(list(collection.find(soort_query, projection={key:1, 'ID':1})))
-        df_soort = df_soort.rename(columns={'_id': soort_lw+'UUID', 'index':soort_lw+'ID', key:'key_'+soort_lw})
+        if key == 'key':
+            df_soort = pd.DataFrame(list(collection.find(soort_query, projection={key:1, 'ID':1})))
+
+            key = 'key_' + soort_lw
+            df_soort = df_soort.rename(columns={'_id': soort_lw+'UUID', 'index':soort_lw+'ID', 'key': key})
+        else:
+            df_soort = pd.DataFrame(list(collection.find(soort_query, projection={key:1, 'ID':1})))
+            df_soort = df_soort.rename(columns={'_id': soort_lw+'UUID', 'index':soort_lw+'ID'})
+
+
         if df_soort.size < 1:
             logger.warning("Er zjn geen documents gevonden van het type " +soort)
             return
 
-        if not 'key_'+soort_lw in df_soort.columns:
+        if not key in df_soort.columns:
             logger.warning("Kan geen referenties maken voor " +soort + ". Geen Key-veld aanwezig.")
             return
 
         # Find all references to type soort
         if refkey:
-            df_ref = pd.DataFrame(list(collection.find({'key_'+refkey: {"$exists": True}}, projection={'key_'+refkey:1})))
-            df_ref = df_ref.rename(columns={'key_'+refkey: 'key_'+soort_lw})
+            df_ref = pd.DataFrame(list(collection.find({'key_'+refkey: {"$exists": True}, (soort_lw if not refkey else refkey) + 'ID': {"$exists": False}}, projection={'key_'+refkey:1})))
+            df_ref = df_ref.rename(columns={'key_'+refkey: key})
         else:
-            df_ref = pd.DataFrame(list(collection.find({"key_"+soort_lw: {"$exists": True}}, projection={'key_'+soort_lw:1})))
+            df_ref = pd.DataFrame(list(collection.find({key: {"$exists": True}, (soort_lw if not refkey else refkey) + 'ID': {"$exists": False}}, projection={key:1})))
         if df_ref.size < 1:
             logger.warning("Er zjn geen referentie met key_"+soort_lw+" gevonden naar documents van het type " +soort )
             return
             
         # Merge dataframes to connect ID's en UUID's to referencing docs
-        df_merge = pd.merge(df_ref, df_soort, how='left', on='key_'+soort_lw).rename(columns={'ID': (soort_lw if not refkey else refkey) + 'ID'})
+        df_merge = pd.merge(df_ref, df_soort, how='left', on=key).rename(columns={'ID': (soort_lw if not refkey else refkey) + 'ID'})
         
         # Update soort documents 
         updates=[ UpdateOne({'_id':x['_id']}, {'$set':x}) for x in [v.dropna().to_dict() for k,v in df_merge.iterrows()]] # 

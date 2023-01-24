@@ -37,6 +37,7 @@ services:
       # Testing settings
        - ./data/input/basefiles/projectdatabase/digidepot:/input/projecten
        - ./data/input/basefiles/projectdatabase/digidepot:/input/images
+       - ./data/input/basefiles/projectdatabase/rapporten:/input/rapporten
        - ./data/input/basefiles/projectdatabase/monsterdatabase:/input/monsterdatabase
        - ./data/input/basefiles/projectdatabase/Delf-IT:/input/delfit
        - ./data/input/basefiles/projectdatabase/magazijnlijst:/input/magazijnlijst
@@ -45,6 +46,7 @@ services:
        - /Users/arjen/stack2/Wasstraat/files/archeomedia:/output/archeomedia
        - ./airflow_app/dags:/opt/airflow/dags
        - ./airflow_app/scripts:/opt/airflow/scripts
+       - ./airflow_app/.vscode:/opt/airflow/.vscode
        - ./data/wasstraat_config:/opt/airflow/config
        - ./shared:/opt/airflow/dags/shared/
     build: 
