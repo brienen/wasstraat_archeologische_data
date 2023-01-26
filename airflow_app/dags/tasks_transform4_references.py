@@ -40,12 +40,12 @@ def getSetReferencesTaskGroup():
             python_callable=references_functions.setReferences,
             op_kwargs={'soort': 'Artefact', 'col': 'analyseclean', 'key': 'key_foto1'}
         )
-        tsk_image2 = PythonOperator(
-            task_id=f'Set_Reference_Images_to_Foto2',
+        tsk_image3 = PythonOperator(
+            task_id=f'Set_Reference_Images_to_Foto3',
             python_callable=references_functions.setReferences,
-            op_kwargs={'soort': 'Artefact', 'col': 'analyseclean', 'key': 'key_foto2'}
+            op_kwargs={'soort': 'Artefact', 'col': 'analyseclean', 'key': 'key_foto3'}
         )
-        curr >> tsk_image1 >> tsk_image2 >> last
+        curr >> tsk_image1 >> tsk_image3 >> last
         tsk_abr_materiaal = PythonOperator(
             task_id=f'Set_Reference_ABR_Materiaal',
             python_callable=references_functions.setReferences,

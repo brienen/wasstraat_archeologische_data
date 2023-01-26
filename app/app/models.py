@@ -499,7 +499,7 @@ class Artefact(WasstraatModel):
 
 
     #fotos = relationship('Foto', backref="artefact")
-    aantal_fotos = Column(Integer, default=0)
+    aantal_fotos = Column(Integer, default=0, index=True)
     @observes('fotos')  # Works only for update events, inserts and deletes via modelevents.py 
     def fotos_observer(self, fotos):
         self.aantal_fotos = len(fotos)
@@ -1009,6 +1009,10 @@ class Overige_foto(Bestand):
     __tablename__ = 'Def_Bestand'
     __table_args__ = {'extend_existing': True}
     __mapper_args__ = {'polymorphic_identity': const.FOTO_OVERIGE}
+class Sfeerfoto(Bestand):
+    __tablename__ = 'Def_Bestand'
+    __table_args__ = {'extend_existing': True}
+    __mapper_args__ = {'polymorphic_identity': const.FOTO_SFEERFOTO}
 
 
 

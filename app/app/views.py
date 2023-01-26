@@ -140,16 +140,15 @@ from models import bestand_tupels
 lst_all_bestanden = [b for b in bestand_tupels] 
 lst_opgravingsfoto = [const.FOTO_OPGRAVINGSFOTO]
 lst_objectfoto = [const.FOTO_OBJECTFOTO]
-lst_veldtekening = [const.TEK_VELDTEKENING]
+lst_veldtekening = [const.TEK_VELDTEKENING, const.TEK_OVERZICHTSTEKENING]
 lst_archrapportage = [const.RAPP_ARCHEOLOGISCHE_RAPPORTAGE, const.RAPP_ARCHEOLOGISCHE_NOTITIE]
 lst_overigerapportage = [const.RAPP_CONSERVERINGSRAPPORT, const.RAPP_OVERIGE_RAPPORTAGE]
 lst_objecttekening = [const.TEK_OBJECTTEKENING, const.TEK_OBJECTTEKENING_PUBL]
 lst_overigetekeningen = [const.TEKENING,
     const.TEK_BOUWTEKENING, 
-    const.TEK_OVERZICHTSTEKENING,
     const.TEK_UITWERKINGSTEKENING,
-    const.TEK_VELDTEKENING_PUBL,
-    const.TEK_OVERIGE]
+    const.TEK_OVERIGE, 
+    const.TEK_VELDTEKENING_PUBL]
 lst_all_getoond = lst_opgravingsfoto + lst_objectfoto + lst_veldtekening + lst_archrapportage + lst_overigerapportage + lst_objecttekening + lst_overigetekeningen
 lst_overige = list(set(lst_all_bestanden) - set(lst_all_getoond))
 
@@ -221,7 +220,8 @@ class ArchOpgravingFotoView(ArchBestandView):
     datamodel = WSSQLAInterface(Opgravingsfoto)
     base_filters = [['bestandsoort', FilterBestandIN, [lst_opgravingsfoto]]]
     list_title = "Opgravingsfoto's"
-    ArchBestandView.view_mapper.update({const.FOTO_OPGRAVINGSFOTO: 'ArchOpgravingFotoView'})
+    for typ in lst_opgravingsfoto:
+        ArchBestandView.view_mapper.update({typ: 'ArchOpgravingFotoView'})
 
 class ArchObjectFotoView(ArchBestandView):
     datamodel = WSSQLAInterface(Objectfoto)
@@ -236,16 +236,18 @@ class ArchObjectFotoView(ArchBestandView):
         ]}),        
         ("Foto", {"fields": ["show_bestand"], "grid":12, "fulldisplay": True}),
         flds_migratie_info]
-    ArchBestandView.view_mapper.update({const.FOTO_OBJECTFOTO: 'ArchObjectFotoView'})
+    for typ in lst_objectfoto:
+        ArchBestandView.view_mapper.update({typ: 'ArchObjectFotoView'})
     #edit_fieldsets = show_fieldsets
-    #add_fieldsets = foto_util.removeFieldFromFieldset(show_fieldsets, "bestandsoort")
+    #add_fieldsets = util.removeFieldFromFieldset(show_fieldsets, "bestandsoort")
 
 
 class ArchVeldtekeningView(ArchBestandView):
-    datamodel = WSSQLAInterface(Veldtekening)
+    datamodel = WSSQLAInterface(Tekening)
     base_filters = [['bestandsoort', FilterBestandIN, [lst_veldtekening]]]
     list_title = "Veldtekeningen"
-    ArchBestandView.view_mapper.update({const.TEK_VELDTEKENING: 'ArchVeldtekeningView'})
+    for typ in lst_overige:
+        ArchBestandView.view_mapper.update({typ: 'ArchVeldtekeningView'})
 
 
 
@@ -262,8 +264,8 @@ class ArchRapportageView(ArchBestandView):
         ]}),        
         ("Rapport", {"fields": ["show_bestand"], "grid":12, "fulldisplay": True}),
         flds_migratie_info]
-    ArchBestandView.view_mapper.update({const.RAPP_ARCHEOLOGISCHE_RAPPORTAGE: 'ArchRapportageView'})
-    ArchBestandView.view_mapper.update({const.RAPP_ARCHEOLOGISCHE_NOTITIE: 'ArchRapportageView'})
+    for typ in lst_archrapportage:
+        ArchBestandView.view_mapper.update({typ: 'ArchRapportageView'})
 
 class ArchOverigeRapportageView(ArchBestandView):
     datamodel = WSSQLAInterface(Rapportage)
@@ -285,8 +287,8 @@ class ArchObjecttekeningenView(ArchBestandView):
     show_fieldsets = ArchBestandView.show_fieldsets.copy()
     show_fieldsets[1] = ('Tekening', show_fieldsets[1][1])
     show_fieldsets.insert(1, tekeningvelden)
-    ArchBestandView.view_mapper.update({const.TEK_OBJECTTEKENING: 'ArchObjecttekeningenView'})
-    ArchBestandView.view_mapper.update({const.TEK_OBJECTTEKENING_PUBL: 'ArchObjecttekeningenView'})
+    for typ in lst_objecttekening:
+        ArchBestandView.view_mapper.update({typ: 'ArchObjecttekeningenView'})
 
 class ArchOverigetekeningenView(ArchBestandView):
     datamodel = WSSQLAInterface(Tekening)

@@ -3,7 +3,7 @@ version: "3"
 # All available services
 services:
   flask:
-    image: brienen/wasstraat_flask:0.7.3
+    image: brienen/wasstraat_flask:0.8.0
     environment: 
       - env=prod
       - FLASK_DEBUG=0
@@ -22,6 +22,6 @@ services:
   #  restart: unless-stopped
 
   apache:
-    image: brienen/wasstraat_apache:0.7.3
+    image: brienen/wasstraat_apache:0.8.0
     ports:
       - '5000:5000'

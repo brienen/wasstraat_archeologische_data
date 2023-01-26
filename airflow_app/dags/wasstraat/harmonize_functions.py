@@ -143,6 +143,17 @@ def parseFotobestanden():
         #extract projectinfo from filename
         for doc in stagingCol.find():
 
+            # Get projectcd from fullfilename
+            matchObj = re.match( r'^([a-z0-9]+).*', doc['fileName'], re.M|re.I)
+            if matchObj:
+                projectcd = matchObj.group(1)
+                if not re.match( r'^(DB|DC).*', projectcd, re.M|re.I): # if it does not start with DB or DC then use start of directory
+                    matchObjDir = re.match( r'^/((?:DB|DC)\d+).*', doc['directory'], re.M|re.I)
+                    if matchObjDir:
+                        projectcd = matchObjDir.group(1)
+
+
+
             try: 
                 # Remove double file extensions
                 if not os.path.splitext(os.path.splitext(doc['fileName'])[0])[1] == '':
@@ -151,7 +162,7 @@ def parseFotobestanden():
                 # Objectfoto's extraheren (Bevatten altijd een _H en beginnen met projectcode)
                 matchObj = re.match( r'^([a-zA-Z0-9]+)(_B?P(\d+))?_H(\d+)(_(\w+))?_(\d+)\.[a-z]{3}$', doc['fileName'], re.M|re.I)
                 if matchObj:
-                    doc['projectcd'] = matchObj.group(1)
+                    doc['projectcd'] = projectcd
                     if matchObj.group(3) is not None: doc['putnr'] = matchObj.group(3).lstrip("0")
                     doc['vondstnr'] = matchObj.group(4).lstrip("0")
                     if matchObj.group(6) is not None: doc['subnr'] = matchObj.group(6).lstrip("0")
@@ -195,7 +206,7 @@ def parseFotobestanden():
                 # Match Tekeningen
                 matchObj = re.match( r'^([a-zA-Z0-9]+)_([ABCDEPT])(\d+).*\.[a-z]{3}$', doc['fileName'], re.M|re.I) 
                 if matchObj:
-                    doc['projectcd'] = matchObj.group(1)
+                    doc['projectcd'] = projectcd
                     doc['tekeningcd'] = matchObj.group(2) + str(int(matchObj.group(3))).zfill(3)
                     doc['soort'] = 'Tekening' 
                     
@@ -224,7 +235,7 @@ def parseFotobestanden():
                 # Match projectFoto's
                 matchObj = re.match( r'^([a-zA-Z0-9]+)_([FG])(\d+).*\.[a-z]{3}$', doc['fileName'], re.M|re.I)
                 if matchObj:
-                    doc['projectcd'] = matchObj.group(1)       
+                    doc['projectcd'] = projectcd       
                     doc['fotonr'] = matchObj.group(3).lstrip("0")
                     doc['soort'] = 'Foto' 
                     
@@ -252,6 +263,7 @@ def parseFotobestanden():
                     continue
                 # Non classified photos
                 else:
+                    doc['projectcd'] = projectcd
                     doc['fototype'] = 'N' 
                     doc['soort'] = 'Bestand' 
                     doc['bestandsoort'] = const.BESTAND_OVERIGE

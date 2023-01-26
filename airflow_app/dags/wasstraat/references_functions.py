@@ -112,7 +112,8 @@ def setReferences(soort, col='analyseclean', key='key', refkey=None):
         # Find all main entries for type soort
         soort_query = {'soort': soort}
         if soort in const.BESTANDSOORTEN:
-            soort_query = {'soort': 'Bestand', 'bestandsoort': soort}
+            soort_query = {'soort': 'Bestand', 'bestandsoort_XX': soort}
+        soort_query[key] = {"$exists": True}
 
         if key == 'key':
             df_soort = pd.DataFrame(list(collection.find(soort_query, projection={key:1, 'ID':1})))
@@ -134,17 +135,25 @@ def setReferences(soort, col='analyseclean', key='key', refkey=None):
 
         # Find all references to type soort
         if refkey:
-            df_ref = pd.DataFrame(list(collection.find({'key_'+refkey: {"$exists": True}, (soort_lw if not refkey else refkey) + 'ID': {"$exists": False}}, projection={'key_'+refkey:1})))
+            df_ref = pd.DataFrame(list(collection.find({'key_'+refkey: {"$exists": True}, 'soort': {'$ne': soort}, (soort_lw if not refkey else refkey) + 'ID': {"$exists": False}}, projection={'key_'+refkey:1})))
             df_ref = df_ref.rename(columns={'key_'+refkey: key})
         else:
-            df_ref = pd.DataFrame(list(collection.find({key: {"$exists": True}, (soort_lw if not refkey else refkey) + 'ID': {"$exists": False}}, projection={key:1})))
+            df_ref = pd.DataFrame(list(collection.find({key: {"$exists": True}, 'soort': {'$ne': soort}, (soort_lw if not refkey else refkey) + 'ID': {"$exists": False}}, projection={key:1})))
         if df_ref.size < 1:
             logger.warning("Er zjn geen referentie met key_"+soort_lw+" gevonden naar documents van het type " +soort )
             return
             
         # Merge dataframes to connect ID's en UUID's to referencing docs
-        df_merge = pd.merge(df_ref, df_soort, how='left', on=key).rename(columns={'ID': (soort_lw if not refkey else refkey) + 'ID'})
-        
+        df_merge = pd.merge(df_ref, df_soort, how='inner', on=key).rename(columns={'ID': (soort_lw if not refkey else refkey) + 'ID'})
+        if key == 'key_foto3':
+            df2 = df_merge.groupby(['_id']).size().reset_index(name='counts')
+            df2 = df2[df2.counts == 1]
+            df_merge = pd.merge(df2, df_merge, how='inner', on='_id')
+
+        if df_merge.size < 1:
+            logger.warning("Er zjn geen referentie met "+key+" gevonden naar documents van het type " +soort )
+            return
+
         # Update soort documents 
         updates=[ UpdateOne({'_id':x['_id']}, {'$set':x}) for x in [v.dropna().to_dict() for k,v in df_merge.iterrows()]] # 
         result = collection.bulk_write(updates)
