@@ -168,6 +168,8 @@ class ArchBestandView(WSModelView):
         ("Afbeelding", {"fields": ["show_bestand"], "grid":12, "fulldisplay": True}),
         flds_migratie_info]
     base_order = ('fileName','asc')
+    main_search_cols = ["fileName", 'project', 'projectcd', 'directory']
+    search_exclude_columns = ['imageID', 'imageMiddleID', 'imageThumbID']
 
 
     @action("5linkskantelen", "Kantelen Linksom", "Geselecteerde foto's linksom kantelen?", "fa-rocket")
@@ -227,7 +229,8 @@ class ArchObjectFotoView(ArchBestandView):
     datamodel = WSSQLAInterface(Objectfoto)
     base_filters = [['bestandsoort', FilterBestandIN, [lst_objectfoto]]]
     list_title = "Objectfoto's"
-    search_exclude_columns = ['artefact']
+    search_exclude_columns = ['artefact'] + ['imageID', 'imageMiddleID', 'imageThumbID']
+    main_search_cols = ["fileName", 'directory', 'project', 'projectcd', 'putnr', 'vondstnr', 'subnr']
     show_columns = ["project", "fototype", 'omschrijving', 'materiaal', 'richting', 'datum', "vondstnr", "subnr", "fotonr", "artefact", "fileName", 'directory', 'show_bestand']
     show_fieldsets = [
         ("Projectvelden", {"columns": [
@@ -743,6 +746,7 @@ class ArchPutView(WSModelView):
     edit_fieldsets = show_fieldsets
     add_fieldsets = show_fieldsets
     search_exclude_columns = ["artefacten", "vondsten"] 
+    main_search_cols = list_columns
 
 
 

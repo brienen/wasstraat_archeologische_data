@@ -72,3 +72,5 @@ ARTF_ONBEKEND = "Onbekend"
 ARTF_SCHELP = "Schelp"
 ARTF_STEEN = "Steen"
 ARTF_TEXTIEL = "Textiel"
+
+MIGRATION_COLUMNS = ['brondata', 'herkomst', 'uuid', 'key', 'soort']

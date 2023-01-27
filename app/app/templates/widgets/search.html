@@ -1,0 +1,70 @@
+{% import 'appbuilder/general/lib.html' as lib %}
+
+<form id="filter_form" class="form-search" method="get">
+
+    <div class="btn-group">
+        <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+        {{_("Add Filter")}}
+      <span class="caret"></span>
+        </button>
+        <ul class="dropdown-menu">
+            {% for col in main_search_cols %}
+            <li><a href="javascript:void(0)" name="{{col}}" class="filter" onclick="return false;">
+                {{ label_columns[col] }}</a>
+            </li>
+            {% endfor %}
+            <li role="separator" class="divider"></li>
+            <li class="dropdown-submenu">
+                <a class="test" tabindex="-1" href="#">More Searching...<span class="caret"></span></a>
+                <ul class="dropdown-menu">
+                    {% for col in sub_search_cols %}
+                    <li><a href="javascript:void(0)" name="{{col}}" class="filter" onclick="return false;">
+                        {{ label_columns[col] }}</a>
+                    </li>
+                    {% endfor %}
+                    <li role="separator" class="divider"></li>
+                    <li class="dropdown-submenu">
+                        <a class="test" tabindex="-1" href="#">Migration Searching...<span class="caret"></span></a>
+                        <ul class="dropdown-menu">
+                            {% for col in migration_cols %}
+                            <li><a href="javascript:void(0)" name="{{col}}" class="filter" onclick="return false;">
+                                {{ label_columns[col] }}</a>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </li>
+                </ul>
+            </li>
+        </ul>
+    </div>
+
+    <table class="table table-responsive table-hover filters">
+        <tbody>
+
+        </tbody>
+    </table>
+
+{{ lib.btn_search() }}
+</form>
+
+<script>
+	(function($) {
+	var filter = new AdminFilters(
+                    '#filter_form',
+                    {{ label_columns | tojson }},
+                    {{ form_fields | tojson }},
+                    {{ search_filters | tojson }},
+                    {{ active_filters | tojson }}
+                );
+	})(jQuery);
+
+</script>
+<script>
+    $(document).ready(function(){
+      $('.dropdown-submenu a.test').on("click", function(e){
+        $(this).next('ul').toggle();
+        e.stopPropagation();
+        e.preventDefault();
+      });
+    });
+</script>

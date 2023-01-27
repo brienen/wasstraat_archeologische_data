@@ -12,7 +12,8 @@ from flask_appbuilder.actions import action
 from flask import redirect
 from inspect import isclass
 import copy
-
+from widgets import SearchWidget, ColumnFormWidget, ColumnShowWidget, MyListWidget
+import shared.const as const
 
 
 def fotoFormatter(fotos):
@@ -69,13 +70,6 @@ formatters_columns = {
 def flatten(t):
     return [item for sublist in t for item in sublist]
 
-class ColumnShowWidget(ShowWidget):
-    template = 'widgets/column_show.html'
-
-class ColumnFormWidget(FormWidget):
-    template = 'widgets/column_form.html'
-class MyListWidget(ListWidget):
-    template = 'widgets/list.html'
 
 
 select2_style = "width:400px"
@@ -210,6 +204,9 @@ class WSModelView(ModelView):
     edit_widget = ColumnFormWidget
     add_widget = ColumnFormWidget
     list_widget = MyListWidget
+    search_widget = SearchWidget
+
+    main_search_cols = []
 
     @action("0muldelete", "Verwijderen", "Echt alle geselecteerde verwijderen?", "fa-rocket")
     def muldelete(self, items):
@@ -228,6 +225,9 @@ class WSModelView(ModelView):
             Extended to allow for multiple grids of columns to be shown. 
         """
         super(BaseCRUDView, self)._init_properties()
+
+        self.main_search_cols = self.main_search_cols if self.main_search_cols and len(self.main_search_cols)>0 else self.list_columns
+
 
         # Reset init props
         self.related_views = self.related_views or []
@@ -276,7 +276,7 @@ class WSModelView(ModelView):
                     x for x in list_cols if x not in self.edit_exclude_columns
                 ]
 
-        api_lst = ['project', 'put', 'vondst', 'spoor', 'doos']
+        api_lst = ['project', 'put', 'vondst', 'spoor', 'doos', 'artefact']
         if 'project' in self.edit_columns:
             for mytype in [x for x in self.edit_columns if x in api_lst]:
                 self.edit_form_extra_fields.update({
@@ -287,7 +287,30 @@ class WSModelView(ModelView):
                 self.add_form_extra_fields.update({
                     mytype: fieldDefinitionFactory(mytype, self.datamodel),
                 })
-             
+
+    def _get_search_widget(self, form=None, exclude_cols=None, widgets=None):
+        include_cols = self.search_columns
+        migration_cols = [item for item in const.MIGRATION_COLUMNS if item in include_cols] 
+        main_search_cols = self.main_search_cols if self.main_search_cols else []
+        main_search_cols = [item for item in main_search_cols if item in include_cols]
+        exclude_cols = exclude_cols or []
+        sub_search_cols = [item for item in include_cols if item not in main_search_cols and item not in exclude_cols and item not in migration_cols]
+        sub_search_cols.sort()
+
+        widgets = widgets or {}
+        widgets["search"] = self.search_widget(
+            route_base=self.route_base,
+            form=form,
+            include_cols=include_cols,
+            exclude_cols=exclude_cols,
+            filters=self._filters,
+            main_search_cols = main_search_cols,
+            sub_search_cols = sub_search_cols,
+            migration_cols = migration_cols        
+            )
+        return widgets
+
+
 
 
 class WSGeoModelView(GeoModelView):
@@ -296,8 +319,12 @@ class WSGeoModelView(GeoModelView):
     show_widget = ColumnShowWidget
     edit_widget = ColumnFormWidget
     add_widget = ColumnFormWidget
+    search_widget = SearchWidget
+
+    main_search_cols = []
 
     _init_properties = WSModelView._init_properties
+    _get_search_widget = WSModelView._get_search_widget
 
     @action("muldelete", "Verwijderen", "Echt alle geselecteerde verwijderen?", "fa-rocket")
     def muldelete(self, items):
