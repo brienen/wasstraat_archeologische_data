@@ -14,6 +14,11 @@
             </li>
             {% endfor %}
             <li role="separator" class="divider"></li>
+            {% for col in fulltext_search_cols %}
+            <li><a href="javascript:void(0)" name="{{col}}" class="filter" onclick="return false;">
+                {{ label_columns[col] }}</a>
+            </li>
+            {% endfor %}
             <li class="dropdown-submenu">
                 <a class="test" tabindex="-1" href="#">More Searching...<span class="caret"></span></a>
                 <ul class="dropdown-menu">

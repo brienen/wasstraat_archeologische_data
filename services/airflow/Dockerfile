@@ -14,7 +14,7 @@ RUN apt-get install -y gdal-bin libgdal-dev g++
 USER airflow
 RUN pip install --upgrade pip
 RUN pip install psycopg2-binary
-RUN pip install matplotlib altair shapely geopandas raven passlib[bcrypt] tenacity pymongo pillow python-magic roman pandas opentelemetry-api openpyxl geoalchemy2 simplejson nltk editdistance pdf2image
+RUN pip install matplotlib altair shapely geopandas raven passlib[bcrypt] tenacity pymongo pillow python-magic roman pandas opentelemetry-api openpyxl geoalchemy2 simplejson nltk editdistance pdf2image elasticsearch
 RUN mkdir tmp
 
 # COPY SQL SCRIPT

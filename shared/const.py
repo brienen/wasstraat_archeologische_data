@@ -74,3 +74,8 @@ ARTF_STEEN = "Steen"
 ARTF_TEXTIEL = "Textiel"
 
 MIGRATION_COLUMNS = ['brondata', 'herkomst', 'uuid', 'key', 'soort']
+
+#Fulltext settings
+SKIP_FULLTEXT = ['_id', 'herkomst', 'key', 'brondata']
+FULLTEXT_SEARCH_FIELD = 'ft_search' 
+FULLTEXT_SCORE_FIELD = "fulltext_score"

@@ -197,7 +197,7 @@ class Select2Many400Widget(Select2ManyWidget):
         return super(Select2Many400Widget, self).__call__(field, **kwargs)
 
 
-class WSModelView(ModelView):
+class WSModelViewMixin(object):
     formatters_columns = formatters_columns
 
     show_widget = ColumnShowWidget
@@ -205,6 +205,7 @@ class WSModelView(ModelView):
     add_widget = ColumnFormWidget
     list_widget = MyListWidget
     search_widget = SearchWidget
+    label_columns = {const.FULLTEXT_SEARCH_FIELD:'Zoeken in alle velden', const.FULLTEXT_SCORE_FIELD:'Fulltextscore'}
 
     main_search_cols = []
 
@@ -225,6 +226,9 @@ class WSModelView(ModelView):
             Extended to allow for multiple grids of columns to be shown. 
         """
         super(BaseCRUDView, self)._init_properties()
+        self.search_columns = self.search_columns or []
+        if not const.FULLTEXT_SEARCH_FIELD in self.search_columns:
+            self.search_columns = self.search_columns + [const.FULLTEXT_SEARCH_FIELD]
 
         self.main_search_cols = self.main_search_cols if self.main_search_cols and len(self.main_search_cols)>0 else self.list_columns
 
@@ -291,10 +295,11 @@ class WSModelView(ModelView):
     def _get_search_widget(self, form=None, exclude_cols=None, widgets=None):
         include_cols = self.search_columns
         migration_cols = [item for item in const.MIGRATION_COLUMNS if item in include_cols] 
+        fulltext_search_cols = [item for item in include_cols if item == const.FULLTEXT_SEARCH_FIELD]
         main_search_cols = self.main_search_cols if self.main_search_cols else []
         main_search_cols = [item for item in main_search_cols if item in include_cols]
         exclude_cols = exclude_cols or []
-        sub_search_cols = [item for item in include_cols if item not in main_search_cols and item not in exclude_cols and item not in migration_cols]
+        sub_search_cols = [item for item in include_cols if item not in main_search_cols and item not in exclude_cols and item not in migration_cols and item not in fulltext_search_cols]
         sub_search_cols.sort()
 
         widgets = widgets or {}
@@ -306,35 +311,72 @@ class WSModelView(ModelView):
             filters=self._filters,
             main_search_cols = main_search_cols,
             sub_search_cols = sub_search_cols,
-            migration_cols = migration_cols        
+            migration_cols = migration_cols,
+            fulltext_search_cols = fulltext_search_cols        
             )
+        return widgets
+
+
+    def _get_list_widget(
+        self,
+        filters,
+        actions=None,
+        order_column="",
+        order_direction="",
+        page=None,
+        page_size=None,
+        widgets=None,
+        **args,
+    ):
+
+        """ get joined base filter and current active filter for query """
+        widgets = widgets or {}
+        actions = actions or self.actions
+        page_size = page_size or self.page_size
+        if not order_column and self.base_order:
+            order_column, order_direction = self.base_order
+        joined_filters = filters.get_joined_filters(self._base_filters)
+        count, lst = self.datamodel.query(
+            joined_filters,
+            order_column,
+            order_direction,
+            page=page,
+            page_size=page_size,
+        )
+        pks = self.datamodel.get_keys(lst)
+
+        # serialize composite pks
+        pks = [self._serialize_pk_if_composite(pk) for pk in pks]
+
+        list_columns=self.list_columns
+        if count > 0 and hasattr(lst[0], const.FULLTEXT_SCORE_FIELD):
+            list_columns = list_columns + [const.FULLTEXT_SCORE_FIELD]
+
+
+        widgets["list"] = self.list_widget(
+            label_columns=self.label_columns,
+            include_columns=list_columns,
+            value_columns=self.datamodel.get_values(lst, list_columns),
+            order_columns=self.order_columns,
+            formatters_columns=self.formatters_columns,
+            page=page,
+            page_size=page_size,
+            count=count,
+            pks=pks,
+            actions=actions,
+            filters=filters,
+            modelview_name=self.__class__.__name__,
+        )
         return widgets
 
 
 
 
-class WSGeoModelView(GeoModelView):
+class WSModelView(WSModelViewMixin, ModelView):
     formatters_columns = formatters_columns
 
-    show_widget = ColumnShowWidget
-    edit_widget = ColumnFormWidget
-    add_widget = ColumnFormWidget
-    search_widget = SearchWidget
-
-    main_search_cols = []
-
-    _init_properties = WSModelView._init_properties
-    _get_search_widget = WSModelView._get_search_widget
-
-    @action("muldelete", "Verwijderen", "Echt alle geselecteerde verwijderen?", "fa-rocket")
-    def muldelete(self, items):
-        if isinstance(items, list):
-            self.datamodel.delete_all(items)
-            self.update_redirect()
-        else:
-            self.datamodel.delete(items)
-        return redirect(self.get_redirect())
-
+class WSGeoModelView(WSModelViewMixin, GeoModelView):
+    formatters_columns = formatters_columns
 
 
 

@@ -34,6 +34,9 @@ class WasstraatModel(Model):
     soort = Column(String(80))
     brondata = Column(Text)
     uuid = Column('_id', String)
+    ft_search = Column(String, default='', comment="technisch veld om fulltext zoeken te ondersteunen")
+    fulltext_score = 0
+    highlight = ''
 
 class ABR(WasstraatModel):
     __tablename__ = 'Def_ABR'
@@ -120,6 +123,9 @@ class Project(Model): # Inherit from Model for cannot use Abstract class Wasstra
     longitude = Column(Float)
     latitude = Column(Float)
     artefacten = relationship("Artefact", back_populates="project")
+    ft_search = Column(String, default='', comment="technisch veld om fulltext zoeken te ondersteunen")
+    fulltext_score = 0
+    highlight = ''
 
     # Explicit defined for cannot use Abstract class Wasstraatmodel, for geo-package gives errors
     herkomst = Column(Text)

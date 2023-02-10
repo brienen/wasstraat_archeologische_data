@@ -1,5 +1,7 @@
 from flask_appbuilder.widgets import ListWidget, FormWidget, ShowWidget
 from flask_appbuilder._compat import as_unicode
+from filters import FulltextFilter
+import shared.const as const
 
 
 class ColumnShowWidget(ShowWidget):
@@ -31,6 +33,10 @@ class SearchWidget(FormWidget):
         form_fields = {}
         search_filters = {}
         dict_filters = self.filters.get_search_filters()
+
+        # The field 'ft_search' is meany only for fulltext search on all fields of a type, remove all other search methods
+        if const.FULLTEXT_SEARCH_FIELD in dict_filters.keys():
+            dict_filters[const.FULLTEXT_SEARCH_FIELD] = [FulltextFilter]
         for col in self.template_args["include_cols"]:
             label_columns[col] = as_unicode(self.template_args["form"][col].label.text)
             form_fields[col] = self.template_args["form"][col]()
@@ -41,3 +47,5 @@ class SearchWidget(FormWidget):
         kwargs["search_filters"] = search_filters
         kwargs["active_filters"] = self.filters.get_filters_values_tojson()
         return super(SearchWidget, self).__call__(**kwargs)
+
+

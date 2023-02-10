@@ -13,7 +13,7 @@ from models import Bestand, Tekening, Rapportage , Aardewerk, Stelling, Doos, Ar
 from widgets import MediaListWidget
 from baseviews import WSModelView, WSGeoModelView, fieldDefinitionFactory, Select2Many400Widget
 from interface import WSSQLAInterface, WSGeoSQLAInterface
-from filters import HierarchicalABRFilter, FilterBestandIN
+from filters import HierarchicalABRFilter, FilterBestandIN, FulltextFilter
 from validators import ABRCompare_Artefactsoort, ABRCompare_SUBArtefactsoort
 
 import foto_util as foto_util
@@ -769,6 +769,10 @@ class ArchProjectView(WSGeoModelView):
     edit_fieldsets = show_fieldsets
     add_fieldsets = show_fieldsets
 
+fulltext_testfilter = ['primary_key', FulltextFilter, 'klooster']
+class ArchTestProjectView(ArchProjectView):
+    base_filters = [fulltext_testfilter]
+
 
 class MasterView(MultipleView):
     #datamodel = WSSQLAInterface(Artefact)
@@ -829,7 +833,8 @@ appbuilder.add_view(ABRMaterialenView,"Materialen uit ABR",icon="fa-dashboard",c
 appbuilder.add_view(ABRArtefactsoortenView,"Artefactsoorten uit ABR",icon="fa-dashboard",category="Beheer")
 
 
-appbuilder.add_view(ArchProjectView,"Projecten",icon="fa-dashboard",category="Projecten")
+appbuilder.add_view(ArchProjectView,"Projecten",icon="fa-dashboard",category="Projecten") #ArchTestProjectView
+appbuilder.add_view(ArchTestProjectView,"Test Projecten",icon="fa-dashboard",category="Projecten") #ArchTestProjectView
 appbuilder.add_view(ArchPutView,"Putten",icon="fa-dashboard",category="Projecten")
 appbuilder.add_view(ArchVlakView,"Vlakken",icon="fa-dashboard",category="Projecten")
 appbuilder.add_view(ArchVondstView,"Vondsten",icon="fa-dashboard",category="Projecten")

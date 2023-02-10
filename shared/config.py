@@ -92,7 +92,7 @@ try:
    AIRFLOW_OUTPUT_MEDIA = os.getenv("AIRFLOW_OUTPUT_MEDIA") if os.getenv("AIRFLOW_OUTPUT_MEDIA") else "/output/archeomedia"
 
    FILE_ABREXCEL = os.getenv("FILE_ABREXCEL") if os.getenv("FILE_ABREXCEL") else '/input/referentietabellen/abr_versie_01122018_input.xlsx'
-
+   ES_HOST = os.getenv("ES_HOST") if os.getenv("ES_HOST") else 'http://elasticsearch:9200'
 except KeyError: 
    logger.error("Cannot read environment variables (ie. POSTGRES_DB, POSTGRES_USER, POSTGRES_PASSWORD) needed to connect to the database. Add them to your .env files")
 

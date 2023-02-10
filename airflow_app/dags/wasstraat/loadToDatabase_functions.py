@@ -51,6 +51,30 @@ def getFields(col, soort):
     return result
 
 
+#Get all tables in Postgres 
+def getAllTables():
+    logger.info("Starting retrieving tables names from relational database...")
+
+    engine = create_engine(config.SQLALCHEMY_DATABASE_URI)
+    logger.info("Connecting to " + config.SQLALCHEMY_DATABASE_URI)
+
+    with engine.connect() as connection:
+        connection = connection.execution_options( 
+            isolation_level="SERIALIZABLE",
+            postgresql_deferrable=True # Does not seem to work. Work imn progress 
+        )
+        with connection.begin():
+            metadata = db.MetaData(bind=engine)
+            db.MetaData.reflect(metadata)
+
+            #get the table list
+            dict_tables = metadata.tables.keys()
+            lst_tables = [x for x in list(dict_tables) if x.startswith('Def_')]
+            return lst_tables
+
+
+
+
 def transferToDB(objecttype, soort, table, connection):
     try:
         insp = inspect(connection)
@@ -135,14 +159,9 @@ def loadAll():
         with connection.begin():
             connection.execute('SET CONSTRAINTS ALL DEFERRED') # Does not seem to work. Work in progress https://stackoverflow.com/questions/48038807/sqlalchemy-orm-deferring-constraint-checking 
             #  ... work with transaction
-            metadata = db.MetaData(bind=engine)
-            db.MetaData.reflect(metadata)
-
-            #get the table list
-            dict_tables = metadata.tables.keys()
-            lst_tables = [x for x in list(dict_tables) if x.startswith('Def_')]
-            logger.info("Loading all data for " + str(lst_tables))
+            lst_tables = getAllTables()
             lst_tables = ['Def_ABR', 'Def_Project', 'Def_Put', 'Def_Vondst', 'Def_Spoor', 'Def_Stelling', 'Def_Doos', 'Def_Standplaats', 'Def_Plaatsing', 'Def_Vlak', 'Def_Vindplaats', 'Def_Artefact', 'Def_Bestand', 'Def_Vulling', 'Def_Monster', 'Def_Monster_Botanie', 'Def_Monster_Schelp']
+            logger.info("Loading all data for " + str(lst_tables))
             
             # To make a comma separated string with substrings between double quotes
             f = lambda x: "\""+str(x)+"\""

@@ -19,5 +19,6 @@ geoalchemy2
 typing_extensions
 pdf2image
 PyPDF2
+elasticsearch
 
 ###### Requirements with Version Specifiers ######

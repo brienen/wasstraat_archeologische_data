@@ -6,6 +6,7 @@ from flask_migrate import Migrate
 from flask_dropzone import Dropzone
 from index import MyIndexView
 from flask_debugtoolbar import DebugToolbarExtension
+from elasticsearch import Elasticsearch
 import shared.config as config
 from caching import cache
 import init
@@ -24,6 +25,8 @@ cache.init_app(app)
 app.config['DEBUG_TB_INTERCEPT_REDIRECTS'] = False
 app.config['DEBUG_TB_PROFILER_ENABLED'] = config.DEBUG_TB_PROFILER_ENABLED
 app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {"pool_pre_ping": True}
+app.elasticsearch = Elasticsearch(config.ES_HOST) if config.ES_HOST else None
+
 toolbar = DebugToolbarExtension(app)
 
 
