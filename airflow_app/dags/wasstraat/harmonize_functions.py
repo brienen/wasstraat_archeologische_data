@@ -172,7 +172,7 @@ def parseFotobestanden():
                     doc['bestandsoort'] = const.FOTO_OBJECTFOTO
 
                     strFN = str(doc['fullFileName']).lower()
-                    if 'aardewerk' in strFN:
+                    if 'aardewerk' in strFN or 'pijpaard' in strFN:
                         doc['artefactsoort'] = const.ARTF_AARDEWERK
                     elif 'bot' in strFN and 'menselijk' in strFN:
                         doc['artefactsoort'] = const.ARTF_MENSELIJK_BOT

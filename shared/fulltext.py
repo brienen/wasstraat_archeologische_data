@@ -17,9 +17,9 @@ def generate_docs(resultset, db_col_names, index_name):
         doc = {
             "_index": index_name,
             "_id": int(row["primary_key"]),
-            "doc": {col.lower(): str(row[col] if str(row[col]) != 'None' else '') for col in db_col_names}
         }
-        doc['doc']['id'] = int(row["primary_key"])
+        for col in db_col_names:
+            doc[col.lower()] = str(row[col] if str(row[col]) != 'None' else '')
         yield doc
 
 
@@ -49,7 +49,10 @@ def indexTable(table):
             if table in lst_tables:
                 insp = inspect(connection)
                 db_cols = insp.get_columns(table)
-                db_cols = [col for col in db_cols if (col['name'] == 'primary_key' or 'text' in str(col['type']).lower() or 'varchar' in str(col['type']).lower()) and col['name'] not in const.SKIP_FULLTEXT]
+                db_cols = [col for col in db_cols if (col['name'] == 'primary_key' 
+                    or 'text' in str(col['type']).lower() 
+                    or 'varchar' in str(col['type']).lower() 
+                    or 'enum' in str(col['type']).lower()) and col['name'] not in const.SKIP_FULLTEXT]
                 sql_col_names = ['"'+col['name']+ '"' for col in db_cols]
                 db_col_names = [col['name'] for col in db_cols]
                 

@@ -29,6 +29,7 @@ import tasks_transform1_harmonize
 import tasks_transform2_attributes
 import tasks_transform4_references
 import tasks_transform5_moveAndMerge
+import tasks_load_to_database_and_index
 import wasstraat.mongoUtils as mongoUtils
 import wasstraat.loadToDatabase_functions as loadToDatabase
 
@@ -50,11 +51,6 @@ with DAG(
         task_id='Drop_Analyse_Database',
         python_callable=mongoUtils.dropAnalyse
     )
-    LoadToDatabase_postgres = PythonOperator(
-        task_id='LoadToDatabase_postgres',
-        python_callable=loadToDatabase.loadAll,
-        op_kwargs={}
-    )
 
     End_cycle = DummyOperator(
         task_id='End_cycle',
@@ -65,6 +61,7 @@ with DAG(
     tg_keys = tasks_transform3_keys.getSetKeysTaskGroup()
     tg_references = tasks_transform4_references.getSetReferencesTaskGroup()
     tg_moveAndMerge = tasks_transform5_moveAndMerge.getMoveAndMergeTaskGroup()
+    tg_loadToDatabaseAndIndex = tasks_load_to_database_and_index.getLoadToDatabaseAndIndexTaskGroup()
 
 
-    Start_cycle >> Drop_Analyse_Database >> tg_harmonize >> tg_enhanceAttrs >> tg_keys >> tg_moveAndMerge >> tg_references >> LoadToDatabase_postgres >> End_cycle 
+    Start_cycle >> Drop_Analyse_Database >> tg_harmonize >> tg_enhanceAttrs >> tg_keys >> tg_moveAndMerge >> tg_references >> tg_loadToDatabaseAndIndex >> End_cycle 

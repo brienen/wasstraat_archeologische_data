@@ -34,6 +34,7 @@ db = SQLA(app)
 appbuilder = AppBuilder(app, db.session, base_template='mybase.html', indexview=MyIndexView)
 migrate = Migrate(app, db) # this
 init.initSequences()
+init.initIfNotInit()
 
 import models, modelevents, views, route, api  # noqa
 

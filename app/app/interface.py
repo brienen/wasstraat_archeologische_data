@@ -7,6 +7,7 @@ from flask_appbuilder.exceptions import InterfaceQueryWithoutSession
 from sqlalchemy import select, func
 from filters import WSFilterConverter
 import shared.const as const
+from sqlalchemy.dialects import postgresql
 
 import logging
 logger = logging.getLogger()
@@ -60,10 +61,12 @@ class WSSQLAInterfaceMixin(object):
                 tobj = getattr(item, self.obj.__name__)
                 if hasattr(item, const.FULLTEXT_SCORE_FIELD) and hasattr(tobj, const.FULLTEXT_SCORE_FIELD):
                     setattr(tobj, const.FULLTEXT_SCORE_FIELD, getattr(item, const.FULLTEXT_SCORE_FIELD))
-
+                if hasattr(item, const.FULLTEXT_HIGHLIGHT_FIELD) and hasattr(tobj, const.FULLTEXT_HIGHLIGHT_FIELD):
+                    setattr(tobj, const.FULLTEXT_HIGHLIGHT_FIELD, getattr(item, const.FULLTEXT_HIGHLIGHT_FIELD))
                 result.append(tobj)
             else:
                 return count, query_results
+
         return count, result
 
 

@@ -51,29 +51,6 @@ def getFields(col, soort):
     return result
 
 
-#Get all tables in Postgres 
-def getAllTables():
-    logger.info("Starting retrieving tables names from relational database...")
-
-    engine = create_engine(config.SQLALCHEMY_DATABASE_URI)
-    logger.info("Connecting to " + config.SQLALCHEMY_DATABASE_URI)
-
-    with engine.connect() as connection:
-        connection = connection.execution_options( 
-            isolation_level="SERIALIZABLE",
-            postgresql_deferrable=True # Does not seem to work. Work imn progress 
-        )
-        with connection.begin():
-            metadata = db.MetaData(bind=engine)
-            db.MetaData.reflect(metadata)
-
-            #get the table list
-            dict_tables = metadata.tables.keys()
-            lst_tables = [x for x in list(dict_tables) if x.startswith('Def_')]
-            return lst_tables
-
-
-
 
 def transferToDB(objecttype, soort, table, connection):
     try:

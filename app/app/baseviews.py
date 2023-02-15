@@ -12,6 +12,7 @@ from flask_appbuilder.actions import action
 from flask import redirect
 from inspect import isclass
 import copy
+import ast
 from widgets import SearchWidget, ColumnFormWidget, ColumnShowWidget, MyListWidget
 import shared.const as const
 
@@ -48,6 +49,15 @@ def fotoFormatter(fotos):
 def abrFormatter(abr):
     return f'<a href="#" data-toggle="tooltip" title="{str(abr.note if abr.note else "<Geen beschrijving>")}">{str(abr)}</a>'
 
+def highlightFormatter(highlight):
+    try:
+        dct = ast.literal_eval(dct)
+        lst = [item.replace("doc.", "") + ": " + ",".join(dct[item]) for item in dct.keys()]
+        return "; ".join(lst)
+    except:
+        return str(highlight)
+
+
 formatters_columns = {
     'project': lambda x: Markup(f'<a href="/archprojectview/show/{str(x.primary_key)}">{str(x)}</a>') if x and not type(x) == str else x,
     'put': lambda x: Markup(f'<a href="/archputview/show/{str(x.primary_key)}">{str(x)}</a>') if x and not type(x) == str else x,
@@ -63,7 +73,8 @@ formatters_columns = {
     'abr_submateriaal': lambda x: Markup(abrFormatter(x)) if x and not type(x) == str else x,
     'abr_extras': lambda x: Markup([abrFormatter(item) for item in x]) if x and not type(x) == str else x,
     'uri': lambda x: Markup(f'<a href="{str(x)}">{str(x)}</a>'),
-    'fotos': lambda x: Markup(fotoFormatter(x)) if x else ''
+    'fotos': lambda x: Markup(fotoFormatter(x)) if x else '',
+    const.FULLTEXT_HIGHLIGHT_FIELD: lambda x: Markup(highlightFormatter(x)) if x else ''
 }
 
 
@@ -205,7 +216,9 @@ class WSModelViewMixin(object):
     add_widget = ColumnFormWidget
     list_widget = MyListWidget
     search_widget = SearchWidget
-    label_columns = {const.FULLTEXT_SEARCH_FIELD:'Zoeken in alle velden', const.FULLTEXT_SCORE_FIELD:'Fulltextscore'}
+    label_columns = {const.FULLTEXT_SEARCH_FIELD:'Zoeken in alle velden', 
+        const.FULLTEXT_SCORE_FIELD:'Score Fulltext', 
+        const.FULLTEXT_HIGHLIGHT_FIELD:'Highlight Fulltext'}
 
     main_search_cols = []
 
@@ -349,8 +362,10 @@ class WSModelViewMixin(object):
         pks = [self._serialize_pk_if_composite(pk) for pk in pks]
 
         list_columns=self.list_columns
-        if count > 0 and hasattr(lst[0], const.FULLTEXT_SCORE_FIELD):
+        if count > 0 and hasattr(lst[0], const.FULLTEXT_SCORE_FIELD) and getattr(lst[0], const.FULLTEXT_SCORE_FIELD) > -1:
             list_columns = list_columns + [const.FULLTEXT_SCORE_FIELD]
+            if hasattr(lst[0], const.FULLTEXT_HIGHLIGHT_FIELD):
+                list_columns = list_columns + [const.FULLTEXT_HIGHLIGHT_FIELD]
 
 
         widgets["list"] = self.list_widget(

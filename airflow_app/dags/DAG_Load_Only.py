@@ -25,7 +25,10 @@ from airflow.operators.python import PythonOperator
 
 import shared.config as config
 import shared.fulltext as fulltext
+import shared.database as database
 import wasstraat.loadToDatabase_functions as loadToDatabase
+import tasks_load_to_database_and_index
+
 
 
 def loadAll():
@@ -46,18 +49,6 @@ with DAG(
     End_cycle = DummyOperator(
         task_id='End_cycle',
     )
+    tg_loadToDatabaseAndIndex = tasks_load_to_database_and_index.getLoadToDatabaseAndIndexTaskGroup()
 
-    LoadToDatabase_postgres = PythonOperator(
-        task_id='LoadToDatabase_postgres',
-        python_callable=loadAll
-    )
-    Start_cycle >> LoadToDatabase_postgres
-
-    tables = loadToDatabase.getAllTables()
-    for table in tables:
-        tsk = PythonOperator(
-            task_id=f'Index_{table}',
-            python_callable=fulltext.indexTable,
-            op_kwargs={'table': table}
-        )
-        LoadToDatabase_postgres >> tsk >> End_cycle
+    Start_cycle >> tg_loadToDatabaseAndIndex >> End_cycle

@@ -31,7 +31,8 @@ import tasks_transform2_attributes
 import tasks_transform4_references
 import tasks_transform5_moveAndMerge
 import wasstraat.mongoUtils as mongoUtils
-import wasstraat.loadToDatabase_functions as loadToDatabase
+import tasks_load_to_database_and_index
+
 
 
 with DAG(
@@ -51,12 +52,6 @@ with DAG(
         python_callable=mongoUtils.dropAll,
         op_kwargs={}
     )
-    LoadToDatabase_postgres = PythonOperator(
-        task_id='LoadToDatabase_postgres',
-        python_callable=loadToDatabase.loadAll,
-        op_kwargs={}
-    )
-
     End_ETL_full_cycle = DummyOperator(
         task_id='End_ETL_full_cycle',
     )
@@ -67,6 +62,7 @@ with DAG(
     tg_keys = tasks_transform3_keys.getSetKeysTaskGroup()
     tg_references = tasks_transform4_references.getSetReferencesTaskGroup()
     tg_moveAndMerge = tasks_transform5_moveAndMerge.getMoveAndMergeTaskGroup()
+    tg_loadToDatabaseAndIndex = tasks_load_to_database_and_index.getLoadToDatabaseAndIndexTaskGroup()
 
 
-    Start_ETL_full_cycle >> Drop_All_Databases >> tg_import >> tg_harmonize >> tg_enhanceAttrs >> tg_keys >> tg_moveAndMerge >> tg_references >> LoadToDatabase_postgres >> End_ETL_full_cycle 
+    Start_ETL_full_cycle >> Drop_All_Databases >> tg_import >> tg_harmonize >> tg_enhanceAttrs >> tg_keys >> tg_moveAndMerge >> tg_references >> tg_loadToDatabaseAndIndex >> End_ETL_full_cycle 

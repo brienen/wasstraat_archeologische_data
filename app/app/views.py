@@ -1,6 +1,6 @@
 import copy
 
-from flask_appbuilder import GroupByChartView, MultipleView
+from flask_appbuilder import GroupByChartView, MultipleView, AppBuilder, BaseView, expose, has_access
 from flask_appbuilder.models.group import aggregate_count
 from flask_appbuilder.models.sqla.filters import FilterEqual, FilterGreater, FilterStartsWith
 from flask_appbuilder.fields import AJAXSelectField, QuerySelectField
@@ -11,7 +11,7 @@ from wtforms import StringField
 from app import db, appbuilder
 from models import Bestand, Tekening, Rapportage , Aardewerk, Stelling, Doos, Artefact, Spoor, Project,Put, Vondst, Vlak, DiscrArtefactsoortEnum, Dierlijk_Bot, Glas, Hout, Bouwaardewerk, Kleipijp, Leer, Menselijk_Bot, Metaal, Munt, Schelp, Steen, Textiel, Vulling, Opgravingsfoto, Objectfoto, Veldtekening, Overige_foto, Monster, Monster_Botanie, Monster_Schelp, Objecttekening, Overige_tekening, ABR, Partij, Bruikleen
 from widgets import MediaListWidget
-from baseviews import WSModelView, WSGeoModelView, fieldDefinitionFactory, Select2Many400Widget
+from baseviews import WSModelView, WSGeoModelView, fieldDefinitionFactory, Select2Many400Widget, WSModelViewMixin
 from interface import WSSQLAInterface, WSGeoSQLAInterface
 from filters import HierarchicalABRFilter, FilterBestandIN, FulltextFilter
 from validators import ABRCompare_Artefactsoort, ABRCompare_SUBArtefactsoort
@@ -325,9 +325,10 @@ class ArchArtefactView_Abstr(WSModelView):
     # base_permissions = ['can_add', 'can_show']
     artf_fieldset = None
     discrartefactsoort = None
-    label_columns = {'abr_materiaal':'Materiaalsoort hoofdmateriaal (ABR)', 'abr_submateriaal':'Sub-materiaalsoort (ABR)', 'abr_extras':'Materiaalsoort overige materialen (ABR)'}
+    
     list_columns = ["artefactsoort", 'typevoorwerp', "datering", "subnr", "vondst", 'project','aantal_fotos']
     #list_widget = ListThumbnail
+    label_columns = WSModelViewMixin.label_columns.update({'abr_materiaal':'Materiaalsoort hoofdmateriaal (ABR)', 'abr_submateriaal':'Sub-materiaalsoort (ABR)', 'abr_extras':'Materiaalsoort overige materialen (ABR)'})
     list_title = "Artefacten"
     related_views = [ArchObjectFotoView, ArchBruikleenView]
     search_exclude_columns = ['fotos', 'doos']
@@ -400,13 +401,19 @@ class ArchArtefactView_Abstr(WSModelView):
         self.add_fieldsets = util.removeFieldFromFieldset(self.edit_fieldsets, "artefactsoort")
         self.add_form_extra_fields = copy.copy(ArchArtefactView_Abstr.add_form_extra_fields)    
 
+        self.label_columns = {const.FULLTEXT_SEARCH_FIELD:'Zoeken in alle velden', 
+            const.FULLTEXT_SCORE_FIELD:'Score Fulltext', 
+            const.FULLTEXT_HIGHLIGHT_FIELD:'Highlight Fulltext', 
+            'abr_materiaal':'Materiaalsoort hoofdmateriaal (ABR)', 
+            'abr_submateriaal':'Sub-materiaalsoort (ABR)', 
+            'abr_extras':'Materiaalsoort overige materialen (ABR)'}
+
+
         super(ArchArtefactView_Abstr, self)._init_properties()
        
 
 class ArchArtefactView(ArchArtefactView_Abstr):
     datamodel = WSSQLAInterface(Artefact)
-    #related_views = [ArchObjectFotoView]
-
 
 class ArchArtefactMetFotoView(ArchArtefactView_Abstr):
     base_filters = [['aantal_fotos', FilterGreater, 0]]
@@ -769,10 +776,6 @@ class ArchProjectView(WSGeoModelView):
     edit_fieldsets = show_fieldsets
     add_fieldsets = show_fieldsets
 
-fulltext_testfilter = ['primary_key', FulltextFilter, 'klooster']
-class ArchTestProjectView(ArchProjectView):
-    base_filters = [fulltext_testfilter]
-
 
 class MasterView(MultipleView):
     #datamodel = WSSQLAInterface(Artefact)
@@ -825,8 +828,6 @@ class ABRArtefactsoortenView(WSModelView):
     
 
 
-    
-
 db.create_all()
 
 appbuilder.add_view(ABRMaterialenView,"Materialen uit ABR",icon="fa-dashboard",category="Beheer")
@@ -834,15 +835,14 @@ appbuilder.add_view(ABRArtefactsoortenView,"Artefactsoorten uit ABR",icon="fa-da
 
 
 appbuilder.add_view(ArchProjectView,"Projecten",icon="fa-dashboard",category="Projecten") #ArchTestProjectView
-appbuilder.add_view(ArchTestProjectView,"Test Projecten",icon="fa-dashboard",category="Projecten") #ArchTestProjectView
 appbuilder.add_view(ArchPutView,"Putten",icon="fa-dashboard",category="Projecten")
 appbuilder.add_view(ArchVlakView,"Vlakken",icon="fa-dashboard",category="Projecten")
 appbuilder.add_view(ArchVondstView,"Vondsten",icon="fa-dashboard",category="Projecten")
 appbuilder.add_view(ArchSpoorView,"Sporen",icon="fa-dashboard",category="Projecten")
 appbuilder.add_view(ArchVullingView,"Vullingen",icon="fa-dashboard",category="Projecten")
 appbuilder.add_view(ArchMonsterView,"Monsters",icon="fa-dashboard",category="Projecten")
-appbuilder.add_view(ArchMonster_BotanieView,"Botaniedeterminaties Monsters",icon="fa-dashboard",category="Projecten")
-appbuilder.add_view(ArchMonster_SchelpView,"Schelpdeterminaties Monsters",icon="fa-dashboard",category="Projecten")
+appbuilder.add_view_no_menu(ArchMonster_BotanieView,"Botaniedeterminaties Monsters")
+appbuilder.add_view_no_menu(ArchMonster_SchelpView,"Schelpdeterminaties Monsters")
  
 #### Artefacten
 appbuilder.add_view(ArchArtefactView,"Alle Artefacten",icon="fa-dashboard",category="Artefacten")

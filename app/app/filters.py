@@ -79,15 +79,16 @@ class FulltextFilter(BaseFilter):
             ft_result, aantal_hits = query_index(self.model, value, fields=[self.column_name])
 
 
-        # Get elastic results in json format
-
         # Create subquery that joins elastic results
         subquery = db.session.query(func.json_to_recordset(ft_result).\
-                                    table_valued(column("primary_key", Integer), column("score", Float)).\
+                                    table_valued(column("primary_key", Integer), column(const.FULLTEXT_SCORE_FIELD, Float), column(const.FULLTEXT_HIGHLIGHT_FIELD, String)).\
                                     render_derived(name="t", with_types=True)).\
                                     subquery()
 
-        result = query.join(subquery, self.model.primary_key == subquery.c.primary_key).add_columns(subquery.c.score.label("fulltext_score")).order_by(subquery.c.score.desc())
+        result = query.join(subquery, self.model.primary_key == subquery.c.primary_key)\
+                .add_columns(subquery.c[const.FULLTEXT_SCORE_FIELD].label(const.FULLTEXT_SCORE_FIELD))\
+                .add_columns(subquery.c[const.FULLTEXT_HIGHLIGHT_FIELD].label(const.FULLTEXT_HIGHLIGHT_FIELD))\
+                .order_by(subquery.c[const.FULLTEXT_SCORE_FIELD].desc())
         return result
 
 
