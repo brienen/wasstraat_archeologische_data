@@ -7,6 +7,8 @@ import json
 from sqlalchemy import inspect
 from shared.fulltext import getCols  
 from models import DiscrArtefactsoortEnum, Bestand, Artefact
+import enum
+
 
 logger = logging.getLogger()
 
@@ -33,7 +35,10 @@ def add_to_index(model):
 
         payload = {}
         for field in model_fields:
-            payload[field.lower()] = getattr(model, field)
+            value = getattr(model, field)
+            if value and issubclass(value.__class__, enum.Enum):
+                value = value.value  
+            payload[field.lower()] = value
 
         current_app.elasticsearch.update(index=index, id=model.primary_key, doc=payload, doc_as_upsert=True)
 

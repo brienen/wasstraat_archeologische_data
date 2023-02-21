@@ -16,6 +16,7 @@ from sqlalchemy.sql import null as sqlnull
 from operator import itemgetter 
 
 import shared.config as config
+import shared.database as database 
 import logging
 logger = logging.getLogger("airflow.task")
 
@@ -136,7 +137,7 @@ def loadAll():
         with connection.begin():
             connection.execute('SET CONSTRAINTS ALL DEFERRED') # Does not seem to work. Work in progress https://stackoverflow.com/questions/48038807/sqlalchemy-orm-deferring-constraint-checking 
             #  ... work with transaction
-            lst_tables = getAllTables()
+            lst_tables = database.getAllTables()
             lst_tables = ['Def_ABR', 'Def_Project', 'Def_Put', 'Def_Vondst', 'Def_Spoor', 'Def_Stelling', 'Def_Doos', 'Def_Standplaats', 'Def_Plaatsing', 'Def_Vlak', 'Def_Vindplaats', 'Def_Artefact', 'Def_Bestand', 'Def_Vulling', 'Def_Monster', 'Def_Monster_Botanie', 'Def_Monster_Schelp']
             logger.info("Loading all data for " + str(lst_tables))
             

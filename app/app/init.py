@@ -41,7 +41,7 @@ def initSequences():
 
 
 def init():
-    logger.info("Initializing Redundant Data...")
+    logger.info("Initializing Redundant Data in 6 phases (might take a few minutes)...")
     db = create_engine(config.SQLALCHEMY_DATABASE_URI)
     try: 
         Session = sessionmaker(bind=db)
@@ -53,6 +53,7 @@ def init():
         for row in rs:
             artf = session.query(Artefact).get(row[0])
             artf.aantal_fotos = row[1] if row[1] else 0
+        logger.info("Initializing Redundant Data phase 1 finished.")
 
         # Set aantal artefacten per project
         session.execute(update(Project).values(aantal_artefacten=0))
@@ -60,9 +61,11 @@ def init():
         for row in rs:
             proj = session.query(Project).get(row[0])
             proj.aantal_artefacten = row[1] if row[1] else 0
+        logger.info("Initializing Redundant Data phase 2 finished.")
 
         # Set aantal spoor- en vondstdatering
         session.execute(update(Artefact).values(spoordatering_vanaf=None, spoordatering_tot=None, vondstdatering_vanaf=None, vondstdatering_tot=None, datering_vanaf=None, datering_tot=None))
+        logger.info("Initializing Redundant Data phase 3 finished.")
 
         # First set artefactdatering
         rs = (session.query(Artefact.primary_key, Artefact.artefactdatering_vanaf, Artefact.artefactdatering_tot)
@@ -72,6 +75,7 @@ def init():
             artf = session.query(Artefact).get(row[0])
             artf.datering_vanaf = row[1] 
             artf.datering_tot = row[2]
+        logger.info("Initializing Redundant Data phase 4 finished.")
 
 
         # First set vondstdatering
@@ -83,6 +87,7 @@ def init():
             artf = session.query(Artefact).get(row[0])
             artf.vondstdatering_vanaf = row[1] 
             artf.vondstdatering_tot = row[2]
+        logger.info("Initializing Redundant Data phase 5 finished.")
 
 
         # Set spoordatering
@@ -95,8 +100,11 @@ def init():
             artf = session.query(Artefact).get(row[0])
             artf.spoordatering_vanaf = row[1]
             artf.spoordatering_tot = row[2]
+        logger.info("Initializing Redundant Data phase 6 finished.")
 
         session.commit()
+        logger.info("Initializing Redundant Data finished.")
+
     except Exception as e:
         session.rollback()
         logger.error("Error while Initializing Redundant with message " + str(e))
@@ -107,12 +115,14 @@ def init():
 
 def indexAll() :
     tables = database.getAllTables()        
+    logger.info(f"Indexing all table {tables}")
     for table in tables:
         try:
             logger.info(f'Indexing table {table}...')
             fulltext.indexTable('table')
         except Exception as e:
             logger.error(f"Error while Indexing table {table} with message {e}")
+    logger.info(f"Indexing all table finished.")
 
 
 def initIfNotInit():
@@ -149,6 +159,8 @@ def initIfNotInit():
             logger.info(f"index def_artefact found: not indexing")
     except Exception as e:
         logger.error(f"Error while indexing tables with message {e}")
+
+    logger.info("Initializing if finished.")
 
 
 

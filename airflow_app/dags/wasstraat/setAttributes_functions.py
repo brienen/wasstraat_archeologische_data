@@ -82,6 +82,8 @@ def enhanceAllAttributes():
                 #clean Type Voorwerp
                 if 'typevoorwerp' in doc:
                     doc['typevoorwerp'] =  str(doc['typevoorwerp']).replace('?', '').strip().title()  
+                elif 'spijker' in str(doc['table']).lower():
+                    doc['typevoorwerp'] = 'Spijker'
 
                 #clean Type Voorwerp
                 if 'tekeningcd' in doc:

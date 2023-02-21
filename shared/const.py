@@ -76,7 +76,7 @@ ARTF_TEXTIEL = "Textiel"
 MIGRATION_COLUMNS = ['brondata', 'herkomst', 'uuid', 'key', 'soort']
 
 #Fulltext settings
-SKIP_FULLTEXT = ['_id', 'herkomst', 'key', 'brondata']
+SKIP_FULLTEXT = ['_id', 'herkomst', 'key', 'brondata', 'vindplaats']
 FULLTEXT_SEARCH_FIELD = 'ft_search' 
 FULLTEXT_SCORE_FIELD = "fulltext_score"
 FULLTEXT_HIGHLIGHT_FIELD = "highlight"
