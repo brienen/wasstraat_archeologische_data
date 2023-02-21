@@ -33,7 +33,7 @@ class PointField(GeometryField):
             lat=lat, lon=lon, point=point))
         return point
 
-    def process(self, formdata, data=unset_value, obj=None):
+    def process(self, formdata, data=unset_value, obj=None, extra_filters=None):
         latname = self.name+'_lat'
         lonname = self.name+'_lon'
         self.process_errors = []
