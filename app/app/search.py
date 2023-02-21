@@ -1,16 +1,18 @@
 from flask import current_app
+from app import db
 import shared.config as config
 import shared.const as const
 import logging
 import json
 from sqlalchemy import inspect
+from shared.fulltext import getCols  
 from models import DiscrArtefactsoortEnum, Bestand, Artefact
 
 logger = logging.getLogger()
 
 
 
-def add_to_index(index, model):
+def add_to_index(model):
     if not current_app.elasticsearch:
         logger.error("Cannot search in elasticsearch since it is not instantiated....")
         return [], 0
@@ -21,16 +23,22 @@ def add_to_index(index, model):
         logger.error(f"Cannot search in elasticsearch: unknown tablename for {model}")
         return [], 0
 
-    payload = {}
+    table = inspect(model).class_.__tablename__
+    with db.engine.connect() as connection:            
+        table_cols = getCols(connection, table)
+        table_cols_keys = [col['name'].lower() for col in table_cols]
+        
+        model_fields = dir(model)
+        model_fields = [field for field in model_fields if field.lower() in table_cols_keys] 
 
-    db_cols = inspect(model)
-    cols = [col for col in db_cols if (col['name'] == 'primary_key' or 'text' in str(col['type']).lower() or 'varchar' in str(col['type']).lower()) and col['name'] not in const.SKIP_FULLTEXT]
-    for field in cols: #
-        payload[field] = getattr(model, field)
-    current_app.elasticsearch.index(index=index, id=model.primary_key, body=payload)
+        payload = {}
+        for field in model_fields:
+            payload[field.lower()] = getattr(model, field)
+
+        current_app.elasticsearch.update(index=index, id=model.primary_key, doc=payload, doc_as_upsert=True)
 
 
-def remove_from_index(index, model):
+def remove_from_index(model):
     if not current_app.elasticsearch:
         logger.error("Cannot search in elasticsearch since it is not instantiated....")
         return [], 0

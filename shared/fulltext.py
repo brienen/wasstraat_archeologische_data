@@ -11,6 +11,15 @@ from sqlalchemy.engine import reflection
 
 logger = logging.getLogger()
 
+def getCols(connection, table):
+    insp = inspect(connection)
+    db_cols = insp.get_columns(table)
+    db_cols = [col for col in db_cols if (col['name'] == 'primary_key' 
+        or 'text' in str(col['type']).lower() 
+        or 'varchar' in str(col['type']).lower() 
+        or 'enum' in str(col['type']).lower()) and col['name'] not in const.SKIP_FULLTEXT]
+    return db_cols
+
 
 def generate_docs(resultset, db_col_names, index_name):
     for row in resultset:
@@ -47,12 +56,7 @@ def indexTable(table):
             logger.info("Indexing all string fields for " + str(lst_tables))
 
             if table in lst_tables:
-                insp = inspect(connection)
-                db_cols = insp.get_columns(table)
-                db_cols = [col for col in db_cols if (col['name'] == 'primary_key' 
-                    or 'text' in str(col['type']).lower() 
-                    or 'varchar' in str(col['type']).lower() 
-                    or 'enum' in str(col['type']).lower()) and col['name'] not in const.SKIP_FULLTEXT]
+                db_cols = getCols(connection, table)
                 sql_col_names = ['"'+col['name']+ '"' for col in db_cols]
                 db_col_names = [col['name'] for col in db_cols]
                 

@@ -7,6 +7,7 @@ from flask_appbuilder.exceptions import InterfaceQueryWithoutSession
 from sqlalchemy import select, func
 from filters import WSFilterConverter
 import shared.const as const
+import search
 from sqlalchemy.dialects import postgresql
 
 import logging
@@ -79,6 +80,22 @@ class WSSQLAInterfaceMixin(object):
                     return col_name
         return None
 
+
+    def add(self, item: Model, raise_exception: bool = False) -> bool:
+        result = super(WSSQLAInterfaceMixin, self).add(item)
+        if result: search.add_to_index(item)
+        return result
+
+
+    def edit(self, item: Model, raise_exception: bool = False) -> bool:
+        result = super(WSSQLAInterfaceMixin, self).edit(item)
+        if result: search.add_to_index(item)
+        return result
+
+    def delete(self, item: Model, raise_exception: bool = False) -> bool:
+        result = super(WSSQLAInterfaceMixin, self).delete(item)
+        if result: search.remove_from_index(item)
+        return result
 
 
 

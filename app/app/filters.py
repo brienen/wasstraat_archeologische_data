@@ -64,7 +64,7 @@ class HierarchicalABRFilter(BaseFilter):
 
 
 class FulltextFilter(BaseFilter):
-    name = "Fulltext Zoeken"
+    name = 'Fulltext Zoeken'
     arg_name = "flt"
 
     def apply(self, query, value):
