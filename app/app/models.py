@@ -38,6 +38,13 @@ class WasstraatModel(Model):
     fulltext_score = -1 #Corrensponds with const.FULLTEXT_SCORE_FIELD 
     highlight = '' #Corrensponds with const.FULLTEXT_HIGHLIGHT_FIELD  
 
+    def __repr__(self):
+        if hasattr(self, '__tablename__'):
+            return self.__tablename__.lower()
+        else: 
+            return 'wasstraat_generic'
+
+
 class ABR(WasstraatModel):
     __tablename__ = 'Def_ABR'
 
@@ -884,6 +891,7 @@ bestand_tupels = create_named_tuple(
     const.FOTO_OPGRAVINGSFOTO,
     const.FOTO_OBJECTFOTO,
     const.FOTO_OVERIGE,
+    const.FOTO_CONSERVERING,
     const.RAPPORTAGE,
     const.RAPP_ARCHEOLOGISCHE_RAPPORTAGE,
     const.RAPP_ARCHEOLOGISCHE_NOTITIE,
@@ -1021,6 +1029,22 @@ class Sfeerfoto(Bestand):
     __mapper_args__ = {'polymorphic_identity': const.FOTO_SFEERFOTO}
 
 
+class ConserverinsgfotomomentEnum(enum.Enum): 
+    Voor = "Voor"
+    Tijdens = "Tijdens"
+    Na = "Na"
+
+class Conserveringsfoto(Bestand):
+    __tablename__ = 'Def_Bestand'
+    __table_args__ = {'extend_existing': True}
+    __mapper_args__ = {'polymorphic_identity': const.FOTO_CONSERVERING}
+
+    fotomoment =  Column(Enum(ConserverinsgfotomomentEnum))
+    #conserveringID = Column(ForeignKey('Def_Conserveringsproject.primary_key'), index=True, nullable=True)
+    #conservering = relationship('Conservering', backref='fotos', lazy="joined")
+
+    #artefactID = Column(ForeignKey('Def_Artefact.primary_key'), index=True)
+    #artefact = relationship('Artefact', backref="fotos", lazy="joined")
 
 
 '''
@@ -1138,6 +1162,10 @@ class Conserveringsrapport (Rapportage):
     __tablename__ = 'Def_Bestand'
     __table_args__ = {'extend_existing': True}
     __mapper_args__ = {'polymorphic_identity': const.RAPP_CONSERVERINGSRAPPORT}
+
+    #conserveringsprojectID = Column(ForeignKey("Def_Conserveringsproject.primary_key"), index=True)
+    #conserveringsproject = relationship("Conserveringsproject", backref="conserveringsrapporten")
+
 class Overige_Rapportage (Rapportage):
     __tablename__ = 'Def_Bestand'
     __table_args__ = {'extend_existing': True}
@@ -1355,6 +1383,30 @@ class Bruikleen(WasstraatModel):
 
 
 
-    
+
+assoc_artefact_conservering = Table('Def_artefact_conservering', Model.metadata,
+                                      Column('id', Integer, primary_key=True),
+                                      Column('conservering_id', Integer, ForeignKey('Def_Conserveringsproject.primary_key')),
+                                      Column('artefact_id', Integer, ForeignKey('Def_Artefact.primary_key'))
+)
+
+
+class Conserveringsproject(WasstraatModel):
+    __tablename__ = 'Def_Conserveringsproject'
+
+    primary_key = Column(Integer, primary_key=True, autoincrement=True)
+    korte_omschrijving = Column(String(256), nullable=False)
+    omschrijving = Column(Text)
+    begindatum = Column(Date, nullable=False)
+    einddatum = Column(Date)
+    uitvoerderID = Column(ForeignKey('Def_Partij.primary_key', deferrable=True), index=True, nullable=False)
+    uitvoerder = relationship('Partij', backref="conserveringsprojecten")
+    #fotos = relationship("Bestand", backref="conserveringsproject")
+    #rapporten = relationship("Conserveringsrapport", backref="conserveringsproject")
+    artefacten = relationship('Artefact', secondary=assoc_artefact_conservering, backref='conserveringsprojecten')
+
+    def __repr__(self):
+        return f"{self.korte_omschrijving} door: {self.uitvoerder} dd: {self.begindatum}"
+
 
 

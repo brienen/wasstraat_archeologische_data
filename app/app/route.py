@@ -1,21 +1,17 @@
 import os
 from urllib.parse import urlparse
 from flask_appbuilder import BaseView, expose, has_access
-from flask import abort, Blueprint, flash, render_template, request, session, url_for
+from flask import request, session
 from app import appbuilder
 from app import db
 from models import Bestand, Artefact, Project, Objectfoto, Veldtekening , Opgravingsfoto, Overige_foto, Overige_tekening, Objecttekening
 from shared import const
 import shared.config as config
 import shared.image_util as image_util
-from PIL import Image, ExifTags, ImageOps
+from PIL import Image
 from flask import redirect
 import pdf2image
-
-import logging
-logger = logging.getLogger()
-
-from flask import current_app as app
+from flask import current_app
 
 
 def makeRelative(path: str):
@@ -33,7 +29,7 @@ class UploadView(BaseView):
     def uploads(self):
 
         strReq = str(request)
-        logger.info(f'Request: {strReq}')
+        current_app.logger.info(f'Request: {strReq}')
         dir = os.sep + "Onbekend Project" + os.sep
 
         if request.method == 'POST':
@@ -52,7 +48,7 @@ class UploadView(BaseView):
                         if page_hist:
                             last_url = page_hist[-1]
                             urlp = urlparse(last_url)
-                            logger.info(f"Page history: {urlp}")
+                            current_app.logger.info(f"Page history: {urlp}")
                             if 'project' in urlp.query:
                                 projectID = int(urlp.query.split("=")[1])
                                 project = db.session.query(Project).get(projectID)
@@ -122,7 +118,7 @@ class UploadView(BaseView):
 
             except Exception as err:
                 print(err)
-                logger.error('Error while saving image with message: ' + str(err))
+                current_app.logger.error('Error while saving image with message: ' + str(err))
                 db.session.rollback()
                 raise
 

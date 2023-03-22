@@ -1,5 +1,5 @@
 #FROM python:3.10-slim-bullseye
-FROM python:3.9.15-bullseye
+FROM python:3.9.16-bullseye
 
 # set environment variables
 ENV PYTHONDONTWRITEBYTECODE 1

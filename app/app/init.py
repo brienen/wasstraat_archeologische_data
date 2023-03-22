@@ -6,10 +6,12 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine, func, update, inspect, MetaData
 from sqlalchemy import and_, or_
 from elasticsearch import Elasticsearch
+from flask import current_app
 
 
 import logging
-logger = logging.getLogger()
+logger = logging.getLogger(__name__)
+
     
     
 def initSequences():
@@ -119,7 +121,7 @@ def indexAll() :
     for table in tables:
         try:
             logger.info(f'Indexing table {table}...')
-            fulltext.indexTable('table')
+            fulltext.indexTable(table)
         except Exception as e:
             logger.error(f"Error while Indexing table {table} with message {e}")
     logger.info(f"Indexing all table finished.")

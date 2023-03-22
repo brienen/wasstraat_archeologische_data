@@ -29,6 +29,7 @@ FOTO_SFEERFOTO = "Sfeerfoto"
 FOTO_OPGRAVINGSFOTO = "Opgravingsfoto"
 FOTO_OBJECTFOTO = "Objectfoto"
 FOTO_OVERIGE = "Overige_afbeelding"
+FOTO_CONSERVERING = "Conserveringsfoto"
 RAPPORTAGE = "Rapportage"
 RAPP_ARCHEOLOGISCHE_RAPPORTAGE = "Archeologische_Rapportage"
 RAPP_ARCHEOLOGISCHE_NOTITIE = "Archeologische_Notitie"
@@ -54,6 +55,10 @@ ABR_URI_DIERLIJK_BOT = 'https://data.cultureelerfgoed.nl/term/id/abr/87a15ea6-0e
 ABR_URI_BOUWAARDEWERK= 'https://data.cultureelerfgoed.nl/term/id/abr/e9c85dbc-f215-4249-ba1f-7d84a22eaa82'
 ABR_URI_SCHELP = 'https://data.cultureelerfgoed.nl/term/id/abr/ea0bcd79-31b9-4645-9783-add79577de3e'
 ABR_URI_TEXTIEL = 'https://data.cultureelerfgoed.nl/term/id/abr/d386b3f4-7aa9-4fe6-a64d-2b659fe6b197'
+
+ABR_URI_DEVENTERVORMCODES = 'https://data.cultureelerfgoed.nl/term/id/abr/e401ee4d-44c1-45e2-8d59-798a86662f2a'
+ABR_URI_DEVENTERBAKSELCODES = 'https://data.cultureelerfgoed.nl/term/id/abr/5b1ce76a-fa80-4d3a-b8e3-8fe1c0d547db'
+
 
 BESTANDSOORTEN = ['Tekening', 'Foto', 'Rapport']
 

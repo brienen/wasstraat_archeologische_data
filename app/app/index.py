@@ -7,11 +7,8 @@ from sqlalchemy import create_engine, func
 
 from flask_appbuilder import IndexView
 import folium
+from flask import current_app
 
-from flask import current_app as app
-
-import logging
-logger = logging.getLogger()
 
 from caching import cache
 
@@ -40,7 +37,7 @@ class MyIndexView(IndexView):
 
     @cache.cached()
     def render_template(self, template, **kwargs):
-        logger.info('Rendering template: setting projectinfo...')
+        current_app.logger.info('Rendering template for index page: setting projectinfo...')
 
         start_coords = (52.00667, 4.35556) # Delft
         foliummap = folium.Map(location=start_coords, zoom_start=12)
@@ -73,7 +70,6 @@ class MyIndexView(IndexView):
             feature_group_ingl.add_to(foliummap)
             folium.LayerControl().add_to(foliummap)
 
-            logger.debug('Setting folium string')
             self.foliummap_str = foliummap._repr_html_()
             self.extra_args = {'foliummap':self.foliummap_str}     
         finally:

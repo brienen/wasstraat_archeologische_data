@@ -9,7 +9,7 @@ from flask_appbuilder import ModelView
 from wtforms import StringField
 
 from app import db, appbuilder
-from models import Bestand, Tekening, Rapportage , Aardewerk, Stelling, Doos, Artefact, Spoor, Project,Put, Vondst, Vlak, DiscrArtefactsoortEnum, Dierlijk_Bot, Glas, Hout, Bouwaardewerk, Kleipijp, Leer, Menselijk_Bot, Metaal, Munt, Schelp, Steen, Textiel, Vulling, Opgravingsfoto, Objectfoto, Veldtekening, Overige_foto, Monster, Monster_Botanie, Monster_Schelp, Objecttekening, Overige_tekening, ABR, Partij, Bruikleen
+from models import Conserveringsproject, Bestand, Tekening, Rapportage , Aardewerk, Stelling, Doos, Artefact, Spoor, Project,Put, Vondst, Vlak, DiscrArtefactsoortEnum, Dierlijk_Bot, Glas, Hout, Bouwaardewerk, Kleipijp, Leer, Menselijk_Bot, Metaal, Munt, Schelp, Steen, Textiel, Vulling, Opgravingsfoto, Objectfoto, Veldtekening, Overige_foto, Monster, Monster_Botanie, Monster_Schelp, Objecttekening, Overige_tekening, ABR, Partij, Bruikleen
 from widgets import MediaListWidget
 from baseviews import WSModelView, WSGeoModelView, fieldDefinitionFactory, Select2Many400Widget, WSModelViewMixin
 from interface import WSSQLAInterface, WSGeoSQLAInterface
@@ -28,12 +28,14 @@ import wtforms.validators as validators
 
 
 import logging
-logger = logging.getLogger()
+
 
 
 flds_migratie_info = ("Migratie-informatie", {"fields": ["soort","brondata","uuid"],"expanded": False})
 abr_materiaalfilter = ['uri', HierarchicalABRFilter, const.ABR_URI_MATERIALEN]
 abr_artefactsoortfilter = ['uri', HierarchicalABRFilter, const.ABR_URI_ARTEFACTEN]
+abr_deventervormcodes = ['uri', HierarchicalABRFilter, const.ABR_URI_DEVENTERVORMCODES] 
+abr_deventerbakselcodes = ['uri', HierarchicalABRFilter, const.ABR_URI_DEVENTERBAKSELCODES] 
 
 class ArtefactChartView(GroupByChartView):
     datamodel = WSSQLAInterface(Artefact)
@@ -118,7 +120,7 @@ class ArchBruikleenView(WSModelView):
 class ArchPartijView(WSModelView):
     datamodel = WSSQLAInterface(Partij)
     list_columns = ["naam", "adres", "contactpersoon", 'email', 'telefoon']
-    list_title="Partijen met bruiklenen"
+    list_title="Partijen (Bruiklenen/Conserveringsprojecten)"
 
     show_fieldsets = [
         ("Partijvelden", {"fields": ["naam", "adres", "contactpersoon", 'email', 'telefoon']}),
@@ -331,10 +333,10 @@ class ArchArtefactView_Abstr(WSModelView):
     label_columns = WSModelViewMixin.label_columns.update({'abr_materiaal':'Materiaalsoort hoofdmateriaal (ABR)', 'abr_submateriaal':'Sub-materiaalsoort (ABR)', 'abr_extras':'Materiaalsoort overige materialen (ABR)'})
     list_title = "Artefacten"
     related_views = [ArchObjectFotoView, ArchBruikleenView]
-    search_exclude_columns = ['fotos', 'doos']
+    search_exclude_columns = ['fotos', 'doos', 'vondst']
     show_fieldsets = [
         ("Projectvelden", {"columns": [
-            {"fields": ["project", "vondst", "subnr", "aantal", "artefactsoort", "abr_materiaal", "abr_submateriaal", "abr_extras", "typevoorwerp", "typecd", "functievoorwerp", "versiering", "beschrijving", "opmerkingen", "doos"], "grid":6},        
+            {"fields": ["project", "vondst", "subnr", "aantal", "artefactsoort", "abr_materiaal", "abr_submateriaal", "abr_extras", "typevoorwerp", "typecd", "functievoorwerp", "versiering", "beschrijving", "opmerkingen", "doos", "conserveringsprojecten"], "grid":6},        
             {"fields": ["fotos"], "grid":6, "fulldisplay": True},        
         ]}),        
         ("Algemene Artefactvelden", {"columns": [
@@ -782,7 +784,9 @@ class MasterView(MultipleView):
     views = [ArchArtefactView]
 
 
-class ABRMaterialenView(WSModelView):
+
+
+class ABRViewMixin(object):
     datamodel = WSSQLAInterface(ABR)
     list_columns = ["concept", "code", "parent", 'note', 'uri']
     list_title="Materialen uit Archeologisch Basisregister"
@@ -803,35 +807,45 @@ class ABRMaterialenView(WSModelView):
     }
 
 
+class ABRMaterialenView(ABRViewMixin, WSModelView):
+    list_title="Materialen uit Archeologisch Basisregister"
+    base_filters = [abr_materiaalfilter]
 
-
-class ABRArtefactsoortenView(WSModelView):
-    datamodel = WSSQLAInterface(ABR)
-    list_columns = ["concept", "code", "parent", 'note', 'uri']
+class ABRArtefactsoortenView(ABRViewMixin, WSModelView):
     list_title="Artefactsoorten uit Archeologisch Basisregister"
     base_filters = [abr_artefactsoortfilter]
-    search_exclude_columns = ['artefacten', 'children', 'uris', 'uuid', 'herkomst', 'brondata']
-    search_form_query_rel_fields = {'parent': base_filters}
-    add_form_query_rel_fields = {'parent': base_filters}
-    edit_form_query_rel_fields = {'parent': base_filters}
+
+class ABRDeventerVormcodesView(ABRViewMixin, WSModelView):
+    list_title="Deventer Vormcodes uit Archeologisch Basisregister"
+    base_filters = [abr_deventervormcodes]
+
+class ABRDeventerBakselcodesView(ABRViewMixin, WSModelView):
+    list_title="Deveter Bakselcodes uit Archeologisch Basisregister"
+    base_filters = [abr_deventerbakselcodes]
+
+
+class ConserveringsprojectView(WSModelView):
+    datamodel = WSSQLAInterface(Conserveringsproject)
+    list_columns = ["korte_omschrijving", "omschrijving", "begindatum", 'einddatum', 'uitvoerder']
+    list_title="Conserveringsprojecten"
+    related_views = [ArchArtefactView]
+    search_exclude_columns = ['artefacten', 'uuid', 'herkomst', 'brondata']
 
     show_fieldsets = [
-        ("ABR-velden", {"fields": ["concept", "code", "parent", 'note', 'uri']}),
+        ("Conserveringsprojectvelden", {"fields": ["korte_omschrijving", "omschrijving", "begindatum", 'einddatum', 'uitvoerder']}),
         flds_migratie_info
     ]
     edit_fieldsets = show_fieldsets
     add_fieldsets = show_fieldsets
-    validators_columns = {
-        'uri':[validators.URL(message='Voer een geldige URL in.')],
-    }
 
-    
 
 
 db.create_all()
 
 appbuilder.add_view(ABRMaterialenView,"Materialen uit ABR",icon="fa-dashboard",category="Beheer")
 appbuilder.add_view(ABRArtefactsoortenView,"Artefactsoorten uit ABR",icon="fa-dashboard",category="Beheer")
+appbuilder.add_view(ABRDeventerVormcodesView,"Deventer Vormcodes uit ABR",icon="fa-dashboard",category="Beheer")
+appbuilder.add_view(ABRDeventerBakselcodesView,"Deventer Bakselcodes uit ABR",icon="fa-dashboard",category="Beheer")
 
 
 appbuilder.add_view(ArchProjectView,"Projecten",icon="fa-dashboard",category="Projecten") #ArchTestProjectView
@@ -866,7 +880,8 @@ appbuilder.add_view(ArchHoutView,"Hout",icon="fa-dashboard",category="Artefacten
 appbuilder.add_view(ArchDoosView, "Dozen", icon="fa-dashboard",category="Depot",)
 appbuilder.add_view(ArchStellingView,"Stellingen",icon="fa-dashboard",category="Depot",)
 appbuilder.add_view(ArchBruikleenView,"Bruiklenen",icon="fa-dashboard",category="Depot",)
-appbuilder.add_view(ArchPartijView,"Partijen met bruiklenen",icon="fa-dashboard",category="Depot",)
+appbuilder.add_view(ConserveringsprojectView,"Conserveringsprojecten",icon="fa-dashboard",category="Depot",)
+appbuilder.add_view(ArchPartijView,"Partijen (Bruiklenen/Conserveringsprojecten)",icon="fa-dashboard",category="Depot",)
 
 
 #### Media

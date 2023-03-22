@@ -11,7 +11,7 @@ import search
 from sqlalchemy.dialects import postgresql
 
 import logging
-logger = logging.getLogger()
+
 
 
 

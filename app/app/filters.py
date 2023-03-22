@@ -10,9 +10,10 @@ from app import appbuilder, db
 from models import ABR, Bestand
 from search import query_index
 import shared.const as const
-import logging
+from flask import current_app
 
-logger = logging.getLogger()
+
+
 
 
 __all__ = [
@@ -70,7 +71,7 @@ class FulltextFilter(BaseFilter):
     def apply(self, query, value):
 
         if not hasattr(self.model, 'primary_key'):
-            logger.error(f"Cannot apply fulltext filter for model {self.model} does not have fierld primary_key.")
+            current_app.logger.error(f"Cannot apply fulltext filter for model {self.model} does not have fierld primary_key.")
             return query
 
         if self.column_name == const.FULLTEXT_SEARCH_FIELD: # Serach all fields

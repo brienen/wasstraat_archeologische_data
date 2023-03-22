@@ -1,8 +1,7 @@
 from flask import url_for, Markup
 
-from flask_appbuilder import ModelView, RestCRUDView
-from flask_appbuilder.baseviews import BaseCRUDView, BaseView
-from flask_appbuilder.widgets import ShowWidget, FormWidget, ListWidget
+from flask_appbuilder import ModelView
+from flask_appbuilder.baseviews import BaseCRUDView
 from fab_addon_geoalchemy.views import GeoModelView
 from flask_appbuilder.fieldwidgets import Select2AJAXWidget, Select2SlaveAJAXWidget, Select2ManyWidget
 from flask_appbuilder.fields import AJAXSelectField
@@ -15,6 +14,8 @@ import copy
 import ast
 from widgets import SearchWidget, ColumnFormWidget, ColumnShowWidget, MyListWidget
 import shared.const as const
+from caching import cache
+
 
 
 def fotoFormatter(fotos):
@@ -383,7 +384,6 @@ class WSModelViewMixin(object):
             modelview_name=self.__class__.__name__,
         )
         return widgets
-
 
 
 

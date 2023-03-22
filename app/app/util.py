@@ -5,7 +5,7 @@ import copy
 import shared.config as config
 from collections import namedtuple
 
-logger = logging.getLogger()
+
 
 def create_named_tuple(*values):
      return namedtuple('NamedTuple', values)(*values)

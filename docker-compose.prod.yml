@@ -3,7 +3,7 @@ version: "3"
 # All available services
 services:
   flask:
-    image: brienen/wasstraat_flask:0.9.0
+    image: brienen/wasstraat_flask:0.9.1
     environment: 
       - env=prod
       - FLASK_DEBUG=0

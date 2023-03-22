@@ -6,66 +6,21 @@ import logging
 import json
 from sqlalchemy import inspect
 from shared.fulltext import getCols  
-from models import DiscrArtefactsoortEnum, Bestand, Artefact
+from models import Bestand, Artefact
 import enum
+from caching import cache
 
 
-logger = logging.getLogger()
-
-
-
-def add_to_index(model):
-    if not current_app.elasticsearch:
-        logger.error("Cannot search in elasticsearch since it is not instantiated....")
-        return [], 0
-
-    if hasattr(model, '__tablename__'):
-        index = model.__tablename__.lower()
-    else: 
-        logger.error(f"Cannot search in elasticsearch: unknown tablename for {model}")
-        return [], 0
-
-    table = inspect(model).class_.__tablename__
-    with db.engine.connect() as connection:            
-        table_cols = getCols(connection, table)
-        table_cols_keys = [col['name'].lower() for col in table_cols]
-        
-        model_fields = dir(model)
-        model_fields = [field for field in model_fields if field.lower() in table_cols_keys] 
-
-        payload = {}
-        for field in model_fields:
-            value = getattr(model, field)
-            if value and issubclass(value.__class__, enum.Enum):
-                value = value.value  
-            payload[field.lower()] = value
-
-        current_app.elasticsearch.update(index=index, id=model.primary_key, doc=payload, doc_as_upsert=True)
-
-
-def remove_from_index(model):
-    if not current_app.elasticsearch:
-        logger.error("Cannot search in elasticsearch since it is not instantiated....")
-        return [], 0
-
-    if hasattr(model, '__tablename__'):
-        index = model.__tablename__.lower()
-    else: 
-        logger.error(f"Cannot search in elasticsearch: unknown tablename for {model}")
-        return [], 0
-
-    current_app.elasticsearch.delete(index=index, id=model.primary_key)
-
-
+@cache.memoize()
 def query_index(model, query, maxsize=1000, fields=['*']):
     if not current_app.elasticsearch:
-        logger.error("Cannot search in elasticsearch since it is not instantiated....")
+        current_app.logger.error("Cannot search in elasticsearch since it is not instantiated....")
         return [], 0
 
     if hasattr(model, '__tablename__'):
         index = model.__tablename__.lower()
     else: 
-        logger.error(f"Cannot search in elasticsearch: unknown tablename for {model}")
+        current_app.logger.error(f"Cannot search in elasticsearch: unknown tablename for {model}")
         return [], 0
 
     # Set basic query string
@@ -82,7 +37,7 @@ def query_index(model, query, maxsize=1000, fields=['*']):
             'filter': [{'multi_match': {'query': value, 'fields': ['bestandsoort']}}],
             'must': [query]}}
 
-    #fields = ['*' + field.lower() for field in fields] if fields != ['*'] else ['*']
+    current_app.logger.info(f'Quering Elastic index {index} with query {query}...')
     search = current_app.elasticsearch.search(
         index=index,
         query=query,
@@ -97,3 +52,49 @@ def query_index(model, query, maxsize=1000, fields=['*']):
     hits = [{'primary_key': hit['_id'], const.FULLTEXT_SCORE_FIELD: hit['_score'], const.FULLTEXT_HIGHLIGHT_FIELD: hit['highlight']} for hit in search['hits']['hits']]
     hits = json.dumps(hits) 
     return hits, search['hits']['total']['value']
+
+
+def add_to_index(model):
+    if not current_app.elasticsearch:
+        current_app.logger.error("Cannot search in elasticsearch since it is not instantiated....")
+        return [], 0
+
+    if hasattr(model, '__tablename__'):
+        index = model.__tablename__.lower()
+    else: 
+        current_app.logger.error(f"Cannot search in elasticsearch: unknown tablename for {model}")
+        return [], 0
+
+    table = inspect(model).class_.__tablename__
+    with db.engine.connect() as connection:            
+        table_cols = getCols(connection, table)
+        table_cols_keys = [col['name'].lower() for col in table_cols]
+        
+        model_fields = dir(model)
+        model_fields = [field for field in model_fields if field.lower() in table_cols_keys] 
+
+        payload = {}
+        for field in model_fields:
+            value = getattr(model, field)
+            if value and issubclass(value.__class__, enum.Enum):
+                value = value.value  
+            payload[field.lower()] = value
+    
+        cache.delete_memoized(query_index)
+        current_app.elasticsearch.update(index=index, id=model.primary_key, doc=payload, doc_as_upsert=True)
+
+
+def remove_from_index(model):
+    if not current_app.elasticsearch:
+        current_app.logger.error("Cannot search in elasticsearch since it is not instantiated....")
+        return [], 0
+
+    if hasattr(model, '__tablename__'):
+        index = model.__tablename__.lower()
+    else: 
+        current_app.logger.error(f"Cannot search in elasticsearch: unknown tablename for {model}")
+        return [], 0
+
+    cache.delete_memoized(query_index)
+    current_app.elasticsearch.delete(index=index, id=model.primary_key)
+
