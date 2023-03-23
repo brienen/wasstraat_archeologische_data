@@ -71,6 +71,53 @@ class ABR(WasstraatModel):
             return f'{concept} {code}'.strip()
 
 
+class Soort_Plant(WasstraatModel):
+    __tablename__ = 'Def_DT_Soort_Plant'
+
+    primary_key = Column(Integer, primary_key=True, autoincrement=True)
+    code = Column(String(80))
+    oude_naam = Column(String(256))
+    wetenschappelijke_naam = Column(String(256))
+    nederlandse_naam = Column(String(256))
+
+    def __repr__(self):
+        return f'{self.nederlandse_naam} ({self.wetenschappelijke_naam})'
+
+
+class Soort_Schelp(WasstraatModel):
+    __tablename__ = 'Def_DT_Soort_Schelp'
+
+    primary_key = Column(Integer, primary_key=True, autoincrement=True)
+    code = Column(String(80))
+    milieu = Column(Text)
+    wetenschappelijke_naam = Column(String(256))
+    nederlandse_naam = Column(String(256))
+
+    def __repr__(self):
+        return f'{self.nederlandse_naam} ({self.wetenschappelijke_naam})'
+
+class Soort_Deel(WasstraatModel):
+    __tablename__ = 'Def_DT_Soort_Deel'
+
+    primary_key = Column(Integer, primary_key=True, autoincrement=True)
+    code = Column(String(80))
+    omschrijving = Column(String(256))
+    uitleg = Column(Text)
+
+    def __repr__(self):
+        return f'{self.omschrijving}'
+
+class Soort_Staat(WasstraatModel):
+    __tablename__ = 'Def_DT_Soort_Staat'
+
+    primary_key = Column(Integer, primary_key=True, autoincrement=True)
+    code = Column(String(80))
+    omschrijving = Column(String(256))
+
+    def __repr__(self):
+        return f'{self.omschrijving}'
+
+
 
 class Stelling(WasstraatModel):
     __tablename__ = 'Def_Stelling'
@@ -1335,7 +1382,15 @@ class Monster_Schelp(WasstraatModel):
     monsterID = Column(ForeignKey('Def_Monster.primary_key', deferrable=True), index=True)
     monster = relationship('Monster', backref="schelpmateriaal")
     aantal = Column(Integer)
-    soort = Column(String(80))
+    soort_schelp = Column(String(80))
+    dt_soort_schelpID = Column(ForeignKey('Def_DT_Soort_Schelp.primary_key', deferrable=True), index=True)
+    dt_soort_schelp = relationship('Soort_Schelp', lazy="joined", backref="schelpdeterminaties")
+
+    def __repr__(self):
+        soort = self.dt_soort_schelp if self.dt_soort_schelp else self.soort_schelp    
+        return f"{self.aantal} {soort} uit {self.monster}"
+
+
 
 class Monster_Botanie(WasstraatModel):
     __tablename__ = 'Def_Monster_Botanie'
@@ -1346,9 +1401,18 @@ class Monster_Botanie(WasstraatModel):
     aantal = Column(Integer)
     deel = Column(String(40))
     staat = Column(String(40))
-    soort = Column(String(80))
+    soort_botanie = Column(String(80))
     determinatie = Column(String(250))
+    dt_soort_plantID = Column(ForeignKey('Def_DT_Soort_Plant.primary_key', deferrable=True), index=True)
+    dt_soort_plant = relationship('Soort_Plant', lazy="joined", backref="botaniedeterminaties")
+    dt_soort_deelID = Column(ForeignKey('Def_DT_Soort_Deel.primary_key', deferrable=True), index=True)
+    dt_soort_deel = relationship('Soort_Deel', lazy="joined", backref="botaniedeterminaties")
+    dt_soort_staatID = Column(ForeignKey('Def_DT_Soort_Staat.primary_key', deferrable=True), index=True)
+    dt_soort_staat = relationship('Soort_Staat', lazy="joined", backref="botaniedeterminaties")
 
+    def __repr__(self):
+        soort = self.dt_soort_plant if self.dt_soort_plant else self.soort_botanie    
+        return f"{self.aantal} {soort} uit {self.monster}"
 
 
 class Partij(WasstraatModel):

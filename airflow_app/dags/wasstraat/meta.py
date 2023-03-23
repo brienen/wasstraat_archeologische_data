@@ -35,6 +35,7 @@ wasstraat_model = {
         ]],
         MOVEANDMERGE_GENERATE_MISSING_PIPELINES: [[
             { '$match': {'putnr': { '$exists': {"$toBool": 1} }, 'projectcd': { '$exists': {"$toBool": 1} }}},
+            { '$match': {'putnr': {"＄ne": 0}}},               
             { '$group':{'_id': {"projectcd" : "$projectcd", 'putnr': "$putnr"}}},
             { '$unwind': "$_id"},
             { '$project': {'_id': 0, 'projectcd': "$_id.projectcd", 'putnr': "$_id.putnr"}},       
@@ -52,6 +53,7 @@ wasstraat_model = {
         ]],
         MOVEANDMERGE_GENERATE_MISSING_PIPELINES: [[
             { '$match': {'vlaknr': { '$exists': {"$toBool": 1} }, 'projectcd': { '$exists': {"$toBool": 1} }, 'putnr': { '$exists': {"$toBool": 1} }}},
+            { '$match': {'vlaknr': {"＄ne": 0}}},   
             { '$group':{'_id': {"projectcd" : "$projectcd", 'putnr': "$putnr", 'vlaknr': "$vlaknr"}}},
             { '$unwind': "$_id"},
             { '$project': {'_id': 0, 'projectcd': "$_id.projectcd", 'putnr': "$_id.putnr", 'vlaknr': "$_id.vlaknr"}},
@@ -76,6 +78,7 @@ wasstraat_model = {
         ]],
         MOVEANDMERGE_GENERATE_MISSING_PIPELINES: [[
             { '$match': {'vlaknr': { '$exists': {"$toBool": 1} }, 'projectcd': { '$exists': {"$toBool": 1} }, 'putnr': { '$exists': {"$toBool": 1} }, 'spoornr': { '$exists': {"$toBool": 1} }}},
+            { '$match': {'spoornr': {"＄ne": 0}}},   
             { '$group':{'_id': {'projectcd':"$projectcd", 'putnr':"$putnr", 'spoornr':"$spoornr", 'vlaknr':"$vlaknr"}, 'aard': {'$max': "$aard"}}},  
             { '$unwind': "$_id"},
             { '$project': {'_id': 0, 'projectcd': "$_id.projectcd", 'putnr': "$_id.putnr", 'spoornr': "$_id.spoornr", 'vlaknr': "$_id.vlaknr"}},
@@ -192,7 +195,8 @@ wasstraat_model = {
         SET_KEYS_PIPELINES: [[ 
             { '$match': { 'soort': "Monster_Schelp" } },
             { '$addFields': {'key': { '$concat': [ "M", {'$toString': "$monstercd"}, "ID", {'$toString': "$Id"}] }}},
-            { '$addFields': {'key_monster': { '$concat': [ "M", {'$toString': "$monstercd"}]}}}
+            { '$addFields': {'key_monster': { '$concat': [ "M", {'$toString': "$monstercd"}]}}},
+            { '$addFields': {'key_dt_soort_schelp': { '$concat': [ "SCH", "$soort_schelp"]}}}, 
     ]]
   },
   "Monster_Botanie": {
@@ -202,7 +206,10 @@ wasstraat_model = {
         SET_KEYS_PIPELINES: [[ 
             { '$match': { 'soort': "Monster_Botanie" } },
             { '$addFields': {'key': { '$concat': [ "M", {'$toString': "$monstercd"}, "ID", {'$toString': "$Id"}] }}},
-            { '$addFields': {'key_monster': { '$concat': [ "M", {'$toString': "$monstercd"}]}}}
+            { '$addFields': {'key_monster': { '$concat': [ "M", {'$toString': "$monstercd"}]}}},
+            { '$addFields': {'key_dt_soort_plant': { '$concat': [ "PL", "$soort_botanie"]}}}, 
+            { '$addFields': {'key_dt_soort_deel': { '$concat': [ "DL", "$deel"]}}}, 
+            { '$addFields': {'key_dt_soort_staat': { '$concat': [ "ST", "$staat"]}}}, 
     ]]
   },
   "Standplaats": {
@@ -273,6 +280,7 @@ wasstraat_model = {
         ]],
         MOVEANDMERGE_GENERATE_MISSING_PIPELINES: [[
             { '$match': {'putnr': { '$exists': {"$toBool": 1} }, 'projectcd': { '$exists': {"$toBool": 1} }, 'vondstnr': { '$exists': {"$toBool": 1} }}},
+            { '$match': {'vondstnr': {"＄ne": 0}}},   
             { '$group':{'_id': {"projectcd" : "$projectcd", 'putnr': "$putnr", 'vondstnr': "$vondstnr"}}},
             { '$unwind': "$_id"},
             { '$project': {'_id': 0, 'projectcd': "$_id.projectcd", 'putnr': "$_id.putnr", 'vondstnr': "$_id.vondstnr"}},       
@@ -332,6 +340,42 @@ wasstraat_model = {
         SET_KEYS_PIPELINES: [[ 
             { '$match': { 'soort': "ABR" } },
             { '$addFields': {'key': { '$concat': [ "A",  {'$toString': "$uri" }]}}}  		
+        ]]
+  },
+  "DT_Soort_Plant": {
+        STAGING_COLLECTION: config.COLL_STAGING_MONSTER,
+        HARMONIZE_PIPELINES: 'DT_Soort_Plant',
+        MOVEANDMERGE_MOVE: True,
+        SET_KEYS_PIPELINES: [[ 
+            { '$match': { 'soort': "DT_Soort_Plant" } },
+            { '$addFields': {'key': { '$concat': [ "PL",  {'$toString': "$code" }]}}}  		
+        ]]
+  },
+  "DT_Soort_Schelp": {
+        STAGING_COLLECTION: config.COLL_STAGING_MONSTER,
+        HARMONIZE_PIPELINES: 'DT_Soort_Schelp',
+        MOVEANDMERGE_MOVE: True,
+        SET_KEYS_PIPELINES: [[ 
+            { '$match': { 'soort': "DT_Soort_Schelp" } },
+            { '$addFields': {'key': { '$concat': [ "SCH",  {'$toString': "$wetenschappelijke_naam" }]}}}  		
+        ]]
+  },
+  "DT_Soort_Deel": {
+        STAGING_COLLECTION: config.COLL_STAGING_MONSTER,
+        HARMONIZE_PIPELINES: 'DT_Soort_Deel',
+        MOVEANDMERGE_MOVE: True,
+        SET_KEYS_PIPELINES: [[ 
+            { '$match': { 'soort': "DT_Soort_Deel" } },
+            { '$addFields': {'key': { '$concat': [ "DL",  {'$toString': "$code" }]}}}  		
+        ]]
+  },
+  "DT_Soort_Staat": {
+        STAGING_COLLECTION: config.COLL_STAGING_MONSTER,
+        HARMONIZE_PIPELINES: 'DT_Soort_Staat',
+        MOVEANDMERGE_MOVE: True,
+        SET_KEYS_PIPELINES: [[ 
+            { '$match': { 'soort': "DT_Soort_Staat" } },
+            { '$addFields': {'key': { '$concat': [ "ST",  {'$toString': "$code" }]}}}  		
         ]]
   },
   "Fotokoppel": {
@@ -414,7 +458,8 @@ wasstraat_model = {
             ]],        
         MOVEANDMERGE_GENERATE_MISSING_PIPELINES: [
             [ 
-                { '$match': {'doosnr': { '$exists': {"$toBool": 1} }, 'soort': "Artefact"}},            
+                { '$match': {'doosnr': { '$exists': {"$toBool": 1} }, 'soort': "Artefact"}},   
+                { '$match': {'doosnr': {"＄ne": 0}}},   
                 { '$group':{'_id': {"projectcd" : "$projectcd", 'doosnr': "$doosnr"}}},
                 { '$unwind': "$_id"},
                 { '$project': {'_id': 0, 'projectcd': "$_id.projectcd", 'doosnr': "$_id.doosnr"}},

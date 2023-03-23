@@ -85,6 +85,15 @@ def enhanceAllAttributes():
                 elif 'spijker' in str(doc['table']).lower():
                     doc['typevoorwerp'] = 'Spijker'
 
+                #clean Functie Voorwerp
+                if 'nederlandse_naam' in doc:
+                    doc['nederlandse_naam'] =  str(doc['nederlandse_naam']).replace('?', '').strip().title()  
+                if 'wetenschappelijke_naam' in doc:
+                    doc['wetenschappelijke_naam'] =  str(doc['wetenschappelijke_naam']).replace('?', '').strip().title()  
+                if 'soort_schelp' in doc:
+                    doc['soort_schelp'] =  str(doc['soort_schelp']).replace('?', '').strip().title()  
+
+
                 #clean Type Voorwerp
                 if 'tekeningcd' in doc:
                     doc['tekeningcd'] = str(doc['tekeningcd']).replace('?', '').replace('!', '').replace('-', '').strip()

@@ -9,7 +9,7 @@ from flask_appbuilder import ModelView
 from wtforms import StringField
 
 from app import db, appbuilder
-from models import Conserveringsproject, Bestand, Tekening, Rapportage , Aardewerk, Stelling, Doos, Artefact, Spoor, Project,Put, Vondst, Vlak, DiscrArtefactsoortEnum, Dierlijk_Bot, Glas, Hout, Bouwaardewerk, Kleipijp, Leer, Menselijk_Bot, Metaal, Munt, Schelp, Steen, Textiel, Vulling, Opgravingsfoto, Objectfoto, Veldtekening, Overige_foto, Monster, Monster_Botanie, Monster_Schelp, Objecttekening, Overige_tekening, ABR, Partij, Bruikleen
+from models import Soort_Staat, Soort_Deel, Soort_Schelp, Soort_Plant, Conserveringsproject, Bestand, Tekening, Rapportage , Aardewerk, Stelling, Doos, Artefact, Spoor, Project,Put, Vondst, Vlak, DiscrArtefactsoortEnum, Dierlijk_Bot, Glas, Hout, Bouwaardewerk, Kleipijp, Leer, Menselijk_Bot, Metaal, Munt, Schelp, Steen, Textiel, Vulling, Opgravingsfoto, Objectfoto, Veldtekening, Overige_foto, Monster, Monster_Botanie, Monster_Schelp, Objecttekening, Overige_tekening, ABR, Partij, Bruikleen
 from widgets import MediaListWidget
 from baseviews import WSModelView, WSGeoModelView, fieldDefinitionFactory, Select2Many400Widget, WSModelViewMixin
 from interface import WSSQLAInterface, WSGeoSQLAInterface
@@ -330,7 +330,9 @@ class ArchArtefactView_Abstr(WSModelView):
     
     list_columns = ["artefactsoort", 'typevoorwerp', "datering", "subnr", "vondst", 'project','aantal_fotos']
     #list_widget = ListThumbnail
-    label_columns = WSModelViewMixin.label_columns.update({'abr_materiaal':'Materiaalsoort hoofdmateriaal (ABR)', 'abr_submateriaal':'Sub-materiaalsoort (ABR)', 'abr_extras':'Materiaalsoort overige materialen (ABR)'})
+    new_label_columns = {'abr_materiaal':'Materiaalsoort hoofdmateriaal (ABR)', 'abr_submateriaal':'Sub-materiaalsoort (ABR)', 'abr_extras':'Materiaalsoort overige materialen (ABR)'}
+    label_columns = {**new_label_columns, **WSModelViewMixin.label_columns}
+    
     list_title = "Artefacten"
     related_views = [ArchObjectFotoView, ArchBruikleenView]
     search_exclude_columns = ['fotos', 'doos', 'vondst']
@@ -403,12 +405,13 @@ class ArchArtefactView_Abstr(WSModelView):
         self.add_fieldsets = util.removeFieldFromFieldset(self.edit_fieldsets, "artefactsoort")
         self.add_form_extra_fields = copy.copy(ArchArtefactView_Abstr.add_form_extra_fields)    
 
-        self.label_columns = {const.FULLTEXT_SEARCH_FIELD:'Zoeken in alle velden', 
+        new_label_columns = {const.FULLTEXT_SEARCH_FIELD:'Zoeken in alle velden', 
             const.FULLTEXT_SCORE_FIELD:'Score Fulltext', 
             const.FULLTEXT_HIGHLIGHT_FIELD:'Highlight Fulltext', 
             'abr_materiaal':'Materiaalsoort hoofdmateriaal (ABR)', 
             'abr_submateriaal':'Sub-materiaalsoort (ABR)', 
             'abr_extras':'Materiaalsoort overige materialen (ABR)'}
+        self.label_columns = {**new_label_columns, **WSModelViewMixin.label_columns}
 
 
         super(ArchArtefactView_Abstr, self)._init_properties()
@@ -616,12 +619,20 @@ class ArchStellingView(WSModelView):
 class ArchMonster_BotanieView(WSModelView):
     datamodel = WSSQLAInterface(Monster_Botanie)
     # base_permissions = ['can_add', 'can_show']
-    list_title = "Botaniedeterminaties Monsters"
-    list_columns = ["soort", "aantal", 'deel', 'staat', 'monster']
+    list_title = "Botaniedeterminaties"
+    list_columns = ["soort_botanie", "dt_soort_plant", "aantal", 'dt_soort_deel', 'dt_soort_staat', "monster"]
+    new_label_columns = {
+        'soort_botanie':'Code Soort', 
+        'dt_soort_plant':'Soort Botanie', 
+        'dt_soort_deel':'Deel', 
+        'dt_soort_staat':'Staat'}
+    label_columns = {**new_label_columns, **WSModelViewMixin.label_columns}
+    search_exclude_columns = ['deel', 'staat']
+    show_title = 'Toon Botaniedeterminatie'
 
     show_fieldsets = [
         ("Projectvelden", {"fields": ["monster"]}),
-        ("Inhoudvelden", {"fields": ["soort", "aantal", "deel", "staat"]}),
+        ("Inhoudvelden", {"fields": ["soort_botanie", "aantal", "dt_soort_plant", "dt_soort_deel", "dt_soort_staat"]}),
         flds_migratie_info]
     edit_fieldsets = show_fieldsets
     add_fieldsets = show_fieldsets
@@ -630,12 +641,17 @@ class ArchMonster_BotanieView(WSModelView):
 class ArchMonster_SchelpView(WSModelView):
     datamodel = WSSQLAInterface(Monster_Schelp)
     # base_permissions = ['can_add', 'can_show']
-    list_title = "Schelpdeterminaties Monsters"
-    list_columns = ["soort", "aantal", "monster"]
+    list_title = "Schelpdeterminaties"
+    list_columns = ["soort_schelp", "aantal", "dt_soort_schelp", "monster"]
+    new_label_columns = {
+        'soort_schelp':'Latijn Soort', 
+        'dt_soort_schelp':'Soort Schelp'}
+    label_columns = {**new_label_columns, **WSModelViewMixin.label_columns}
+    show_title = 'Toon Schelpdeterminatie'
 
     show_fieldsets = [
         ("Projectvelden", {"fields": ["monster"]}),
-        ("Inhoudvelden", {"fields": ["soort", "aantal"]}),
+        ("Inhoudvelden", {"fields": ["soort_schelp", "aantal"]}),
         flds_migratie_info]
     edit_fieldsets = show_fieldsets
     add_fieldsets = show_fieldsets
@@ -646,15 +662,48 @@ class ArchMonsterView(WSModelView):
     # base_permissions = ['can_add', 'can_show']
     list_title = "Monsters"
     list_columns = ["monstercd", "project", "put", "spoor", 'vondst', 'opmerkingen', 'karakterisering', 'omstandigheden']
+    new_label_columns = {
+        'r_analysewaardig_zo':'Zoologisch analysewaardig', 
+        'r_analysewaardig_bo':'Botanisch analysewaardig', 
+        'r_concentratie_zo':'Zoologisch concentratie', 
+        'r_concentratie_bo':'Botanisch concentratie', 
+        'r_conservering_zo':'Zoologisch conservering', 
+        'r_conservering_bo':'Botanisch conservering', 
+        'r_diversiteit_zo':'Zoologisch diversiteit', 
+        'r_diversiteit_bo':'Botanisch diversiteit'}
+    label_columns = {**new_label_columns, **WSModelViewMixin.label_columns}
 
-    rwaarden_fieldset = [("R-waarden", {"columns": [
-            {"fields": ["r_analysewaardig_zo", "r_analysewaardig_bo", "r_concentratie_zo", "r_concentratie_bo"], "grid":6},        
-            {"fields": ["r_conservering_zo", "r_conservering_bo", "r_diversiteit_zo", "r_diversiteit_bo"], "grid":6},        
-        ]})]
+
     waardering_fieldset = [("Waardering", {"columns": [
-            {"fields": ['B_stengel_mineraaliseerd', 'B_stengel_onverkoold', 'B_stengel_recent', 'B_stengel_verkoold', 'B_wortel_mineraaliseerd', 'B_wortel_onverkoold', 'B_wortel_recent', 'B_wortel_verkoold', 'B_zaden_cultuur_mineraaliseerd', 'B_zaden_cultuur_onverkoold', 'B_zaden_cultuur_recent', 'B_zaden_cultuur_verkoold', 'B_zaden_kaf_mineraaliseerd', 'B_zaden_kaf_onverkoold', 'B_zaden_kaf_recent', 'B_zaden_kaf_verkoold', 'B_zaden_wild_mineraaliseerd','B_zaden_wild_onverkoold', 'B_zaden_wild_recent', 'B_zaden_wild_verkoold'], "grid":4},        
-            {"fields": ['C_aardewerk', 'C_antraciet', 'C_bewerkt_hout', 'C_fabsteen', 'C_fosfaat', 'C_glas', 'C_huttenleem', 'C_kleipijp', 'C_lakzegel', 'C_leer', 'C_leisteen', 'C_metaal', 'C_mortel', 'C_natsteen', 'C_ovenslakken', 'C_overig', 'C_steenkool', 'C_textiel', 'C_turf', 'D_C14', 'D_hout', 'D_houtskool', 'D_tak_of_knop', 'D_te_determ', 'S_kokkel', 'S_molzoet_of_land', 'S_mossel', 'S_oester'], "grid":4},        
-            {"fields": ['Z_amfibiebot_O', 'Z_amfibiebot_V', 'Z_anders', 'Z_bot_groot_O', 'Z_bot_groot_V', 'Z_bot_klein_O', 'Z_bot_klein_V', 'Z_eierschaal_of_vel_O', 'Z_eierschaal_of_vel_V', 'Z_insekten_O', 'Z_insekten_V', 'Z_visgraat_of_bot_O', 'Z_visgraat_of_bot_V', 'Z_visschub_O', 'Z_visschub_V', 'Z_viswervel_O', 'Z_viswervel_V', 'Z_vliegepop_O', 'Z_vliegepop_V', 'Z_vogelbot_O', 'Z_vogelbot_V', 'Z_watervlo_ei_O', 'Z_watervlo_ei_V', 'Z_wormei_O', 'Z_wormei_V'], "grid":4},        
+            {"fields": ["r_analysewaardig_zo", "r_analysewaardig_bo"], "grid":3},        
+            {"fields": ["r_concentratie_zo", "r_concentratie_bo"], "grid":3},        
+            {"fields": ["r_conservering_zo", "r_conservering_bo"], "grid":3},        
+            {"fields": ["r_diversiteit_zo", "r_diversiteit_bo"], "grid":3},        
+        ]})]
+    telling_botanisch_fieldset = [("Telling Botanisch", {"columns": [
+            {"fields": ['B_stengel_onverkoold', 'B_wortel_onverkoold', 'B_zaden_cultuur_onverkoold', 'B_zaden_kaf_onverkoold', 'B_zaden_wild_onverkoold'], "grid":3},        
+            {"fields": ['B_stengel_verkoold', 'B_wortel_verkoold', 'B_zaden_cultuur_verkoold', 'B_zaden_kaf_verkoold', 'B_zaden_wild_verkoold'], "grid":3},        
+            {"fields": ['B_stengel_mineraaliseerd','B_wortel_mineraaliseerd', 'B_zaden_cultuur_mineraaliseerd', 'B_zaden_kaf_mineraaliseerd', 'B_zaden_wild_mineraaliseerd'], "grid":3},        
+            {"fields": ['B_stengel_recent',  'B_wortel_recent', 'B_zaden_cultuur_recent', 'B_zaden_kaf_recent', 'B_zaden_wild_recent'], "grid":3},        
+        ]})]
+    telling_cultureel_fieldset = [("Telling Cultureel", {"columns": [
+            {"fields": ['C_aardewerk', 'C_antraciet', 'C_bewerkt_hout', 'C_fabsteen', 'C_fosfaat'], "grid":3},        
+            {"fields": ['C_glas', 'C_huttenleem', 'C_kleipijp', 'C_lakzegel', 'C_leer'], "grid":3},        
+            {"fields": ['C_leisteen', 'C_metaal', 'C_mortel', 'C_natsteen', 'C_ovenslakken'], "grid":3},        
+            {"fields": ['C_overig', 'C_steenkool', 'C_textiel', 'C_turf'], "grid":3},        
+        ]})]
+    telling_hout_fieldset = [("Telling Hout", {"columns": [
+            {"fields": ['D_C14', 'D_hout', 'D_houtskool'], "grid":6},        
+            {"fields": ['D_tak_of_knop', 'D_te_determ'], "grid":6},        
+        ]})]
+    telling_schelp_fieldset = [("Telling Schelp", {"columns": [
+            {"fields": ['S_kokkel', 'S_molzoet_of_land'], "grid":6},        
+            {"fields": ['S_mossel', 'S_oester'], "grid":6},        
+        ]})]
+    telling_zoologisch_fieldset = [("Telling Zoologisch", {"columns": [
+            {"fields": ['Z_amfibiebot_O', 'Z_bot_groot_O', 'Z_bot_klein_O', 'Z_eierschaal_of_vel_O', 'Z_insekten_O', 'Z_visgraat_of_bot_O', 'Z_visschub_O', 'Z_viswervel_O', 'Z_vliegepop_O', 'Z_vogelbot_O', 'Z_watervlo_ei_O', 'Z_wormei_O'], "grid":4},        
+            {"fields": ['Z_amfibiebot_V', 'Z_bot_groot_V', 'Z_bot_klein_V', 'Z_eierschaal_of_vel_V', 'Z_insekten_V', 'Z_visgraat_of_bot_V', 'Z_visschub_V', 'Z_viswervel_V', 'Z_vliegepop_V', 'Z_vogelbot_V', 'Z_watervlo_ei_V', 'Z_wormei_V'], "grid":4},        
+            {"fields": ['Z_anders'], "grid":4},        
         ]})]
 
 
@@ -663,12 +712,26 @@ class ArchMonsterView(WSModelView):
         ("Inhoudvelden", {"fields": ["gezeefd_volume", "zeefmaat", "restvolume", 'datum_zeven']}),
         ("Beschrijving", {"fields": ['opmerkingen', 'karakterisering', 'omstandigheden', "grondsoort"]}),
         flds_migratie_info]
-    show_fieldsets[len(show_fieldsets)-1:len(show_fieldsets)-1] = rwaarden_fieldset
     show_fieldsets[len(show_fieldsets)-1:len(show_fieldsets)-1] = waardering_fieldset
+    show_fieldsets[len(show_fieldsets)-1:len(show_fieldsets)-1] = telling_botanisch_fieldset
+    show_fieldsets[len(show_fieldsets)-1:len(show_fieldsets)-1] = telling_cultureel_fieldset
+    show_fieldsets[len(show_fieldsets)-1:len(show_fieldsets)-1] = telling_hout_fieldset
+    show_fieldsets[len(show_fieldsets)-1:len(show_fieldsets)-1] = telling_schelp_fieldset
+    show_fieldsets[len(show_fieldsets)-1:len(show_fieldsets)-1] = telling_zoologisch_fieldset
     edit_fieldsets = show_fieldsets
     add_fieldsets = show_fieldsets
     related_views = [ArchMonster_BotanieView, ArchMonster_SchelpView]
     search_exclude_columns = ["artefacten"] 
+
+
+    def _prettify_column(self, name):
+        name = WSModelView._prettify_column(self, name)
+
+        if name[:2] in ['B ', 'C ', 'D ', 'Z ', 'S ']:
+            name = name[2:]
+
+        return name
+
 
 
 
@@ -784,6 +847,49 @@ class MasterView(MultipleView):
     views = [ArchArtefactView]
 
 
+class Soort_PlantView(WSModelView):
+    datamodel = WSSQLAInterface(Soort_Plant)
+    list_title="Referentielijst plantsoorten"
+    list_columns = ["nederlandse_naam", "wetenschappelijke_naam", "code"]
+    show_fieldsets = [
+        ("Soortvelden", {"fields": list_columns + ["oude_naam"]}),
+        flds_migratie_info
+    ]
+    edit_fieldsets = show_fieldsets
+    add_fieldsets = show_fieldsets
+
+class Soort_SchelpView(WSModelView):
+    datamodel = WSSQLAInterface(Soort_Schelp)
+    list_title="Referentielijst schelpsoorten"
+    list_columns = ["nederlandse_naam", "wetenschappelijke_naam", "code"]
+    show_fieldsets = [
+        ("Soortvelden", {"fields": list_columns + ["milieu"]}),
+        flds_migratie_info
+    ]
+    edit_fieldsets = show_fieldsets
+    add_fieldsets = show_fieldsets
+
+class Soort_DeelView(WSModelView):
+    datamodel = WSSQLAInterface(Soort_Deel)
+    list_title="Referentielijst deelsoorten"
+    list_columns = ["omschrijving", "code"]
+    show_fieldsets = [
+        ("Soortvelden", {"fields": list_columns + ["uitleg"]}),
+        flds_migratie_info
+    ]
+    edit_fieldsets = show_fieldsets
+    add_fieldsets = show_fieldsets
+
+class Soort_StaatView(WSModelView):
+    datamodel = WSSQLAInterface(Soort_Staat)
+    list_title="Referentielijst staatsoorten"
+    list_columns = ["omschrijving", "code"]
+    show_fieldsets = [
+        ("Soortvelden", {"fields": list_columns}),
+        flds_migratie_info
+    ]
+    edit_fieldsets = show_fieldsets
+    add_fieldsets = show_fieldsets
 
 
 class ABRViewMixin(object):
@@ -846,6 +952,10 @@ appbuilder.add_view(ABRMaterialenView,"Materialen uit ABR",icon="fa-dashboard",c
 appbuilder.add_view(ABRArtefactsoortenView,"Artefactsoorten uit ABR",icon="fa-dashboard",category="Beheer")
 appbuilder.add_view(ABRDeventerVormcodesView,"Deventer Vormcodes uit ABR",icon="fa-dashboard",category="Beheer")
 appbuilder.add_view(ABRDeventerBakselcodesView,"Deventer Bakselcodes uit ABR",icon="fa-dashboard",category="Beheer")
+appbuilder.add_view(Soort_PlantView,"Referentielijst plantsoorten",icon="fa-dashboard",category="Beheer")
+appbuilder.add_view(Soort_SchelpView,"Referentielijst schelpsoorten",icon="fa-dashboard",category="Beheer")
+appbuilder.add_view(Soort_DeelView,"Referentielijst deelsoorten",icon="fa-dashboard",category="Beheer")
+appbuilder.add_view(Soort_StaatView,"Referentielijst staatsoorten",icon="fa-dashboard",category="Beheer")
 
 
 appbuilder.add_view(ArchProjectView,"Projecten",icon="fa-dashboard",category="Projecten") #ArchTestProjectView
@@ -855,8 +965,8 @@ appbuilder.add_view(ArchVondstView,"Vondsten",icon="fa-dashboard",category="Proj
 appbuilder.add_view(ArchSpoorView,"Sporen",icon="fa-dashboard",category="Projecten")
 appbuilder.add_view(ArchVullingView,"Vullingen",icon="fa-dashboard",category="Projecten")
 appbuilder.add_view(ArchMonsterView,"Monsters",icon="fa-dashboard",category="Projecten")
-appbuilder.add_view_no_menu(ArchMonster_BotanieView,"Botaniedeterminaties Monsters")
-appbuilder.add_view_no_menu(ArchMonster_SchelpView,"Schelpdeterminaties Monsters")
+appbuilder.add_view(ArchMonster_BotanieView,"Botaniedeterminaties",icon="fa-dashboard",category="Projecten")
+appbuilder.add_view(ArchMonster_SchelpView,"Schelpdeterminaties",icon="fa-dashboard",category="Projecten")
  
 #### Artefacten
 appbuilder.add_view(ArchArtefactView,"Alle Artefacten",icon="fa-dashboard",category="Artefacten")

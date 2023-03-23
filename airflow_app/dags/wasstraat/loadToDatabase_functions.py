@@ -138,7 +138,7 @@ def loadAll():
             connection.execute('SET CONSTRAINTS ALL DEFERRED') # Does not seem to work. Work in progress https://stackoverflow.com/questions/48038807/sqlalchemy-orm-deferring-constraint-checking 
             #  ... work with transaction
             lst_tables = database.getAllTables()
-            lst_tables = ['Def_ABR', 'Def_Project', 'Def_Put', 'Def_Vondst', 'Def_Spoor', 'Def_Stelling', 'Def_Doos', 'Def_Standplaats', 'Def_Plaatsing', 'Def_Vlak', 'Def_Vindplaats', 'Def_Artefact', 'Def_Bestand', 'Def_Vulling', 'Def_Monster', 'Def_Monster_Botanie', 'Def_Monster_Schelp']
+            lst_tables = ['Def_ABR', 'Def_Project', 'Def_Put', 'Def_Vondst', 'Def_Spoor', 'Def_Stelling', 'Def_Doos', 'Def_Standplaats', 'Def_Plaatsing', 'Def_Vlak', 'Def_Vindplaats', 'Def_Artefact', 'Def_Bestand', 'Def_Vulling', 'Def_Monster', 'Def_Monster_Botanie', 'Def_Monster_Schelp', 'Def_DT_Soort_Plant', 'Def_DT_Soort_Schelp', 'Def_DT_Soort_Deel', 'Def_DT_Soort_Staat']
             logger.info("Loading all data for " + str(lst_tables))
             
             # To make a comma separated string with substrings between double quotes
@@ -147,7 +147,7 @@ def loadAll():
 
             # Truncate all tables
             logger.info("Deleting all data from " + str(lst_tables))
-            connection.execute('TRUNCATE "Def_artefact_abr", "Def_Bruikleen", ' + ','.join(lst) + ';')
+            connection.execute('TRUNCATE "Def_artefact_abr", "Def_Bruikleen", "Def_artefact_conservering", "Def_Conserveringsproject", ' + ','.join(lst) + ';')
 
             # Set table_lst to avoid relational integrity issues
             # Then load new data

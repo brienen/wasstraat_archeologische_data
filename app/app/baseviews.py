@@ -50,6 +50,12 @@ def fotoFormatter(fotos):
 def abrFormatter(abr):
     return f'<a href="#" data-toggle="tooltip" title="{str(abr.note if abr.note else "<Geen beschrijving>")}">{str(abr)}</a>'
 
+# <a href="#" data-toggle="tooltip" title="" data-original-title="Another tooltip">have a</a>
+def schelpFormatter(schelp):
+    milieu = 'Milieu: '
+    return f'<a href="#" data-toggle="tooltip" title="{milieu + str(schelp.milieu if schelp.milieu else "<Geen milieu-informatie>")}">{str(schelp)}</a>'
+
+
 def highlightFormatter(highlight):
     try:
         dct = ast.literal_eval(dct)
@@ -73,6 +79,7 @@ formatters_columns = {
     'abr_materiaal': lambda x: Markup(abrFormatter(x)) if x and not type(x) == str else x,
     'abr_submateriaal': lambda x: Markup(abrFormatter(x)) if x and not type(x) == str else x,
     'abr_extras': lambda x: Markup([abrFormatter(item) for item in x]) if x and not type(x) == str else x,
+    'dt_soort_schelp': lambda x: Markup(schelpFormatter(x)) if x and not type(x) == str else x, 
     'uri': lambda x: Markup(f'<a href="{str(x)}">{str(x)}</a>'),
     'fotos': lambda x: Markup(fotoFormatter(x)) if x else '',
     const.FULLTEXT_HIGHLIGHT_FIELD: lambda x: Markup(highlightFormatter(x)) if x else ''

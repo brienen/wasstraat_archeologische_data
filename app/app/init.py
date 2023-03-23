@@ -35,7 +35,7 @@ def initSequences():
                     else:
                         logger.warning(f"Could not set sequence {seq} to value {max_value}...")
             except Exception as e:
-                logger.error(f"Error while Initializing Sequences for table {table} with message {e}")
+                logger.error(f"Error while Initializing Sequences for table {table_name} with message {e}")
 
     except Exception as e:
         logger.error("Error while Initializing Sequences of flask database with message " + str(e))
