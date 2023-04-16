@@ -160,7 +160,7 @@ def parseFotobestanden():
                     doc['fileName'] = os.path.splitext(doc['fileName'])[0]
 
                 # Objectfoto's extraheren (Bevatten altijd een _H en beginnen met projectcode)
-                matchObj = re.match( r'^([a-zA-Z0-9]+)(_B?P(\d+))?_H(\d+)(_(\w+))?_(\d+)\.[a-z]{3}$', doc['fileName'], re.M|re.I)
+                matchObj = re.match( r'^([a-zA-Z0-9]+)(_B?P(\d+))?_H([a-zA-Z0-9]+)(_([a-zA-Z0-9]+))?_(\d+)\.[a-z]{3}$', doc['fileName'], re.M|re.I)
                 if matchObj:
                     doc['projectcd'] = projectcd
                     if matchObj.group(3) is not None: doc['putnr'] = matchObj.group(3).lstrip("0")
@@ -204,7 +204,7 @@ def parseFotobestanden():
 
 
                 # Match Tekeningen
-                matchObj = re.match( r'^([a-zA-Z0-9]+)_([ABCDEPT])(\d+).*\.[a-z]{3}$', doc['fileName'], re.M|re.I) 
+                matchObj = re.match( r'^([a-zA-Z0-9]+)_([ABCDEPT])([a-zA-Z0-9]+)(_LZW)?\.[a-z]{3}$', doc['fileName'], re.M|re.I) 
                 if matchObj:
                     doc['projectcd'] = projectcd
                     doc['tekeningcd'] = matchObj.group(2) + str(int(matchObj.group(3))).zfill(3)
@@ -233,7 +233,7 @@ def parseFotobestanden():
                     continue
 
                 # Match projectFoto's
-                matchObj = re.match( r'^([a-zA-Z0-9]+)_([FG])(\d+).*\.[a-z]{3}$', doc['fileName'], re.M|re.I)
+                matchObj = re.match( r'^([a-zA-Z0-9]+)_([FG])([a-zA-Z0-9]+).*\.[a-z]{3}$', doc['fileName'], re.M|re.I)
                 if matchObj:
                     doc['projectcd'] = projectcd       
                     doc['fotonr'] = matchObj.group(3).lstrip("0")
@@ -255,7 +255,8 @@ def parseFotobestanden():
             # Rapporten hebben allemaal filenaam die begint met DAR of DAN
                 matchObj = re.match( r'^(DAN|DAR)\s*([0-9]{2,3}).*', doc['rapportnr'], re.M|re.I)
                 if matchObj:
-                    doc['rapportnr'] = matchObj.group(1) + matchObj.group(2)        
+                    doc['rapportnr'] = matchObj.group(1) + matchObj.group(2)   
+                    doc['key'] = 'R' + doc['rapportnr']     
                     doc['soort'] = 'Rapport' 
                     doc['fototype'] = 'R' 
                     doc['bestandsoort'] = const.RAPP_ARCHEOLOGISCHE_RAPPORTAGE if 'DAR' in str(doc['rapportnr']) else const.RAPP_ARCHEOLOGISCHE_NOTITIE

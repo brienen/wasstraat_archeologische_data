@@ -9,7 +9,7 @@ from flask_appbuilder import ModelView
 from wtforms import StringField
 
 from app import db, appbuilder
-from models import Soort_Staat, Soort_Deel, Soort_Schelp, Soort_Plant, Conserveringsproject, Bestand, Tekening, Rapportage , Aardewerk, Stelling, Doos, Artefact, Spoor, Project,Put, Vondst, Vlak, DiscrArtefactsoortEnum, Dierlijk_Bot, Glas, Hout, Bouwaardewerk, Kleipijp, Leer, Menselijk_Bot, Metaal, Munt, Schelp, Steen, Textiel, Vulling, Opgravingsfoto, Objectfoto, Veldtekening, Overige_foto, Monster, Monster_Botanie, Monster_Schelp, Objecttekening, Overige_tekening, ABR, Partij, Bruikleen
+from models import Sfeerfoto, Soort_Staat, Soort_Deel, Soort_Schelp, Soort_Plant, Conserveringsproject, Bestand, Tekening, Rapportage , Aardewerk, Stelling, Doos, Artefact, Spoor, Project,Put, Vondst, Vlak, DiscrArtefactsoortEnum, Dierlijk_Bot, Glas, Hout, Bouwaardewerk, Kleipijp, Leer, Menselijk_Bot, Metaal, Munt, Schelp, Steen, Textiel, Vulling, Opgravingsfoto, Objectfoto, Veldtekening, Overige_foto, Monster, Monster_Botanie, Monster_Schelp, Objecttekening, Overige_tekening, ABR, Partij, Bruikleen
 from widgets import MediaListWidget
 from baseviews import WSModelView, WSGeoModelView, fieldDefinitionFactory, Select2Many400Widget, WSModelViewMixin
 from interface import WSSQLAInterface, WSGeoSQLAInterface
@@ -142,6 +142,7 @@ from models import bestand_tupels
 lst_all_bestanden = [b for b in bestand_tupels] 
 lst_opgravingsfoto = [const.FOTO_OPGRAVINGSFOTO]
 lst_objectfoto = [const.FOTO_OBJECTFOTO]
+lst_sfeerfoto = [const.FOTO_SFEERFOTO]
 lst_veldtekening = [const.TEK_VELDTEKENING, const.TEK_OVERZICHTSTEKENING]
 lst_archrapportage = [const.RAPP_ARCHEOLOGISCHE_RAPPORTAGE, const.RAPP_ARCHEOLOGISCHE_NOTITIE]
 lst_overigerapportage = [const.RAPP_CONSERVERINGSRAPPORT, const.RAPP_OVERIGE_RAPPORTAGE]
@@ -151,7 +152,7 @@ lst_overigetekeningen = [const.TEKENING,
     const.TEK_UITWERKINGSTEKENING,
     const.TEK_OVERIGE, 
     const.TEK_VELDTEKENING_PUBL]
-lst_all_getoond = lst_opgravingsfoto + lst_objectfoto + lst_veldtekening + lst_archrapportage + lst_overigerapportage + lst_objecttekening + lst_overigetekeningen
+lst_all_getoond = lst_opgravingsfoto + lst_objectfoto + lst_veldtekening + lst_archrapportage + lst_overigerapportage + lst_objecttekening + lst_overigetekeningen + lst_sfeerfoto
 lst_overige = list(set(lst_all_bestanden) - set(lst_all_getoond))
 
 
@@ -226,6 +227,14 @@ class ArchOpgravingFotoView(ArchBestandView):
     list_title = "Opgravingsfoto's"
     for typ in lst_opgravingsfoto:
         ArchBestandView.view_mapper.update({typ: 'ArchOpgravingFotoView'})
+
+class ArchSfeerFotoView(ArchBestandView):
+    datamodel = WSSQLAInterface(Sfeerfoto)
+    base_filters = [['bestandsoort', FilterBestandIN, [lst_sfeerfoto]]]
+    list_title = "Sfeerfoto's"
+    for typ in lst_sfeerfoto:
+        ArchBestandView.view_mapper.update({typ: 'ArchSfeerFotoView'})
+
 
 class ArchObjectFotoView(ArchBestandView):
     datamodel = WSSQLAInterface(Objectfoto)
@@ -998,6 +1007,7 @@ appbuilder.add_view(ArchPartijView,"Partijen (Bruiklenen/Conserveringsprojecten)
 appbuilder.add_view(ArchBestandView,"Alle Bestanden",icon="fa-dashboard",category="Media",)
 appbuilder.add_view(ArchObjectFotoView,"Objectfoto's",icon="fa-dashboard",category="Media")
 appbuilder.add_view(ArchOpgravingFotoView,"Opgravingsfoto's",icon="fa-dashboard",category="Media")
+appbuilder.add_view(ArchSfeerFotoView,"Sfeerfoto's",icon="fa-dashboard",category="Media")
 appbuilder.add_view(ArchVeldtekeningView,"Veldtekeningen",icon="fa-dashboard",category="Media")
 appbuilder.add_view(ArchObjecttekeningenView,"Objecttekeningen",icon="fa-dashboard",category="Media")
 appbuilder.add_view(ArchOverigetekeningenView,"Overige Tekeningen",icon="fa-dashboard",category="Media")

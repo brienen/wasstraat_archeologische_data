@@ -82,8 +82,22 @@ def enhanceAllAttributes():
                 #clean Type Voorwerp
                 if 'typevoorwerp' in doc:
                     doc['typevoorwerp'] =  str(doc['typevoorwerp']).replace('?', '').strip().title()  
-                elif 'spijker' in str(doc['table']).lower():
-                    doc['typevoorwerp'] = 'Spijker'
+
+                if 'brondata' in doc and 'table' in doc['brondata']:
+                    if 'spijker' in str(doc['brondata']['table']).lower():
+                        doc['typevoorwerp'] = 'Spijker'
+
+                #clean Type Voorwerp
+                if 'soort' in doc and doc['soort'] == 'Artefact' and not 'artefactsoort' in doc and 'typevoorwerp' in doc:
+                    if doc['typevoorwerp'] == 'Kleipijp':
+                        doc['artefactsoort'] = 'Kleipijp'
+                    matchObj = re.match( r'^[a-z]{1,2}(_|-)', doc['typevoorwerp'], re.M|re.I)
+                    if matchObj:
+                        doc['artefactsoort'] = 'Aardewerk'
+                    matchObj = re.match( r'^gl(_|-)', doc['typevoorwerp'], re.M|re.I)
+                    if matchObj:
+                        doc['artefactsoort'] = 'Glas'
+                    
 
                 #clean Functie Voorwerp
                 if 'nederlandse_naam' in doc:
@@ -106,11 +120,16 @@ def enhanceAllAttributes():
                     doc['rapportnr'] = str(doc['rapportnr']).replace(' ', '')
                     if str(doc['rapportnr']).isdigit(): # Some DAR-numbers do not contain DAR in front of code
                         if 'DARnr' in doc['brondata'].keys():
-                            doc['rapportnr'] = 'DAR' + doc['rapportnr']
+                            doc['rapportnr'] = 'DAR' + str(int(doc['rapportnr'])).zfill(3)
                         elif 'DANnr' in doc['brondata'].keys():
-                            doc['rapportnr'] = 'DAN' + doc['rapportnr']
+                            doc['rapportnr'] = 'DAN' + str(int(doc['rapportnr'])).zfill(3)
                         else:
                             doc['rapportnr'] = ''
+                    else:
+                        matchObj = re.match( r'^(DAN|DAR)\s*([0-9]+)$', doc['rapportnr'], re.M|re.I)
+                        if matchObj:
+                            doc['rapportnr'] =  matchObj.group(1) + str(int(matchObj.group(2))).zfill(3)
+
 
 
                 ut.convertToInt(doc, 'putnr', True) 

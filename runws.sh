@@ -50,8 +50,9 @@ git commit -m "$3"
 git push --all
 git push --tags
 #docker-compose build postgres flask airflow
+docker login
 docker buildx build --no-cache --platform linux/amd64,linux/arm64 --builder mybuilder -f ./services/flask/Dockerfile -t brienen/wasstraat_flask:$2 --push .
-docker buildx build --no-cache --platform linux/amd64,linux/arm64 --builder mybuilder -f ./services/flask/Dockerfile-uwsgi -t brienen/wasstraat_flask-uwsgi:$2 --push .
+#docker buildx build --no-cache --platform linux/amd64,linux/arm64 --builder mybuilder -f ./services/flask/Dockerfile-uwsgi -t brienen/wasstraat_flask-uwsgi:$2 --push .
 #docker tag brienen/wasstraat_flask:$2 wasstraat_flask:$2 
 #docker tag brienen/wasstraat_flask:$2 wasstraat_flask:latest
 #docker push brienen/wasstraat_flask:$2
@@ -66,7 +67,7 @@ docker buildx build --no-cache --platform linux/amd64,linux/arm64 --builder mybu
 #docker tag wasstraat_airflow:latest brienen/wasstraat_airflow:$2 
 #docker push brienen/wasstraat_airflow:$2
 
-docker buildx build --no-cache --platform linux/amd64,linux/arm64 --builder mybuilder -f ./services/apache/Dockerfile -t brienen/wasstraat_apache:$2 --push .
+#docker buildx build --no-cache --platform linux/amd64,linux/arm64 --builder mybuilder -f ./services/apache/Dockerfile -t brienen/wasstraat_apache:$2 --push .
 ;;
 
 backup)

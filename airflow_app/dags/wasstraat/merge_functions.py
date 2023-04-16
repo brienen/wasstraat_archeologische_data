@@ -150,6 +150,9 @@ def mergeSoort(soort):
             aggr.insert(-1, {'$addFields': {'soort': 'Bestand'}})
             aggr.insert(-1, {'$addFields': {'bestandsoort_XX': soort}})
 
+        if soort == 'Artefact':
+            aggr.insert(-1, { '$set': {"artefactsoort": { '$cond': [ { '$not': ["$artefactsoort"] }, "Onbekend", "$artefactsoort" ] }}})
+
         logger.info("Calling aggregation: " + str(aggr))
         collection.aggregate(aggr, allowDiskUse=True)
         
