@@ -74,7 +74,8 @@ backup)
 DT=$(date +"%Y-%m-%d_%H-%M-%S")
 echo "Backing up Postgres and Mongo with timestamp $DT"
 docker-compose stop flask airflow
-docker exec -u postgres -w /backup wasstraat_postgres bash -c "pg_dump -v -F t -f postgres_$DT.tar flask"
+
+docker exec -u airflow -w /backup wasstraat_postgres bash -c "pg_dump -v -F t -f postgres_$DT.tar flask"
 docker exec -w /backup wasstraat_mongo bash -c "mongodump --uri mongodb://\$MONGO_INITDB_ROOT_USERNAME:\$MONGO_INITDB_ROOT_PASSWORD@localhost:27017/\$DB_STAGING?authSource=admin --out mongo_$DT"
 docker exec -w /backup wasstraat_mongo bash -c "mongodump --uri mongodb://\$MONGO_INITDB_ROOT_USERNAME:\$MONGO_INITDB_ROOT_PASSWORD@localhost:27017/\$DB_FILES?authSource=admin --out mongo_$DT"
 docker exec -w /backup wasstraat_mongo bash -c "mongodump --uri mongodb://\$MONGO_INITDB_ROOT_USERNAME:\$MONGO_INITDB_ROOT_PASSWORD@localhost:27017/\$DB_ANALYSE?authSource=admin --out mongo_$DT"
@@ -87,6 +88,20 @@ docker exec -u postgres -w /backup wasstraat_postgres bash -c "pg_restore -Ft -c
 docker exec -w /backup wasstraat_mongo bash -c "mongorestore --drop --uri mongodb://\$MONGO_INITDB_ROOT_USERNAME:\$MONGO_INITDB_ROOT_PASSWORD@localhost:27017/?authSource=admin mongo_$2"
 ;;
 
+export)
+DT=$(date +"%Y-%m-%d_%H-%M-%S")
+TABLES="Def_Vulling Def_Conserveringsproject Def_artefact_conservering Def_DT_Soort_Plant Def_Project Def_Put Def_Spoor Def_Vondst Def_Plaatsing Def_Vlak Def_artefact_abr Def_Doos Def_Standplaats Def_Bruikleen Def_Partij Def_Vindplaats Def_Artefact Def_ABR Def_Stelling Def_DT_Soort_Schelp Def_Bestand Def_DT_Soort_Deel Def_DT_Soort_Staat Def_Monster Def_Monster_Botanie Def_Monster_Schelp"
+echo "Exporting Postgres data to CSV with timestamp $DT"
+docker-compose stop flask airflow
+
+docker exec -u airflow -w /backup wasstraat_postgres bash -c "mkdir postgres_$DT"
+for table in $TABLES
+do
+   echo Exporting table $table
+   tb="public.\"$table\""
+   docker exec -u airflow wasstraat_postgres bash -c "psql -t -d flask -c 'COPY $tb TO \$\$/backup/postgres_$DT/$table.csv\$\$ DELIMITER \$\$;\$\$ CSV HEADER QUOTE \$\$\"\$\$ ESCAPE \$\$\"\$\$; '"
+done
+;;
 
 
 
