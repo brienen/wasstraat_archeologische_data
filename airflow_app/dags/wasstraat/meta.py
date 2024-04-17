@@ -418,7 +418,9 @@ wasstraat_model = {
         SET_KEYS_PIPELINES: [[ 
             { '$match': { 'soort': "Rapport" } },
             { '$addFields': {'key': {'$concat': ["R", {'$toString': "$fileName"}]}}},  		
+            { '$addFields': {'key': {'$concat': ["R", {'$toString': "$rapportnr"}]}}},  		
             { '$addFields': {'key_rapport': {'$concat': ["R", {'$toString': "$fileName"}]}}},  		
+            { '$addFields': {'key_rapport': {'$concat': ["R", {'$toString': "$rapportnr"}]}}},  		
             { '$addFields': {'key_project': { '$concat': [ "P", "$projectcd"]}}}, 
         ]]
   },

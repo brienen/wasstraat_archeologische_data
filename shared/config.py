@@ -93,7 +93,7 @@ try:
 
    FILE_WORD_ICON = os.getenv("FILE_WORD_ICON") if os.getenv("FILE_WORD_ICON") else '/input/digifotos/microsoft-word-logo.jpg'
    FILE_ABREXCEL = os.getenv("FILE_ABREXCEL") if os.getenv("FILE_ABREXCEL") else '/input/referentietabellen/abr_versie_01122018_input.xlsx'
-   FILE_EXTRA_PROJECTS = os.getenv("FILE_EXTRA_PROJECTS") if os.getenv("FILE_EXTRA_PROJECTS") else '/input/Delf-IT/Extra_projecten_tabel_OPGRAVINGEN.xlsx'
+   FILE_EXTRA_PROJECTS = os.getenv("FILE_EXTRA_PROJECTS") if os.getenv("FILE_EXTRA_PROJECTS") else '/input/delfit/Extra_projecten_tabel_OPGRAVINGEN.xlsx'
    FILE_IMPORT_FILES_EXCEL = os.getenv("FILE_IMPORT_FILES_EXCEL") if os.getenv("FILE_IMPORT_FILES_EXCEL") else '/input/referentietabellen/Alle Bestanden Archeologisch Depot.xlsx'
    ES_HOST = os.getenv("ES_HOST") if os.getenv("ES_HOST") else 'http://elasticsearch:9200'
 except KeyError: 
