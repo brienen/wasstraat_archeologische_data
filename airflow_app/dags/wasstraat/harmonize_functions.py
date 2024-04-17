@@ -159,6 +159,17 @@ def parseFotobestanden():
                 if not os.path.splitext(os.path.splitext(doc['fileName'])[0])[1] == '':
                     doc['fileName'] = os.path.splitext(doc['fileName'])[0]
 
+                # Alle word-bestanden worden als Overige Rapport ingelezen 
+                if doc['fileType'] and str(doc['fileType']).lower() in ['.doc', '.docx']:
+                    doc['rapportnr'] = doc['fullFileName']   
+                    doc['key'] = 'R' + doc['fullFileName']        
+                    doc['soort'] = 'Rapport' 
+                    doc['fototype'] = 'R' 
+                    doc['bestandsoort'] = const.RAPP_OVERIGE_RAPPORTAGE
+                    analyseCol.replace_one({"_id": doc['_id']}, doc, upsert=True)
+                    continue
+
+
                 # Objectfoto's extraheren (Bevatten altijd een _H en beginnen met projectcode)
                 matchObj = re.match( r'^([a-zA-Z0-9]+)(_B?P(\d+))?_H([a-zA-Z0-9]+)(_([a-zA-Z0-9]+))?_(\d+)\.[a-z]{3}$', doc['fileName'], re.M|re.I)
                 if matchObj:
@@ -237,17 +248,6 @@ def parseFotobestanden():
                     continue
 
 
-                # Match Tekeningen
-                if 'tekening' in str(doc['fileName']).lower() and not 'aantekening' in str(doc['fileName']).lower():
-                    doc['projectcd'] = projectcd
-                    doc['soort'] = 'Tekening' 
-                    doc['bestandsoort'] = const.TEK_OVERIGE
-                    doc['fototype'] = 'T'
-                    doc['tekeningcd'] = doc['fullFileName']
-
-                    analyseCol.replace_one({"_id": doc['_id']}, doc, upsert=True)
-                    continue
-
 
                 # Match projectFoto's
                 matchObj = re.match( r'^([a-zA-Z0-9]+)_([FG])([a-zA-Z0-9]+).*\.[a-z]{3}$', doc['fileName'], re.M|re.I)
@@ -279,6 +279,21 @@ def parseFotobestanden():
                     doc['bestandsoort'] = const.RAPP_ARCHEOLOGISCHE_RAPPORTAGE if 'DAR' in str(doc['rapportnr']) else const.RAPP_ARCHEOLOGISCHE_NOTITIE
                     analyseCol.replace_one({"_id": doc['_id']}, doc, upsert=True)
                     continue
+
+
+
+
+                # Match Tekeningen
+                if 'tekening' in str(doc['fileName']).lower() and not 'aantekening' in str(doc['fileName']).lower():
+                    doc['projectcd'] = projectcd
+                    doc['soort'] = 'Tekening' 
+                    doc['bestandsoort'] = const.TEK_OVERIGE
+                    doc['fototype'] = 'T'
+                    doc['tekeningcd'] = doc['fullFileName']
+
+                    analyseCol.replace_one({"_id": doc['_id']}, doc, upsert=True)
+                    continue
+
 
                 # Non classified photos
                 doc['projectcd'] = projectcd

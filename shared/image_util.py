@@ -94,8 +94,16 @@ def adjustAndSaveFile(fullfilename, fs, collection):
         if 'pdf' in file_extension.lower():
             images = pdf2image.convert_from_path(fullfilename)
             image = images[0]
-            image_dict_sml, image_dict_med, image_dict_big = putImageInGrid(image, fullfilename, fs, dir, projectcd, pdf=True)    
+            image_dict_sml, image_dict_med, image_dict_big = putImageInGrid(image, fullfilename, fs, dir, projectcd, filetype='.pdf')    
             mime_type = 'application/pdf'
+        elif file_extension.lower() == '.docx':
+            image = Image.open(config.FILE_WORD_ICON)
+            image_dict_sml, image_dict_med, image_dict_big = putImageInGrid(image, fullfilename, fs, dir, projectcd, filetype='.docx')    
+            mime_type = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        elif file_extension.lower() == '.doc':
+            image = Image.open(config.FILE_WORD_ICON)
+            image_dict_sml, image_dict_med, image_dict_big = putImageInGrid(image, fullfilename, fs, dir, projectcd, filetype='.doc')    
+            mime_type = 'application/msword'
         else:
             image = Image.open(fullfilename, 'r')
             image_dict_sml, image_dict_med, image_dict_big = putImageInGrid(image, fullfilename, fs, dir, projectcd)    
@@ -120,7 +128,7 @@ def adjustAndSaveFile(fullfilename, fs, collection):
 
 
 
-def putImageInGrid(image: Image, fullfilename, fs, dir, projectcd, pdf=False):
+def putImageInGrid(image: Image, fullfilename, fs, dir, projectcd, filetype='.jpg'):
     try:
         basename = os.path.basename(fullfilename)
         basename_noext, file_extension = os.path.splitext(basename)
@@ -162,14 +170,14 @@ def putImageInGrid(image: Image, fullfilename, fs, dir, projectcd, pdf=False):
         file_id_med = os.path.join(dir, basename_noext + '-med.jpg')
         image_dict_med['image'].save(os.path.join(config.AIRFLOW_OUTPUT_MEDIA, file_id_med.lstrip('/\\')))
 
-        if not pdf: 
-            file_id = os.path.join(dir, basename_noext + '.jpg')
-            image_dict_big['image'].save(os.path.join(config.AIRFLOW_OUTPUT_MEDIA, file_id.lstrip('/\\')))
-        else:
-            file_id = os.path.join(dir, basename_noext + '.pdf')
+        if filetype != '.jpg': 
+            file_id = os.path.join(dir, basename_noext + filetype)
             filename_to = os.path.join(config.AIRFLOW_OUTPUT_MEDIA, file_id.lstrip('/\\'))
             if not fullfilename == filename_to:
                 shutil.copy(fullfilename, filename_to)
+        else:
+            file_id = os.path.join(dir, basename_noext + '.jpg')
+            image_dict_big['image'].save(os.path.join(config.AIRFLOW_OUTPUT_MEDIA, file_id.lstrip('/\\')))
     
         return file_id_sml, file_id_med, file_id
 

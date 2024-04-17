@@ -840,7 +840,7 @@ class ArchProjectView(WSGeoModelView):
     #related_views = [ArchPutView, ArchVondstView, ArchArtefactView]
     base_order = ("projectcd", "asc")
     list_title = "Projecten"
-    related_views = [ArchArtefactView, ArchDoosView, ArchPutView, ArchSpoorView, ArchVondstView, ArchMonsterView, ArchOpgravingFotoView, ArchVeldtekeningView, ArchObjectFotoView, ArchObjecttekeningenView, ArchOverigetekeningenView, ArchRapportageView, ArchOverigebestandenView]
+    related_views = [ArchArtefactView, ArchDoosView, ArchPutView, ArchSpoorView, ArchVondstView, ArchMonsterView, ArchOpgravingFotoView, ArchVeldtekeningView, ArchObjectFotoView, ArchObjecttekeningenView, ArchOverigetekeningenView, ArchRapportageView, ArchOverigeRapportageView, ArchOverigebestandenView]
     search_exclude_columns = ["location", "artefacten", "fotos"] 
 
     show_fieldsets = [

@@ -101,7 +101,19 @@ class UploadView(BaseView):
                             f.save(fullfilename)
                             images = pdf2image.convert_from_path(fullfilename)
                             image = images[0]
-                            imageThumbID, imageMiddleID, imageID = image_util.putImageInGrid(image, fullfilename, None, dir, "project", pdf=True)
+                            imageThumbID, imageMiddleID, imageID = image_util.putImageInGrid(image, fullfilename, None, dir, "project", filetype='.pdf')
+                        elif file_extension.lower() == '.docx':
+                            image = Image.open(config.FILE_WORD_ICON)
+                            imageThumbID, imageMiddleID, imageID = image_util.putImageInGrid(image, fullfilename, None, dir, "project", filetype='.docx')    
+                            mime_type = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+                            filetype = '.docx'
+                            f.save(fullfilename)
+                        elif file_extension.lower() == '.doc':
+                            image = Image.open(config.FILE_WORD_ICON)
+                            imageThumbID, imageMiddleID, imageID = image_util.putImageInGrid(image, fullfilename, None, dir, "project", filetype='.doc')    
+                            mime_type = 'application/msword'
+                            filetype = '.doc'
+                            f.save(fullfilename)
                         else:
                             image = Image.open(request.files['file'].stream)
                             imageThumbID, imageMiddleID, imageID = image_util.putImageInGrid(image, fullfilename, None, dir, "project")
