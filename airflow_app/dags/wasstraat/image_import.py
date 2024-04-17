@@ -3,10 +3,10 @@ import os
 import re
 import shared.config as config
 import pymongo
-from pymongo import WriteConcern, InsertOne
-from pdf2image import convert_from_path, convert_from_bytes
+from pymongo import InsertOne
 import gridfs
 import random
+import pandas as pd
 
 # Import app code
 import shared.image_util as image_util
@@ -20,6 +20,19 @@ def getImageNamesFromDir(dir):
     lst = [file for file in lst if ("velddocument" in file.lower() or "fotos" in file.lower() or "tekening" in file.lower() or "DAN" in file or "DAR" in file)]
     lst = list(set(lst))
     return lst 
+
+
+def getImageNamesFromExcelAndDir(dir):
+    # get list from excel
+    df = pd.read_excel(config.FILE_IMPORT_FILES_EXCEL)
+    df = df[df['wel/niet'] == 1]
+    df['fulldir'] = df['Dir'] + '/' + df['Bestand']
+    excel_lst = df['fulldir'].tolist()
+    
+    # get files from dir
+    dir_lst = [os.path.join(dp, f) for dp, dn, filenames in os.walk(dir) for f in filenames if os.path.splitext(f)[1].lower() in config.IMAGE_EXTENSIONS] 
+    
+    return list(set(excel_lst).intersection(set(dir_lst)).difference(set(getImageNamesFromDir(dir))))
 
 
 def importImages(index, of):   
@@ -72,7 +85,7 @@ def importImages(index, of):
 
 
 def getAndStoreImageFilenames():
-    lst_filenames = getImageNamesFromDir(config.AIRFLOW_INPUT_IMAGES) + getImageNamesFromDir(config.AIRFLOW_INPUT_RAPPORTEN)
+    lst_filenames = getImageNamesFromDir(config.AIRFLOW_INPUT_IMAGES) + getImageNamesFromDir(config.AIRFLOW_INPUT_RAPPORTEN) + getImageNamesFromExcelAndDir(config.AIRFLOW_INPUT_IMAGES)
     random.shuffle(lst_filenames) # Shuffle to make sure not all big files are at the end
     logger.info(f'Found {len(lst_filenames)} unique image files for processing...')
 

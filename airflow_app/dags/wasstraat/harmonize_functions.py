@@ -207,7 +207,11 @@ def parseFotobestanden():
                 matchObj = re.match( r'^([a-zA-Z0-9]+)_([ABCDEPT])([a-zA-Z0-9]+)(_LZW)?\.[a-z]{3}$', doc['fileName'], re.M|re.I) 
                 if matchObj:
                     doc['projectcd'] = projectcd
-                    doc['tekeningcd'] = matchObj.group(2) + str(int(matchObj.group(3))).zfill(3)
+                    try:
+                        doc['tekeningcd'] = matchObj.group(2) + str(int(matchObj.group(3))).zfill(3)
+                    except:
+                        doc['tekeningcd'] = matchObj.group(2) + matchObj.group(3)
+
                     doc['soort'] = 'Tekening' 
                     
                     tektype = matchObj.group(2)
@@ -232,6 +236,19 @@ def parseFotobestanden():
                     analyseCol.replace_one({"_id": doc['_id']}, doc, upsert=True)
                     continue
 
+
+                # Match Tekeningen
+                if 'tekening' in str(doc['fileName']).lower() and not 'aantekening' in str(doc['fileName']).lower():
+                    doc['projectcd'] = projectcd
+                    doc['soort'] = 'Tekening' 
+                    doc['bestandsoort'] = const.TEK_OVERIGE
+                    doc['fototype'] = 'T'
+                    doc['tekeningcd'] = doc['fullFileName']
+
+                    analyseCol.replace_one({"_id": doc['_id']}, doc, upsert=True)
+                    continue
+
+
                 # Match projectFoto's
                 matchObj = re.match( r'^([a-zA-Z0-9]+)_([FG])([a-zA-Z0-9]+).*\.[a-z]{3}$', doc['fileName'], re.M|re.I)
                 if matchObj:
@@ -252,8 +269,8 @@ def parseFotobestanden():
                     continue
 
 
-            # Rapporten hebben allemaal filenaam die begint met DAR of DAN
-                matchObj = re.match( r'^(DAN|DAR)\s*([0-9]{2,3}).*', doc['rapportnr'], re.M|re.I)
+                # Rapporten hebben allemaal filenaam die begint met DAR of DAN
+                matchObj = re.match( r'^(DAN|DAR)\s*([0-9]{2,3}).*', doc['fileName'], re.M|re.I)
                 if matchObj:
                     doc['rapportnr'] = matchObj.group(1) + matchObj.group(2)   
                     doc['key'] = 'R' + doc['rapportnr']     
@@ -262,15 +279,16 @@ def parseFotobestanden():
                     doc['bestandsoort'] = const.RAPP_ARCHEOLOGISCHE_RAPPORTAGE if 'DAR' in str(doc['rapportnr']) else const.RAPP_ARCHEOLOGISCHE_NOTITIE
                     analyseCol.replace_one({"_id": doc['_id']}, doc, upsert=True)
                     continue
+
                 # Non classified photos
-                else:
-                    doc['projectcd'] = projectcd
-                    doc['fototype'] = 'N' 
-                    doc['soort'] = 'Bestand' 
-                    doc['bestandsoort'] = const.BESTAND_OVERIGE
-                    analyseCol.replace_one({"_id": doc['_id']}, doc, upsert=True)
+                doc['projectcd'] = projectcd
+                doc['fototype'] = 'N' 
+                doc['soort'] = 'Bestand' 
+                doc['bestandsoort'] = const.BESTAND_OVERIGE
+                analyseCol.replace_one({"_id": doc['_id']}, doc, upsert=True)
+
             except Exception as err:
-                msg = "Unknown error while collecting image info with message: " + str(err)
+                msg = f"Unknown error while collecting image {doc['fileName']} with message: " + str(err)
                 logger.error(msg)    
     
     finally:

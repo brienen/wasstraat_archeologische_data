@@ -91,7 +91,9 @@ try:
 
    AIRFLOW_OUTPUT_MEDIA = os.getenv("AIRFLOW_OUTPUT_MEDIA") if os.getenv("AIRFLOW_OUTPUT_MEDIA") else "/output/archeomedia"
 
+   FILE_WORD_ICON = os.getenv("FILE_WORD_ICON") if os.getenv("FILE_WORD_ICON") else '/input/digifotos/microsoft-word-logo.jpg'
    FILE_ABREXCEL = os.getenv("FILE_ABREXCEL") if os.getenv("FILE_ABREXCEL") else '/input/referentietabellen/abr_versie_01122018_input.xlsx'
+   FILE_IMPORT_FILES_EXCEL = os.getenv("FILE_IMPORT_FILES_EXCEL") if os.getenv("FILE_IMPORT_FILES_EXCEL") else '/input/referentietabellen/Alle Bestanden Archeologisch Depot.xlsx'
    ES_HOST = os.getenv("ES_HOST") if os.getenv("ES_HOST") else 'http://elasticsearch:9200'
 except KeyError: 
    logger.error("Cannot read environment variables (ie. POSTGRES_DB, POSTGRES_USER, POSTGRES_PASSWORD) needed to connect to the database. Add them to your .env files")
@@ -128,7 +130,7 @@ IMG_UPLOAD_URL = "/static/uploads/"
 IMG_SIZE = (300, 200, True)
 IMAGE_BIG_SIZE = (5000, 5000)
 
-IMAGE_EXTENSIONS = [".jpg",".jpeg", ".gif",".png",".tif", ".psd", ".pdf"]
+IMAGE_EXTENSIONS = [".jpg",".jpeg", ".gif",".png",".tif", ".psd", ".pdf", ".jp2"]
 IMAGE_SIZE_THUMB = (300, 200)
 IMAGE_SIZE_MIDDLE = (1500, 1000)
 IMAGE_SIZE_BIGGEST = (7000, 7000)

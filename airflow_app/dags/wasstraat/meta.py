@@ -417,7 +417,18 @@ wasstraat_model = {
         MOVEANDMERGE_MERGE: True,
         SET_KEYS_PIPELINES: [[ 
             { '$match': { 'soort': "Rapport" } },
-            { '$addFields': {'key': {'$concat': ["R", {'$toString': "$rapportnr"}]}}},  		
+            { '$addFields': {'key': {'$concat': ["R", {'$toString': "$fileName"}]}}},  		
+            { '$addFields': {'key_rapport': {'$concat': ["R", {'$toString': "$fileName"}]}}},  		
+            { '$addFields': {'key_project': { '$concat': [ "P", "$projectcd"]}}}, 
+        ]]
+  },
+  "Bestand": {
+        STAGING_COLLECTION: config.COLL_STAGING_DIGIFOTOS,
+        HARMONIZE_PIPELINES: [[]],
+        MOVEANDMERGE_MOVE: True,
+        SET_KEYS_PIPELINES: [[ 
+            { '$match': { 'soort': "Bestand" } },
+            { '$addFields': {'key': {'$concat': ["B", {'$toString': "$rapportnr"}]}}},  		
             { '$addFields': {'key_rapport': {'$concat': ["R", {'$toString': "$rapportnr"}]}}},  		
             { '$addFields': {'key_project': { '$concat': [ "P", "$projectcd"]}}}, 
         ]]

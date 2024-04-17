@@ -1219,6 +1219,11 @@ class Overige_Rapportage (Rapportage):
     __mapper_args__ = {'polymorphic_identity': const.RAPP_OVERIGE_RAPPORTAGE}
 
 
+class Overige_Bestanden (Bestand):
+    __tablename__ = 'Def_Bestand'
+    __table_args__ = {'extend_existing': True}
+    __mapper_args__ = {'polymorphic_identity': const.BESTAND_OVERIGE}
+
 
 
 
