@@ -32,11 +32,11 @@ services:
       - mongo
     volumes:
       # Production settings
-      # - /Volumes/Extreme SSD/Depot Projecten:/input/projecten
-      # - /Volumes/Extreme SSD/Depot Projecten:/input/images
+       - /Volumes/Extreme SSD/Depot Projecten nieuw:/input/projecten
+       - /Volumes/Extreme SSD/Depot Projecten nieuw:/input/images
       # Testing settings
-       - ./data/input/basefiles/projectdatabase/digidepot:/input/projecten
-       - ./data/input/basefiles/projectdatabase/digidepot:/input/images
+      # - ./data/input/basefiles/projectdatabase/digidepot:/input/projecten
+      # - ./data/input/basefiles/projectdatabase/digidepot:/input/images
        - ./data/input/basefiles/projectdatabase/rapporten:/input/rapporten
        - ./data/input/basefiles/projectdatabase/monsterdatabase:/input/monsterdatabase
        - ./data/input/basefiles/projectdatabase/Delf-IT:/input/delfit
@@ -137,6 +137,7 @@ services:
     environment:
       - xpack.security.enabled=false
       - discovery.type=single-node
+      - ES_JAVA_OPTS= -Xms512m -Xmx512m
     ulimits:
       memlock:
         soft: -1
