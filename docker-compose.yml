@@ -11,7 +11,7 @@ services:
     volumes:
       - wasstraat_postgres_volume:/data/postgres
       #- ./scripts/postgres/:/docker-entrypoint-initdb.d/
-      - /Users/arjen/stack/Wasstraat/backup:/backup
+      - /Users/arjen/stack2/Wasstraat/backup:/backup
     build: 
       dockerfile: ./services/postgres/Dockerfile
       context: .
@@ -90,7 +90,7 @@ services:
       - ./config/mongo.env
     volumes:
       - wasstraat_mongo_volume:/data/db
-      - /Users/arjen/stack/Wasstraat/backup:/backup
+      - /Users/arjen/stack2/Wasstraat/backup:/backup
     restart: unless-stopped
 
   jupyter:
