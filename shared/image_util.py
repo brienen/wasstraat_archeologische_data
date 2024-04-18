@@ -138,6 +138,8 @@ def putImageInGrid(image: Image, fullfilename, fs, dir, projectcd, filetype='.jp
         if 'lzw' in basename.lower() and 'tif' in file_extension.lower():
             image = ImageOps.grayscale(image)
             lzw = True
+        if 'png' in file_extension.lower():
+            image = image.convert('RGB')
 
         lst_images = []
         image_dict_big = image.copy()
