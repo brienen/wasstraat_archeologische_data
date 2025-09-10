@@ -28,6 +28,7 @@ services:
     depends_on:
       - postgres
       - mongo
+      - elasticsearch
     volumes:
       # Production settings
       # - /Volumes/Extreme SSD/Depot Projecten nieuw:/input/projecten
@@ -74,7 +75,8 @@ services:
     depends_on:
       - postgres
       - mongo
-      - redis
+      - redis      
+      - elasticsearch
     volumes:
       - /Users/arjen/stack2/Wasstraat/files/archeomedia:/output/archeomedia
 

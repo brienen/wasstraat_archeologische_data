@@ -6,6 +6,9 @@ while ! nc -z "$DB__HOST" "$DB__PORT"; do
   sleep 1
 done
 
+# Ensure script is executable
+chmod +x /opt/airflow/scripts/importMDB.sh
+
 # check on db if admin exists
 echo "Checking if admin user already exists..."
 SECURITY_ALREADY_INITIALIZED=$(cat /opt/airflow/extra/check_init.sql | psql -h ${DB__HOST} -p ${DB__PORT} -U ${DB__USERNAME} ${DB__NAME} -t | xargs | head -c 1)
