@@ -1,7 +1,5 @@
 # Wasstraat Archeologische Data
 
-
-
 Uitleggen wat het isWasstraat Archeologische Data
 
 Uitleggen Mongo Elastic

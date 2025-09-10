@@ -1,5 +1,3 @@
-version: "3"
-
 # All available services
 services:
   flask:
