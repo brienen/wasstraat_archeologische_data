@@ -33,9 +33,9 @@ COPY ./shared /app/app/shared
 ENV STATIC_PATH /app/app/static
 ENV STATIC_INDEX 1
 
-EXPOSE 5001
+EXPOSE 5051
 
 CMD gunicorn --worker-class gevent \
-  --bind 0.0.0.0:5001 \ 
+  --bind 0.0.0.0:5051 \ 
   --config ./gunicorn.conf.py \
   patched_app:app

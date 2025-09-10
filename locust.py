@@ -3,7 +3,7 @@ from pyquery import PyQuery
 import re
 
 class QuickstartUser(HttpUser):
-    host = "http://localhost:5000"
+    host = "http://localhost:5052"
     # Wait between 5 and 9 seconds per request per user
     wait_time = between(5, 9)
     

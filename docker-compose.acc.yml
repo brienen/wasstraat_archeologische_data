@@ -4,9 +4,9 @@ services:
     environment: 
       - env=prod
       - FLASK_DEBUG=1
-      - PORT=5001
+      - PORT=5051
     ports:
-      - 5001:5001
+      - 5051:5051
     build: 
       dockerfile: ./services/flask/Dockerfile
       context: .

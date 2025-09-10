@@ -33,8 +33,8 @@ COPY ./shared /app/app/shared
 ENV STATIC_PATH /app/app/static
 ENV STATIC_INDEX 1
 
-EXPOSE 5001
+EXPOSE 5051
 
-CMD uwsgi --http 0.0.0.0:5001 \
+CMD uwsgi --http 0.0.0.0:5051 \
   --ini uwsgi.ini \ 
   --module patched_app:app

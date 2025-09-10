@@ -30,11 +30,11 @@ services:
       - mongo
     volumes:
       # Production settings
-       - /Volumes/Extreme SSD/Depot Projecten nieuw:/input/projecten
-       - /Volumes/Extreme SSD/Depot Projecten nieuw:/input/images
+      # - /Volumes/Extreme SSD/Depot Projecten nieuw:/input/projecten
+      # - /Volumes/Extreme SSD/Depot Projecten nieuw:/input/images
       # Testing settings
-      # - ./data/input/basefiles/projectdatabase/digidepot:/input/projecten
-      # - ./data/input/basefiles/projectdatabase/digidepot:/input/images
+       - ./data/input/basefiles/projectdatabase/digidepot:/input/projecten
+       - ./data/input/basefiles/projectdatabase/digidepot:/input/images
        - ./data/input/basefiles/projectdatabase/rapporten:/input/rapporten
        - ./data/input/basefiles/projectdatabase/monsterdatabase:/input/monsterdatabase
        - ./data/input/basefiles/projectdatabase/Delf-IT:/input/delfit
@@ -70,7 +70,7 @@ services:
       - ./config/mongo.env
       - ./config/redis.env
     ports:
-      - '5001:5001'
+      - '5051:5051'
     depends_on:
       - postgres
       - mongo
@@ -125,7 +125,7 @@ services:
     volumes:
       - /Users/arjen/stack2/Wasstraat/files:/usr/local/apache2/htdocs
     ports:
-      - '5000:5000'
+      - '5052:5052'
 
 
 # docker pull docker.elastic.co/elasticsearch/elasticsearch:8.6.1

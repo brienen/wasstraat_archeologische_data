@@ -5,9 +5,9 @@ services:
     environment: 
       - env=prod
       - FLASK_DEBUG=0
-      - PORT=5001
+      - PORT=5051
     ports:
-      - 5001:5001
+      - 5051:5051
 
   #postgres:
   #  image: brienen/wasstraat_postgres:0.5.2
@@ -22,4 +22,4 @@ services:
   apache:
     image: brienen/wasstraat_apache:0.8.0
     ports:
-      - '5000:5000'
+      - '5052:5052'
