@@ -1,14 +1,20 @@
 # All available services
 services:
   airflow:
+    environment:
+      # Debug (zoals je nu hebt)
+      - DEBUGPY=1
+      - DEBUG_TARGET=scheduler
+      # --- Scheduler/DAG-parser single process ---
+      - AIRFLOW__SCHEDULER__DAG_FILE_PROCESSOR_PROCESSES=1  # 1 parser-proces
+      # --- Geen parallelle tasks ---
+      - AIRFLOW__CORE__PARALLELISM=1           # max aantal gelijktijdige tasks in hele installatie
+      - AIRFLOW__CORE__DAG_CONCURRENCY=1       # max gelijktijdige tasks per DAG
+      - AIRFLOW__SCHEDULER__MAX_TIS_PER_QUERY=1
     ports:
-      - "8080:8080"   # bestaande webinterface
-      - "5678:5678"   # debugpoort
-    command: >
-      python -m debugpy
-      --listen 0.0.0.0:5678
-      -m airflow webserver
-
+      - "8080:8080"                # web UI
+      - "5678:5678"                # debugpy
+      
   flask:
     entrypoint: bash -c "while true; do sleep 1; done"  # Infinite loop to keep container live doing nothing
     environment: 

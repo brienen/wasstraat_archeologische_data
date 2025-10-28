@@ -1,0 +1,121 @@
+<mxfile host="Electron" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/29.6.1 Chrome/142.0.7444.265 Electron/39.8.0 Safari/537.36" version="29.6.1">
+  <diagram id="dataflow" name="Dataflow Pipeline">
+    <mxGraphModel dx="796" dy="677" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" parent="1" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=16;" value="&lt;b&gt;Dataflow Pipeline — Wasstraat Archeologische Data&lt;/b&gt;" vertex="1">
+          <mxGeometry height="40" width="500" x="300" y="10" as="geometry" />
+        </mxCell>
+        <mxCell id="phase1" parent="1" style="text;html=1;align=left;fontSize=12;fillColor=none;strokeColor=none;fontColor=#2980b9;" value="&lt;b&gt;FASE 1: Ingest&lt;/b&gt;" vertex="1">
+          <mxGeometry height="25" width="150" x="30" y="55" as="geometry" />
+        </mxCell>
+        <mxCell id="eenmalig" parent="1" style="shape=parallelogram;perimeter=parallelogramPerimeter;whiteSpace=wrap;html=1;fixedSize=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;" value="Eenmalige bronnen&#xa;(historische datasets)" vertex="1">
+          <mxGeometry height="50" width="170" x="30" y="85" as="geometry" />
+        </mxCell>
+        <mxCell id="periodiek" parent="1" style="shape=parallelogram;perimeter=parallelogramPerimeter;whiteSpace=wrap;html=1;fixedSize=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;" value="Periodieke bronnen&#xa;(nieuwe veldwerkdata)" vertex="1">
+          <mxGeometry height="50" width="170" x="30" y="145" as="geometry" />
+        </mxCell>
+        <mxCell id="phase2" parent="1" style="text;html=1;align=left;fontSize=12;fillColor=none;strokeColor=none;fontColor=#2980b9;" value="&lt;b&gt;FASE 2: Extractie&lt;/b&gt;" vertex="1">
+          <mxGeometry height="25" width="150" x="250" y="55" as="geometry" />
+        </mxCell>
+        <mxCell id="detect" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;" value="Format detectie&#xa;&amp; encoding" vertex="1">
+          <mxGeometry height="40" width="130" x="260" y="85" as="geometry" />
+        </mxCell>
+        <mxCell id="parse" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;" value="Parsing &amp;&#xa;veldherkenning" vertex="1">
+          <mxGeometry height="40" width="130" x="260" y="135" as="geometry" />
+        </mxCell>
+        <mxCell id="meta" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;" value="Metadatering&#xa;(type/bron/datum)" vertex="1">
+          <mxGeometry height="40" width="130" x="260" y="185" as="geometry" />
+        </mxCell>
+        <mxCell id="phase3" parent="1" style="text;html=1;align=left;fontSize=12;fillColor=none;strokeColor=none;fontColor=#2980b9;" value="&lt;b&gt;FASE 3: Ruwe Opslag&lt;/b&gt;" vertex="1">
+          <mxGeometry height="25" width="180" x="250" y="250" as="geometry" />
+        </mxCell>
+        <mxCell id="mongo" parent="1" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=12;fillColor=#f8cecc;strokeColor=#b85450;fontSize=10;align=left;spacingLeft=10;" value="&lt;b&gt;MongoDB / SingleStore&lt;/b&gt;&#xa;&#xa;• Originele data bewaard&#xa;• Schema-vrij&#xa;• Polymorf metadateringsmodel&#xa;• Hiërarchische thesauri" vertex="1">
+          <mxGeometry height="120" width="180" x="240" y="280" as="geometry" />
+        </mxCell>
+        <mxCell id="phase4" parent="1" style="text;html=1;align=left;fontSize=12;fillColor=none;strokeColor=none;fontColor=#2980b9;" value="&lt;b&gt;FASE 4: Transformatie&lt;/b&gt;" vertex="1">
+          <mxGeometry height="25" width="180" x="480" y="250" as="geometry" />
+        </mxCell>
+        <mxCell id="t_abr" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;" value="ABR thesaurus&#xa;harmonisatie" vertex="1">
+          <mxGeometry height="35" width="130" x="490" y="280" as="geometry" />
+        </mxCell>
+        <mxCell id="t_spell" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;" value="Spelling &amp;&#xa;diakritiek normalisatie" vertex="1">
+          <mxGeometry height="35" width="130" x="490" y="322" as="geometry" />
+        </mxCell>
+        <mxCell id="t_key" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;" value="Sleutel / datum /&#xa;locatie harmonisatie" vertex="1">
+          <mxGeometry height="35" width="130" x="490" y="364" as="geometry" />
+        </mxCell>
+        <mxCell id="t_dedup" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;" value="Deduplicatie" vertex="1">
+          <mxGeometry height="30" width="130" x="490" y="406" as="geometry" />
+        </mxCell>
+        <mxCell id="phase5" parent="1" style="text;html=1;align=left;fontSize=12;fillColor=none;strokeColor=none;fontColor=#2980b9;" value="&lt;b&gt;FASE 5: Validatie&lt;/b&gt;" vertex="1">
+          <mxGeometry height="25" width="180" x="480" y="455" as="geometry" />
+        </mxCell>
+        <mxCell id="validate" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" value="Data logica validatie&#xa;+ Cache mechanisme" vertex="1">
+          <mxGeometry height="45" width="130" x="490" y="485" as="geometry" />
+        </mxCell>
+        <mxCell id="phase6" parent="1" style="text;html=1;align=left;fontSize=12;fillColor=none;strokeColor=none;fontColor=#2980b9;" value="&lt;b&gt;FASE 6: Definitieve Opslag&lt;/b&gt;" vertex="1">
+          <mxGeometry height="25" width="200" x="680" y="250" as="geometry" />
+        </mxCell>
+        <mxCell id="pg" parent="1" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=12;fillColor=#f8cecc;strokeColor=#b85450;fontSize=10;align=left;spacingLeft=10;" value="&lt;b&gt;PostgreSQL / Oracle&lt;/b&gt;&#xa;&#xa;• Relationeel model&#xa;• GGM-compatibel&#xa;• Geïndexeerd&#xa;• ABR-geharmoniseerd" vertex="1">
+          <mxGeometry height="120" width="180" x="680" y="280" as="geometry" />
+        </mxCell>
+        <mxCell id="phase7" parent="1" style="text;html=1;align=left;fontSize=12;fillColor=none;strokeColor=none;fontColor=#2980b9;" value="&lt;b&gt;FASE 7: Uitvoer&lt;/b&gt;" vertex="1">
+          <mxGeometry height="25" width="150" x="920" y="250" as="geometry" />
+        </mxCell>
+        <mxCell id="web" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;" value="Website&#xa;(Vue / Vuetify)" vertex="1">
+          <mxGeometry height="35" width="120" x="920" y="280" as="geometry" />
+        </mxCell>
+        <mxCell id="geo" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;" value="GIS export" vertex="1">
+          <mxGeometry height="30" width="120" x="920" y="325" as="geometry" />
+        </mxCell>
+        <mxCell id="dw" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;" value="Data Warehouse&#xa;(Rapportage)" vertex="1">
+          <mxGeometry height="35" width="120" x="920" y="365" as="geometry" />
+        </mxCell>
+        <mxCell id="lod" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;" value="Linked Open Data&#xa;(RDF / SPARQL)" vertex="1">
+          <mxGeometry height="35" width="120" x="920" y="410" as="geometry" />
+        </mxCell>
+        <mxCell id="cv" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;dashed=1;dashPattern=8 4;" value="&lt;b&gt;Crossviews Engine&lt;/b&gt;&#xa;Record matching | Relatie-identificatie | ML-detectie" vertex="1">
+          <mxGeometry height="55" width="180" x="240" y="430" as="geometry" />
+        </mxCell>
+        <mxCell id="handm" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e6d0de;strokeColor=#996185;fontSize=10;" value="Handmatige&#xa;schoning (UI)" vertex="1">
+          <mxGeometry height="40" width="120" x="30" y="320" as="geometry" />
+        </mxCell>
+        <mxCell id="ea1" edge="1" parent="1" source="eenmalig" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#333;" target="detect">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ea2" edge="1" parent="1" source="periodiek" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#333;" target="parse">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ea3" edge="1" parent="1" source="meta" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#333;" target="mongo">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ea4" edge="1" parent="1" source="mongo" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#333;" target="t_abr">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ea5" edge="1" parent="1" source="t_dedup" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#333;" target="validate">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ea6" edge="1" parent="1" source="validate" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#333;" target="pg">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ea7" edge="1" parent="1" source="pg" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#333;" target="web">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ea8" edge="1" parent="1" source="mongo" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#333;dashed=1;" target="cv">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ea9" edge="1" parent="1" source="handm" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#333;dashed=1;" target="mongo">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="legend" parent="1" style="text;html=1;align=left;fontSize=9;fillColor=#f5f5f5;strokeColor=#999;rounded=1;spacingLeft=5;" value="&lt;b&gt;Legenda:&lt;/b&gt; Groen = Verwerkingscomponent | Rood = Opslag | Blauw = In/Uitvoer | Geel = Ondersteunend | Paars = Handmatig" vertex="1">
+          <mxGeometry height="25" width="600" x="30" y="520" as="geometry" />
+        </mxCell>
+        <mxCell id="note1" parent="1" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;size=15;fillColor=#ffffcc;strokeColor=#999;fontSize=9;" value="&lt;i&gt;Originele data wordt altijd bewaard.&#xa;Alle transformaties zijn traceerbaar.&lt;/i&gt;" vertex="1">
+          <mxGeometry height="55" width="160" x="30" y="400" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

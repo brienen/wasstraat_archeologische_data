@@ -1,72 +1,192 @@
 # Wasstraat Archeologische Data
 
-Uitleggen wat het isWasstraat Archeologische Data
+[![License: EUPL-1.2](https://img.shields.io/badge/License-EUPL--1.2-yellow.svg)](https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12)
+[![Version](https://img.shields.io/badge/version-1.0.1-blue.svg)](https://github.com/brienen/wasstraat_archeologische_data/releases)
+[![Python](https://img.shields.io/badge/python-3.10-3776ab.svg)](https://www.python.org/)
+[![Docker](https://img.shields.io/badge/docker-compose-2496ed.svg)](https://docs.docker.com/compose/)
 
-Uitleggen Mongo Elastic
+> Een open-source platform dat archeologische gegevens verzamelt, verwerkt en toegankelijk maakt — van ruwe data naar gestructureerd inzicht.
 
-## Resultaat
+![Wasstraat Overzicht](image/wasstraat-overzicht.jpeg)
 
-## Verwerken archeologische data
+## Over het project
 
-Het verwerken van alle archeologische data gebeurt doordat in een aantal stappen de data wordt ingelezen, gewassen en samengevoegd. Deze stappen zijn uitgewerkt in procesmodellen in [Apache Airflow](https://airflow.apache.org): een opensource workflow engine. Het hoofdproces van de Wasstraat Archeologische Data kent de volgende hoofdstappen (zie onderstaanbe afbeelding).
+De Wasstraat functioneert als een digitale wasstraat voor archeologische data. Verspreide bronbestanden — Access-databases, Excel-sheets, foto's, rapporten en GIS-bestanden — worden geautomatiseerd ingelezen, opgeschoond, gekoppeld en gestructureerd opgeslagen.
+
+Ontwikkeld voor de **gemeente Delft**, waar meer dan 1.000 opgravingen met tienduizenden foto's, vondstlijsten en rapporten (bijna 1 Terabyte aan data) zijn gedigitaliseerd.
+
+## Architectuur
+
+Het platform bestaat uit twee hoofdapplicaties die als Docker-containers draaien:
+
+| Applicatie | Doel | Poort |
+|------------|------|-------|
+| **Airflow** (`airflow_app/`) | Data verwerken (ETL-pipeline) | :8080 |
+| **Flask App** (`app/`) | Data inzichtelijk maken (web-interface) | :5051 |
+
+Daarnaast draaien de volgende ondersteunende services:
+
+| Service | Rol | Poort |
+|---------|-----|-------|
+| **PostgreSQL** | Definitieve relationele opslag | :5432 |
+| **MongoDB** | Ruwe opslag en staging | :27017 |
+| **Elasticsearch** | Fulltext-zoekindex | :9200 |
+| **Redis** | Caching | :6379 |
+| **Apache** | Statische bestanden (foto's) | :5052 |
+| **Jupyter** | Data-analyse notebooks | :8888 |
+
+## Verwerken van archeologische data
+
+Het verwerken van alle archeologische data is uitgewerkt in procesmodellen in [Apache Airflow](https://airflow.apache.org). Het hoofdproces kent de volgende stappen:
 
 ![Hoofdprocessen Verwerken Data](image/Airflow_Hoofdprocessen.png)
 
-Het hoofdproces voor het verwerken van de archeologische data kent de volgende hoofdstappen:
+1. **Drop All Databases** — Schoon alle data zodat gestart kan worden met verse databases.
+2. **Extract** — Lees alle data uit externe bronnen in, as-is zonder transformatie. Voor Archeologie Delft zijn dat ongeveer 1.000 databases, ~100.000 foto's en enkele duizenden rapporten — in totaal bijna 1 TB aan data.
+3. **Transform1 Harmonize** — Harmoniseer de veldnamen van alle ingelezen data over alle bronnen heen.
+4. **Transform2 Enhance Attributes** — Maak de inhoud van alle velden consistent. Datumformaten, codes, projectnummers en metadata worden genormaliseerd.
+5. **Transform3 Set Keys** — Genereer unieke sleutels en verwijzende sleutels voor alle entiteiten.
+6. **Transform4 Move and Merge** — Voeg dubbele entiteiten samen met behoud van [polymorfisme](https://nl.wikipedia.org/wiki/Polymorfisme_(informatica)). Artefacten en Bestanden kunnen zo verschillende soorten hebben met eigen attributen.
+7. **Transform5 Set References** — Ken integer-sleutels toe voor gebruik in de relationele database.
+8. **Load to Database & Index** — Kopieer data naar PostgreSQL en bouw de Elasticsearch-zoekindex op.
 
-1. **Drop All Databases**: schoon alle data zodat gestart kan worden met verse databases;
-2. **Extract**: lees alle data uit externe bronnen in. De data wordt 'as-is' ingelezen, dus zonder enige transformatie. Hier kunnen vele ongelijkvormige databases worden ingelezen. Voor [Archeologie Delft](https://archeologie-delft.nl) zijn dat ongeveer 1000 databases, een kleine 100.000 foto's en andere afbeeldingen en enkele 1000'den rapporten. In totaal een klein [terabyte](https://nl.wikipedia.org/wiki/Terabyte) aan data;
-3. **Transform1 Harmonize**: in deze stap worden de veldnamen van alle ingelezen data geharmoniseerd. Van alle gegevens, uit welke bron dan ook, worden de entiteitnamen en veldnamen gelijkgetrokken;   
-4. **Transform2 Enhance Alle Attributes**: hier wordt de inhoud van alle velden consistent gemaakt. In deze stap worden alle gegevens inhoudelijk 'gewassen'. Alle velden krijgen het juiste formaat. Als voorbeeld: datumvelden worden op één manier geschreven, jaartallen worden eenduidig gemaakt (in de bron staat het soms in tekst, getallen, romeinse notatie, soms tijdvakken etc.), projectcodes worden overal op dezelfde manier gehanteerd, en zo verder. Ook worden in deze stap de metagegevens uit alle aangeboden mediamateriaal gehaald;
-5. **Transform3 Setkeys**: in deze stap krijgen alle ingelezen entiteiten een eigen unieke sleutel, en krijgen de entiteiten verwijzende sleutels naar andere entiteiten. Sleutels zijn nodig om entiteiten uniek te identificeren en zijn ook nodig om verwijzingen tussen entiteiten te maken, zoals een verwijzing vanuit een Artefact naar het Project waarbinnen deze valt. De bronbestanden bevatten niet allemaal de juiste sleutels of informatie om te koppelen naar andere entiteiten. Om deze reden worden op basis van de in de eerdere stappen geschoonde informatie nieuwe eenduidige en herkenbare sleutelvelden gemaakt;
-6.  **Transform4 Move and Merge**: in de data zoals die nu is ontstaan kunnen nog dubbelingen voorkomen, zo kan een bepaald Artefact meerdere keren voorkomen (vaak aangeboden in meerdere bronbestanden), soms worden enteiten in meerdere bronnen beschreven. In deze stap worden op basis van de aangemaakte sleutels dubbele voorkomens van entiteiten samengevoegd. Ook de verschillende soorten Artefacten en Bestanden worden met behoud van [polymorfisme](https://nl.wikipedia.org/wiki/Polymorfisme_(informatica)) samengevoegd. Artefacten en Bestanden kunnen zo verschillende soorten hebben, met eigen unieke atributen, en toch als Artefact en Bestand herkenbaar zijn. De zo onstane informatie wordt naar een nieuwe Mongo-database geschreven waar alleen unieke entiteiten in voorkomen.
-7. **Transform5 Set References**: Op basis van de eerder aangemaakte (nu unieke) sleutels krijgen alle entiteiten een primaire sleutel in de vorm van een [Integer](https://nl.wikipedia.org/wiki/Integer_(informatica)) (die te gebruiken is in een [relationele database](https://nl.wikipedia.org/wiki/Relationele_database) en nodig is voor de volgende stap);
-8. **Load to Database en index**: in deze laatst database wordt de data van de Mongo-database naar de Postgres-database gekopïeerd. Ook worden de indexes aangemaakt in Elastic Search voor het fulltext kunnen zoeken.  
+Zie de [volledige documentatie](https://brienen.github.io/wasstraat_archeologische_data/) voor het uitgeklapte procesmodel en gedetailleerde uitleg per stap.
 
-In het hoofdproces worden vele soorten gegevens ingelezen, de verwerking hiervan is te zien in het deels uitgeklapte procesmodel (niet goed leesbaar, maar voor het idee).
+## Ondersteunde data
 
-![Uitgeklapt procesmodel](image/Airflow_Opengeklapt.png)
+| Categorie | Entiteiten |
+|-----------|-----------|
+| **Basisgegevens** | Project, Vindplaats, Vondst, Put, Vlak, Spoor, Vulling, Artefact, Monster, Bestand |
+| **Depotgegevens** | Stelling, Standplaats, Plaatsing, Doos |
+| **Bestanden** | Foto's, Tekeningen, Rapporten — elk met automatische metadata-extractie |
+| **Artefacten** | Aardewerk, Glas, Metaal, Hout, Steen, Leer, Dierlijk Bot, Menselijk Bot, Kleipijp, Bouwaardewerk, Munt, Schelp, Textiel |
+| **Standaarden** | [ABR](https://thesaurus.cultureelerfgoed.nl/search;schemes=abr:b6df7840-67bf-48bd-aa56-7ee39435d2ed), GGM, CIDOC CRM, DANS e-Depot, Archis |
 
+Elke artefactcategorie kent eigen specifieke velden:
 
-## Soorten archeologische data
+| | |
+|---|---|
+| ![Artefact Aardewerk](image/Attributen_Aardewerk.png) | ![Artefact Glas](image/Attributen_Glas.png) |
 
-De Wasstraat Archeologische data ondersteunt de volgende soorten archeologische data:
+## Snel starten
 
-### Basisgegevens
-* Project, Vindplaats, Vondst, Put, Vlak, Spoor, Vulling, Artefact, Monster (Schelp en Botanie) en Bestand.
+### Vereisten
 
-### Depotgegevens
-* Stelling, Standplaats, Plaatsing, Doos.
+- [Docker](https://www.docker.com/) en Docker Compose
+- Minimaal 8 GB RAM beschikbaar voor Docker
 
-### Soorten Bestanden:
-* Foto's, Tekeningen en Rapporten.
+### Installatie
 
-De versachillende soorten bestanden kennen ieder hun eigen velden. 
+```bash
+# Clone de repository
+git clone https://github.com/brienen/wasstraat_archeologische_data.git
+cd wasstraat_archeologische_data
 
-### Soorten Artefacten:
-* Aardewerk, Dierlijk_Bot, Glas, Leer, Steen, Kleipijp, Menselijk Bot, Hout, Bouwaardewerk, Metaal, Munt, Schelp, Onbekend en Textiel.
+# Controleer en pas de environment-bestanden aan in config/
+# (postgres.env, mongo.env, redis.env, flask.env, etc.)
+ls config/*.env
 
-Ieder van deze artefactsoorten kent zijn eigen velden. Hieronder voorbeelden van Aardewerk, Glas en Hout. Hieronder zijn de velden van een aardewerken artefact te zien:
+# Start de ontwikkelomgeving
+./runws.sh dev
+```
 
-![Artefact Aardewerk](image/Attributen_Aardewerk.png)
+### Omgevingen starten
 
-Hieronder zijn de velden van een glazen artefact te zien:
+```bash
+./runws.sh dev      # Ontwikkelomgeving (met debugpy)
+./runws.sh app      # Lokale modus (basis)
+./runws.sh acc      # Acceptatieomgeving
+./runws.sh prod     # Productie (gepubliceerde images)
+./runws.sh stop     # Stop alle containers
+./runws.sh start    # Herstart gestopte containers
+```
 
-![Artefact Glas](image/Attributen_Glas.png)
+### Eerste data verwerken
 
-Hieronder zijn de velden van een houten artefact te zien:
+1. Plaats bronbestanden (`.mdb`) in `data/input/basefiles/projectdatabase/digidepot/`
+2. Open Airflow UI op [http://localhost:8080](http://localhost:8080)
+3. Start de DAG **`Extract_Transform_Load_Full_Cycle`**
+4. Bekijk het resultaat in de Flask App op [http://localhost:5051](http://localhost:5051)
 
-![Artefact Hout](image/Attributen_Hout.png)
+### Backup en restore
 
+```bash
+./runws.sh backup                        # Backup PostgreSQL + MongoDB
+./runws.sh restore 2024-03-15_14-30-00   # Restore vanuit timestamp
+./runws.sh export                        # Exporteer alle tabellen als CSV
+```
 
-### Soorten Metadata:
-De volgende soorten metadata worden ondersteund:
-* [ABR (Archeologsch Basisregister)](https://thesaurus.cultureelerfgoed.nl/search;schemes=abr:b6df7840-67bf-48bd-aa56-7ee39435d2ed): koppeling naar materiaalsoorten en materiaalsubsoorten
-* Soorten Planten: koppeling naar Monsters
-* Soorten Schelpen: koppeling naar Monsters
-* Soorten Delen: koppeling naar Monsters
-* Soort Staat: koppeling naar Monsters
+## Projectstructuur
 
-## Installatie
+```
+wasstraat_archeologische_data/
+├── airflow_app/          # Airflow ETL-applicatie
+│   ├── dags/             # DAG-definities en transformatielogica
+│   └── scripts/          # Shell-scripts voor data-import
+├── app/                  # Flask web-applicatie
+│   └── app/              # Models, views, API, templates
+├── shared/               # Gedeelde modules (config, database, constanten)
+├── config/               # Environment-bestanden (.env)
+├── services/             # Dockerfiles per service
+├── data/                 # Input- en outputdata
+│   └── input/basefiles/  # Bronbestanden
+├── notebooks/            # Jupyter notebooks voor analyse
+├── docs/                 # MkDocs documentatie
+├── image/                # Afbeeldingen voor README
+├── docker-compose.yml    # Basis service-definities
+├── docker-compose.develop.yml  # Development overrides
+├── docker-compose.acc.yml      # Acceptatie overrides
+├── docker-compose.prod.yml     # Productie overrides
+└── runws.sh              # Start/stop/backup script
+```
 
-## Snel starten 
+## Documentatie
+
+De volledige technische documentatie is beschikbaar als [MkDocs-site](https://brienen.github.io/wasstraat_archeologische_data/):
+
+```bash
+# Of draai lokaal:
+pip install mkdocs mkdocs-material
+mkdocs serve
+```
+
+De documentatie bevat:
+
+- **Projectoverzicht** — Inleiding, probleemstelling en doelstellingen
+- **Architectuur** — Systeemarchitectuur, dataflow, componentenmodel, gegevensmodel en stack
+- **Componenten** — Extractie, SingleStore, Transformatie, Crossviews, Validatie, Configuratie, Zoeken
+- **Deployment** — Omgevingen, Airflow vs. App, proefdata inlezen
+- **Diagrammen** — draw.io architectuurdiagrammen
+
+## Technische stack
+
+| Categorie | Technologieën |
+|-----------|---------------|
+| **Orchestratie** | Apache Airflow 2.3.3 |
+| **Backend** | Python, Flask, Flask-AppBuilder |
+| **Databases** | MongoDB 4.2, PostgreSQL, Elasticsearch 8.6 |
+| **Caching** | Redis |
+| **Infrastructuur** | Docker Compose |
+| **Analyse** | Jupyter Lab, Pandas, GeoPandas |
+| **Data-import** | mdbtools, Pillow, pdf2image |
+
+## Bijdragen
+
+Bijdragen zijn welkom! Het project is open-source onder de EUPL-licentie.
+
+1. Fork de repository
+2. Maak een feature-branch (`git checkout -b feature/mijn-verbetering`)
+3. Commit je wijzigingen (`git commit -m 'Voeg verbetering toe'`)
+4. Push naar de branch (`git push origin feature/mijn-verbetering`)
+5. Open een Pull Request
+
+Bij vragen of suggesties, open een [issue](https://github.com/brienen/wasstraat_archeologische_data/issues).
+
+## Licentie
+
+Dit project is uitgegeven onder de [EUPL-1.2 licentie](https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12).
+
+## Contact
+
+Ontwikkeld door **E-Space** (Arjen Brienen) in opdracht van de gemeente Delft.
+Het project wordt uitgebreid tot een generiek systeem voor andere Nederlandse gemeenten via Stichting Reuvens.

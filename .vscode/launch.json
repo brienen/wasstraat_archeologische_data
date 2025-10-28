@@ -20,6 +20,21 @@
             ],
             "jinja": true,
             "justMyCode": true
+        },
+        {
+            "name": "Attach to Airflow (scheduler)",
+            "type": "python",
+            "request": "attach",
+            "connect": { "host": "localhost", "port": 5678 },
+            "pathMappings": [
+                { "localRoot": "${workspaceFolder}/airflow_app/dags",     "remoteRoot": "/opt/airflow/dags" },
+                { "localRoot": "${workspaceFolder}/airflow_app/scripts",  "remoteRoot": "/opt/airflow/scripts" },
+                { "localRoot": "${workspaceFolder}/airflow_app/.vscode",  "remoteRoot": "/opt/airflow/.vscode" },
+                { "localRoot": "${workspaceFolder}/shared",               "remoteRoot": "/opt/airflow/dags/shared" }
+            ],
+            "justMyCode": false,    
+            "subProcess": true,
+            "redirectOutput": true
         }
     ]
 }

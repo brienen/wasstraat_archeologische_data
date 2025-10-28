@@ -1,0 +1,170 @@
+<mxfile host="app.diagrams.net" modified="2026-03-09T10:00:00.000Z" agent="Wasstraat Documentation" version="24.0.0" type="device">
+  <diagram id="semantisch" name="Semantisch Model &amp; Standaarden">
+    <mxGraphModel dx="1422" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="title" value="&lt;b&gt;Semantisch Model &amp; Standaarden — Wasstraat Archeologische Data&lt;/b&gt;" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="250" y="10" width="550" height="30" as="geometry"/>
+        </mxCell>
+        <!-- CIDOC CRM Family -->
+        <mxCell id="cidoc_group" value="&lt;b&gt;CIDOC CRM Familie (ISO 21127)&lt;/b&gt;" style="swimlane;startSize=25;fillColor=#e1d5e7;strokeColor=#9673a6;rounded=1;" vertex="1" parent="1">
+          <mxGeometry x="30" y="50" width="500" height="250" as="geometry"/>
+        </mxCell>
+        <mxCell id="crm_base" value="&lt;b&gt;CIDOC CRM&lt;/b&gt;&#xa;(CRMbase)&#xa;Kern-ontologie" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=10;" vertex="1" parent="cidoc_group">
+          <mxGeometry x="180" y="35" width="140" height="55" as="geometry"/>
+        </mxCell>
+        <mxCell id="crm_archaeo" value="&lt;b&gt;CRMarchaeo&lt;/b&gt;&#xa;Opgravingsproces" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=10;" vertex="1" parent="cidoc_group">
+          <mxGeometry x="20" y="110" width="110" height="45" as="geometry"/>
+        </mxCell>
+        <mxCell id="crm_sci" value="&lt;b&gt;CRMsci&lt;/b&gt;&#xa;Wetenschappelijke&#xa;observatie" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=10;" vertex="1" parent="cidoc_group">
+          <mxGeometry x="140" y="110" width="110" height="45" as="geometry"/>
+        </mxCell>
+        <mxCell id="crm_ba" value="&lt;b&gt;CRMba&lt;/b&gt;&#xa;Bouwarcheologie" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=10;" vertex="1" parent="cidoc_group">
+          <mxGeometry x="260" y="110" width="110" height="45" as="geometry"/>
+        </mxCell>
+        <mxCell id="crm_geo" value="&lt;b&gt;CRMgeo&lt;/b&gt;&#xa;Ruimtelijke data" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=10;" vertex="1" parent="cidoc_group">
+          <mxGeometry x="380" y="110" width="110" height="45" as="geometry"/>
+        </mxCell>
+        <mxCell id="crm_dig" value="&lt;b&gt;CRMdig&lt;/b&gt;&#xa;Digitale objecten" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;" vertex="1" parent="cidoc_group">
+          <mxGeometry x="20" y="175" width="100" height="45" as="geometry"/>
+        </mxCell>
+        <mxCell id="crm_inf" value="&lt;b&gt;CRMinf&lt;/b&gt;&#xa;Interpretatie" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;" vertex="1" parent="cidoc_group">
+          <mxGeometry x="130" y="175" width="100" height="45" as="geometry"/>
+        </mxCell>
+        <mxCell id="crm_surv" value="&lt;b&gt;CRMsurv&lt;/b&gt;&#xa;Survey" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;" vertex="1" parent="cidoc_group">
+          <mxGeometry x="240" y="175" width="100" height="45" as="geometry"/>
+        </mxCell>
+        <!-- Arrows from base to extensions -->
+        <mxCell id="cra1" style="strokeColor=#999;" edge="1" source="crm_base" target="crm_archaeo" parent="cidoc_group">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="cra2" style="strokeColor=#999;" edge="1" source="crm_base" target="crm_sci" parent="cidoc_group">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="cra3" style="strokeColor=#999;" edge="1" source="crm_base" target="crm_ba" parent="cidoc_group">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="cra4" style="strokeColor=#999;" edge="1" source="crm_base" target="crm_geo" parent="cidoc_group">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <!-- SRDMs -->
+        <mxCell id="srdm_group" value="&lt;b&gt;Semantic Reference Data Models (SRDMs)&lt;/b&gt;" style="swimlane;startSize=25;fillColor=#d5e8d4;strokeColor=#82b366;rounded=1;" vertex="1" parent="1">
+          <mxGeometry x="30" y="320" width="500" height="200" as="geometry"/>
+        </mxCell>
+        <mxCell id="srdm1" value="Archaeological&#xa;Project" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=9;" vertex="1" parent="srdm_group">
+          <mxGeometry x="10" y="30" width="85" height="35" as="geometry"/>
+        </mxCell>
+        <mxCell id="srdm2" value="Excavation" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=9;" vertex="1" parent="srdm_group">
+          <mxGeometry x="100" y="30" width="75" height="35" as="geometry"/>
+        </mxCell>
+        <mxCell id="srdm3" value="Survey" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=9;" vertex="1" parent="srdm_group">
+          <mxGeometry x="180" y="30" width="65" height="35" as="geometry"/>
+        </mxCell>
+        <mxCell id="srdm4" value="Site" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=9;" vertex="1" parent="srdm_group">
+          <mxGeometry x="250" y="30" width="55" height="35" as="geometry"/>
+        </mxCell>
+        <mxCell id="srdm5" value="Stratigraphic&#xa;Unit" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=9;" vertex="1" parent="srdm_group">
+          <mxGeometry x="310" y="30" width="80" height="35" as="geometry"/>
+        </mxCell>
+        <mxCell id="srdm6" value="Context" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=9;" vertex="1" parent="srdm_group">
+          <mxGeometry x="395" y="30" width="65" height="35" as="geometry"/>
+        </mxCell>
+        <mxCell id="srdm7" value="Area" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=9;" vertex="1" parent="srdm_group">
+          <mxGeometry x="10" y="72" width="55" height="30" as="geometry"/>
+        </mxCell>
+        <mxCell id="srdm8" value="Trench" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=9;" vertex="1" parent="srdm_group">
+          <mxGeometry x="70" y="72" width="60" height="30" as="geometry"/>
+        </mxCell>
+        <mxCell id="srdm9" value="Place" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=9;" vertex="1" parent="srdm_group">
+          <mxGeometry x="135" y="72" width="55" height="30" as="geometry"/>
+        </mxCell>
+        <mxCell id="srdm10" value="Finds&#xa;Collection" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=9;" vertex="1" parent="srdm_group">
+          <mxGeometry x="195" y="72" width="70" height="30" as="geometry"/>
+        </mxCell>
+        <mxCell id="srdm11" value="Artefact" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=9;" vertex="1" parent="srdm_group">
+          <mxGeometry x="270" y="72" width="65" height="30" as="geometry"/>
+        </mxCell>
+        <mxCell id="srdm12" value="Feature" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=9;" vertex="1" parent="srdm_group">
+          <mxGeometry x="340" y="72" width="65" height="30" as="geometry"/>
+        </mxCell>
+        <mxCell id="srdm13" value="Sample" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=9;" vertex="1" parent="srdm_group">
+          <mxGeometry x="410" y="72" width="65" height="30" as="geometry"/>
+        </mxCell>
+        <mxCell id="srdm14" value="Image" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=9;" vertex="1" parent="srdm_group">
+          <mxGeometry x="10" y="110" width="55" height="30" as="geometry"/>
+        </mxCell>
+        <mxCell id="srdm15" value="Digital&#xa;Object" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=9;" vertex="1" parent="srdm_group">
+          <mxGeometry x="70" y="110" width="65" height="30" as="geometry"/>
+        </mxCell>
+        <mxCell id="srdm16" value="Biological&#xa;Object" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=9;" vertex="1" parent="srdm_group">
+          <mxGeometry x="140" y="110" width="65" height="30" as="geometry"/>
+        </mxCell>
+        <mxCell id="srdm17" value="Person" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e6d0de;strokeColor=#996185;fontSize=9;" vertex="1" parent="srdm_group">
+          <mxGeometry x="210" y="110" width="60" height="30" as="geometry"/>
+        </mxCell>
+        <mxCell id="srdm18" value="Institution" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e6d0de;strokeColor=#996185;fontSize=9;" vertex="1" parent="srdm_group">
+          <mxGeometry x="275" y="110" width="65" height="30" as="geometry"/>
+        </mxCell>
+        <mxCell id="srdm19" value="Period" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e6d0de;strokeColor=#996185;fontSize=9;" vertex="1" parent="srdm_group">
+          <mxGeometry x="345" y="110" width="55" height="30" as="geometry"/>
+        </mxCell>
+        <mxCell id="srdm20" value="Analysis" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=9;" vertex="1" parent="srdm_group">
+          <mxGeometry x="10" y="150" width="65" height="30" as="geometry"/>
+        </mxCell>
+        <mxCell id="srdm21" value="Textual&#xa;Work" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=9;" vertex="1" parent="srdm_group">
+          <mxGeometry x="80" y="150" width="65" height="30" as="geometry"/>
+        </mxCell>
+        <mxCell id="srdm22" value="Archival&#xa;Unit" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=9;" vertex="1" parent="srdm_group">
+          <mxGeometry x="150" y="150" width="65" height="30" as="geometry"/>
+        </mxCell>
+        <!-- Dutch Standards -->
+        <mxCell id="nl_group" value="&lt;b&gt;Nederlandse Standaarden &amp; Infrastructuur&lt;/b&gt;" style="swimlane;startSize=25;fillColor=#fff2cc;strokeColor=#d6b656;rounded=1;" vertex="1" parent="1">
+          <mxGeometry x="560" y="50" width="220" height="250" as="geometry"/>
+        </mxCell>
+        <mxCell id="nl_abr" value="&lt;b&gt;ABR&lt;/b&gt;&#xa;Archeologisch Basis&#xa;Register" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" vertex="1" parent="nl_group">
+          <mxGeometry x="15" y="35" width="190" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="nl_ggm" value="&lt;b&gt;GGM&lt;/b&gt;&#xa;Gemeentelijk&#xa;Gegevensmodel" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" vertex="1" parent="nl_group">
+          <mxGeometry x="15" y="85" width="190" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="nl_archis" value="&lt;b&gt;Archis / RCE&lt;/b&gt;&#xa;Nationaal register" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" vertex="1" parent="nl_group">
+          <mxGeometry x="15" y="135" width="190" height="35" as="geometry"/>
+        </mxCell>
+        <mxCell id="nl_dans" value="&lt;b&gt;DANS e-Depot&lt;/b&gt;&#xa;Duurzame archivering" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" vertex="1" parent="nl_group">
+          <mxGeometry x="15" y="180" width="190" height="35" as="geometry"/>
+        </mxCell>
+        <!-- International -->
+        <mxCell id="intl_group" value="&lt;b&gt;Internationale Initiatieven&lt;/b&gt;" style="swimlane;startSize=25;fillColor=#dae8fc;strokeColor=#6c8ebf;rounded=1;" vertex="1" parent="1">
+          <mxGeometry x="560" y="320" width="220" height="200" as="geometry"/>
+        </mxCell>
+        <mxCell id="intl1" value="&lt;b&gt;ARIADNE / ARIADNEplus&lt;/b&gt;&#xa;EU infrastructuur" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;" vertex="1" parent="intl_group">
+          <mxGeometry x="15" y="35" width="190" height="35" as="geometry"/>
+        </mxCell>
+        <mxCell id="intl2" value="&lt;b&gt;FAIR Data Principes&lt;/b&gt;&#xa;Findable, Accessible,&#xa;Interoperable, Reusable" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;" vertex="1" parent="intl_group">
+          <mxGeometry x="15" y="80" width="190" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="intl3" value="&lt;b&gt;Linked Open Data&lt;/b&gt;&#xa;RDF / SPARQL / LOD" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;" vertex="1" parent="intl_group">
+          <mxGeometry x="15" y="140" width="190" height="40" as="geometry"/>
+        </mxCell>
+        <!-- Wasstraat Central -->
+        <mxCell id="wasstraat" value="&lt;b&gt;WASSTRAAT&lt;br&gt;ARCHEOLOGISCHE DATA&lt;/b&gt;&#xa;&#xa;Verbindt brondata met&#xa;semantische standaarden&#xa;via configureerbare&#xa;transformaties" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#27ae60;fontSize=11;strokeWidth=3;" vertex="1" parent="1">
+          <mxGeometry x="560" y="545" width="220" height="100" as="geometry"/>
+        </mxCell>
+        <!-- Connection arrows -->
+        <mxCell id="conn1" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#27ae60;strokeWidth=2;dashed=1;" edge="1" source="cidoc_group" target="wasstraat" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="conn2" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#27ae60;strokeWidth=2;dashed=1;" edge="1" source="srdm_group" target="wasstraat" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="conn3" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#d6b656;strokeWidth=2;dashed=1;" edge="1" source="nl_group" target="wasstraat" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="conn4" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#6c8ebf;strokeWidth=2;dashed=1;" edge="1" source="intl_group" target="wasstraat" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

@@ -1,0 +1,44 @@
+site_name: Wasstraat Archeologische Data
+site_description: Technische documentatie voor de Wasstraat Archeologische Data - een open source verwerkingsplatform voor archeologische datasets
+site_author: E-Space / Arjen Brienen
+site_url: ""
+
+theme:
+  name: readthedocs
+  locale: nl
+
+nav:
+  - Home: index.md
+  - Projectoverzicht:
+    - Inleiding: overzicht/inleiding.md
+    - Probleemstelling: overzicht/probleemstelling.md
+    - Doelstellingen: overzicht/doelstellingen.md
+  - Architectuur:
+    - Systeemarchitectuur: architectuur/systeem.md
+    - Dataflow Pipeline: architectuur/dataflow.md
+    - Componentenmodel: architectuur/componenten.md
+    - Gegevensmodel & Semantiek: architectuur/gegevensmodel.md
+    - Technische Stack: architectuur/stack.md
+  - Componenten:
+    - Extractielaag: componenten/extractie.md
+    - SingleStore & Clusterlaag: componenten/singlestore.md
+    - Transformatielaag: componenten/transformatie.md
+    - Crossviews: componenten/crossviews.md
+    - Validatielaag: componenten/validatie.md
+    - Configuratiemodule: componenten/configuratie.md
+    - Zoek- en Indexeringslaag: componenten/zoeken.md
+  - Deployment:
+    - Omgevingen & Docker Compose: deployment/omgevingen.md
+    - Airflow Transformatie vs. Web Applicatie: deployment/airflow-vs-app.md
+    - Proefdata Inlezen: deployment/proefdata.md
+  - Diagrammen: diagrammen.md
+
+markdown_extensions:
+  - toc:
+      permalink: true
+  - admonition
+  - codehilite
+  - tables
+
+extra_css:
+  - assets/extra.css

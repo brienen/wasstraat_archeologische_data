@@ -36,3 +36,4 @@ opentelemetry-api
 
 # (optioneel) error logging
 raven
+debugpy
