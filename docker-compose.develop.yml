@@ -1,5 +1,14 @@
 # All available services
 services:
+  airflow:
+    ports:
+      - "8080:8080"   # bestaande webinterface
+      - "5678:5678"   # debugpoort
+    command: >
+      python -m debugpy
+      --listen 0.0.0.0:5678
+      -m airflow webserver
+
   flask:
     entrypoint: bash -c "while true; do sleep 1; done"  # Infinite loop to keep container live doing nothing
     environment: 
@@ -15,8 +24,6 @@ services:
       #- ./examples/polymorph:/app
       #- ./data/images:/images
       - ./app:/app
-      # - /Users/arjen/Dropbox/Development/Flask-AppBuilder/examples/related_fields:/app
-      # - /Users/arjen/Dropbox/Development/Flask-AppBuilder/flask_appbuilder:/app/app/flask_appbuilder
       - ./shared:/app/app/shared/
 
    

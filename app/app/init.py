@@ -24,14 +24,20 @@ def initSequences():
         for table_name in database.getAllTables():
             try:
                 with engine.connect() as con:
+                    # Check eerst of kolom 'primary_key' bestaat in de tabel
+                    columns = inspector.get_columns(table_name)
+                    if not any(c["name"] == "primary_key" for c in columns):
+                        logger.warning(f"Skipping table {table_name}: no 'primary_key' column found.")
+                        continue
+
                     rs = con.execute(f'SELECT MAX(primary_key) FROM public."{table_name}"')
                     max_value = rs.first()
                     max_value = max_value[0]+1 if max_value[0] else 1
-    
+
                     seq = f"{table_name}_primary_key_seq"
                     if seq in seqs:
                         logger.info(f"Setting sequence {seq} to value {max_value}...")
-                        rs = con.execute(f'alter sequence public."{seq}" restart with {max_value};')
+                        con.execute(f'alter sequence public."{seq}" restart with {max_value};')
                     else:
                         logger.warning(f"Could not set sequence {seq} to value {max_value}...")
             except Exception as e:

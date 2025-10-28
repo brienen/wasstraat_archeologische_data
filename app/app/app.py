@@ -1,5 +1,16 @@
 import logging
 
+# Zet logging van FAB, SQLAlchemy en Elastic op WARNING of ERROR
+logging.getLogger("flask_appbuilder").setLevel(logging.WARNING)
+logging.getLogger("flask_appbuilder.base").setLevel(logging.WARNING)
+logging.getLogger("flask_appbuilder.baseviews").setLevel(logging.WARNING)
+logging.getLogger("flask_appbuilder.api").setLevel(logging.WARNING)
+logging.getLogger("sqlalchemy.engine").setLevel(logging.WARNING)
+logging.getLogger("elastic_transport").setLevel(logging.WARNING)
+
+import warnings
+warnings.filterwarnings("ignore", category=UserWarning, module="jinja2.loaders")
+
 from flask import Flask, request
 from flask_appbuilder import AppBuilder, SQLA
 from flask_migrate import Migrate
@@ -10,6 +21,7 @@ from elasticsearch import Elasticsearch
 import shared.config as config
 from caching import cache
 import init
+from flask_migrate import Migrate
 
 logging.basicConfig(format="%(asctime)s:%(levelname)s:%(name)s:%(message)s")
 logging.getLogger().setLevel(logging.INFO)
@@ -32,7 +44,7 @@ toolbar = DebugToolbarExtension(app)
 
 db = SQLA(app)
 appbuilder = AppBuilder(app, db.session, base_template='mybase.html', indexview=MyIndexView)
-migrate = Migrate(app, db) # this
+migrate = Migrate(app, db)
 init.initSequences()
 init.initIfNotInit()
 

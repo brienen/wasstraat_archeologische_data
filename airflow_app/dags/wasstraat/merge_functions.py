@@ -57,12 +57,32 @@ AGGREGATE_MERGE = [{'$match': {'soort': 'XXX'}},
 ]
 
 ## Match phase aggregation specific for moving Artefacts: inverse of the merge phase. For alle artefacts that do not pass the merge match clause  
-INVERSE_MATCH_ARTEFACT = {"$match": {'$and': [{'soort': 'Artefact'},
-  {'brondata.table': {'$nin': ['ARTEFACT']}},
-  {'$or': [{'subnr': {'$exists': False}},
-    {'brondata.ARTEFACT': {'$exists': True}},
-    {'brondata.table': {'$in': ARTEFACT_NOT_MERGE_TABLES}},
-    {'projectcd': {'$in': ARTEFACT_NOT_MERGE_PROJECTS}}]}]}}
+INVERSE_MATCH_ARTEFACT = {
+    "$match": {
+        "$and": [
+            {"soort": "Artefact"},
+            {"brondata.table": {"$nin": ["ARTEFACT"]}},
+            {
+                "$or": [
+                    {"subnr": {"$exists": False}},
+                    {"brondata.ARTEFACT": {"$exists": True}},
+                    {"brondata.table": {"$in": ARTEFACT_NOT_MERGE_TABLES}},
+                    {"projectcd": {"$in": ARTEFACT_NOT_MERGE_PROJECTS}},
+                    {"artefactsoort": {"$exists": False}},
+                    {"artefactsoort": None},
+                    {
+                        "$expr": {
+                            "$in": [
+                                {"$toLower": {"$trim": {"input": "$artefactsoort"}}},
+                                ["", "-", "onbekend"]
+                            ]
+                        }
+                    }
+                ]
+            }
+        ]
+    }
+}
 
 ''' Factory method to retrieve move aggragtion pipeline for specific type
 '''
@@ -151,8 +171,27 @@ def mergeSoort(soort):
             aggr.insert(-1, {'$addFields': {'bestandsoort_XX': soort}})
 
         if soort == 'Artefact':
-            aggr.insert(-1, { '$set': {"artefactsoort": { '$cond': [ { '$not': ["$artefactsoort"] }, "Onbekend", "$artefactsoort" ] }}})
-
+            aggr.insert(-1, {
+                '$set': {
+                    'artefactsoort': {
+                        '$let': {
+                            'vars': {'val': {'$ifNull': ['$artefactsoort', '']}},
+                            'in': {
+                                '$cond': [
+                                    { '$or': [
+                                        { '$eq': ['$$val', ''] },
+                                        { '$eq': [ { '$trim': { 'input': '$$val' } }, '' ] },
+                                        { '$eq': [ { '$toLower': { '$trim': { 'input': '$$val' } } }, 'onbekend' ] },
+                                        { '$eq': [ { '$trim': { 'input': '$$val' } }, '-' ] }
+                                    ]},
+                                    'Onbekend',
+                                    { '$trim': { 'input': '$$val' } }
+                                ]
+                            }
+                        }
+                    }
+                }
+            })
         logger.info("Calling aggregation: " + str(aggr))
         collection.aggregate(aggr, allowDiskUse=True)
         
