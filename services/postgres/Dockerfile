@@ -16,5 +16,5 @@ RUN apt-get update \
 RUN mkdir -p /docker-entrypoint-initdb.d
 COPY ./services/postgres/initdb-postgis.sh /docker-entrypoint-initdb.d/10_postgis.sh
 COPY ./services/postgres/update-postgis.sh /usr/local/bin
-
+RUN chmod -x /docker-entrypoint-initdb.d/10_postgis.sh
 COPY ./scripts/postgres/* /docker-entrypoint-initdb.d/
