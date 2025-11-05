@@ -3,6 +3,7 @@ FROM postgres:12-bullseye
 LABEL maintainer="PostGIS Project - https://postgis.net"
 
 ENV POSTGIS_MAJOR 3
+ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update \
       && apt-get -y upgrade \
