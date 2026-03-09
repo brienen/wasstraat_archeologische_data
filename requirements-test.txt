@@ -14,3 +14,4 @@ roman>=3.0
 # Integratietests
 pymongo>=4.0
 psycopg2-binary>=2.9
+simplejson>=3.0
