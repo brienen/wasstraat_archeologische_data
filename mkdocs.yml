@@ -13,6 +13,8 @@ nav:
     - Inleiding: overzicht/inleiding.md
     - Probleemstelling: overzicht/probleemstelling.md
     - Doelstellingen: overzicht/doelstellingen.md
+  - Aan de slag:
+    - Handleiding: aan-de-slag.md
   - Architectuur:
     - Systeemarchitectuur: architectuur/systeem.md
     - Dataflow Pipeline: architectuur/dataflow.md
