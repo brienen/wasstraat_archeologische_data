@@ -7,7 +7,7 @@
 
 > Een open-source platform dat archeologische gegevens verzamelt, verwerkt en toegankelijk maakt — van ruwe data naar gestructureerd inzicht.
 
-![Wasstraat Overzicht](image/wasstraat-overzicht.jpeg)
+[![Wasstraat Overzicht](image/wasstraat-overzicht.jpeg)](image/wasstraat-overzicht.jpeg)
 
 ## Over het project
 
@@ -43,7 +43,7 @@ Daarnaast draaien de volgende ondersteunende services:
 
 Het verwerken van alle archeologische data is uitgewerkt in procesmodellen in [Apache Airflow](https://airflow.apache.org). Het hoofdproces kent de volgende stappen:
 
-![Hoofdprocessen Verwerken Data](image/Airflow_Hoofdprocessen.png)
+[![Hoofdprocessen Verwerken Data](image/Airflow_Hoofdprocessen.png)](image/Airflow_Hoofdprocessen.png)
 
 1. **Drop All Databases** — Schoon alle data zodat gestart kan worden met verse databases.
 2. **Extract** — Lees alle data uit externe bronnen in, as-is zonder transformatie. Voor Archeologie Delft zijn dat ongeveer 1.000 databases, ~100.000 foto's en enkele duizenden rapporten — in totaal bijna 1 TB aan data.
@@ -68,7 +68,7 @@ Elke artefactcategorie kent eigen specifieke velden:
 
 | | |
 |---|---|
-| ![Artefact Aardewerk](image/Attributen_Aardewerk.png) | ![Artefact Glas](image/Attributen_Glas.png) |
+| [![Artefact Aardewerk](image/Attributen_Aardewerk.png)](image/Attributen_Aardewerk.png) | [![Artefact Glas](image/Attributen_Glas.png)](image/Attributen_Glas.png) |
 
 ## Snel starten
 
