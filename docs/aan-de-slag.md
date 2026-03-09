@@ -38,10 +38,10 @@ De configuratiebestanden worden aangemaakt in `config/` op basis van de meegelev
 
 ## 2. Wasstraat starten
 
-Start de ontwikkelomgeving:
+Start de wasstraat:
 
 ```bash
-./runws.sh dev
+./runws.sh app
 ```
 
 Bij de allereerste start duurt het enkele minuten omdat Docker alle images moet downloaden en bouwen. Je ziet de voortgang in de terminal.
