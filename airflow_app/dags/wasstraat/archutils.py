@@ -1,5 +1,6 @@
 import sys
 import re
+import unicodedata
 import pandas as pd
 import numpy as np
 import roman
@@ -9,12 +10,139 @@ import logging
 logger = logging.getLogger("airflow.task")
 
 def logError(doc, errtype, msg, severity):
-    doc['error'] = {"Error": {  
-        "Type": errtype, 
+    doc['error'] = {"Error": {
+        "Type": errtype,
         "Message": msg,
         "Severity": severity,
         "ObjectID": doc['_id']}}
     logger.error(msg)
+
+
+# ============================================================
+# Encoding & tekst-sanitatie functies
+# ============================================================
+
+# Mapping van veelvoorkomende Windows-1252 tekens die fout gedecodeerd zijn
+# naar hun correcte UTF-8 equivalenten. Dit vangt het geval op waarbij
+# Windows-1252 bytes als Latin-1 zijn geinterpreteerd (0x80-0x9F range).
+_WIN1252_MOJIBAKE_MAP = {
+    '\x80': '\u20AC',  # Euro sign
+    '\x85': '\u2026',  # Ellipsis
+    '\x91': '\u2018',  # Left single quote
+    '\x92': '\u2019',  # Right single quote / apostrophe
+    '\x93': '\u201C',  # Left double quote
+    '\x94': '\u201D',  # Right double quote
+    '\x95': '\u2022',  # Bullet
+    '\x96': '\u2013',  # En dash
+    '\x97': '\u2014',  # Em dash
+    '\x99': '\u2122',  # Trademark
+    '\xA0': '\u00A0',  # Non-breaking space
+    # C1 control characters die soms als mojibake verschijnen:
+    '\xC2\x91': '\u2018',  # UTF-8 interpretatie van Latin-1 0x91
+    '\xC2\x92': '\u2019',
+    '\xC2\x93': '\u201C',
+    '\xC2\x94': '\u201D',
+    '\xC2\x96': '\u2013',
+    '\xC2\x97': '\u2014',
+}
+
+# Unicode replacement character - teken dat encoding-conversie is mislukt
+REPLACEMENT_CHAR = '\ufffd'
+
+
+def sanitize_text(value, field_name=None, doc_id=None):
+    """
+    Normaliseer tekst: repareer encoding-problemen en verwijder onleesbare tekens.
+
+    In tegenstelling tot de oude .replace('?', '') aanpak:
+    - Repareert bekende Windows-1252 mojibake patronen
+    - Verwijdert alleen echte control characters, niet leestekens als '?'
+    - Logt wanneer er replacement characters gevonden worden
+    - Past Unicode NFC-normalisatie toe (samengestelde diakritische tekens)
+
+    Args:
+        value: De te sanitizen waarde (wordt naar str geconverteerd)
+        field_name: Optioneel veldnaam voor logging
+        doc_id: Optioneel document-ID voor logging
+
+    Returns:
+        Gesanitizede string
+    """
+    if value is None:
+        return None
+    if not isinstance(value, str):
+        value = str(value)
+
+    original = value
+
+    # Stap 1: Repareer bekende Windows-1252 mojibake patronen
+    for bad_char, good_char in _WIN1252_MOJIBAKE_MAP.items():
+        if bad_char in value:
+            value = value.replace(bad_char, good_char)
+
+    # Stap 2: Unicode NFC-normalisatie
+    # Combineert losse diakritische tekens met hun basisletters (e + ´ -> e)
+    value = unicodedata.normalize('NFC', value)
+
+    # Stap 3: Verwijder control characters (C0/C1), behoud newline en tab
+    cleaned_chars = []
+    for c in value:
+        cat = unicodedata.category(c)
+        if cat.startswith('C') and c not in '\n\t\r':
+            # Dit is een control character - overslaan
+            continue
+        cleaned_chars.append(c)
+    value = ''.join(cleaned_chars)
+
+    # Stap 4: Verwijder Unicode replacement characters (U+FFFD) en log dit
+    if REPLACEMENT_CHAR in value:
+        count = value.count(REPLACEMENT_CHAR)
+        context = f" in veld '{field_name}'" if field_name else ""
+        doc_context = f" van document {doc_id}" if doc_id else ""
+        logger.warning(
+            f"ENCODING: {count} onleesbare teken(s) verwijderd{context}{doc_context}. "
+            f"Originele waarde: '{original[:100]}'"
+        )
+        value = value.replace(REPLACEMENT_CHAR, '')
+
+    return value.strip()
+
+
+def sanitize_text_field(doc, field_name):
+    """
+    Sanitize een specifiek tekstveld in een MongoDB document.
+    Combineert sanitize_text met de juiste field_name en doc_id voor logging.
+
+    Args:
+        doc: MongoDB document (dict)
+        field_name: Naam van het veld om te sanitizen
+    """
+    if field_name in doc and doc[field_name] is not None:
+        doc[field_name] = sanitize_text(
+            doc[field_name],
+            field_name=field_name,
+            doc_id=doc.get('_id')
+        )
+
+
+def sanitize_all_string_fields(doc, exclude_fields=None):
+    """
+    Sanitize alle string-velden in een MongoDB document.
+    Slaat het 'brondata'-subdocument en systeem-velden over.
+
+    Args:
+        doc: MongoDB document (dict)
+        exclude_fields: Set van veldnamen om over te slaan
+    """
+    if exclude_fields is None:
+        exclude_fields = {'_id', 'brondata', 'loadtime', 'mdbfile', 'bron'}
+
+    for key, value in doc.items():
+        if key in exclude_fields:
+            continue
+        if isinstance(value, str):
+            doc[key] = sanitize_text(value, field_name=key, doc_id=doc.get('_id'))
+
 
 # Conveniece methods
 def convertToInt(d, attr, force):
@@ -49,8 +177,8 @@ def convertToDate(attr, force):
 def fixDatering(value):
     import timeperiod2daterange 
 
-    try:     
-        value = str(value).replace("?", "")
+    try:
+        value = sanitize_text(str(value), field_name='datering')
         value = value.replace('-', ',').replace("/", ",").replace("+", ",").replace("=", ",").replace(",,", ",-").replace(")", "").replace("(", "")
         if value[0] == ',':
             value = value.replace(',', '-', 1)

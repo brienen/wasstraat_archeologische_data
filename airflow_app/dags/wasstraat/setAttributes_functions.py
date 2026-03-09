@@ -77,11 +77,11 @@ def enhanceAllAttributes():
 
                 #clean Functie Voorwerp
                 if 'functievoorwerp' in doc:
-                    doc['functievoorwerp'] =  str(doc['functievoorwerp']).replace('?', '').strip().title()  
+                    doc['functievoorwerp'] = ut.sanitize_text(doc['functievoorwerp'], 'functievoorwerp', doc.get('_id')).title()
 
                 #clean Type Voorwerp
                 if 'typevoorwerp' in doc:
-                    doc['typevoorwerp'] =  str(doc['typevoorwerp']).replace('?', '').strip().title()  
+                    doc['typevoorwerp'] = ut.sanitize_text(doc['typevoorwerp'], 'typevoorwerp', doc.get('_id')).title()  
 
                 if 'brondata' in doc and 'table' in doc['brondata']:
                     if 'spijker' in str(doc['brondata']['table']).lower():
@@ -99,18 +99,17 @@ def enhanceAllAttributes():
                         doc['artefactsoort'] = 'Glas'
                     
 
-                #clean Functie Voorwerp
+                #clean namen en soorten
                 if 'nederlandse_naam' in doc:
-                    doc['nederlandse_naam'] =  str(doc['nederlandse_naam']).replace('?', '').strip().title()  
+                    doc['nederlandse_naam'] = ut.sanitize_text(doc['nederlandse_naam'], 'nederlandse_naam', doc.get('_id')).title()
                 if 'wetenschappelijke_naam' in doc:
-                    doc['wetenschappelijke_naam'] =  str(doc['wetenschappelijke_naam']).replace('?', '').strip().title()  
+                    doc['wetenschappelijke_naam'] = ut.sanitize_text(doc['wetenschappelijke_naam'], 'wetenschappelijke_naam', doc.get('_id')).title()
                 if 'soort_schelp' in doc:
-                    doc['soort_schelp'] =  str(doc['soort_schelp']).replace('?', '').strip().title()  
+                    doc['soort_schelp'] = ut.sanitize_text(doc['soort_schelp'], 'soort_schelp', doc.get('_id')).title()
 
-
-                #clean Type Voorwerp
+                #clean tekeningcode
                 if 'tekeningcd' in doc:
-                    doc['tekeningcd'] = str(doc['tekeningcd']).replace('?', '').replace('!', '').replace('-', '').strip()
+                    doc['tekeningcd'] = ut.sanitize_text(doc['tekeningcd'], 'tekeningcd', doc.get('_id')).replace('!', '').replace('-', '')
                     matchObj = re.match( r'^([A-Z])([0-9]+)$', doc['tekeningcd'], re.M|re.I)
                     if matchObj:
                         doc['tekeningcd'] = matchObj.group(1) + str(int(matchObj.group(2))).zfill(3)

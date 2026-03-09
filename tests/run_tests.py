@@ -239,6 +239,25 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"SKIP harmonizer tests: {e}")
 
+    # encoding
+    try:
+        from unit.test_encoding import (
+            TestSanitizeTextBasic, TestSanitizeTextDiacritics,
+            TestSanitizeTextMojibake, TestSanitizeTextControlChars,
+            TestSanitizeTextField, TestSanitizeAllStringFields,
+            TestSanitizeTextArchaeologicalData,
+            TestMdbExportEncoding, TestQuestionMarkRegression
+        )
+        test_modules.extend([
+            TestSanitizeTextBasic, TestSanitizeTextDiacritics,
+            TestSanitizeTextMojibake, TestSanitizeTextControlChars,
+            TestSanitizeTextField, TestSanitizeAllStringFields,
+            TestSanitizeTextArchaeologicalData,
+            TestMdbExportEncoding, TestQuestionMarkRegression
+        ])
+    except Exception as e:
+        print(f"SKIP encoding tests: {e}")
+
     print(f"\nRunning tests from {len(test_modules)} test classes...\n")
     p, f, e = collect_and_run_pytest_classes(test_modules)
 
