@@ -1,5 +1,11 @@
 #!/usr/bin/env bash
 
+# Initialiseer configuratie als .env bestanden nog niet bestaan
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+if [[ -f "$SCRIPT_DIR/init-config.sh" ]]; then
+    bash "$SCRIPT_DIR/init-config.sh"
+fi
+
 case $1 in
 dev)
 echo "Starting in development mode"

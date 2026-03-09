@@ -84,13 +84,12 @@ Elke artefactcategorie kent eigen specifieke velden:
 git clone https://github.com/brienen/wasstraat_archeologische_data.git
 cd wasstraat_archeologische_data
 
-# Controleer en pas de environment-bestanden aan in config/
-# (postgres.env, mongo.env, redis.env, flask.env, etc.)
-ls config/*.env
-
 # Start de ontwikkelomgeving
+# (config/*.env bestanden worden automatisch gegenereerd met unieke wachtwoorden)
 ./runws.sh dev
 ```
+
+> **Tip:** Bij de eerste start genereert `init-config.sh` automatisch alle `config/*.env` bestanden met unieke wachtwoorden. Om handmatig opnieuw te genereren: `./init-config.sh --force`
 
 ### Omgevingen starten
 
