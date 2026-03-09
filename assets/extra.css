@@ -9,4 +9,43 @@ tr:nth-child(even) { background-color: #f9f9f9; }
 .admonition.danger { border-left-color: #e74c3c; background: #fdf0ef; }
 .admonition.tip { border-left-color: #27ae60; background: #edfaf1; }
 code { background: #f4f4f4; padding: 2px 6px; border-radius: 3px; }
-img { max-width: 100%; height: auto; }
+img { max-width: 100%; height: auto; cursor: pointer; transition: opacity 0.2s; }
+img:hover { opacity: 0.85; }
+
+/* Lightbox overlay voor uitvergroten van afbeeldingen */
+.lightbox-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0, 0, 0, 0.85);
+    z-index: 9999;
+    cursor: zoom-out;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+}
+.lightbox-overlay.active {
+    display: flex;
+}
+.lightbox-overlay img {
+    max-width: 95vw;
+    max-height: 95vh;
+    object-fit: contain;
+    border-radius: 4px;
+    box-shadow: 0 4px 30px rgba(0,0,0,0.5);
+    cursor: zoom-in;
+    transform-origin: center center;
+    transition: none;
+    user-select: none;
+    -webkit-user-drag: none;
+}
+.lightbox-overlay .lightbox-hint {
+    position: absolute;
+    bottom: 1.5rem;
+    left: 50%;
+    transform: translateX(-50%);
+    color: rgba(255,255,255,0.6);
+    font-size: 0.85rem;
+    pointer-events: none;
+    transition: opacity 0.3s;
+}
