@@ -258,6 +258,22 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"SKIP encoding tests: {e}")
 
+    # importMDB bash unit tests (wrapper)
+    try:
+        from unit.test_importMDB_bash import TestImportMDBBashFunctions
+        test_modules.append(TestImportMDBBashFunctions)
+    except Exception as e:
+        print(f"SKIP importMDB bash unit tests: {e}")
+
+    # importMDB bash integration tests (wrapper)
+    try:
+        from integration.test_importMDB_bash import (
+            TestImportMDBPipeline, TestBashEncoding
+        )
+        test_modules.extend([TestImportMDBPipeline, TestBashEncoding])
+    except Exception as e:
+        print(f"SKIP importMDB bash integration tests: {e}")
+
     print(f"\nRunning tests from {len(test_modules)} test classes...\n")
     p, f, e = collect_and_run_pytest_classes(test_modules)
 
