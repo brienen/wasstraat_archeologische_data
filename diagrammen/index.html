@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="nl" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="author" content="E-Space / Arjen Brienen" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>Diagrammen - Wasstraat Archeologische Data</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+        <link href="../assets/extra.css" rel="stylesheet" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Diagrammen";
+        var mkdocs_page_input_path = "diagrammen.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href=".." class="icon icon-home"> Wasstraat Archeologische Data
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="..">Home</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Projectoverzicht</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../overzicht/inleiding/">Inleiding</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../overzicht/probleemstelling/">Probleemstelling</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../overzicht/doelstellingen/">Doelstellingen</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Architectuur</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../architectuur/systeem/">Systeemarchitectuur</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../architectuur/dataflow/">Dataflow Pipeline</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../architectuur/componenten/">Componentenmodel</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../architectuur/gegevensmodel/">Gegevensmodel & Semantiek</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../architectuur/stack/">Technische Stack</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Componenten</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../componenten/extractie/">Extractielaag</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../componenten/singlestore/">SingleStore & Clusterlaag</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../componenten/transformatie/">Transformatielaag</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../componenten/crossviews/">Crossviews</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../componenten/validatie/">Validatielaag</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../componenten/configuratie/">Configuratiemodule</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../componenten/zoeken/">Zoek- en Indexeringslaag</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Deployment</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../deployment/omgevingen/">Omgevingen & Docker Compose</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../deployment/airflow-vs-app/">Airflow Transformatie vs. Web Applicatie</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../deployment/proefdata/">Proefdata Inlezen</a>
+                  </li>
+              </ul>
+              <ul class="current">
+                <li class="toctree-l1 current"><a class="reference internal current" href="#">Diagrammen</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#beschikbare-diagrammen">Beschikbare diagrammen</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#1-systeemarchitectuur">1. Systeemarchitectuur</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#2-dataflow-pipeline">2. Dataflow Pipeline</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#3-componentenmodel">3. Componentenmodel</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#4-semantisch-model">4. Semantisch Model</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#gebruik-van-de-diagrammen">Gebruik van de diagrammen</a>
+    </li>
+    </ul>
+                </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="..">Wasstraat Archeologische Data</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
+      <li class="breadcrumb-item active">Diagrammen</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="architectuurdiagrammen">Architectuurdiagrammen<a class="headerlink" href="#architectuurdiagrammen" title="Permanent link">&para;</a></h1>
+<p>Deze pagina biedt een overzicht van alle architectuurdiagrammen die zijn opgesteld voor het Wasstraat Archeologische Data-platform. De diagrammen zijn beschikbaar in <a href="https://www.diagrams.net/">draw.io</a> formaat en kunnen direct worden geopend en bewerkt.</p>
+<h2 id="beschikbare-diagrammen">Beschikbare diagrammen<a class="headerlink" href="#beschikbare-diagrammen" title="Permanent link">&para;</a></h2>
+<h3 id="1-systeemarchitectuur">1. Systeemarchitectuur<a class="headerlink" href="#1-systeemarchitectuur" title="Permanent link">&para;</a></h3>
+<p><strong>Bestand:</strong> <code>assets/diagrams/systeem-architectuur.drawio</code></p>
+<p>Het systeemarchitectuurdiagram toont de volledige opbouw van het platform in drie hoofdlagen:</p>
+<ul>
+<li><strong>Bronbestanden</strong> — de diverse invoerformaten (Excel, CSV, Word, PDF, Access, dBase, foto's, GIS-bestanden, XML/XMI)</li>
+<li><strong>Wasstraat Core</strong> — het verwerkingshart met extractie, ruwe opslag (MongoDB/SingleStore), transformatie, definitieve opslag (PostgreSQL/Oracle), en ondersteunende modules (Crossviews, Validatie, Configuratie, Zoeken, Handmatige Schoning, Monitoring)</li>
+<li><strong>Uitvoer</strong> — de diverse outputkanalen (Website, GIS-export, Data Warehouse, Linked Open Data)</li>
+</ul>
+<p>Daarnaast worden de externe standaarden en referenties weergegeven: ABR Thesaurus, CIDOC CRM/CRMarchaeo, GGM, DANS e-Depot, Archis/RCE en FAIR-principes.</p>
+<h3 id="2-dataflow-pipeline">2. Dataflow Pipeline<a class="headerlink" href="#2-dataflow-pipeline" title="Permanent link">&para;</a></h3>
+<p><strong>Bestand:</strong> <code>assets/diagrams/dataflow-pipeline.drawio</code></p>
+<p>Dit diagram beschrijft de zevenledige dataverwerkingspipeline:</p>
+<table>
+<thead>
+<tr>
+<th>Fase</th>
+<th>Naam</th>
+<th>Beschrijving</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Ingest</td>
+<td>Ontvangen van eenmalige en periodieke bronnen</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Extractie</td>
+<td>Formatdetectie, encoding-afhandeling, parsing en veldherkenning</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Ruwe Opslag</td>
+<td>Bewaren in MongoDB/SingleStore met polymorf metadateringsmodel</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Transformatie</td>
+<td>ABR-harmonisatie, spellingnormalisatie, sleutel-/locatieharmonisatie, deduplicatie</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Validatie</td>
+<td>Datalogicavalidatie en cachemechanisme</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Definitieve Opslag</td>
+<td>Gestructureerde opslag in PostgreSQL/Oracle (GGM-compatibel)</td>
+</tr>
+<tr>
+<td>7</td>
+<td>Uitvoer</td>
+<td>Website, GIS-export, Data Warehouse, Linked Open Data</td>
+</tr>
+</tbody>
+</table>
+<p>De Crossviews Engine en het handmatige schoningsproces zijn als parallelle processen weergegeven.</p>
+<h3 id="3-componentenmodel">3. Componentenmodel<a class="headerlink" href="#3-componentenmodel" title="Permanent link">&para;</a></h3>
+<p><strong>Bestand:</strong> <code>assets/diagrams/componenten-model.drawio</code></p>
+<p>Het componentenmodel visualiseert de functionele indeling in vier lagen:</p>
+<ul>
+<li><strong>Verwerkingslaag</strong> — Extractie → Mapping → Transformatie → Validatie, aangevuld met Crossviews en Zoek &amp; Indexering</li>
+<li><strong>Opslaglaag</strong> — MongoDB (schema-vrij), PostgreSQL (relationeel/GGM) en Oracle (optioneel/enterprise)</li>
+<li><strong>Beheer &amp; Configuratie</strong> — Configuratiemodule (gemeenteprofielen, mappings) en Monitoring (logging, procesvoortgang, foutafhandeling)</li>
+<li><strong>Presentatielaag</strong> — Website (Django + Vue/Vuetify), REST API, GIS-export, Data Warehouse en Linked Open Data</li>
+</ul>
+<p>De infrastructuurlaag (Docker, Kubernetes, Airflow, Celery, Luigi, Spark) vormt de basis. Het toekomstige UML-Transformer-component is met een stippellijn aangegeven.</p>
+<h3 id="4-semantisch-model">4. Semantisch Model<a class="headerlink" href="#4-semantisch-model" title="Permanent link">&para;</a></h3>
+<p><strong>Bestand:</strong> <code>assets/diagrams/semantisch-model.drawio</code></p>
+<p>Dit diagram toont de semantische architectuur van het platform:</p>
+<ul>
+<li><strong>CIDOC CRM-familie</strong> — de hiërarchie van CRM-core, CRMarchaeo, CRMsci, CRMba en CRMgeo</li>
+<li><strong>22 Semantische Referentie Data Modellen (SRDMs)</strong> — de modelleringsgroepen voor vondsten, structuren, locaties, documentatie, actoren en analyse</li>
+<li><strong>Nederlandse standaarden</strong> — ABR Thesaurus, GGM, Archis/RCE en DANS e-Depot</li>
+<li><strong>Internationale standaarden</strong> — ARIADNE, FAIR-principes en Linked Open Data</li>
+</ul>
+<p>Alle elementen convergeren naar de centrale Wasstraat-node, die als integratielaag fungeert.</p>
+<h2 id="gebruik-van-de-diagrammen">Gebruik van de diagrammen<a class="headerlink" href="#gebruik-van-de-diagrammen" title="Permanent link">&para;</a></h2>
+<p>De <code>.drawio</code>-bestanden kunnen worden geopend met:</p>
+<ul>
+<li><a href="https://github.com/jgraph/drawio-desktop/releases">draw.io Desktop</a> (offline)</li>
+<li><a href="https://app.diagrams.net/">draw.io Online</a> (browser)</li>
+<li>De draw.io-extensie voor VS Code</li>
+</ul>
+<div class="admonition tip">
+<p class="admonition-title">Kleurcodering</p>
+<p>Alle diagrammen hanteren een consistente kleurcodering:</p>
+<ul>
+<li><strong>Groen</strong> — Verwerkingscomponenten (extractie, transformatie)</li>
+<li><strong>Rood</strong> — Opslagcomponenten (databases)</li>
+<li><strong>Blauw</strong> — In- en uitvoercomponenten</li>
+<li><strong>Geel</strong> — Ondersteunende componenten (crossviews, validatie, zoeken)</li>
+<li><strong>Paars</strong> — Handmatige/beheerprocessen en externe standaarden</li>
+</ul>
+</div>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../deployment/proefdata/" class="btn btn-neutral float-left" title="Proefdata Inlezen"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../deployment/proefdata/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+  </span>
+</div>
+    <script src="../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "..";</script>
+    <script src="../js/theme_extra.js"></script>
+    <script src="../js/theme.js"></script>
+      <script src="../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

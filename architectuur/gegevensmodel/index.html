@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="nl" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="author" content="E-Space / Arjen Brienen" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>Gegevensmodel & Semantiek - Wasstraat Archeologische Data</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+        <link href="../../assets/extra.css" rel="stylesheet" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Gegevensmodel \u0026 Semantiek";
+        var mkdocs_page_input_path = "architectuur/gegevensmodel.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> Wasstraat Archeologische Data
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Home</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Projectoverzicht</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../overzicht/inleiding/">Inleiding</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../overzicht/probleemstelling/">Probleemstelling</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../overzicht/doelstellingen/">Doelstellingen</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Architectuur</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../systeem/">Systeemarchitectuur</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../dataflow/">Dataflow Pipeline</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../componenten/">Componentenmodel</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Gegevensmodel & Semantiek</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#overzicht">Overzicht</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#semantische-grondslag">Semantische Grondslag</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#cidoc-crm-familie">CIDOC CRM Familie</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#thesauribronnen">Thesauribronnen</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#semantische-referentiedatamodellen-srdms">Semantische Referentiedatamodellen (SRDM's)</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#primaire-entiteiten">Primaire Entiteiten</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#cidoc-crm-structuur">CIDOC CRM Structuur</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#relationele-model">Relationele Model</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#project-excavation-context-finds">Project → Excavation → Context → Finds</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#gegevensattributen-per-srdm">Gegevensattributen per SRDM</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#archaeological-project">Archaeological Project</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#excavation">Excavation</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#stratigraphic-unit">Stratigraphic Unit</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#context">Context</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#artefact">Artefact</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#linked-open-data-lod">Linked Open Data (LOD)</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#fair-data-principes">FAIR Data Principes</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#uitbreidbaarheid">Uitbreidbaarheid</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#lokale-extensies">Lokale Extensies</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#multi-source-reconciliation">Multi-Source Reconciliation</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#data-validation">Data Validation</a>
+    </li>
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../stack/">Technische Stack</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Componenten</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../componenten/extractie/">Extractielaag</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../componenten/singlestore/">SingleStore & Clusterlaag</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../componenten/transformatie/">Transformatielaag</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../componenten/crossviews/">Crossviews</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../componenten/validatie/">Validatielaag</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../componenten/configuratie/">Configuratiemodule</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../componenten/zoeken/">Zoek- en Indexeringslaag</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Deployment</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../deployment/omgevingen/">Omgevingen & Docker Compose</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../deployment/airflow-vs-app/">Airflow Transformatie vs. Web Applicatie</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../deployment/proefdata/">Proefdata Inlezen</a>
+                  </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../diagrammen/">Diagrammen</a>
+                </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">Wasstraat Archeologische Data</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">Architectuur</li>
+      <li class="breadcrumb-item active">Gegevensmodel & Semantiek</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="gegevensmodel-en-semantiek">Gegevensmodel en Semantiek<a class="headerlink" href="#gegevensmodel-en-semantiek" title="Permanent link">&para;</a></h1>
+<h2 id="overzicht">Overzicht<a class="headerlink" href="#overzicht" title="Permanent link">&para;</a></h2>
+<p>Het gegevensmodel van Wasstraat is gegrondvest op de CIDOC CRM-familie van ontologieën, aangevuld met gespecialiseerde archeologische en wetenschappelijke extensies. Het model organiseert archeologische informatie rond 22 semantische referentiedatamodellen (SRDM's), die de kernentiteiten en hun relaties definiëren.</p>
+<h2 id="semantische-grondslag">Semantische Grondslag<a class="headerlink" href="#semantische-grondslag" title="Permanent link">&para;</a></h2>
+<h3 id="cidoc-crm-familie">CIDOC CRM Familie<a class="headerlink" href="#cidoc-crm-familie" title="Permanent link">&para;</a></h3>
+<p>Het systeem bouwt voort op internationale standaarden voor informatiemodellering:</p>
+<table>
+<thead>
+<tr>
+<th>Ontologie</th>
+<th>Focus</th>
+<th>Toepassing</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>CIDOC CRM</strong></td>
+<td>Cultureel erfgoed in het algemeen</td>
+<td>Basis voor alle domeinmodellering</td>
+</tr>
+<tr>
+<td><strong>CRMarchaeo</strong></td>
+<td>Archeologische processen en gegevens</td>
+<td>Opgravingen, contexten, vondsten</td>
+</tr>
+<tr>
+<td><strong>CRMsci</strong></td>
+<td>Wetenschappelijke observatie en analyse</td>
+<td>Laboratoriumwerk, dateringen, analyses</td>
+</tr>
+<tr>
+<td><strong>CRMba</strong></td>
+<td>Bouwkundig erfgoed</td>
+<td>Architecturale elementen</td>
+</tr>
+<tr>
+<td><strong>CRMgeo</strong></td>
+<td>Geografische en ruimtelijke concepten</td>
+<td>Locaties, coördinaten, grenzen</td>
+</tr>
+</tbody>
+</table>
+<h3 id="thesauribronnen">Thesauribronnen<a class="headerlink" href="#thesauribronnen" title="Permanent link">&para;</a></h3>
+<p>Het systeem normaliseert terminologie via:</p>
+<table>
+<thead>
+<tr>
+<th>Thesaurus</th>
+<th>Beschrijving</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>ABR</strong></td>
+<td>Archeologisch Basisregister - Nederlandse standaard voor archeologische termen</td>
+</tr>
+<tr>
+<td><strong>Gemeentelijk Gegevensmodel (GGM)</strong></td>
+<td>Lokale administratieve gegevensdefinities</td>
+</tr>
+<tr>
+<td><strong>Lokale Thesauribronnen</strong></td>
+<td>Project- en archief-specifieke terminologie</td>
+</tr>
+</tbody>
+</table>
+<h2 id="semantische-referentiedatamodellen-srdms">Semantische Referentiedatamodellen (SRDM's)<a class="headerlink" href="#semantische-referentiedatamodellen-srdms" title="Permanent link">&para;</a></h2>
+<p>22 kernmodellen structureren de archeologische informatie:</p>
+<h3 id="primaire-entiteiten">Primaire Entiteiten<a class="headerlink" href="#primaire-entiteiten" title="Permanent link">&para;</a></h3>
+<p><strong>Projecten &amp; Onderzoek</strong>
+1. <strong>Archaeological Project</strong> - Overkoepelend onderzoeksproject
+2. <strong>Excavation</strong> - Systematische opgraving
+3. <strong>Survey</strong> - Oppervlakte- of luchtfotografisch onderzoek
+4. <strong>Analysis</strong> - Wetenschappelijke analyse van vondsten/samples</p>
+<p><strong>Ruimtelijke Eenheden</strong>
+5. <strong>Site</strong> - Archeologische locatie
+6. <strong>Place</strong> - Geografische plaats
+7. <strong>Stratigraphic Unit</strong> - Geologische/archeologische stratificatielaag
+8. <strong>Context</strong> - Archeologische context (bijv. huisplaats, greppel)
+9. <strong>Area</strong> - Onderzochte ruimte (rooster, quadrant)
+10. <strong>Trench</strong> - Opgravingssleuf</p>
+<p><strong>Materiaalkunde</strong>
+11. <strong>Finds Collection</strong> - Groep van samen gevonden objecten
+12. <strong>Artefact</strong> - Vervaardigd voorwerp
+13. <strong>Feature</strong> - In-situ structuur (bijv. vuurplaats, weg)
+14. <strong>Sample</strong> - Monstermateriaal voor analyse
+15. <strong>Biological Object</strong> - Biologisch/faunaal materiaal</p>
+<p><strong>Documentatie</strong>
+16. <strong>Image</strong> - Fotografische opname
+17. <strong>Digital Object</strong> - Gedigitaliseerde bron
+18. <strong>Textual Work</strong> - Publicatie, rapport, artikel
+19. <strong>Archival Unit</strong> - Archiefstuk</p>
+<p><strong>Thesaurale Eenheden</strong>
+20. <strong>Period</strong> - Chronologische periode
+21. <strong>Person</strong> - Individueel persoon
+22. <strong>Institution</strong> - Organisatie of instelling</p>
+<h2 id="cidoc-crm-structuur">CIDOC CRM Structuur<a class="headerlink" href="#cidoc-crm-structuur" title="Permanent link">&para;</a></h2>
+<p>De CIDOC CRM organisatie van informatie volgt dit patroon:</p>
+<div class="codehilite"><pre><span></span><code><span class="nl">E1</span><span class="p">:</span><span class="w"> </span><span class="n">CRM</span><span class="w"> </span><span class="n">Entity</span>
+<span class="err">├──</span><span class="w"> </span><span class="n">E2</span><span class="o">:</span><span class="w"> </span><span class="n">Temporal</span><span class="w"> </span><span class="n">Entity</span>
+<span class="err">│</span><span class="w">   </span><span class="err">├──</span><span class="w"> </span><span class="n">E4</span><span class="o">:</span><span class="w"> </span><span class="n">Persistent</span><span class="w"> </span><span class="n">Item</span>
+<span class="err">│</span><span class="w">   </span><span class="err">│</span><span class="w">   </span><span class="err">├──</span><span class="w"> </span><span class="n">E18</span><span class="o">:</span><span class="w"> </span><span class="n">Physical</span><span class="w"> </span><span class="n">Thing</span>
+<span class="err">│</span><span class="w">   </span><span class="err">│</span><span class="w">   </span><span class="err">│</span><span class="w">   </span><span class="err">├──</span><span class="w"> </span><span class="n">E21</span><span class="o">:</span><span class="w"> </span><span class="n">Person</span>
+<span class="err">│</span><span class="w">   </span><span class="err">│</span><span class="w">   </span><span class="err">│</span><span class="w">   </span><span class="err">├──</span><span class="w"> </span><span class="n">E39</span><span class="o">:</span><span class="w"> </span><span class="n">Actor</span>
+<span class="err">│</span><span class="w">   </span><span class="err">│</span><span class="w">   </span><span class="err">│</span><span class="w">   </span><span class="err">└──</span><span class="w"> </span><span class="n">E22</span><span class="o">:</span><span class="w"> </span><span class="n">Man</span><span class="o">-</span><span class="n">Made</span><span class="w"> </span><span class="n">Object</span>
+<span class="err">│</span><span class="w">   </span><span class="err">│</span><span class="w">   </span><span class="err">│</span><span class="w">       </span><span class="err">├──</span><span class="w"> </span><span class="n">E84</span><span class="o">:</span><span class="w"> </span><span class="n">Information</span><span class="w"> </span><span class="n">Carrier</span>
+<span class="err">│</span><span class="w">   </span><span class="err">│</span><span class="w">   </span><span class="err">│</span><span class="w">       </span><span class="err">└──</span><span class="w"> </span><span class="n">E57</span><span class="o">:</span><span class="w"> </span><span class="n">Archaeological</span><span class="w"> </span><span class="n">Object</span>
+<span class="err">│</span><span class="w">   </span><span class="err">│</span><span class="w">   </span><span class="err">└──</span><span class="w"> </span><span class="n">E41</span><span class="o">:</span><span class="w"> </span><span class="n">Appellation</span>
+<span class="err">│</span><span class="w">   </span><span class="err">└──</span><span class="w"> </span><span class="n">E5</span><span class="o">:</span><span class="w"> </span><span class="n">Event</span>
+<span class="err">│</span><span class="w">       </span><span class="err">├──</span><span class="w"> </span><span class="n">E7</span><span class="o">:</span><span class="w"> </span><span class="n">Activity</span>
+<span class="err">│</span><span class="w">       </span><span class="err">│</span><span class="w">   </span><span class="err">├──</span><span class="w"> </span><span class="n">E13</span><span class="o">:</span><span class="w"> </span><span class="n">Attribute</span><span class="w"> </span><span class="n">Assignment</span>
+<span class="err">│</span><span class="w">       </span><span class="err">│</span><span class="w">   </span><span class="err">├──</span><span class="w"> </span><span class="n">E19</span><span class="o">:</span><span class="w"> </span><span class="n">Physical</span><span class="w"> </span><span class="n">Object</span>
+<span class="err">│</span><span class="w">       </span><span class="err">│</span><span class="w">   </span><span class="err">└──</span><span class="w"> </span><span class="p">...</span><span class="w"> </span><span class="p">[</span><span class="n">andere</span><span class="w"> </span><span class="n">events</span><span class="p">]</span>
+<span class="err">│</span><span class="w">       </span><span class="err">└──</span><span class="w"> </span><span class="n">E81</span><span class="o">:</span><span class="w"> </span><span class="n">Transformation</span>
+<span class="err">└──</span><span class="w"> </span><span class="n">E13</span><span class="o">:</span><span class="w"> </span><span class="n">Attribute</span><span class="w"> </span><span class="n">Assignment</span>
+</code></pre></div>
+
+<h2 id="relationele-model">Relationele Model<a class="headerlink" href="#relationele-model" title="Permanent link">&para;</a></h2>
+<p>Kern-entiteitsrelaties:</p>
+<h3 id="project-excavation-context-finds">Project → Excavation → Context → Finds<a class="headerlink" href="#project-excavation-context-finds" title="Permanent link">&para;</a></h3>
+<div class="codehilite"><pre><span></span><code>Archaeological Project
+    │
+    ├─→ Excavation (E7: Activity)
+    │       │
+    │       ├─→ Area (E26: Physical Feature)
+    │       │   └─→ Trench (E26: Physical Feature)
+    │       │
+    │       ├─→ Stratigraphic Unit (E26: Physical Feature)
+    │       │   └─→ Context (E26: Physical Feature)
+    │       │       └─→ Finds Collection
+    │       │           ├─→ Artefact (E22: Man-Made Object)
+    │       │           ├─→ Biological Object (E18: Physical Thing)
+    │       │           └─→ Sample (E18: Physical Thing)
+    │       │
+    │       └─→ Image (E38: Image)
+    │
+    └─→ Analysis (E7: Activity)
+            ├─→ Input: Sample
+            └─→ Output: Attribute Assignment
+</code></pre></div>
+
+<h2 id="gegevensattributen-per-srdm">Gegevensattributen per SRDM<a class="headerlink" href="#gegevensattributen-per-srdm" title="Permanent link">&para;</a></h2>
+<h3 id="archaeological-project">Archaeological Project<a class="headerlink" href="#archaeological-project" title="Permanent link">&para;</a></h3>
+<div class="codehilite"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;project_uuid&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;title&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;string&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;description&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;text&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;startDate&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;ISO 8601&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;endDate&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;ISO 8601&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;location&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Place reference&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;responsible&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Person/Institution reference&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;relatedExcavations&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;excavation_uuid&quot;</span><span class="p">],</span>
+<span class="w">  </span><span class="nt">&quot;relatedSurveys&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;survey_uuid&quot;</span><span class="p">],</span>
+<span class="w">  </span><span class="nt">&quot;relatedAnalyses&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;analysis_uuid&quot;</span><span class="p">]</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<h3 id="excavation">Excavation<a class="headerlink" href="#excavation" title="Permanent link">&para;</a></h3>
+<div class="codehilite"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;excavation_uuid&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;title&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;string&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;description&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;text&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;date&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;ISO 8601&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;season&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;string&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;location&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Place reference&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;relatedProject&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;project_uuid&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;areas&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;area_uuid&quot;</span><span class="p">],</span>
+<span class="w">  </span><span class="nt">&quot;trenches&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;trench_uuid&quot;</span><span class="p">],</span>
+<span class="w">  </span><span class="nt">&quot;stratigraphicUnits&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;strunit_uuid&quot;</span><span class="p">],</span>
+<span class="w">  </span><span class="nt">&quot;findCollections&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;collection_uuid&quot;</span><span class="p">],</span>
+<span class="w">  </span><span class="nt">&quot;images&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;image_uuid&quot;</span><span class="p">]</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<h3 id="stratigraphic-unit">Stratigraphic Unit<a class="headerlink" href="#stratigraphic-unit" title="Permanent link">&para;</a></h3>
+<div class="codehilite"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;strunit_uuid&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;description&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;string&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;depth_top&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;float&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;depth_bottom&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;float&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;color&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;string (ABR-gestandaardiseerd)&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;texture&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;string (ABR-gestandaardiseerd)&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;interpretation&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;string (ABR-mapped)&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;relatedContexts&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;context_uuid&quot;</span><span class="p">],</span>
+<span class="w">  </span><span class="nt">&quot;relatedExcavation&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;excavation_uuid&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;datingEvidence&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;sample_uuid&quot;</span><span class="p">]</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<h3 id="context">Context<a class="headerlink" href="#context" title="Permanent link">&para;</a></h3>
+<div class="codehilite"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;context_uuid&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;string&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;string (ABR-mapped)&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;description&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;text&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;stratigraphicUnit&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;strunit_uuid&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;area&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;area_uuid&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;findCollections&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;collection_uuid&quot;</span><span class="p">],</span>
+<span class="w">  </span><span class="nt">&quot;cuts&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;context_uuid&quot;</span><span class="p">],</span>
+<span class="w">  </span><span class="nt">&quot;cutBy&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;context_uuid&quot;</span><span class="p">],</span>
+<span class="w">  </span><span class="nt">&quot;seals&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;context_uuid&quot;</span><span class="p">],</span>
+<span class="w">  </span><span class="nt">&quot;sealedBy&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;context_uuid&quot;</span><span class="p">]</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<h3 id="artefact">Artefact<a class="headerlink" href="#artefact" title="Permanent link">&para;</a></h3>
+<div class="codehilite"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;artefact_uuid&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;string&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;string (ABR-mapped)&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;material&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;string (ABR-mapped)&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;period&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;period_uuid&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;description&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;text&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;dimensions&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;length&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;float&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;width&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;float&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;height&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;float&quot;</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="w">  </span><span class="nt">&quot;findCollection&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;collection_uuid&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;images&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;image_uuid&quot;</span><span class="p">],</span>
+<span class="w">  </span><span class="nt">&quot;analyses&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;analysis_uuid&quot;</span><span class="p">]</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<h2 id="linked-open-data-lod">Linked Open Data (LOD)<a class="headerlink" href="#linked-open-data-lod" title="Permanent link">&para;</a></h2>
+<p>Het gegevensmodel ondersteunt Linked Open Data publishing:</p>
+<ul>
+<li>URIs voor alle kernentiteiten</li>
+<li>RDF-uitvoering via RDFLib</li>
+<li>CIDOC CRM property-mappingen</li>
+<li>Links naar externe autoriteiten (AAT, GeoNames, Wikidata)</li>
+</ul>
+<h2 id="fair-data-principes">FAIR Data Principes<a class="headerlink" href="#fair-data-principes" title="Permanent link">&para;</a></h2>
+<p>Alle gegevens volgen FAIR-principes:</p>
+<table>
+<thead>
+<tr>
+<th>Principe</th>
+<th>Implementatie</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Findable</strong></td>
+<td>Unieke URIs, thesaurus-gebaseerde indexering, gestructureerde metadaten</td>
+</tr>
+<tr>
+<td><strong>Accessible</strong></td>
+<td>HTTP REST API's, multiple export-formaten (JSON, RDF, CSV)</td>
+</tr>
+<tr>
+<td><strong>Interoperable</strong></td>
+<td>CIDOC CRM basis, ABR-harmonisering, SRDM-conformiteit</td>
+</tr>
+<tr>
+<td><strong>Reusable</strong></td>
+<td>Licentie-gestandaardiseerde metadata, volledige provenance-tracking, FAIR Data Maturity Levels</td>
+</tr>
+</tbody>
+</table>
+<h2 id="uitbreidbaarheid">Uitbreidbaarheid<a class="headerlink" href="#uitbreidbaarheid" title="Permanent link">&para;</a></h2>
+<p>Het semantische model is ontworpen voor uitbreiding:</p>
+<h3 id="lokale-extensies">Lokale Extensies<a class="headerlink" href="#lokale-extensies" title="Permanent link">&para;</a></h3>
+<p>Instellingen kunnen lokale SRDM's definiëren die voortbouwen op het basismodel:</p>
+<div class="codehilite"><pre><span></span><code><span class="nt">&lt;rdf:RDF</span><span class="w"> </span><span class="na">xmlns:rdf=</span><span class="s">&quot;http://www.w3.org/1999/02/22-rdf-syntax-ns#&quot;</span>
+<span class="w">         </span><span class="na">xmlns:crm=</span><span class="s">&quot;http://www.cidoc-crm.org/cidoc-crm/&quot;</span><span class="nt">&gt;</span>
+<span class="w">  </span><span class="nt">&lt;rdfs:Class</span><span class="w"> </span><span class="na">rdf:about=</span><span class="s">&quot;http://wasstraat.nl/model/CustomContext&quot;</span>
+<span class="w">             </span><span class="na">rdfs:subClassOf=</span><span class="s">&quot;&amp;crm;E26&quot;</span><span class="nt">&gt;</span>
+<span class="w">    </span><span class="cm">&lt;!-- Lokale uitbreiding --&gt;</span>
+<span class="w">  </span><span class="nt">&lt;/rdfs:Class&gt;</span>
+<span class="nt">&lt;/rdf:RDF&gt;</span>
+</code></pre></div>
+
+<h3 id="multi-source-reconciliation">Multi-Source Reconciliation<a class="headerlink" href="#multi-source-reconciliation" title="Permanent link">&para;</a></h3>
+<p>De UML-Transformer ondersteunt het merger van meerdere lokale modellen in het centrale CIDOC CRM-raamwerk.</p>
+<h2 id="data-validation">Data Validation<a class="headerlink" href="#data-validation" title="Permanent link">&para;</a></h2>
+<p>Alle inkomende gegevens worden gevalideerd tegen SRDM-definities:</p>
+<table>
+<thead>
+<tr>
+<th>Validatieniveau</th>
+<th>Beschrijving</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Syntactisch</strong></td>
+<td>XML/JSON schema-conformiteit</td>
+</tr>
+<tr>
+<td><strong>Semantisch</strong></td>
+<td>CIDOC CRM property-constraints</td>
+</tr>
+<tr>
+<td><strong>Domein</strong></td>
+<td>ABR-thesaurus conformiteit</td>
+</tr>
+<tr>
+<td><strong>Relatie</strong></td>
+<td>Integriteitsconstraints tussen entiteiten</td>
+</tr>
+</tbody>
+</table>
+<p>Validatieresultaten voeden de handmatige schoonmaakinterface.</p>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../componenten/" class="btn btn-neutral float-left" title="Componentenmodel"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../stack/" class="btn btn-neutral float-right" title="Technische Stack">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../componenten/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../stack/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../..";</script>
+    <script src="../../js/theme_extra.js"></script>
+    <script src="../../js/theme.js"></script>
+      <script src="../../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

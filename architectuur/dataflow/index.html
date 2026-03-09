@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="nl" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="author" content="E-Space / Arjen Brienen" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>Dataflow Pipeline - Wasstraat Archeologische Data</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+        <link href="../../assets/extra.css" rel="stylesheet" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Dataflow Pipeline";
+        var mkdocs_page_input_path = "architectuur/dataflow.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> Wasstraat Archeologische Data
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Home</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Projectoverzicht</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../overzicht/inleiding/">Inleiding</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../overzicht/probleemstelling/">Probleemstelling</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../overzicht/doelstellingen/">Doelstellingen</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Architectuur</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../systeem/">Systeemarchitectuur</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Dataflow Pipeline</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#overzicht">Overzicht</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#fase-1-bronsystemen">Fase 1: Bronsystemen</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#fase-2-extractie">Fase 2: Extractie</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#extractielogica">Extractielogica</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#mapping-en-herkenning">Mapping en Herkenning</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#fase-3-ruwopslag">Fase 3: Ruwopslag</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#mongodb-nosql-storage">MongoDB NoSQL Storage</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#singlestore-kolom-opslag">SingleStore Kolom-opslag</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#fase-4-transformatie">Fase 4: Transformatie</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#abr-harmonisering">ABR-Harmonisering</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#datumafstemming">Datumafstemming</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#locatieharmonisering">Locatieharmonisering</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#spelling-en-tekst">Spelling en Tekst</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#fase-5-definitieve-opslag">Fase 5: Definitieve Opslag</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#postgresql">PostgreSQL</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#oracle">Oracle</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#fase-6-verdere-verwerking">Fase 6: Verdere Verwerking</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#fulltext-search">Fulltext Search</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#crossviews">Crossviews</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#fase-7-outputs">Fase 7: Outputs</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#website">Website</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#gis-integratie">GIS-Integratie</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#data-warehouse">Data Warehouse</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#transformatiestelling">Transformatiestelling</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#handmatige-interventie">Handmatige Interventie</a>
+    </li>
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../componenten/">Componentenmodel</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../gegevensmodel/">Gegevensmodel & Semantiek</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../stack/">Technische Stack</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Componenten</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../componenten/extractie/">Extractielaag</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../componenten/singlestore/">SingleStore & Clusterlaag</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../componenten/transformatie/">Transformatielaag</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../componenten/crossviews/">Crossviews</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../componenten/validatie/">Validatielaag</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../componenten/configuratie/">Configuratiemodule</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../componenten/zoeken/">Zoek- en Indexeringslaag</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Deployment</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../deployment/omgevingen/">Omgevingen & Docker Compose</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../deployment/airflow-vs-app/">Airflow Transformatie vs. Web Applicatie</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../deployment/proefdata/">Proefdata Inlezen</a>
+                  </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../diagrammen/">Diagrammen</a>
+                </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">Wasstraat Archeologische Data</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">Architectuur</li>
+      <li class="breadcrumb-item active">Dataflow Pipeline</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="gegevensstroomverloop">Gegevensstroomverloop<a class="headerlink" href="#gegevensstroomverloop" title="Permanent link">&para;</a></h1>
+<h2 id="overzicht">Overzicht<a class="headerlink" href="#overzicht" title="Permanent link">&para;</a></h2>
+<p>Dit document beschrijft de volledige stroom van archeologische gegevens door het Wasstraat-systeem, van bron tot eindgebruiker. Elke fase voegt waarde toe door gegevens incrementeel beter toegankelijk, betrouwbaar en betekenisvol te maken.</p>
+<p><img alt="Dataflow Pipeline" src="../../assets/images/dataflow-pipeline.svg" /></p>
+<h2 id="fase-1-bronsystemen">Fase 1: Bronsystemen<a class="headerlink" href="#fase-1-bronsystemen" title="Permanent link">&para;</a></h2>
+<p>Gegevens origineren uit verschillende bronnen:</p>
+<table>
+<thead>
+<tr>
+<th>Brontype</th>
+<th>Beschrijving</th>
+<th>Frequentie</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Historische datasets</td>
+<td>Gedigitaliseerde collecties, archieven</td>
+<td>Eenmalig</td>
+</tr>
+<tr>
+<td>Veldwerkapplicaties</td>
+<td>Real-time veldopnamen van opgravingen</td>
+<td>Periodiek</td>
+</tr>
+<tr>
+<td>Externe bronnen</td>
+<td>Samenwerking met andere instellingen</td>
+<td>Variabel</td>
+</tr>
+<tr>
+<td>Thesauribronnen</td>
+<td>Gecontroleerde vocabulaires (ABR, etc.)</td>
+<td>Regelmatig</td>
+</tr>
+</tbody>
+</table>
+<h2 id="fase-2-extractie">Fase 2: Extractie<a class="headerlink" href="#fase-2-extractie" title="Permanent link">&para;</a></h2>
+<p><strong>Python-extractielaag</strong> leest gegevens in native formaten en converteert naar standaardformaten.</p>
+<h3 id="extractielogica">Extractielogica<a class="headerlink" href="#extractielogica" title="Permanent link">&para;</a></h3>
+<div class="codehilite"><pre><span></span><code><span class="c1"># Pseudo-code voor typische extractiestap</span>
+<span class="k">for</span> <span class="n">bronbestand</span> <span class="ow">in</span> <span class="n">bronsystemen</span><span class="p">:</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">lees_bronformaat</span><span class="p">(</span><span class="n">bronbestand</span><span class="p">)</span>
+    <span class="n">validatie</span> <span class="o">=</span> <span class="n">basale_checks</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+    <span class="n">standaard</span> <span class="o">=</span> <span class="n">map_naar_standaardformaat</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+    <span class="n">log_extractie</span><span class="p">(</span><span class="n">bronbestand</span><span class="p">,</span> <span class="n">standaard</span><span class="p">,</span> <span class="n">validatie</span><span class="p">)</span>
+</code></pre></div>
+
+<h3 id="mapping-en-herkenning">Mapping en Herkenning<a class="headerlink" href="#mapping-en-herkenning" title="Permanent link">&para;</a></h3>
+<p>De <strong>mappinglaag</strong> herkent:
+- <strong>Termdefinities</strong>: Mapping van bron-termen naar gestandaardiseerde vocabulaires
+- <strong>Veldherkenning</strong>: Automatische detectie van semantisch equivalente velden
+- <strong>Domeinafleiding</strong>: Bepaling van gegevensdomeinen op basis van inhoud</p>
+<h2 id="fase-3-ruwopslag">Fase 3: Ruwopslag<a class="headerlink" href="#fase-3-ruwopslag" title="Permanent link">&para;</a></h2>
+<p>Opgeslagen gegevens in niet-genormaliseerde vorm:</p>
+<h3 id="mongodb-nosql-storage">MongoDB NoSQL Storage<a class="headerlink" href="#mongodb-nosql-storage" title="Permanent link">&para;</a></h3>
+<p>Flexibele schema voor heterogene bronnen:
+- Behoud van originele structuur
+- Semi-gestructureerde gegevens
+- Schaalbare horizontale distributie</p>
+<h3 id="singlestore-kolom-opslag">SingleStore Kolom-opslag<a class="headerlink" href="#singlestore-kolom-opslag" title="Permanent link">&para;</a></h3>
+<p>Geoptimaliseerd voor analytische queries:
+- Efficiënte compressie
+- Snelle aggregaties
+- Ondersteuning voor crossviews</p>
+<h2 id="fase-4-transformatie">Fase 4: Transformatie<a class="headerlink" href="#fase-4-transformatie" title="Permanent link">&para;</a></h2>
+<p>De <strong>Python-transformatielaag</strong> en <strong>SQLAlchemy ORM</strong> normaliseren en harmoniseren gegevens:</p>
+<h3 id="abr-harmonisering">ABR-Harmonisering<a class="headerlink" href="#abr-harmonisering" title="Permanent link">&para;</a></h3>
+<p>Mapping van lokale termen naar ABR-thesaurusconcepten:</p>
+<div class="codehilite"><pre><span></span><code>Lokale term: &quot;middeleeuwse aardewerkscherf&quot;
+    ↓ [ABR-mapping]
+ABR-concept: &quot;keramiek&quot; (urn:nbn:nl:ui:nbn-id-123456)
+</code></pre></div>
+
+<h3 id="datumafstemming">Datumafstemming<a class="headerlink" href="#datumafstemming" title="Permanent link">&para;</a></h3>
+<p>Conversie naar ISO 8601-standaard:</p>
+<div class="codehilite"><pre><span></span><code><span class="n">Verschillende</span><span class="w"> </span><span class="nl">invoeren</span><span class="p">:</span><span class="w"> </span><span class="ss">&quot;13de eeuw&quot;</span><span class="p">,</span><span class="w"> </span><span class="ss">&quot;1200-1300&quot;</span><span class="p">,</span><span class="w"> </span><span class="ss">&quot;AD 1250&quot;</span>
+<span class="w">    </span><span class="err">↓</span><span class="w"> </span><span class="o">[</span><span class="n">Normalisering</span><span class="o">]</span>
+<span class="nl">Standaard</span><span class="p">:</span><span class="w"> </span><span class="err">{</span><span class="ss">&quot;begin&quot;</span><span class="err">:</span><span class="w"> </span><span class="mi">1200</span><span class="p">,</span><span class="w"> </span><span class="ss">&quot;einde&quot;</span><span class="err">:</span><span class="w"> </span><span class="mi">1300</span><span class="err">}</span>
+</code></pre></div>
+
+<h3 id="locatieharmonisering">Locatieharmonisering<a class="headerlink" href="#locatieharmonisering" title="Permanent link">&para;</a></h3>
+<p>Consolidatie van locatieaanduidingen:</p>
+<div class="codehilite"><pre><span></span><code>Duplicate locaties → Deduplicatie → Canonische locatie-ID
+RDx,y koordinaten → Conversie naar WGS84
+</code></pre></div>
+
+<h3 id="spelling-en-tekst">Spelling en Tekst<a class="headerlink" href="#spelling-en-tekst" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Unicode-normalisatie</li>
+<li>Diacrietenafhandeling</li>
+<li>Diakritiek-neutrale zoekindex</li>
+</ul>
+<h2 id="fase-5-definitieve-opslag">Fase 5: Definitieve Opslag<a class="headerlink" href="#fase-5-definitieve-opslag" title="Permanent link">&para;</a></h2>
+<p>Genormaliseerde, canonieke opslag in relationele databases:</p>
+<h3 id="postgresql">PostgreSQL<a class="headerlink" href="#postgresql" title="Permanent link">&para;</a></h3>
+<p>Voorkeur voor nieuwe implementaties:
+- Open-source, goed gedocumenteerd
+- Sterke JSON/jsonb-ondersteuning
+- PostGIS extensie voor geografische data
+- Excellent voor FAIR data-workflows</p>
+<h3 id="oracle">Oracle<a class="headerlink" href="#oracle" title="Permanent link">&para;</a></h3>
+<p>Voor legacy-integratie en enterprise-omgevingen:
+- Reeds aanwezig in sommige organisaties
+- Sterke integratie met BI-tools</p>
+<h2 id="fase-6-verdere-verwerking">Fase 6: Verdere Verwerking<a class="headerlink" href="#fase-6-verdere-verwerking" title="Permanent link">&para;</a></h2>
+<h3 id="fulltext-search">Fulltext Search<a class="headerlink" href="#fulltext-search" title="Permanent link">&para;</a></h3>
+<p>Polymorfe zoekindexering met:
+- Vakgericht-bewuste tokening
+- Multi-language stemming
+- Relevantie-ranking op basis van gegevensveld</p>
+<h3 id="crossviews">Crossviews<a class="headerlink" href="#crossviews" title="Permanent link">&para;</a></h3>
+<p>Query-lagen die data uit meerdere bronnen combineren zonder duplicatie</p>
+<h2 id="fase-7-outputs">Fase 7: Outputs<a class="headerlink" href="#fase-7-outputs" title="Permanent link">&para;</a></h2>
+<h3 id="website">Website<a class="headerlink" href="#website" title="Permanent link">&para;</a></h3>
+<ul>
+<li>REST API's</li>
+<li>Web UI voor zoeken en browse</li>
+<li>Linked Open Data exports</li>
+</ul>
+<h3 id="gis-integratie">GIS-Integratie<a class="headerlink" href="#gis-integratie" title="Permanent link">&para;</a></h3>
+<ul>
+<li>WMS/WFS services</li>
+<li>GeoJSON exports</li>
+<li>Kaartgebaseerde interfaces</li>
+</ul>
+<h3 id="data-warehouse">Data Warehouse<a class="headerlink" href="#data-warehouse" title="Permanent link">&para;</a></h3>
+<ul>
+<li>OLAP-cubes</li>
+<li>Reporting dashboards</li>
+<li>Exports voor verdere analyse</li>
+</ul>
+<h2 id="transformatiestelling">Transformatiestelling<a class="headerlink" href="#transformatiestelling" title="Permanent link">&para;</a></h2>
+<p>Een kritiek ontwerp-principe:</p>
+<blockquote>
+<p><strong>Originele data wordt altijd behouden. Transformaties kunnen opnieuw worden uitgevoerd.</strong></p>
+</blockquote>
+<p>Dit betekent:
+- Alle transformatielogica is versioneerd
+- Transformatieresultaten kunnen worden geverifieerd
+- Fouten kunnen worden geïsoleerd en gecorrigeerd
+- Volledig audittrail is beschikbaar</p>
+<h2 id="handmatige-interventie">Handmatige Interventie<a class="headerlink" href="#handmatige-interventie" title="Permanent link">&para;</a></h2>
+<p>De <strong>handmatige schoonmaakinterface</strong> biedt menselijke mogelijkheden:
+- Controle van onzekere transformaties
+- Correctie van foutieve mappings
+- Disambiguering van anomalieën</p>
+<p>Dit is vooral belangrijk voor:
+- Waardeconflicten tussen bronnen
+- Verouderde of onvolledig bron-thesaurus
+- Contextgebonden interpretaties</p>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../systeem/" class="btn btn-neutral float-left" title="Systeemarchitectuur"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../componenten/" class="btn btn-neutral float-right" title="Componentenmodel">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../systeem/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../componenten/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../..";</script>
+    <script src="../../js/theme_extra.js"></script>
+    <script src="../../js/theme.js"></script>
+      <script src="../../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="nl" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="author" content="E-Space / Arjen Brienen" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>Systeemarchitectuur - Wasstraat Archeologische Data</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+        <link href="../../assets/extra.css" rel="stylesheet" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Systeemarchitectuur";
+        var mkdocs_page_input_path = "architectuur/systeem.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> Wasstraat Archeologische Data
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Home</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Projectoverzicht</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../overzicht/inleiding/">Inleiding</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../overzicht/probleemstelling/">Probleemstelling</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../overzicht/doelstellingen/">Doelstellingen</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Architectuur</span></p>
+              <ul class="current">
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Systeemarchitectuur</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#overzicht">Overzicht</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#kernarchitectuur">Kernarchitectuur</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#1-bronnen-sources">1. Bronnen (Sources)</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#2-extractielaag-extraction">2. Extractielaag (Extraction)</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#3-opslag-ruw-raw-storage">3. Opslag - Ruw (Raw Storage)</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#4-transformatielaag-transformation">4. Transformatielaag (Transformation)</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#5-opslag-definitief-definitive-storage">5. Opslag - Definitief (Definitive Storage)</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#6-outputs">6. Outputs</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#ondersteunende-componenten">Ondersteunende Componenten</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#handmatige-schoonmaakinterface">Handmatige Schoonmaakinterface</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#clientonderhoudinterface">Clientonderhoudinterface</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#gegevenspreservatie">Gegevenspreservatie</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#data-governance">Data Governance</a>
+    </li>
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../dataflow/">Dataflow Pipeline</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../componenten/">Componentenmodel</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../gegevensmodel/">Gegevensmodel & Semantiek</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../stack/">Technische Stack</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Componenten</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../componenten/extractie/">Extractielaag</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../componenten/singlestore/">SingleStore & Clusterlaag</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../componenten/transformatie/">Transformatielaag</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../componenten/crossviews/">Crossviews</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../componenten/validatie/">Validatielaag</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../componenten/configuratie/">Configuratiemodule</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../componenten/zoeken/">Zoek- en Indexeringslaag</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Deployment</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../deployment/omgevingen/">Omgevingen & Docker Compose</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../deployment/airflow-vs-app/">Airflow Transformatie vs. Web Applicatie</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../deployment/proefdata/">Proefdata Inlezen</a>
+                  </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../diagrammen/">Diagrammen</a>
+                </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">Wasstraat Archeologische Data</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">Architectuur</li>
+      <li class="breadcrumb-item active">Systeemarchitectuur</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="systeemarchitectuur">Systeemarchitectuur<a class="headerlink" href="#systeemarchitectuur" title="Permanent link">&para;</a></h1>
+<h2 id="overzicht">Overzicht<a class="headerlink" href="#overzicht" title="Permanent link">&para;</a></h2>
+<p>Het Wasstraat Archeologische Data-systeem is een geïntegreerde gegevensplatform dat archeologische informatie uit meerdere bronnen verzamelt, transformeert en beschikbaar stelt via diverse outputs. Het systeem volgt een data pipeline-benadering met strikte scheiding van concerns tussen extractie, opslag, transformatie en uitgave.</p>
+<p><img alt="Systeemarchitectuur" src="../../assets/images/systeem-architectuur.svg" /></p>
+<h2 id="kernarchitectuur">Kernarchitectuur<a class="headerlink" href="#kernarchitectuur" title="Permanent link">&para;</a></h2>
+<p>Het systeem is opgebouwd uit de volgende lagen:</p>
+<h3 id="1-bronnen-sources">1. Bronnen (Sources)<a class="headerlink" href="#1-bronnen-sources" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Eenmalige imports</strong>: Historische gegevenssets</li>
+<li><strong>Periodieke bronnen</strong>: Continu of regelmatig bijgewerkte gegevens</li>
+</ul>
+<h3 id="2-extractielaag-extraction">2. Extractielaag (Extraction)<a class="headerlink" href="#2-extractielaag-extraction" title="Permanent link">&para;</a></h3>
+<p>Converteert diverse gegevensbronnen naar een gestandaardiseerd formaat. De extractielaag:
+- Leest data uit heterogene bronnen
+- Voert basale validatie uit
+- Behoudt alle originele informatie</p>
+<h3 id="3-opslag-ruw-raw-storage">3. Opslag - Ruw (Raw Storage)<a class="headerlink" href="#3-opslag-ruw-raw-storage" title="Permanent link">&para;</a></h3>
+<p>Opslag van onbewerkte data direct na extractie:
+- <strong>MongoDB</strong>: NoSQL opslag voor semi-gestructureerde data
+- <strong>SingleStore</strong>: Kolom-georiënteerde opslag voor queryperformance</p>
+<p>Originele gegevens worden altijd bewaard zonder aanpassingen.</p>
+<h3 id="4-transformatielaag-transformation">4. Transformatielaag (Transformation)<a class="headerlink" href="#4-transformatielaag-transformation" title="Permanent link">&para;</a></h3>
+<p>Normaliseert en harmoniseert de opgeslagen data:
+- <strong>ABR-harmonisering</strong>: Afstemming met het ABR-thesaurus
+- <strong>Spelling</strong>: Gestandaardiseerde schrijfwijzen
+- <strong>Sleutel/Datum/Locatie harmonisering</strong>: Consolidatie van redundante en inconsistente gegevens</p>
+<h3 id="5-opslag-definitief-definitive-storage">5. Opslag - Definitief (Definitive Storage)<a class="headerlink" href="#5-opslag-definitief-definitive-storage" title="Permanent link">&para;</a></h3>
+<p>Eindopslag in gestructureerde relationele databases:
+- <strong>PostgreSQL</strong>: Open-source relationele database
+- <strong>Oracle</strong>: Enterprise-grade relationele database</p>
+<h3 id="6-outputs">6. Outputs<a class="headerlink" href="#6-outputs" title="Permanent link">&para;</a></h3>
+<p>Diverse gebruikersfacing applicaties:
+- <strong>Website</strong>: Webinterface voor publieke toegang
+- <strong>GIS</strong>: Geografische informatie-systemen
+- <strong>Data Warehouse/Reporting</strong>: Analytische dashboards en rapportage</p>
+<h2 id="ondersteunende-componenten">Ondersteunende Componenten<a class="headerlink" href="#ondersteunende-componenten" title="Permanent link">&para;</a></h2>
+<h3 id="handmatige-schoonmaakinterface">Handmatige Schoonmaakinterface<a class="headerlink" href="#handmatige-schoonmaakinterface" title="Permanent link">&para;</a></h3>
+<p>Interface voor menselijke validatie en correctie van gegevens, op kritieke punten in de pipeline.</p>
+<h3 id="clientonderhoudinterface">Clientonderhoudinterface<a class="headerlink" href="#clientonderhoudinterface" title="Permanent link">&para;</a></h3>
+<p>Beheersmodule voor het beheren van bronconfiguraties, gebruikers en systeeminstellingen.</p>
+<h2 id="gegevenspreservatie">Gegevenspreservatie<a class="headerlink" href="#gegevenspreservatie" title="Permanent link">&para;</a></h2>
+<p>Een kernprincipe van het systeem is dat <strong>originele gegevens altijd behouden blijven</strong>. Dit maakt het mogelijk om:
+- Transformaties op elk moment opnieuw uit te voeren
+- Fouten in transformatie-logica op te sporen en te corrigeren
+- Audit trails in stand te houden
+- Terugkeer naar bron-integriteit te garanderen</p>
+<h2 id="data-governance">Data Governance<a class="headerlink" href="#data-governance" title="Permanent link">&para;</a></h2>
+<p>Het systeem implementeert strakke gegevensbeheer:
+- Strikte scheiding tussen ruw en gereinigd
+- Versionering van transformatielogica
+- Volledig traceerbare transformatiegeschiedenis
+- Geïsoleerde correctiebewerkingen in de handmatige schoonmaakinterface</p>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../../overzicht/doelstellingen/" class="btn btn-neutral float-left" title="Doelstellingen"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../dataflow/" class="btn btn-neutral float-right" title="Dataflow Pipeline">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../../overzicht/doelstellingen/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../dataflow/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../..";</script>
+    <script src="../../js/theme_extra.js"></script>
+    <script src="../../js/theme.js"></script>
+      <script src="../../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

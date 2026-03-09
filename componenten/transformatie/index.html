@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="nl" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="author" content="E-Space / Arjen Brienen" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>Transformatielaag - Wasstraat Archeologische Data</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+        <link href="../../assets/extra.css" rel="stylesheet" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Transformatielaag";
+        var mkdocs_page_input_path = "componenten/transformatie.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> Wasstraat Archeologische Data
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Home</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Projectoverzicht</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../overzicht/inleiding/">Inleiding</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../overzicht/probleemstelling/">Probleemstelling</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../overzicht/doelstellingen/">Doelstellingen</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Architectuur</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../architectuur/systeem/">Systeemarchitectuur</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../architectuur/dataflow/">Dataflow Pipeline</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../architectuur/componenten/">Componentenmodel</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../architectuur/gegevensmodel/">Gegevensmodel & Semantiek</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../architectuur/stack/">Technische Stack</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Componenten</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../extractie/">Extractielaag</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../singlestore/">SingleStore & Clusterlaag</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Transformatielaag</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#overzicht">Overzicht</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#kernfunctionaliteiten">Kernfunctionaliteiten</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#1-abr-thesaurus-afstemming">1. ABR Thesaurus Afstemming</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#2-spellingsnotering">2. Spellingsnotering</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#ondersteuning-voor-diakritische-tekens">Ondersteuning voor Diakritische Tekens</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#3-harmonisering-van-sleutels">3. Harmonisering van Sleutels</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#4-datumnotering">4. Datumnotering</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#5-locatienotering">5. Locatienotering</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#coordinatensystemen">Coördinatensystemen</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#plaats-en-adresbeschrijvingen">Plaats- en Adresbeschrijvingen</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#6-deduplicatie">6. Deduplicatie</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#architectuur">Architectuur</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#configuratie">Configuratie</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#foutafhandeling">Foutafhandeling</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#best-practices">Best Practices</a>
+    </li>
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../crossviews/">Crossviews</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../validatie/">Validatielaag</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../configuratie/">Configuratiemodule</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../zoeken/">Zoek- en Indexeringslaag</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Deployment</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../deployment/omgevingen/">Omgevingen & Docker Compose</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../deployment/airflow-vs-app/">Airflow Transformatie vs. Web Applicatie</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../deployment/proefdata/">Proefdata Inlezen</a>
+                  </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../diagrammen/">Diagrammen</a>
+                </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">Wasstraat Archeologische Data</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">Componenten</li>
+      <li class="breadcrumb-item active">Transformatielaag</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="transformatie">Transformatie<a class="headerlink" href="#transformatie" title="Permanent link">&para;</a></h1>
+<h2 id="overzicht">Overzicht<a class="headerlink" href="#overzicht" title="Permanent link">&para;</a></h2>
+<p>De transformatielaag voert kritieke gegevenshomogenisering uit. Dit onderdeel zorgt ervoor dat gegevens uit diverse bronnen naar één gemeenschappelijk format worden omgezet en dat semantische variaties worden genormaliseerd.</p>
+<h2 id="kernfunctionaliteiten">Kernfunctionaliteiten<a class="headerlink" href="#kernfunctionaliteiten" title="Permanent link">&para;</a></h2>
+<h3 id="1-abr-thesaurus-afstemming">1. ABR Thesaurus Afstemming<a class="headerlink" href="#1-abr-thesaurus-afstemming" title="Permanent link">&para;</a></h3>
+<p>De ABR (Archeologische Basisregistratie) thesaurus vormt de basis voor standaardisering. De transformatielaag brengt alle periodebetekeningen in kaart naar officiële ABR-termen:</p>
+<div class="codehilite"><pre><span></span><code>Originele waarde      →    ABR Term
+────────────────────     ──────────
+&quot;Bronstijd&quot;           →    &quot;Bronstijd&quot; (3000-800 vC)
+&quot;Bronze Age&quot;          →    &quot;Bronstijd&quot;
+&quot;Brons periode&quot;       →    &quot;Bronstijd&quot;
+&quot;3000-800 vC&quot;         →    &quot;Bronstijd&quot;
+</code></pre></div>
+
+<div class="admonition info">
+<p class="admonition-title">ABR Standaard</p>
+<p>De ABR biedt gestandaardiseerde termen voor periodes, monumenttypen, materialen en andere archeologische concepten.</p>
+</div>
+<h3 id="2-spellingsnotering">2. Spellingsnotering<a class="headerlink" href="#2-spellingsnotering" title="Permanent link">&para;</a></h3>
+<p>Systematische correctie van spellingsfouten en inconsistenties:</p>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span> <span class="nn">transformatie</span> <span class="kn">import</span> <span class="n">SpellingNormalizer</span>
+
+<span class="n">normalizer</span> <span class="o">=</span> <span class="n">SpellingNormalizer</span><span class="p">()</span>
+
+<span class="c1"># Variaties worden naar standaardspelling omgezet</span>
+<span class="n">normalizer</span><span class="o">.</span><span class="n">normalize</span><span class="p">(</span><span class="s2">&quot;aerdewerk&quot;</span><span class="p">)</span> <span class="err">→</span> <span class="s2">&quot;aardewerk&quot;</span>
+<span class="n">normalizer</span><span class="o">.</span><span class="n">normalize</span><span class="p">(</span><span class="s2">&quot;potscherf&quot;</span><span class="p">)</span> <span class="err">→</span> <span class="s2">&quot;potscherf&quot;</span>
+<span class="n">normalizer</span><span class="o">.</span><span class="n">normalize</span><span class="p">(</span><span class="s2">&quot;grondwerken&quot;</span><span class="p">)</span> <span class="err">→</span> <span class="s2">&quot;grondwerken&quot;</span>
+</code></pre></div>
+
+<h4 id="ondersteuning-voor-diakritische-tekens">Ondersteuning voor Diakritische Tekens<a class="headerlink" href="#ondersteuning-voor-diakritische-tekens" title="Permanent link">&para;</a></h4>
+<ul>
+<li>Accenten: é, è, ê → e</li>
+<li>Umlauts: ü, ö, ä → u, o, a</li>
+<li>Aanhalingstekens: " " ' ' → "standaard</li>
+</ul>
+<h3 id="3-harmonisering-van-sleutels">3. Harmonisering van Sleutels<a class="headerlink" href="#3-harmonisering-van-sleutels" title="Permanent link">&para;</a></h3>
+<p>Verschillende bronnen gebruiken verschillende naamgeving voor hetzelfde concept:</p>
+<div class="codehilite"><pre><span></span><code><span class="nx">Bron</span><span class="w"> </span><span class="nx">A</span><span class="w">              </span><span class="nx">Bron</span><span class="w"> </span><span class="nx">B</span><span class="w">              </span><span class="nx">Genormaliseerd</span>
+<span class="err">──────</span><span class="w">              </span><span class="err">──────</span><span class="w">              </span><span class="err">──────────────</span>
+<span class="nx">FIND_ID</span><span class="w">        </span><span class="err">→</span><span class="w">    </span><span class="nx">ObjectID</span><span class="w">      </span><span class="err">→</span><span class="w">    </span><span class="nx">object_id</span>
+<span class="nx">GRONDWERK</span><span class="w">      </span><span class="err">→</span><span class="w">    </span><span class="nx">Werktype</span><span class="w">      </span><span class="err">→</span><span class="w">    </span><span class="nx">werk_type</span>
+<span class="nx">DATUM_VONDST</span><span class="w">   </span><span class="err">→</span><span class="w">    </span><span class="nx">DiscoveryDate</span><span class="w"> </span><span class="err">→</span><span class="w">    </span><span class="nx">discovery_date</span>
+<span class="nx">COORDS_X</span><span class="w">       </span><span class="err">→</span><span class="w">    </span><span class="nx">lon</span><span class="w">           </span><span class="err">→</span><span class="w">    </span><span class="nx">longitude</span>
+<span class="nx">COORDS_Y</span><span class="w">       </span><span class="err">→</span><span class="w">    </span><span class="nx">lat</span><span class="w">           </span><span class="err">→</span><span class="w">    </span><span class="nx">latitude</span>
+</code></pre></div>
+
+<h3 id="4-datumnotering">4. Datumnotering<a class="headerlink" href="#4-datumnotering" title="Permanent link">&para;</a></h3>
+<p>Alle datums worden naar ISO 8601-format omgezet voor consistentie:</p>
+<div class="codehilite"><pre><span></span><code>Invoer                      Genormaliseerd
+──────                      ──────────────
+&quot;03-06-2024&quot;           →    &quot;2024-06-03&quot;
+&quot;June 3, 2024&quot;         →    &quot;2024-06-03&quot;
+&quot;3 juni 2024&quot;          →    &quot;2024-06-03&quot;
+&quot;2024-06-03T14:30:00Z&quot; →    &quot;2024-06-03&quot;
+</code></pre></div>
+
+<p>Onvolledig gespecificeerde datums:</p>
+<div class="codehilite"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;datum_exacte&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;datum_jaar&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">2024</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;datum_seizoen&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;zomer&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;datum_geschatte_periode&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Vroeg Middeleeuwen&quot;</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<h3 id="5-locatienotering">5. Locatienotering<a class="headerlink" href="#5-locatienotering" title="Permanent link">&para;</a></h3>
+<p>Normalisatie van coördinatensystemen en localiteitsaanduidingen:</p>
+<h4 id="coordinatensystemen">Coördinatensystemen<a class="headerlink" href="#coordinatensystemen" title="Permanent link">&para;</a></h4>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span> <span class="nn">transformatie</span> <span class="kn">import</span> <span class="n">CoordinateNormalizer</span>
+
+<span class="n">normalizer</span> <span class="o">=</span> <span class="n">CoordinateNormalizer</span><span class="p">()</span>
+
+<span class="c1"># Alle coördinaten worden naar WGS84 (EPSG:4326) omgezet</span>
+<span class="n">normalizer</span><span class="o">.</span><span class="n">convert</span><span class="p">(</span>
+  <span class="n">x</span><span class="o">=</span><span class="mi">120000</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="mi">400000</span><span class="p">,</span>
+  <span class="n">from_crs</span><span class="o">=</span><span class="s2">&quot;EPSG:28992&quot;</span>  <span class="c1"># RD Nieuw</span>
+<span class="p">)</span> <span class="err">→</span> <span class="p">(</span><span class="mf">52.3702</span><span class="p">,</span> <span class="mf">4.8952</span><span class="p">)</span>    <span class="c1"># WGS84</span>
+</code></pre></div>
+
+<p>Ondersteunde coördinatensystemen:
+- <strong>WGS84</strong> (EPSG:4326) - standaard
+- <strong>RD Nieuw</strong> (EPSG:28992) - Nederlands coördinatensysteem
+- <strong>UTM Zone 31N</strong> (EPSG:32631)
+- <strong>ETRS89</strong> (EPSG:4258)</p>
+<h4 id="plaats-en-adresbeschrijvingen">Plaats- en Adresbeschrijvingen<a class="headerlink" href="#plaats-en-adresbeschrijvingen" title="Permanent link">&para;</a></h4>
+<div class="codehilite"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;plaats_omschrijving&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Waterlooplein, Amsterdam&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;plaats_genormaliseerd&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Amsterdam&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;gemeente&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Amsterdam&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;provincie&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Noord-Holland&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;land&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Nederland&quot;</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<h3 id="6-deduplicatie">6. Deduplicatie<a class="headerlink" href="#6-deduplicatie" title="Permanent link">&para;</a></h3>
+<p>Identificatie en afhandeling van duplicaten:</p>
+<div class="codehilite"><pre><span></span><code><span class="n">Invoer</span><span class="w"> </span><span class="n">records</span><span class="o">:</span>
+<span class="err">┌─────────────┬─────────────┬──────────────┐</span>
+<span class="err">│</span><span class="w"> </span><span class="n">Bron</span><span class="w"> </span><span class="n">A</span><span class="w">      </span><span class="err">│</span><span class="w"> </span><span class="n">Bron</span><span class="w"> </span><span class="n">B</span><span class="w">      </span><span class="err">│</span><span class="w"> </span><span class="n">Bron</span><span class="w"> </span><span class="n">C</span><span class="w">       </span><span class="err">│</span>
+<span class="err">├─────────────┼─────────────┼──────────────┤</span>
+<span class="err">│</span><span class="w"> </span><span class="n">Object</span><span class="w"> </span><span class="mo">001</span><span class="w">  </span><span class="err">│</span><span class="w"> </span><span class="n">Artefact</span><span class="w"> </span><span class="mi">47</span><span class="w"> </span><span class="err">│</span><span class="w"> </span><span class="n">WSTR</span><span class="mi">-2024</span><span class="mo">-01</span><span class="w"> </span><span class="err">│</span>
+<span class="err">│</span><span class="w"> </span><span class="n">Fragmentair</span><span class="w"> </span><span class="err">│</span><span class="w"> </span><span class="n">Fragment</span><span class="w">    </span><span class="err">│</span><span class="w"> </span><span class="n">Fragmentair</span><span class="w">  </span><span class="err">│</span>
+<span class="err">│</span><span class="w"> </span><span class="n">aardewerk</span><span class="w">   </span><span class="err">│</span><span class="w"> </span><span class="n">pottery</span><span class="w">     </span><span class="err">│</span><span class="w"> </span><span class="n">aardewerk</span><span class="w">    </span><span class="err">│</span>
+<span class="err">│</span><span class="w"> </span><span class="n">Amsterdam</span><span class="w">   </span><span class="err">│</span><span class="w"> </span><span class="n">Amsterdam</span><span class="w">   </span><span class="err">│</span><span class="w"> </span><span class="n">Amsterdam</span><span class="w">    </span><span class="err">│</span>
+<span class="err">│</span><span class="w"> </span><span class="mf">52.3702</span><span class="p">,</span><span class="w">    </span><span class="err">│</span><span class="w"> </span><span class="mf">52.37</span><span class="p">,</span><span class="w">      </span><span class="err">│</span><span class="w"> </span><span class="mf">52.37</span><span class="p">,</span><span class="w">       </span><span class="err">│</span>
+<span class="err">│</span><span class="w"> </span><span class="mf">4.8952</span><span class="w">      </span><span class="err">│</span><span class="w"> </span><span class="mf">4.89</span><span class="w">        </span><span class="err">│</span><span class="w"> </span><span class="mf">4.90</span><span class="w">         </span><span class="err">│</span>
+<span class="err">└─────────────┴─────────────┴──────────────┘</span>
+<span class="w">        </span><span class="err">│</span><span class="w">         </span><span class="err">│</span><span class="w">               </span><span class="err">│</span>
+<span class="w">        </span><span class="err">└─────────┴───────────────┘</span>
+<span class="w">                </span><span class="err">│</span>
+<span class="w">        </span><span class="n">Deduplicatie</span><span class="o">-</span><span class="n">analyse</span>
+<span class="w">                </span><span class="err">│</span>
+<span class="w">                </span><span class="err">▼</span>
+<span class="w">        </span><span class="err">┌──────────────────────┐</span>
+<span class="w">        </span><span class="err">│</span><span class="w"> </span><span class="n">Geconsolideerd</span><span class="w"> </span><span class="n">record</span><span class="w"> </span><span class="err">│</span>
+<span class="w">        </span><span class="err">│</span><span class="w"> </span><span class="n">ID</span><span class="o">:</span><span class="w"> </span><span class="n">WSTR</span><span class="mi">-2024</span><span class="mo">-001</span><span class="w">    </span><span class="err">│</span>
+<span class="w">        </span><span class="err">│</span><span class="w"> </span><span class="p">[</span><span class="n">bron</span><span class="w"> </span><span class="n">geïntegreerd</span><span class="p">]</span><span class="w">  </span><span class="err">│</span>
+<span class="w">        </span><span class="err">└──────────────────────┘</span>
+</code></pre></div>
+
+<div class="admonition warning">
+<p class="admonition-title">Deduplicatie Voorzichtigheid</p>
+<p>Deduplicatie vereist zorgvuldige validatie. Foutieve deduplicatie kan tot verlies van informatie leiden. Alle consolidaties worden vastgelegd met bronverwijzingen.</p>
+</div>
+<h2 id="architectuur">Architectuur<a class="headerlink" href="#architectuur" title="Permanent link">&para;</a></h2>
+<div class="codehilite"><pre><span></span><code>┌─────────────────────────────────┐
+│  Ruwe Data uit SingleStore       │
+└────────────┬────────────────────┘
+             │
+             ▼
+┌─────────────────────────────────┐
+│  ABR Thesaurus Afstemming       │
+│  (Standaardisering)             │
+└────────────┬────────────────────┘
+             │
+             ▼
+┌─────────────────────────────────┐
+│  Spellingsnotering &amp; Tekens      │
+│  (Normalisatie)                 │
+└────────────┬────────────────────┘
+             │
+             ▼
+┌─────────────────────────────────┐
+│  Sleutel- en Datumharmonisering │
+├─────────────────────────────────┤
+│  Coördinaat Transformatie       │
+│  Deduplicatie                   │
+└────────────┬────────────────────┘
+             │
+             ▼
+┌─────────────────────────────────┐
+│  Getransformeerde Data          │
+└─────────────────────────────────┘
+</code></pre></div>
+
+<h2 id="configuratie">Configuratie<a class="headerlink" href="#configuratie" title="Permanent link">&para;</a></h2>
+<p>Transformatiestappen kunnen per bron worden geconfigureerd:</p>
+<div class="codehilite"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;bron&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Amsterdam Gemeente&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;transformatie_regels&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;periode&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">&quot;invoerkolom&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;PERIODE_CODE&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;transformatie&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;abr_alignment&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;mapping&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nt">&quot;PA&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Paleolithicum&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;BA&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Bronstijd&quot;</span>
+<span class="w">      </span><span class="p">}</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="nt">&quot;datum&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">&quot;invoerkolom&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;VONDSTDATUM&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;format&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;DD-MM-YYYY&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;transformatie&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;iso8601_normalisatie&quot;</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="nt">&quot;coördinaten&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">&quot;invoerkolonX&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;X_RD&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;invoerkolonY&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Y_RD&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;invoer_crs&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;EPSG:28992&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;uitvoer_crs&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;EPSG:4326&quot;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<h2 id="foutafhandeling">Foutafhandeling<a class="headerlink" href="#foutafhandeling" title="Permanent link">&para;</a></h2>
+<p>De transformatielaag registreert alle transformaties en mogelijke fouten:</p>
+<div class="admonition error">
+<p class="admonition-title">Kritieke Fouten</p>
+<ul>
+<li>Onleesbare data (geen parsering mogelijk)</li>
+<li>Conflicterende waarden in deduplicatie</li>
+<li>Onherkenbare coördinatensystemen</li>
+</ul>
+</div>
+<div class="admonition warning">
+<p class="admonition-title">Waarschuwingen</p>
+<ul>
+<li>Onbekende thesaurustermen</li>
+<li>Potentiële spellingsfouten</li>
+<li>Coördinaten buiten verwachte grenzen</li>
+<li>Datums in toekomst of te ver verleden</li>
+</ul>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Informatie</p>
+<ul>
+<li>Succesvol getransformeerde records</li>
+<li>Gemaakte deduplicaties</li>
+<li>Geïnterpreteerde waarden</li>
+</ul>
+</div>
+<h2 id="best-practices">Best Practices<a class="headerlink" href="#best-practices" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Controleer transformatieregels vóór volledige batch-verwerking</li>
+<li>Test met kleine datasets eerst</li>
+<li>Behoud logboeken van alle transformaties</li>
+<li>Valideer het resultado na transformatie</li>
+</ul>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../singlestore/" class="btn btn-neutral float-left" title="SingleStore & Clusterlaag"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../crossviews/" class="btn btn-neutral float-right" title="Crossviews">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../singlestore/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../crossviews/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../..";</script>
+    <script src="../../js/theme_extra.js"></script>
+    <script src="../../js/theme.js"></script>
+      <script src="../../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

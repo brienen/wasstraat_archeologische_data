@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="nl" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="description" content="Technische documentatie voor de Wasstraat Archeologische Data - een open source verwerkingsplatform voor archeologische datasets" /><meta name="author" content="E-Space / Arjen Brienen" />
+      <link rel="shortcut icon" href="img/favicon.ico" />
+    <title>Wasstraat Archeologische Data</title>
+    <link rel="stylesheet" href="css/theme.css" />
+    <link rel="stylesheet" href="css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+        <link href="assets/extra.css" rel="stylesheet" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Home";
+        var mkdocs_page_input_path = "index.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="." class="icon icon-home"> Wasstraat Archeologische Data
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="./search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+                <li class="toctree-l1 current"><a class="reference internal current" href="#">Home</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#wat-is-de-wasstraat">Wat is de Wasstraat?</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#hoe-werkt-het">Hoe werkt het?</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#ondersteunde-data">Ondersteunde data</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#technische-stack">Technische Stack</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#nationale-standaarden">Nationale Standaarden</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#aan-de-slag">Aan de slag</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#licentie">Licentie</a>
+    </li>
+    </ul>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Projectoverzicht</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="overzicht/inleiding/">Inleiding</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="overzicht/probleemstelling/">Probleemstelling</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="overzicht/doelstellingen/">Doelstellingen</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Architectuur</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="architectuur/systeem/">Systeemarchitectuur</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="architectuur/dataflow/">Dataflow Pipeline</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="architectuur/componenten/">Componentenmodel</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="architectuur/gegevensmodel/">Gegevensmodel & Semantiek</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="architectuur/stack/">Technische Stack</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Componenten</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="componenten/extractie/">Extractielaag</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="componenten/singlestore/">SingleStore & Clusterlaag</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="componenten/transformatie/">Transformatielaag</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="componenten/crossviews/">Crossviews</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="componenten/validatie/">Validatielaag</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="componenten/configuratie/">Configuratiemodule</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="componenten/zoeken/">Zoek- en Indexeringslaag</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Deployment</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="deployment/omgevingen/">Omgevingen & Docker Compose</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="deployment/airflow-vs-app/">Airflow Transformatie vs. Web Applicatie</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="deployment/proefdata/">Proefdata Inlezen</a>
+                  </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="diagrammen/">Diagrammen</a>
+                </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href=".">Wasstraat Archeologische Data</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="." class="icon icon-home" aria-label="Docs"></a></li>
+      <li class="breadcrumb-item active">Home</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="wasstraat-archeologische-data">Wasstraat Archeologische Data<a class="headerlink" href="#wasstraat-archeologische-data" title="Permanent link">&para;</a></h1>
+<p>Welkom bij de documentatie van <strong>Wasstraat Archeologische Data</strong> — een open-source platform dat archeologische gegevens verzamelt, verwerkt en toegankelijk maakt.</p>
+<p><img alt="Wasstraat Overzicht — Van Ruwe Data naar Gestructureerd Inzicht" src="assets/images/wasstraat-overzicht.jpeg" /></p>
+<h2 id="wat-is-de-wasstraat">Wat is de Wasstraat?<a class="headerlink" href="#wat-is-de-wasstraat" title="Permanent link">&para;</a></h2>
+<p>De Wasstraat functioneert als een "digitale wasstraat" voor archeologische data: verspreide bronbestanden zoals Access-databases, Excel-sheets, foto's, rapporten en GIS-bestanden worden geautomatiseerd ingelezen, opgeschoond, gekoppeld en gestructureerd opgeslagen. Het resultaat is een eenduidige, doorzoekbare dataset.</p>
+<p>Het project is in 2019 ontstaan voor de gemeente Delft, waar meer dan <strong>1.000 opgravingen</strong> met tienduizenden foto's, vondstlijsten en rapporten — in totaal bijna <strong>1 Terabyte</strong> aan data — zijn gedigitaliseerd en gestructureerd.</p>
+<h2 id="hoe-werkt-het">Hoe werkt het?<a class="headerlink" href="#hoe-werkt-het" title="Permanent link">&para;</a></h2>
+<p>De verwerking verloopt in drie hoofdfasen via <a href="https://airflow.apache.org">Apache Airflow</a>:</p>
+<table>
+<thead>
+<tr>
+<th>Fase</th>
+<th>Stap</th>
+<th>Wat gebeurt er?</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>1. Extractie &amp; Harmonisatie</strong></td>
+<td>Extract + Harmonize</td>
+<td>Ruwe data wordt as-is ingelezen uit 6+ bronnen. Veldnamen worden universeel gelijkgetrokken.</td>
+</tr>
+<tr>
+<td><strong>2. Opschonen &amp; Verrijken</strong></td>
+<td>Enhance + Set Keys</td>
+<td>Inhoud wordt consistent gemaakt (datums, codes, metadata). Unieke sleutels worden gegenereerd.</td>
+</tr>
+<tr>
+<td><strong>3. Koppelen &amp; Laden</strong></td>
+<td>Merge + Load + Index</td>
+<td>Dubbele entiteiten worden samengevoegd. Data wordt geladen in PostgreSQL en geïndexeerd in Elasticsearch.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="ondersteunde-data">Ondersteunde data<a class="headerlink" href="#ondersteunde-data" title="Permanent link">&para;</a></h2>
+<p>De Wasstraat verwerkt een breed scala aan archeologische gegevens:</p>
+<p><strong>Basisgegevens</strong> — Project, Vindplaats, Vondst, Put, Vlak, Spoor, Vulling, Artefact, Monster en Bestand.</p>
+<p><strong>Depotgegevens</strong> — Stelling, Standplaats, Plaatsing, Doos.</p>
+<p><strong>Artefactcategorieën</strong> — Aardewerk, Glas, Metaal, Hout, Steen, Leer, Dierlijk Bot, Menselijk Bot, Kleipijp, Bouwaardewerk, Munt, Schelp, Textiel.</p>
+<p><strong>Bestanden</strong> — Foto's, Tekeningen en Rapporten met automatische metadata-extractie.</p>
+<h2 id="technische-stack">Technische Stack<a class="headerlink" href="#technische-stack" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Categorie</th>
+<th>Technologieën</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Orchestratie</strong></td>
+<td>Apache Airflow</td>
+</tr>
+<tr>
+<td><strong>Backend</strong></td>
+<td>Python, Flask, Flask-AppBuilder</td>
+</tr>
+<tr>
+<td><strong>Databases</strong></td>
+<td>MongoDB (staging), PostgreSQL (definitief), Elasticsearch (zoeken)</td>
+</tr>
+<tr>
+<td><strong>Caching</strong></td>
+<td>Redis</td>
+</tr>
+<tr>
+<td><strong>Infrastructuur</strong></td>
+<td>Docker Compose, multi-service architectuur</td>
+</tr>
+<tr>
+<td><strong>Analyse</strong></td>
+<td>Jupyter Lab, Pandas</td>
+</tr>
+</tbody>
+</table>
+<h2 id="nationale-standaarden">Nationale Standaarden<a class="headerlink" href="#nationale-standaarden" title="Permanent link">&para;</a></h2>
+<p>Het platform is verbonden met de Nederlandse erfgoed-infrastructuur:</p>
+<ul>
+<li><strong>ABR</strong> — Archeologisch Basisregister (materiaalclassificatie)</li>
+<li><strong>GGM</strong> — Gemeentelijk Gegevensmodel (Common Ground)</li>
+<li><strong>CIDOC CRM</strong> — Conceptueel referentiemodel voor cultureel erfgoed</li>
+<li><strong>DANS e-Depot</strong> — Nationaal digitaal archief</li>
+<li><strong>Archis</strong> — Landelijke archeologische database (RCE)</li>
+</ul>
+<h2 id="aan-de-slag">Aan de slag<a class="headerlink" href="#aan-de-slag" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="overzicht/inleiding/">Inleiding</a> — Het archeologische datavraagstuk</li>
+<li><a href="architectuur/systeem/">Systeemarchitectuur</a> — Hoe het platform is opgebouwd</li>
+<li><a href="deployment/omgevingen/">Omgevingen &amp; Docker Compose</a> — De Wasstraat opstarten</li>
+<li><a href="deployment/proefdata/">Proefdata inlezen</a> — Een eerste dataset verwerken</li>
+<li><a href="deployment/airflow-vs-app/">Airflow vs. App</a> — Verschil tussen de twee applicaties</li>
+</ul>
+<h2 id="licentie">Licentie<a class="headerlink" href="#licentie" title="Permanent link">&para;</a></h2>
+<p>Wasstraat is uitgegeven onder de <strong>EUPL-licentie</strong> en volledig open-source.</p>
+<div class="admonition info">
+<p class="admonition-title">Over dit project</p>
+<p>Wasstraat is ontwikkeld door E-Space (Arjen Brienen) in opdracht van de gemeente Delft. Het wordt nu uitgebreid tot een generiek, configureerbaar systeem voor andere Nederlandse gemeenten via het innovatieproject van Stichting Reuvens.</p>
+</div>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="overzicht/inleiding/" class="btn btn-neutral float-right" title="Inleiding">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+    
+      <span><a href="overzicht/inleiding/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = ".";</script>
+    <script src="js/theme_extra.js"></script>
+    <script src="js/theme.js"></script>
+      <script src="search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>
+
+<!--
+MkDocs version : 1.6.0
+Build Date UTC : 2026-03-09 13:29:47.525302+00:00
+-->

@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="nl" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="author" content="E-Space / Arjen Brienen" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>Inleiding - Wasstraat Archeologische Data</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+        <link href="../../assets/extra.css" rel="stylesheet" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Inleiding";
+        var mkdocs_page_input_path = "overzicht/inleiding.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> Wasstraat Archeologische Data
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Home</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Projectoverzicht</span></p>
+              <ul class="current">
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Inleiding</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#het-probleem-in-nederlandse-gemeenten">Het Probleem in Nederlandse Gemeenten</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#verspreide-gegevensbronnen">Verspreide Gegevensbronnen</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#gebrek-aan-geintegreerde-toegang">Gebrek aan Geïntegreerde Toegang</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#het-voorbeeld-van-delft">Het Voorbeeld van Delft</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#de-nood-aan-harmonisatie">De Nood aan Harmonisatie</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#wasstraat-als-oplossing">Wasstraat als Oplossing</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#leeswijzer">Leeswijzer</a>
+    </li>
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../probleemstelling/">Probleemstelling</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../doelstellingen/">Doelstellingen</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Architectuur</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../architectuur/systeem/">Systeemarchitectuur</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../architectuur/dataflow/">Dataflow Pipeline</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../architectuur/componenten/">Componentenmodel</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../architectuur/gegevensmodel/">Gegevensmodel & Semantiek</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../architectuur/stack/">Technische Stack</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Componenten</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../componenten/extractie/">Extractielaag</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../componenten/singlestore/">SingleStore & Clusterlaag</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../componenten/transformatie/">Transformatielaag</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../componenten/crossviews/">Crossviews</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../componenten/validatie/">Validatielaag</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../componenten/configuratie/">Configuratiemodule</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../componenten/zoeken/">Zoek- en Indexeringslaag</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Deployment</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../deployment/omgevingen/">Omgevingen & Docker Compose</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../deployment/airflow-vs-app/">Airflow Transformatie vs. Web Applicatie</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../deployment/proefdata/">Proefdata Inlezen</a>
+                  </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../diagrammen/">Diagrammen</a>
+                </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">Wasstraat Archeologische Data</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">Projectoverzicht</li>
+      <li class="breadcrumb-item active">Inleiding</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="inleiding-het-archeologische-datavraagstuk">Inleiding: Het Archeologische Datavraagstuk<a class="headerlink" href="#inleiding-het-archeologische-datavraagstuk" title="Permanent link">&para;</a></h1>
+<h2 id="het-probleem-in-nederlandse-gemeenten">Het Probleem in Nederlandse Gemeenten<a class="headerlink" href="#het-probleem-in-nederlandse-gemeenten" title="Permanent link">&para;</a></h2>
+<p>In tal van Nederlandse gemeenten worden archeologische gegevens nog altijd op een gefragmenteerde manier beheerd. Dit leidt tot ernstige problemen:</p>
+<h3 id="verspreide-gegevensbronnen">Verspreide Gegevensbronnen<a class="headerlink" href="#verspreide-gegevensbronnen" title="Permanent link">&para;</a></h3>
+<p>Archeologische informatie bevindt zich niet op één plek, maar is verspreid over:</p>
+<ul>
+<li><strong>Excel-spreadsheets</strong> met vondstlijsten en grondwerkgegevens</li>
+<li><strong>Word-documenten</strong> en PDF-rapporten van archeologische bureaus</li>
+<li><strong>Digitale foto's en scans</strong> zonder consistente naamgeving</li>
+<li><strong>Papieren archieven</strong> die slechts gedeeltelijk gedigitaliseerd zijn</li>
+<li><strong>Lokale databases</strong> van erfgoedorganisaties, elk met eigen structuur</li>
+<li><strong>Digitale assets</strong> opgeslagen in diverse cloudservices en archieven</li>
+</ul>
+<h3 id="gebrek-aan-geintegreerde-toegang">Gebrek aan Geïntegreerde Toegang<a class="headerlink" href="#gebrek-aan-geintegreerde-toegang" title="Permanent link">&para;</a></h3>
+<p>Een onderzoeker of erfgoedprofessional die informatie over een bepaalde opgravingslokatie wil vinden, moet:</p>
+<ol>
+<li>Meerdere systemen raadplegen</li>
+<li>Verschillende bestandsformaten parseren</li>
+<li>Handmatig gegevens correleren</li>
+<li>Inconsistenties en tegenstrijdigheden oplossen</li>
+<li>Duplicaten identificeren</li>
+</ol>
+<p>Dit is niet alleen arbeidsintensief, maar leidt ook tot verlies van archeologisch inzicht.</p>
+<h2 id="het-voorbeeld-van-delft">Het Voorbeeld van Delft<a class="headerlink" href="#het-voorbeeld-van-delft" title="Permanent link">&para;</a></h2>
+<p>De gemeente Delft illustreert deze problematiek in groot:</p>
+<ul>
+<li><strong>1.000+ opgravingen</strong> gedocumenteerd sinds 2019</li>
+<li><strong>40.000+ foto's</strong> verspreid over verschillende archiefsystemen</li>
+<li><strong>Honderden vondstlijsten</strong> in heterogene Excel-formaten</li>
+<li><strong>Talrijke rapport documenten</strong> van verschillende uitvoerders</li>
+</ul>
+<p>Al deze gegevens bevonden zich in <strong>duizenden losse bestanden</strong>, zonder centraal inzicht, zonder mogelijkheid om vragen als "Welke munten zijn gevonden in het centrum?" snel en volledig te beantwoorden.</p>
+<h2 id="de-nood-aan-harmonisatie">De Nood aan Harmonisatie<a class="headerlink" href="#de-nood-aan-harmonisatie" title="Permanent link">&para;</a></h2>
+<p>Voor effectief erfoedbeheer en wetenschappelijk onderzoek is vereist:</p>
+<ul>
+<li><strong>Uniforme structurering</strong>: alle gegevens in vergelijkbare formaten</li>
+<li><strong>Metagegevens-annotatie</strong>: context en herkomst van elk gegevenspunt</li>
+<li><strong>Referentiële integriteit</strong>: consistente relaties tussen entities</li>
+<li><strong>Volledig zoeken</strong>: snelle toegang tot alle relevante informatie</li>
+<li><strong>Tijdlijnen</strong>: historische analyses mogelijk</li>
+<li><strong>Geografische ordening</strong>: ruimtelijk inzicht in vondsten en locaties</li>
+</ul>
+<h2 id="wasstraat-als-oplossing">Wasstraat als Oplossing<a class="headerlink" href="#wasstraat-als-oplossing" title="Permanent link">&para;</a></h2>
+<p>Wasstraat biedt een "digitale wasfabriek" voor archeologische data. Het platform:</p>
+<ul>
+<li><strong>Verzamelt</strong> gegevens uit diverse bronnen</li>
+<li><strong>Schoonmaakt</strong> en harmoniseert de gegevens</li>
+<li><strong>Verrijkt</strong> gegevens met metagegevens en validatie</li>
+<li><strong>Integreert</strong> informatie in één coherent systeem</li>
+<li><strong>Maakt beschikbaar</strong> via intuïtieve interfaces</li>
+</ul>
+<p>Dit stelt gemeenten, onderzoeksinstituten en erfgoedprofessionals in staat om:</p>
+<p>✓ Archeologische datasets volledig te benutten
+✓ Inzichten sneller te verkrijgen
+✓ Onderzoek te reproduceren en uit te breiden
+✓ Data te delen volgens FAIR-principes
+✓ Aan te sluiten bij nationale standaarden</p>
+<h2 id="leeswijzer">Leeswijzer<a class="headerlink" href="#leeswijzer" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Voor technische inzichten in de problemen die Wasstraat oploste, zie <a href="../probleemstelling/">Probleemstelling</a></li>
+<li>Voor onze ambities en doelstellingen, zie <a href="../doelstellingen/">Doelstellingen</a></li>
+</ul>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../.." class="btn btn-neutral float-left" title="Home"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../probleemstelling/" class="btn btn-neutral float-right" title="Probleemstelling">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../.." style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../probleemstelling/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../..";</script>
+    <script src="../../js/theme_extra.js"></script>
+    <script src="../../js/theme.js"></script>
+      <script src="../../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

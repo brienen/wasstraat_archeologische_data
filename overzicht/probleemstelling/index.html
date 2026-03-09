@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="nl" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="author" content="E-Space / Arjen Brienen" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>Probleemstelling - Wasstraat Archeologische Data</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+        <link href="../../assets/extra.css" rel="stylesheet" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Probleemstelling";
+        var mkdocs_page_input_path = "overzicht/probleemstelling.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> Wasstraat Archeologische Data
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Home</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Projectoverzicht</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../inleiding/">Inleiding</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Probleemstelling</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#inleiding">Inleiding</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#gegevensintegriteit">Gegevensintegriteit</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#ontbreken-van-primaire-sleutels">Ontbreken van Primaire Sleutels</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#referentiele-integriteit">Referentiële Integriteit</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#polymorfische-gegevenstypen">Polymorfische Gegevenstypen</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#diverse-structuren">Diverse Structuren</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#monomorphic-storage-requirements">Monomorphic Storage Requirements</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#coordinaten-en-ruimtelijke-data">Coördinaten en Ruimtelijke Data</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#coordinaatsysteemambiguiteit">Coördinaatsysteemambiguïteit</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#lage-precisie-in-historische-data">Lage Precisie in Historische Data</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#tekencodering-en-taal">Tekencodering en Taal</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#diacrietische-tekens-en-lokale-variatie">Diacrietische Tekens en Lokale Variatie</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#synchronisatie-tussen-systemen">Synchronisatie Tussen Systemen</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dual-write-problem">Dual-Write Problem</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#change-data-capture">Change Data Capture</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#prestaties-en-schaal">Prestaties en Schaal</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#large-volume-data">Large Volume Data</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#fuzzy-search-performance">Fuzzy Search Performance</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#data-governance">Data Governance</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#versioning-en-reproduceerbaarheid">Versioning en Reproduceerbaarheid</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#licenties-en-attribuering">Licenties en Attribuering</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#samenvatting">Samenvatting</a>
+    </li>
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../doelstellingen/">Doelstellingen</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Architectuur</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../architectuur/systeem/">Systeemarchitectuur</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../architectuur/dataflow/">Dataflow Pipeline</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../architectuur/componenten/">Componentenmodel</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../architectuur/gegevensmodel/">Gegevensmodel & Semantiek</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../architectuur/stack/">Technische Stack</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Componenten</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../componenten/extractie/">Extractielaag</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../componenten/singlestore/">SingleStore & Clusterlaag</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../componenten/transformatie/">Transformatielaag</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../componenten/crossviews/">Crossviews</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../componenten/validatie/">Validatielaag</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../componenten/configuratie/">Configuratiemodule</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../componenten/zoeken/">Zoek- en Indexeringslaag</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Deployment</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../deployment/omgevingen/">Omgevingen & Docker Compose</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../deployment/airflow-vs-app/">Airflow Transformatie vs. Web Applicatie</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../deployment/proefdata/">Proefdata Inlezen</a>
+                  </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../diagrammen/">Diagrammen</a>
+                </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">Wasstraat Archeologische Data</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">Projectoverzicht</li>
+      <li class="breadcrumb-item active">Probleemstelling</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="probleemstelling-technische-uitdagingen">Probleemstelling: Technische Uitdagingen<a class="headerlink" href="#probleemstelling-technische-uitdagingen" title="Permanent link">&para;</a></h1>
+<h2 id="inleiding">Inleiding<a class="headerlink" href="#inleiding" title="Permanent link">&para;</a></h2>
+<p>Wanneer archeologische gegevens uit diverse bronnen worden geïntegreerd, ontstaan talrijke technische problemen. Wasstraat is specifiek ontworpen om deze uitdagingen aan te pakken.</p>
+<h2 id="gegevensintegriteit">Gegevensintegriteit<a class="headerlink" href="#gegevensintegriteit" title="Permanent link">&para;</a></h2>
+<h3 id="ontbreken-van-primaire-sleutels">Ontbreken van Primaire Sleutels<a class="headerlink" href="#ontbreken-van-primaire-sleutels" title="Permanent link">&para;</a></h3>
+<p>Veel gegevensbronnen ontberen unieke, stabile identificatoren:</p>
+<ul>
+<li>Vondstlijsten hebben geen consistent ID-schema</li>
+<li>Foto's worden soms alleen benoemd naar opname-datum</li>
+<li>Rapportdocumenten verwijzen naar locaties zonder standarcoördinaten</li>
+</ul>
+<div class="admonition warning">
+<p class="admonition-title">Impact</p>
+<p>Zonder unieke sleutels kunnen dezelfde fysieke objecten meerdere malen in het systeem voorkomen (duplicaten) of foutief gekoppeld worden.</p>
+</div>
+<h3 id="referentiele-integriteit">Referentiële Integriteit<a class="headerlink" href="#referentiele-integriteit" title="Permanent link">&para;</a></h3>
+<p>Relationshipss tussen gegevens ontbreken vaak:</p>
+<ul>
+<li>Vondsten zijn niet expliciet gekoppeld aan opgravingen</li>
+<li>Foto's ontbreken verwijzingen naar de context waarin ze genomen zijn</li>
+<li>Contextuele informatie (bodemnummers, sporen) is onvolledig</li>
+</ul>
+<h2 id="polymorfische-gegevenstypen">Polymorfische Gegevenstypen<a class="headerlink" href="#polymorfische-gegevenstypen" title="Permanent link">&para;</a></h2>
+<h3 id="diverse-structuren">Diverse Structuren<a class="headerlink" href="#diverse-structuren" title="Permanent link">&para;</a></h3>
+<p>Archeologische gegevens zijn inherent divers:</p>
+<ul>
+<li>Sommige vondstlijsten registreren alleen vondsttype en aantal</li>
+<li>Andere bevatten gedetailleerde metingen, materiaalanalyses, en conserveringsstoffen</li>
+<li>Foto's hebben EXIF-data; scans alleen bestandsnaam en uploadtijdstip</li>
+<li>Rapporten bevatten ongestructureerde tekst naast gestructureerde tabellen</li>
+</ul>
+<p>Een traditioneel relationeel schema kan deze variatie moeilijk representeren zonder:</p>
+<ul>
+<li>Enorme hoeveelheden NULL-kolommen</li>
+<li>Ingewikkelde entity-type splitsingen</li>
+<li>Of verlies van informatie</li>
+</ul>
+<h3 id="monomorphic-storage-requirements">Monomorphic Storage Requirements<a class="headerlink" href="#monomorphic-storage-requirements" title="Permanent link">&para;</a></h3>
+<p>Dit dilemma werd opgelost door <strong>SingleStore</strong> (NoSQL/MongoDB) als intermediaire opslaglaag te introduceren, die flexibel polymorfische documenten aanvaardt.</p>
+<h2 id="coordinaten-en-ruimtelijke-data">Coördinaten en Ruimtelijke Data<a class="headerlink" href="#coordinaten-en-ruimtelijke-data" title="Permanent link">&para;</a></h2>
+<h3 id="coordinaatsysteemambiguiteit">Coördinaatsysteemambiguïteit<a class="headerlink" href="#coordinaatsysteemambiguiteit" title="Permanent link">&para;</a></h3>
+<p>Archeologische datasets gebruiken diverse coördinaatsystemen:</p>
+<ul>
+<li><strong>RD (Rijksdriehoekstelsel)</strong>: Nederlands standaardsysteem, maar verouderd</li>
+<li><strong>ETRS89 (WGS84)</strong>: Modern GPS-standaard</li>
+<li><strong>Lokale vakindelingen</strong>: Opgravingsvakken in interne nummering</li>
+<li><strong>Adresseringen</strong>: "achter café De Zwaan" of historische straatnamen</li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Transformaties Vereist</p>
+<p>Correcte georeferentie vereist het herkennen en transformeren tussen deze systemen. Fouten bij transformaties kunnen tot meters afwijking leiden.</p>
+</div>
+<h3 id="lage-precisie-in-historische-data">Lage Precisie in Historische Data<a class="headerlink" href="#lage-precisie-in-historische-data" title="Permanent link">&para;</a></h3>
+<p>Oudere gegevens hebben vaak slechts locatieprecisie tot op 10 of 25 meter. Dit moet duidelijk in metagegevens vastgelegd worden.</p>
+<h2 id="tekencodering-en-taal">Tekencodering en Taal<a class="headerlink" href="#tekencodering-en-taal" title="Permanent link">&para;</a></h2>
+<h3 id="diacrietische-tekens-en-lokale-variatie">Diacrietische Tekens en Lokale Variatie<a class="headerlink" href="#diacrietische-tekens-en-lokale-variatie" title="Permanent link">&para;</a></h3>
+<p>Archeologische gegevens bevatten veel Nederlandse, Latijnse en andere tekens:</p>
+<ul>
+<li><strong>Diacrietische tekens</strong>: é, ö, ü in naamgeving (bijv. "Theodoor")</li>
+<li><strong>Ligatures</strong>: æ, œ in Latijnse beschrijvingen</li>
+<li><strong>Historische spelling</strong>: Dezelfde naam in verschillende periodes anders gespeld</li>
+<li><strong>Coderingsconflicten</strong>: Oudere bestanden in ISO-8859-1, nieuwere in UTF-8</li>
+</ul>
+<p>Een geunificeerd tekencoderingsschema (UTF-8) met normalisatie is essentieel.</p>
+<h2 id="synchronisatie-tussen-systemen">Synchronisatie Tussen Systemen<a class="headerlink" href="#synchronisatie-tussen-systemen" title="Permanent link">&para;</a></h2>
+<h3 id="dual-write-problem">Dual-Write Problem<a class="headerlink" href="#dual-write-problem" title="Permanent link">&para;</a></h3>
+<p>Wasstraat onderhoudt zowel:</p>
+<ul>
+<li><strong>NoSQL-laag</strong> (SingleStore/MongoDB): flexibel, voor ingest en transformatie</li>
+<li><strong>Relationele laag</strong> (PostgreSQL/Oracle): gestructureerd, voor analytics en GIS</li>
+</ul>
+<div class="admonition danger">
+<p class="admonition-title">Synchronisatieproblemen</p>
+<p>Wanneer gegevens in beide systemen opleven, moet consistentie gegarandeerd worden. Race conditions, transactie-failures, en unidirectionele sync kunnen anomalieën veroorzaken.</p>
+</div>
+<h3 id="change-data-capture">Change Data Capture<a class="headerlink" href="#change-data-capture" title="Permanent link">&para;</a></h3>
+<p>Dit vereist:</p>
+<ul>
+<li>Versieering van gegevens</li>
+<li>Event-logging voor alle mutaties</li>
+<li>Idempotente transformaties</li>
+<li>Reconciliation-mechanismen</li>
+</ul>
+<h2 id="prestaties-en-schaal">Prestaties en Schaal<a class="headerlink" href="#prestaties-en-schaal" title="Permanent link">&para;</a></h2>
+<h3 id="large-volume-data">Large Volume Data<a class="headerlink" href="#large-volume-data" title="Permanent link">&para;</a></h3>
+<p>De Delft-dataset bevat:</p>
+<ul>
+<li><strong>40.000 foto's</strong> (elk gigabytes aan BLOB-data)</li>
+<li><strong>Honderden miljoen metadata-punten</strong></li>
+<li><strong>Complexe queries</strong> over miljarden documents</li>
+</ul>
+<div class="admonition info">
+<p class="admonition-title">Uitdagingen</p>
+<ul>
+<li>Index-keuzes die zoekopdrachten accelereren zonder schrijven te vertragen</li>
+<li>Partitionering van data voor horizontale schaalbaarheid</li>
+<li>Query-planning voor cross-source joins</li>
+<li>Cache-coherentie tussen laagen</li>
+</ul>
+</div>
+<h3 id="fuzzy-search-performance">Fuzzy Search Performance<a class="headerlink" href="#fuzzy-search-performance" title="Permanent link">&para;</a></h3>
+<p>Archaeologists zoeken vaak op onnauwkeurige termen:</p>
+<ul>
+<li>"Munten met Maria-afbeelding" (niet gespecificeerde periode)</li>
+<li>"Blauwe potscherven" (kleur is subjectief)</li>
+<li>"Gereedschap, mogelijk Romeins" (onzekerheid in datering)</li>
+</ul>
+<p>Fuzzy indexering en full-text search met ranking moet snel werken op miljarden records.</p>
+<h2 id="data-governance">Data Governance<a class="headerlink" href="#data-governance" title="Permanent link">&para;</a></h2>
+<h3 id="versioning-en-reproduceerbaarheid">Versioning en Reproduceerbaarheid<a class="headerlink" href="#versioning-en-reproduceerbaarheid" title="Permanent link">&para;</a></h3>
+<p>Voor FAIR-data moet elke analyse:</p>
+<ul>
+<li><strong>Traceerbaar zijn</strong>: welke versie van welke brongegevens werd gebruikt?</li>
+<li><strong>Reproduceerbaar</strong>: dezelfde inputs → dezelfde outputs</li>
+<li><strong>Archiveerbaar</strong>: data vastgelegd voor lange-termijn behoud</li>
+</ul>
+<p>Dit vereist:</p>
+<ul>
+<li>Versie-tracking voor alle transformaties</li>
+<li>Reproduceerbare transformatie-pipelines (Apache Spark, Airflow)</li>
+<li>Metadata-dokumentatie volgende CIDOC CRM</li>
+</ul>
+<h3 id="licenties-en-attribuering">Licenties en Attribuering<a class="headerlink" href="#licenties-en-attribuering" title="Permanent link">&para;</a></h3>
+<p>Archeologische data komt van diverse uitvoerders met verschillende licenties. De integratie moet:</p>
+<ul>
+<li>Provenance vastleggen</li>
+<li>Licentie-compliance garanderen</li>
+<li>Juiste attribuering faciliteren</li>
+</ul>
+<h2 id="samenvatting">Samenvatting<a class="headerlink" href="#samenvatting" title="Permanent link">&para;</a></h2>
+<p>De technische complexiteit van archeologische data-integratie is aanzienlijk. Wasstraat adresseert deze door:</p>
+<ol>
+<li><strong>Polymorfische opslag</strong> via NoSQL</li>
+<li><strong>Metagegevens-gestuurde mapping</strong> voor flexibiliteit</li>
+<li><strong>Crossviews-technologie</strong> voor multi-source queries</li>
+<li><strong>Standaard-aansluiting</strong> (GGM, ABR, CIDOC CRM) voor interoperabiliteit</li>
+</ol>
+<p>Zie <a href="../doelstellingen/">Doelstellingen</a> voor hoe Wasstraat deze problemen systematisch oploste.</p>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../inleiding/" class="btn btn-neutral float-left" title="Inleiding"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../doelstellingen/" class="btn btn-neutral float-right" title="Doelstellingen">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../inleiding/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../doelstellingen/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../..";</script>
+    <script src="../../js/theme_extra.js"></script>
+    <script src="../../js/theme.js"></script>
+      <script src="../../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

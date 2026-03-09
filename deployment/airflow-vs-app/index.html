@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="nl" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="author" content="E-Space / Arjen Brienen" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>Airflow Transformatie vs. Web Applicatie - Wasstraat Archeologische Data</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+        <link href="../../assets/extra.css" rel="stylesheet" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Airflow Transformatie vs. Web Applicatie";
+        var mkdocs_page_input_path = "deployment/airflow-vs-app.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> Wasstraat Archeologische Data
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Home</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Projectoverzicht</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../overzicht/inleiding/">Inleiding</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../overzicht/probleemstelling/">Probleemstelling</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../overzicht/doelstellingen/">Doelstellingen</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Architectuur</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../architectuur/systeem/">Systeemarchitectuur</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../architectuur/dataflow/">Dataflow Pipeline</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../architectuur/componenten/">Componentenmodel</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../architectuur/gegevensmodel/">Gegevensmodel & Semantiek</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../architectuur/stack/">Technische Stack</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Componenten</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../componenten/extractie/">Extractielaag</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../componenten/singlestore/">SingleStore & Clusterlaag</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../componenten/transformatie/">Transformatielaag</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../componenten/crossviews/">Crossviews</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../componenten/validatie/">Validatielaag</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../componenten/configuratie/">Configuratiemodule</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../componenten/zoeken/">Zoek- en Indexeringslaag</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Deployment</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../omgevingen/">Omgevingen & Docker Compose</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Airflow Transformatie vs. Web Applicatie</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#overzicht">Overzicht</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#airflow-transformatie-applicatie-airflow_app">Airflow Transformatie-applicatie (airflow_app/)</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#functie">Functie</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#structuur">Structuur</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#dags-directed-acyclic-graphs">DAGs (Directed Acyclic Graphs)</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#extractie-bronnen">Extractie-bronnen</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#transformatiestappen">Transformatiestappen</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#kernmodule-wasstraat">Kernmodule: wasstraat/</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#web-applicatie-app">Web-applicatie (app/)</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#functie_1">Functie</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#structuur_1">Structuur</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#technische-stack">Technische Stack</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#functionaliteiten">Functionaliteiten</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#orm-modellen">ORM-modellen</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#samenspel-tussen-beide-applicaties">Samenspel tussen beide applicaties</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#gedeelde-componenten">Gedeelde componenten</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#wanneer-gebruik-je-welke-applicatie">Wanneer gebruik je welke applicatie?</a>
+    </li>
+        </ul>
+    </li>
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../proefdata/">Proefdata Inlezen</a>
+                  </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../diagrammen/">Diagrammen</a>
+                </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">Wasstraat Archeologische Data</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">Deployment</li>
+      <li class="breadcrumb-item active">Airflow Transformatie vs. Web Applicatie</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="airflow-transformatie-vs-web-applicatie">Airflow Transformatie vs. Web Applicatie<a class="headerlink" href="#airflow-transformatie-vs-web-applicatie" title="Permanent link">&para;</a></h1>
+<p>De Wasstraat bevat twee hoofdapplicaties die elk een eigen rol vervullen. Beide draaien als aparte Docker-containers maar delen dezelfde databases en configuratie.</p>
+<h2 id="overzicht">Overzicht<a class="headerlink" href="#overzicht" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Aspect</th>
+<th>Airflow (<code>airflow_app/</code>)</th>
+<th>Flask App (<code>app/</code>)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Doel</strong></td>
+<td>Data verwerken (ETL)</td>
+<td>Data inzichtelijk maken</td>
+</tr>
+<tr>
+<td><strong>Gebruiker</strong></td>
+<td>Data-engineers, beheerders</td>
+<td>Archeologen, onderzoekers</td>
+</tr>
+<tr>
+<td><strong>Interface</strong></td>
+<td>Airflow Web UI (:8080)</td>
+<td>Web-applicatie (:5051)</td>
+</tr>
+<tr>
+<td><strong>Richting</strong></td>
+<td>Bron → MongoDB → PostgreSQL</td>
+<td>PostgreSQL → Gebruiker</td>
+</tr>
+<tr>
+<td><strong>Modus</strong></td>
+<td>Batch (handmatig of gepland)</td>
+<td>Interactief (request/response)</td>
+</tr>
+<tr>
+<td><strong>Framework</strong></td>
+<td>Apache Airflow 2.3.3</td>
+<td>Flask + Flask-AppBuilder</td>
+</tr>
+<tr>
+<td><strong>Database-rol</strong></td>
+<td>Schrijft naar MongoDB en PostgreSQL</td>
+<td>Leest uit PostgreSQL en Elasticsearch</td>
+</tr>
+</tbody>
+</table>
+<h2 id="airflow-transformatie-applicatie-airflow_app">Airflow Transformatie-applicatie (<code>airflow_app/</code>)<a class="headerlink" href="#airflow-transformatie-applicatie-airflow_app" title="Permanent link">&para;</a></h2>
+<h3 id="functie">Functie<a class="headerlink" href="#functie" title="Permanent link">&para;</a></h3>
+<p>De Airflow-applicatie is de <strong>dataverwerkingsmotor</strong>. Zij leest ruwe bronbestanden in (Access-databases, foto's, rapporten), transformeert deze door een reeks stappen, en laadt het resultaat in de definitieve databases.</p>
+<h3 id="structuur">Structuur<a class="headerlink" href="#structuur" title="Permanent link">&para;</a></h3>
+<div class="codehilite"><pre><span></span><code>airflow_app/
+├── dags/                           # DAG-definities (workflows)
+│   ├── DAG_Extract_Transform_Load_Full_Cycle.py   # Volledige ETL-cyclus
+│   ├── DAG_Extract_Only.py                        # Alleen extractie
+│   ├── DAG_Transform1_Harmonize_Only.py           # Alleen harmonisatie
+│   ├── DAG_Transform2_Enhance_Attributes_Only.py  # Alleen attribuut-verbetering
+│   ├── DAG_Transform3_Keys_Only.py                # Alleen sleutels instellen
+│   ├── DAG_Transform4_Refs_Only.py                # Alleen referenties
+│   ├── DAG_Transform_Move_Only.py                 # Alleen verplaatsen
+│   ├── DAG_Load_Only.py                           # Alleen laden naar PostgreSQL
+│   └── DAG_Redo_Images.py                         # Herverwerken van foto&#39;s
+├── scripts/                        # Shell-scripts (MDB-import, etc.)
+└── .vscode/                        # VS Code debug-configuratie
+</code></pre></div>
+
+<h3 id="dags-directed-acyclic-graphs">DAGs (Directed Acyclic Graphs)<a class="headerlink" href="#dags-directed-acyclic-graphs" title="Permanent link">&para;</a></h3>
+<p>Elke DAG definieert een workflow die via de Airflow UI handmatig kan worden gestart of ingepland. De belangrijkste DAG is de <strong>volledige ETL-cyclus</strong> die 8 stappen sequentieel uitvoert:</p>
+<div class="codehilite"><pre><span></span><code><span class="nv">Start</span><span class="w"> </span>→<span class="w"> </span><span class="nv">Drop</span><span class="w"> </span><span class="nv">All</span><span class="w"> </span><span class="nv">Databases</span>
+<span class="w">      </span>→<span class="w"> </span><span class="nv">Extract</span><span class="w"> </span><span class="ss">(</span><span class="mi">6</span><span class="w"> </span><span class="nv">MDB</span><span class="o">-</span><span class="nv">bronnen</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="nv">foto</span><span class="err">&#39;s + referentietabellen)</span>
+<span class="err">      → Transform 1: Harmonize (veldnamen standaardiseren)</span>
+<span class="err">      → Transform 2: Enhance Attributes (waarden opschonen)</span>
+<span class="err">      → Transform 3: Set Keys (unieke sleutels genereren)</span>
+<span class="err">      → Transform 5: Move &amp; Merge (deduplicatie, polymorfisme)</span>
+<span class="err">      → Transform 4: Set References (referenties als integer PKs)</span>
+<span class="err">      → Load to Database &amp; Index (PostgreSQL + Elasticsearch)</span>
+<span class="err">      → End</span>
+</code></pre></div>
+
+<h3 id="extractie-bronnen">Extractie-bronnen<a class="headerlink" href="#extractie-bronnen" title="Permanent link">&para;</a></h3>
+<p>De extractie-stap leest data uit zes Access-databases (<code>.mdb</code>) plus foto- en referentiebestanden:</p>
+<table>
+<thead>
+<tr>
+<th>Bron</th>
+<th>Inhoud</th>
+<th>Volume</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Projectendatabase (digidepot)</td>
+<td>Opgravingsprojecten, putten, sporen, vondsten</td>
+<td>~1000 databases</td>
+</tr>
+<tr>
+<td>DelfIT</td>
+<td>Administratieve gegevens</td>
+<td>1 database</td>
+</tr>
+<tr>
+<td>Magazijnlijst</td>
+<td>Depot-informatie (stellingen, dozen)</td>
+<td>1 database</td>
+</tr>
+<tr>
+<td>DigiFotolijst</td>
+<td>Foto-metadata</td>
+<td>1 database</td>
+</tr>
+<tr>
+<td>MonsterDB</td>
+<td>Monster-gegevens (botanie, schelpen)</td>
+<td>1 database</td>
+</tr>
+<tr>
+<td>Rapportendatabases</td>
+<td>Rapporten en tekeningen</td>
+<td>Meerdere databases</td>
+</tr>
+<tr>
+<td>Foto's</td>
+<td>Originele afbeeldingen</td>
+<td>~100.000 bestanden</td>
+</tr>
+<tr>
+<td>Referentietabellen</td>
+<td>ABR-codes, materiaaltypen</td>
+<td>Handmatige tabellen</td>
+</tr>
+</tbody>
+</table>
+<p>De Access-databases worden via <code>mdbtools</code> (een open-source MDB-lezer) als JSON naar MongoDB geëxporteerd.</p>
+<h3 id="transformatiestappen">Transformatiestappen<a class="headerlink" href="#transformatiestappen" title="Permanent link">&para;</a></h3>
+<p>Elke transformatiestap werkt op de MongoDB staging-collecties:</p>
+<ol>
+<li>
+<p><strong>Harmonize</strong> (<code>tasks_transform1_harmonize.py</code>): Standaardiseert veldnamen over bronnen heen. Bijvoorbeeld <code>opgrNaam</code>, <code>project_naam</code> en <code>Naam_opgraving</code> worden allemaal <code>opgraving_naam</code>.</p>
+</li>
+<li>
+<p><strong>Enhance Attributes</strong> (<code>tasks_transform2_attributes.py</code>): Schoont waarden op, corrigeert datatypes, normaliseert datums en coderingen.</p>
+</li>
+<li>
+<p><strong>Set Keys</strong> (<code>tasks_transform3_keys.py</code>): Genereert unieke sleutels voor elk record zodat relaties tussen entiteiten gelegd kunnen worden.</p>
+</li>
+<li>
+<p><strong>Move &amp; Merge</strong> (<code>tasks_transform5_moveAndMerge.py</code>): Verplaatst data naar definitieve collecties, voegt duplicaten samen, en handelt polymorfisme af (een vondst kan tegelijk een artefact en een monster zijn).</p>
+</li>
+<li>
+<p><strong>Set References</strong> (<code>tasks_transform4_references.py</code>): Converteert tekstuele verwijzingen naar integer-PKs voor de relationele database.</p>
+</li>
+<li>
+<p><strong>Load to Database &amp; Index</strong> (<code>tasks_load_to_database_and_index.py</code>): Kopieert de getransformeerde data naar PostgreSQL-tabellen en bouwt de Elasticsearch-zoekindex op.</p>
+</li>
+</ol>
+<h3 id="kernmodule-wasstraat">Kernmodule: <code>wasstraat/</code><a class="headerlink" href="#kernmodule-wasstraat" title="Permanent link">&para;</a></h3>
+<p>De gedeelde verwerkingslogica zit in <code>airflow_app/dags/wasstraat/</code>:</p>
+<ul>
+<li><code>meta.py</code> — Definieert alle entiteitstypen, hun verwerkingspipelines, en MongoDB-aggregatieschema's. Dit is het hart van de dataverwerking.</li>
+<li><code>mongoUtils.py</code> — Database-operaties (drop, indexering, queries)</li>
+<li><code>harmonize_functions.py</code> — Veldnaam-harmonisatie per entiteitstype</li>
+<li><code>setAttributes_functions.py</code> — Waarde-opschoning en -conversie</li>
+<li><code>merge_functions.py</code> — Deduplicatie en samenvoeglogica</li>
+<li><code>references_functions.py</code> — Referentie-resolutie</li>
+<li><code>loadToDatabase_functions.py</code> — PostgreSQL-laden via SQLAlchemy</li>
+<li><code>image_import.py</code> — Parallelle foto-import (8 processen)</li>
+</ul>
+<h2 id="web-applicatie-app">Web-applicatie (<code>app/</code>)<a class="headerlink" href="#web-applicatie-app" title="Permanent link">&para;</a></h2>
+<h3 id="functie_1">Functie<a class="headerlink" href="#functie_1" title="Permanent link">&para;</a></h3>
+<p>De Flask web-applicatie is de <strong>presentatielaag</strong>. Zij maakt de verwerkte data inzichtelijk voor archeologen, onderzoekers en beleidsmedewerkers via een interactieve webinterface.</p>
+<h3 id="structuur_1">Structuur<a class="headerlink" href="#structuur_1" title="Permanent link">&para;</a></h3>
+<div class="codehilite"><pre><span></span><code><span class="n">app</span>/
+├── <span class="n">app</span>/
+│   ├── <span class="n">app</span>.<span class="n">py</span>          <span class="c1"># Flask-initialisatie, database-connectie, caching</span>
+│   ├── <span class="n">models</span>.<span class="n">py</span>       <span class="c1"># SQLAlchemy ORM-modellen (alle entiteiten)</span>
+│   ├── <span class="n">views</span>.<span class="n">py</span>        <span class="c1"># Flask-AppBuilder views (CRUD-interfaces)</span>
+│   ├── <span class="n">api</span>.<span class="n">py</span>          <span class="c1"># REST API-endpoints</span>
+│   ├── <span class="n">search</span>.<span class="n">py</span>       <span class="c1"># Elasticsearch fulltext-zoekfunctie</span>
+│   ├── <span class="n">route</span>.<span class="n">py</span>        <span class="c1"># Custom routes (bestandsupload, redirects)</span>
+│   ├── <span class="n">init</span>.<span class="n">py</span>         <span class="c1"># Database-initialisatie en vulling</span>
+│   ├── <span class="n">caching</span>.<span class="n">py</span>      <span class="c1"># Redis cache-configuratie</span>
+│   ├── <span class="n">models</span>.<span class="n">py</span>       <span class="c1"># ~62KB aan ORM-modellen</span>
+│   ├── <span class="n">views</span>.<span class="n">py</span>        <span class="c1"># ~47KB aan view-definities</span>
+│   ├── <span class="n">validators</span>.<span class="n">py</span>   <span class="c1"># Formulier-validatie</span>
+│   ├── <span class="n">filters</span>.<span class="n">py</span>      <span class="c1"># Jinja2 template-filters</span>
+│   ├── <span class="n">foto_util</span>.<span class="n">py</span>    <span class="c1"># Foto-weergave utilities</span>
+│   ├── <span class="n">modelevents</span>.<span class="n">py</span>  <span class="c1"># SQLAlchemy event-listeners</span>
+│   ├── <span class="n">static</span>/         <span class="c1"># JavaScript, CSS</span>
+│   ├── <span class="n">templates</span>/      <span class="c1"># Jinja2 HTML-templates</span>
+│   └── <span class="n">translations</span>/   <span class="c1"># Internationalisatie (Babel)</span>
+├── <span class="nb">run</span>.<span class="n">py</span>              <span class="c1"># Entrypoint (start Flask op 0.0.0.0:8080)</span>
+└── <span class="n">gunicorn</span>.<span class="n">conf</span>.<span class="n">py</span>    <span class="c1"># uWSGI/Gunicorn productie-config</span>
+</code></pre></div>
+
+<h3 id="technische-stack">Technische Stack<a class="headerlink" href="#technische-stack" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Flask</strong> + <strong>Flask-AppBuilder</strong>: Genereert automatisch CRUD-interfaces op basis van SQLAlchemy-modellen</li>
+<li><strong>SQLAlchemy ORM</strong>: Alle <code>Def_*</code> PostgreSQL-tabellen zijn als Python-klassen gemodelleerd in <code>models.py</code></li>
+<li><strong>Elasticsearch</strong>: Fulltext-zoekfunctie over alle entiteiten</li>
+<li><strong>Redis</strong>: Caching van veelgebruikte queries en weergaven</li>
+<li><strong>Apache</strong>: Serveert statische bestanden (foto's, rapporten) via een apart volume</li>
+<li><strong>Jinja2 templates</strong>: HTML-rendering met Bootstrap (via Flask-AppBuilder)</li>
+</ul>
+<h3 id="functionaliteiten">Functionaliteiten<a class="headerlink" href="#functionaliteiten" title="Permanent link">&para;</a></h3>
+<p>De web-applicatie biedt:</p>
+<ul>
+<li><strong>Projectoverzicht</strong>: Lijst van alle opgravingsprojecten met filtering en sortering</li>
+<li><strong>Entiteiten-browser</strong>: Navigatie door putten, vlakken, sporen, vullingen, vondsten, artefacten en monsters</li>
+<li><strong>Foto-viewer</strong>: Bekijken van gekoppelde foto's per vondst of spoor</li>
+<li><strong>Depot-beheer</strong>: Overzicht van fysieke opslaglocaties (stellingen, standplaatsen, dozen)</li>
+<li><strong>Zoekfunctie</strong>: Fulltext-zoeken over alle archeologische records via Elasticsearch</li>
+<li><strong>REST API</strong>: Programmatische toegang voor externe systemen (ABR-materialen, projecten, putten)</li>
+<li><strong>Bestandsupload</strong>: Drag-and-drop upload van nieuwe bestanden via Flask-Dropzone</li>
+</ul>
+<h3 id="orm-modellen">ORM-modellen<a class="headerlink" href="#orm-modellen" title="Permanent link">&para;</a></h3>
+<p>Het bestand <code>models.py</code> (~62KB) definieert alle databasetabellen als Python-klassen. De belangrijkste entiteiten:</p>
+<table>
+<thead>
+<tr>
+<th>Model</th>
+<th>Tabel</th>
+<th>Beschrijving</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Project</code></td>
+<td><code>Def_Project</code></td>
+<td>Opgravingsproject</td>
+</tr>
+<tr>
+<td><code>Vindplaats</code></td>
+<td><code>Def_Vindplaats</code></td>
+<td>Archeologische vindplaats</td>
+</tr>
+<tr>
+<td><code>Put</code></td>
+<td><code>Def_Put</code></td>
+<td>Opgravingsput</td>
+</tr>
+<tr>
+<td><code>Vlak</code></td>
+<td><code>Def_Vlak</code></td>
+<td>Vlak binnen een put</td>
+</tr>
+<tr>
+<td><code>Spoor</code></td>
+<td><code>Def_Spoor</code></td>
+<td>Grondspoor</td>
+</tr>
+<tr>
+<td><code>Vulling</code></td>
+<td><code>Def_Vulling</code></td>
+<td>Vulling van een spoor</td>
+</tr>
+<tr>
+<td><code>Vondst</code></td>
+<td><code>Def_Vondst</code></td>
+<td>Vondstmelding</td>
+</tr>
+<tr>
+<td><code>Artefact</code></td>
+<td><code>Def_Artefact</code></td>
+<td>Fysiek artefact</td>
+</tr>
+<tr>
+<td><code>Monster</code></td>
+<td><code>Def_Monster</code></td>
+<td>Wetenschappelijk monster</td>
+</tr>
+<tr>
+<td><code>Bestand</code></td>
+<td><code>Def_Bestand</code></td>
+<td>Foto, tekening of rapport</td>
+</tr>
+</tbody>
+</table>
+<h2 id="samenspel-tussen-beide-applicaties">Samenspel tussen beide applicaties<a class="headerlink" href="#samenspel-tussen-beide-applicaties" title="Permanent link">&para;</a></h2>
+<p>De twee applicaties vormen samen de complete Wasstraat-pipeline:</p>
+<div class="codehilite"><pre><span></span><code>                    AIRFLOW (airflow_app/)
+                    ════════════════════════
+Bronbestanden ──→ │ Extract ──→ MongoDB    │
+ (MDB, foto&#39;s)    │    ↓       (staging)   │
+                   │ Transform (5 stappen)  │
+                   │    ↓                   │
+                   │ Load ──→ PostgreSQL    │
+                   │       ──→ Elasticsearch│
+                    ════════════════════════
+                              ↓
+                    FLASK APP (app/)
+                    ════════════════════════
+                   │ PostgreSQL ──→ Views   │──→ Webbrowser
+                   │ Elasticsearch ──→ Zoek │    (archeologen)
+                   │ Redis ──→ Cache        │
+                   │ Apache ──→ Foto&#39;s      │
+                    ════════════════════════
+</code></pre></div>
+
+<h3 id="gedeelde-componenten">Gedeelde componenten<a class="headerlink" href="#gedeelde-componenten" title="Permanent link">&para;</a></h3>
+<p>Beide applicaties gebruiken de <code>shared/</code> directory:</p>
+<ul>
+<li><code>shared/config.py</code> — Centrale configuratie (database-URLs, collectienamen, paden)</li>
+<li><code>shared/const.py</code> — Constanten (entiteitstypen, ABR-codes, materiaaltypen)</li>
+<li><code>shared/database.py</code> — PostgreSQL tabel-discovery</li>
+<li><code>shared/fulltext.py</code> — Elasticsearch indexering</li>
+<li><code>shared/image_util.py</code> — Beeldverwerking</li>
+</ul>
+<h3 id="wanneer-gebruik-je-welke-applicatie">Wanneer gebruik je welke applicatie?<a class="headerlink" href="#wanneer-gebruik-je-welke-applicatie" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Scenario</th>
+<th>Applicatie</th>
+<th>Hoe</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Nieuwe data importeren</td>
+<td>Airflow</td>
+<td>Start DAG via Airflow UI (:8080)</td>
+</tr>
+<tr>
+<td>Bestaande data bekijken</td>
+<td>Flask App</td>
+<td>Open webbrowser op :5051</td>
+</tr>
+<tr>
+<td>Zoeken in data</td>
+<td>Flask App</td>
+<td>Gebruik zoekbalk in web-interface</td>
+</tr>
+<tr>
+<td>Transformaties debuggen</td>
+<td>Airflow</td>
+<td>Bekijk task-logs in Airflow UI</td>
+</tr>
+<tr>
+<td>Data-model aanpassen</td>
+<td>Beide</td>
+<td>Pas <code>meta.py</code> (Airflow) en <code>models.py</code> (Flask) aan</td>
+</tr>
+<tr>
+<td>API gebruiken</td>
+<td>Flask App</td>
+<td><code>GET /api/v1/projects/</code> etc.</td>
+</tr>
+<tr>
+<td>Ad-hoc analyse</td>
+<td>Jupyter</td>
+<td>Open notebook op :8888</td>
+</tr>
+</tbody>
+</table>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../omgevingen/" class="btn btn-neutral float-left" title="Omgevingen & Docker Compose"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../proefdata/" class="btn btn-neutral float-right" title="Proefdata Inlezen">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../omgevingen/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../proefdata/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../..";</script>
+    <script src="../../js/theme_extra.js"></script>
+    <script src="../../js/theme.js"></script>
+      <script src="../../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

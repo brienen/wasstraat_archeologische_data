@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="nl" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="author" content="E-Space / Arjen Brienen" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>Componentenmodel - Wasstraat Archeologische Data</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+        <link href="../../assets/extra.css" rel="stylesheet" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Componentenmodel";
+        var mkdocs_page_input_path = "architectuur/componenten.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> Wasstraat Archeologische Data
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Home</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Projectoverzicht</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../overzicht/inleiding/">Inleiding</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../overzicht/probleemstelling/">Probleemstelling</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../overzicht/doelstellingen/">Doelstellingen</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Architectuur</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../systeem/">Systeemarchitectuur</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../dataflow/">Dataflow Pipeline</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Componentenmodel</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#overzicht">Overzicht</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#kerncomponenten">Kerncomponenten</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#extractie-module">Extractie Module</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#transformatie-module">Transformatie Module</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#handmatige-schoonmaakinterface">Handmatige Schoonmaakinterface</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#clientonderhoudinterface">Clientonderhoudinterface</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#data-warehouse-reporting">Data Warehouse / Reporting</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#website-apis">Website &amp; API's</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#gis-systeem">GIS-Systeem</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#ondersteunende-systemen">Ondersteunende Systemen</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#extractie-transformatie">Extractie &amp; Transformatie</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#data-access-semantiek">Data Access &amp; Semantiek</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#web-framework">Web Framework</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#storing">Storing</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#orchestratie">Orchestratie</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#infrastructure">Infrastructure</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#analyse-visualisatie">Analyse &amp; Visualisatie</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#uml-transformer-project-2024">UML-Transformer Project (2024)</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#onderdelen">Onderdelen</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#integratie">Integratie</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#informatiestroom-tussen-componenten">Informatiestroom tussen Componenten</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#betrouwbaarheid-redundantie">Betrouwbaarheid &amp; Redundantie</a>
+    </li>
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../gegevensmodel/">Gegevensmodel & Semantiek</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../stack/">Technische Stack</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Componenten</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../componenten/extractie/">Extractielaag</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../componenten/singlestore/">SingleStore & Clusterlaag</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../componenten/transformatie/">Transformatielaag</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../componenten/crossviews/">Crossviews</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../componenten/validatie/">Validatielaag</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../componenten/configuratie/">Configuratiemodule</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../componenten/zoeken/">Zoek- en Indexeringslaag</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Deployment</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../deployment/omgevingen/">Omgevingen & Docker Compose</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../deployment/airflow-vs-app/">Airflow Transformatie vs. Web Applicatie</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../deployment/proefdata/">Proefdata Inlezen</a>
+                  </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../diagrammen/">Diagrammen</a>
+                </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">Wasstraat Archeologische Data</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">Architectuur</li>
+      <li class="breadcrumb-item active">Componentenmodel</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="componentenmodel">Componentenmodel<a class="headerlink" href="#componentenmodel" title="Permanent link">&para;</a></h1>
+<h2 id="overzicht">Overzicht<a class="headerlink" href="#overzicht" title="Permanent link">&para;</a></h2>
+<p>Dit document beschrijft hoe de verschillende modules en services van het Wasstraat-systeem samenwerken. Het componentenmodel toont de relaties en afhankelijkheden tussen technische en functionele eenheden.</p>
+<p><img alt="Componentenmodel" src="../../assets/images/componenten-model.svg" /></p>
+<h2 id="kerncomponenten">Kerncomponenten<a class="headerlink" href="#kerncomponenten" title="Permanent link">&para;</a></h2>
+<h3 id="extractie-module">Extractie Module<a class="headerlink" href="#extractie-module" title="Permanent link">&para;</a></h3>
+<p><strong>Verantwoordelijkheid</strong>: Conversie van brondataformaten naar gestandaardiseerde formaten.</p>
+<p><strong>Ondersteund door</strong>:
+- Python extractie-scripts
+- Mapping-engine voor term/veld-herkenning
+- Validatieroutines</p>
+<p><strong>Gegevensuitgang</strong>: Ruw format naar MongoDB/SingleStore</p>
+<h3 id="transformatie-module">Transformatie Module<a class="headerlink" href="#transformatie-module" title="Permanent link">&para;</a></h3>
+<p><strong>Verantwoordelijkheid</strong>: Normalisering en harmonisering van gegevens.</p>
+<p><strong>Kernfuncties</strong>:
+- ABR-harmonisering (thesaurus-afstemming)
+- Datumformatstandardisatie
+- Locatie-deduplicatie
+- Spellingstandardisatie</p>
+<p><strong>Gegevensuitgang</strong>: Genormaliseerde records naar PostgreSQL/Oracle</p>
+<h3 id="handmatige-schoonmaakinterface">Handmatige Schoonmaakinterface<a class="headerlink" href="#handmatige-schoonmaakinterface" title="Permanent link">&para;</a></h3>
+<p><strong>Verantwoordelijkheid</strong>: Menselijke validatie en correctie van kritieke gegevenselementen.</p>
+<p><strong>Specifieke Taken</strong>:
+- Controle van waardeconflicten
+- Aanpassing van foutieve mappings
+- Disambiguering van ambigue gegevens</p>
+<p><strong>Gegevensinteractie</strong>: Directe updates in PostgreSQL/Oracle met audit logging</p>
+<h3 id="clientonderhoudinterface">Clientonderhoudinterface<a class="headerlink" href="#clientonderhoudinterface" title="Permanent link">&para;</a></h3>
+<p><strong>Verantwoordelijkheid</strong>: Beheer van systeemconfiguratie en metadata.</p>
+<p><strong>Specifieke Taken</strong>:
+- Bronconfiguratie
+- Gebruiker- en permissiebeheer
+- Mapping-sjablonen beheren
+- Validatieregel-management</p>
+<p><strong>Gegevensinteractie</strong>: Configuratietabellen in PostgreSQL/Oracle</p>
+<h3 id="data-warehouse-reporting">Data Warehouse / Reporting<a class="headerlink" href="#data-warehouse-reporting" title="Permanent link">&para;</a></h3>
+<p><strong>Verantwoordelijkheid</strong>: Analytische weergaven en rapportage van historische data.</p>
+<p><strong>Ondersteund door</strong>:
+- Snowflake gegevens-consolidering
+- Apache Spark voor ETL
+- RShiny voor interactieve dashboards
+- Jupyter voor ad-hoc analyses</p>
+<p><strong>Gegevensingang</strong>: Read-only kopieën uit definitieve opslag</p>
+<h3 id="website-apis">Website &amp; API's<a class="headerlink" href="#website-apis" title="Permanent link">&para;</a></h3>
+<p><strong>Verantwoordelijkheid</strong>: Publieke toegang tot archeologische gegevens.</p>
+<p><strong>Functies</strong>:
+- REST API's voor gegevenstoegang
+- Web UI zoeken/browse
+- Linked Open Data exports
+- Fulltext search</p>
+<p><strong>Gegevensingang</strong>: PostgreSQL/Oracle via SQLAlchemy ORM</p>
+<h3 id="gis-systeem">GIS-Systeem<a class="headerlink" href="#gis-systeem" title="Permanent link">&para;</a></h3>
+<p><strong>Verantwoordelijkheid</strong>: Geografische visualisatie en spatiale analyses.</p>
+<p><strong>Functies</strong>:
+- WMS/WFS geo-services
+- GeoJSON exports
+- Kaartgebaseerde interfaces
+- Spatiale queries</p>
+<p><strong>Gegevensingang</strong>: PostGIS-extensie van PostgreSQL</p>
+<h2 id="ondersteunende-systemen">Ondersteunende Systemen<a class="headerlink" href="#ondersteunende-systemen" title="Permanent link">&para;</a></h2>
+<h3 id="extractie-transformatie">Extractie &amp; Transformatie<a class="headerlink" href="#extractie-transformatie" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Component</th>
+<th>Functie</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Python Pandas</strong></td>
+<td>Data wrangling en transformatie</td>
+</tr>
+<tr>
+<td><strong>RDFLib</strong></td>
+<td>RDF-processing voor semantische mapping</td>
+</tr>
+<tr>
+<td><strong>SQLAlchemy</strong></td>
+<td>ORM voor database-agnostische query's</td>
+</tr>
+<tr>
+<td><strong>Alembic</strong></td>
+<td>Database schema versioning &amp; migraties</td>
+</tr>
+</tbody>
+</table>
+<h3 id="data-access-semantiek">Data Access &amp; Semantiek<a class="headerlink" href="#data-access-semantiek" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Component</th>
+<th>Functie</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Jinja2</strong></td>
+<td>Template-engine voor dynamische queries</td>
+</tr>
+<tr>
+<td><strong>Fulltext Search Engine</strong></td>
+<td>Polymorfe, vakgebied-bewuste zoek-indexering</td>
+</tr>
+<tr>
+<td><strong>Crossviews</strong></td>
+<td>Cross-source querying zonder duplicatie</td>
+</tr>
+</tbody>
+</table>
+<h3 id="web-framework">Web Framework<a class="headerlink" href="#web-framework" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Component</th>
+<th>Functie</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Django</strong></td>
+<td>Backend web framework</td>
+</tr>
+<tr>
+<td><strong>Vue/Vuetify</strong></td>
+<td>Frontend JavaScript framework</td>
+</tr>
+<tr>
+<td><strong>REST Framework</strong></td>
+<td>API architecture</td>
+</tr>
+</tbody>
+</table>
+<h3 id="storing">Storing<a class="headerlink" href="#storing" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Component</th>
+<th>Functie</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>MongoDB</strong></td>
+<td>NoSQL opslag voor ruw data</td>
+</tr>
+<tr>
+<td><strong>SingleStore</strong></td>
+<td>Kolom-opslag voor analytische queries</td>
+</tr>
+<tr>
+<td><strong>PostgreSQL</strong></td>
+<td>Relationele database (voorkeur)</td>
+</tr>
+<tr>
+<td><strong>Oracle</strong></td>
+<td>Relationele database (legacy)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="orchestratie">Orchestratie<a class="headerlink" href="#orchestratie" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Component</th>
+<th>Functie</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Airflow</strong></td>
+<td>Workflow orchestratie en scheduling</td>
+</tr>
+<tr>
+<td><strong>Luigi</strong></td>
+<td>Task dependency management</td>
+</tr>
+<tr>
+<td><strong>Celery</strong></td>
+<td>Asynchrone taakuitvoering</td>
+</tr>
+</tbody>
+</table>
+<h3 id="infrastructure">Infrastructure<a class="headerlink" href="#infrastructure" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Component</th>
+<th>Functie</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Docker</strong></td>
+<td>Container-verpakking</td>
+</tr>
+<tr>
+<td><strong>Kubernetes</strong></td>
+<td>Container orchestratie &amp; deployment</td>
+</tr>
+</tbody>
+</table>
+<h3 id="analyse-visualisatie">Analyse &amp; Visualisatie<a class="headerlink" href="#analyse-visualisatie" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Component</th>
+<th>Functie</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Apache Spark</strong></td>
+<td>Distributed ETL processing</td>
+</tr>
+<tr>
+<td><strong>RShiny</strong></td>
+<td>Interactieve dashboards</td>
+</tr>
+<tr>
+<td><strong>Jupyter</strong></td>
+<td>Notebook-gebaseerde analyses</td>
+</tr>
+</tbody>
+</table>
+<h2 id="uml-transformer-project-2024">UML-Transformer Project (2024)<a class="headerlink" href="#uml-transformer-project-2024" title="Permanent link">&para;</a></h2>
+<p>Een specialist-component voor generieke transformatie van UML-gemodelleerde datamodellen:</p>
+<h3 id="onderdelen">Onderdelen<a class="headerlink" href="#onderdelen" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Metaschema Repository</strong>: Opslag van UML-modellen in kanonieke vorm</li>
+<li><strong>Import/Export Laag</strong>: Conversie tussen UML-formaten en interne representatie</li>
+<li><strong>Validatie Laag</strong>: Schema-validatie tegen UML-definities</li>
+<li><strong>Configuratie Module</strong>: Mapping van UML naar fysieke databaseschema's</li>
+</ul>
+<h3 id="integratie">Integratie<a class="headerlink" href="#integratie" title="Permanent link">&para;</a></h3>
+<p>De UML-Transformer ondersteunt cross-model mapping:
+- CIDOC CRM ↔ Lokale gegevensmodellen
+- CRMarchaeo ↔ Project-specifieke modellen
+- CRMsci ↔ Laboratorium-gemodelleerde data
+- GGM (Gemeentelijk Gegevensmodel) ↔ Administratieve data</p>
+<h2 id="informatiestroom-tussen-componenten">Informatiestroom tussen Componenten<a class="headerlink" href="#informatiestroom-tussen-componenten" title="Permanent link">&para;</a></h2>
+<div class="codehilite"><pre><span></span><code>Bronsystemen
+    ↓ (Extractie Module)
+MongoDB/SingleStore (Ruw)
+    ↓ (Transformatie Module)
+PostgreSQL/Oracle (Definitief)
+    ↙ ↓ ↘
+  /   |   \
+GIS  Web  Data
+    Warehouse
+
+Handmatige Schoonmaak ⟷ PostgreSQL/Oracle
+Clientonderhoud ⟷ Configuratietabellen
+</code></pre></div>
+
+<h2 id="betrouwbaarheid-redundantie">Betrouwbaarheid &amp; Redundantie<a class="headerlink" href="#betrouwbaarheid-redundantie" title="Permanent link">&para;</a></h2>
+<p>De componentenarchitectuur ondersteunt:
+- <strong>Separatie van concerns</strong>: Componenten hebben duidelijk omgrensd verantwoordelijkheden
+- <strong>Decomponeerbaarheid</strong>: Componenten kunnen onafhankelijk getest en geüpdatet worden
+- <strong>Redundantie</strong>: Kritieke componenten kunnen gerepliceerd worden in Kubernetes
+- <strong>Failover</strong>: Omleiding naar backup-systemen bij uitval</p>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../dataflow/" class="btn btn-neutral float-left" title="Dataflow Pipeline"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../gegevensmodel/" class="btn btn-neutral float-right" title="Gegevensmodel & Semantiek">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../dataflow/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../gegevensmodel/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../..";</script>
+    <script src="../../js/theme_extra.js"></script>
+    <script src="../../js/theme.js"></script>
+      <script src="../../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

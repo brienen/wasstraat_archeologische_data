@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="nl" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="author" content="E-Space / Arjen Brienen" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>Configuratiemodule - Wasstraat Archeologische Data</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+        <link href="../../assets/extra.css" rel="stylesheet" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Configuratiemodule";
+        var mkdocs_page_input_path = "componenten/configuratie.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> Wasstraat Archeologische Data
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Home</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Projectoverzicht</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../overzicht/inleiding/">Inleiding</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../overzicht/probleemstelling/">Probleemstelling</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../overzicht/doelstellingen/">Doelstellingen</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Architectuur</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../architectuur/systeem/">Systeemarchitectuur</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../architectuur/dataflow/">Dataflow Pipeline</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../architectuur/componenten/">Componentenmodel</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../architectuur/gegevensmodel/">Gegevensmodel & Semantiek</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../architectuur/stack/">Technische Stack</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Componenten</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../extractie/">Extractielaag</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../singlestore/">SingleStore & Clusterlaag</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../transformatie/">Transformatielaag</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../crossviews/">Crossviews</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../validatie/">Validatielaag</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Configuratiemodule</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#overzicht">Overzicht</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#kernfunctionaliteiten">Kernfunctionaliteiten</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#1-databronnen-configuratie">1. Databronnen Configuratie</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#ondersteunde-brontypen">Ondersteunde Brontypen</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#2-kolom-mappings">2. Kolom-Mappings</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#3-alternatieve-kolomnamen">3. Alternatieve Kolomnamen</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#4-categorieen-en-woordenlijsten">4. Categorieën en Woordenlijsten</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#5-lokale-specifieke-uitbreidingen">5. Lokale Specifieke Uitbreidingen</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#configuratie-interface">Configuratie-Interface</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#web-dashboard">Web Dashboard</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#gegevensuitwisselingsbeheer">Gegevensuitwisselingsbeheer</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#importexport-configuraties">Import/Export Configuraties</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#logging-en-auditing">Logging en Auditing</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#architectuur">Architectuur</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#best-practices">Best Practices</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#integratie-met-andere-lagen">Integratie met andere Lagen</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#rollen-toestemmingen">Rollen &amp; Toestemmingen</a>
+    </li>
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../zoeken/">Zoek- en Indexeringslaag</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Deployment</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../deployment/omgevingen/">Omgevingen & Docker Compose</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../deployment/airflow-vs-app/">Airflow Transformatie vs. Web Applicatie</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../deployment/proefdata/">Proefdata Inlezen</a>
+                  </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../diagrammen/">Diagrammen</a>
+                </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">Wasstraat Archeologische Data</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">Componenten</li>
+      <li class="breadcrumb-item active">Configuratiemodule</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="configuratie">Configuratie<a class="headerlink" href="#configuratie" title="Permanent link">&para;</a></h1>
+<h2 id="overzicht">Overzicht<a class="headerlink" href="#overzicht" title="Permanent link">&para;</a></h2>
+<p>De configuratiemodule vormt het controlecentrum voor gemeentelijke aanpassingen en systeembeheer in Wasstraat Archeologische Data. Dit onderdeel stelt beheerders in staat hun eigen gegevensbronnen in te stellen, mappings te definiëren en lokale specifieke instellingen in te voeren zonder de kernarchitectuur te beschadigen.</p>
+<h2 id="kernfunctionaliteiten">Kernfunctionaliteiten<a class="headerlink" href="#kernfunctionaliteiten" title="Permanent link">&para;</a></h2>
+<h3 id="1-databronnen-configuratie">1. Databronnen Configuratie<a class="headerlink" href="#1-databronnen-configuratie" title="Permanent link">&para;</a></h3>
+<p>Gestructureerde definities voor externe databronnen:</p>
+<div class="codehilite"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;databron&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;amsterdam_gemeente_2024&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;naam&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Amsterdam Gemeente Vondsten&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;excel&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;locatie&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;/data/imports/amsterdam_2024.xlsx&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;schema&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">&quot;sheet_naam&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Vondsten&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;rijen_skip&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;koppen_rij&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="nt">&quot;frequentie_import&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;maandelijks&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;volgende_import&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2024-04-09T02:00:00Z&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;validatie_profiel&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;amsterdam_standaard&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;contactpersoon&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;j.de.vries@amsterdam.nl&quot;</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<h4 id="ondersteunde-brontypen">Ondersteunde Brontypen<a class="headerlink" href="#ondersteunde-brontypen" title="Permanent link">&para;</a></h4>
+<div class="codehilite"><pre><span></span><code><span class="err">┌──────────────────────────────────┐</span>
+<span class="err">│</span><span class="w">    </span><span class="nx">Ondersteunde</span><span class="w"> </span><span class="nx">Brontypen</span><span class="w">        </span><span class="err">│</span>
+<span class="err">├──────────────────────────────────┤</span>
+<span class="err">│</span><span class="w"> </span><span class="err">•</span><span class="w"> </span><span class="nx">Excel</span><span class="w"> </span><span class="p">(.</span><span class="nx">xls</span><span class="p">,</span><span class="w"> </span><span class="p">.</span><span class="nx">xlsx</span><span class="p">)</span><span class="w">            </span><span class="err">│</span>
+<span class="err">│</span><span class="w"> </span><span class="err">•</span><span class="w"> </span><span class="nx">CSV</span><span class="w"> </span><span class="p">(</span><span class="nx">diverse</span><span class="w"> </span><span class="nx">scheidingstekens</span><span class="p">)</span><span class="w"> </span><span class="err">│</span>
+<span class="err">│</span><span class="w"> </span><span class="err">•</span><span class="w"> </span><span class="nx">Access</span><span class="w"> </span><span class="nx">Database</span><span class="w"> </span><span class="p">(.</span><span class="nx">mdb</span><span class="p">)</span><span class="w">         </span><span class="err">│</span>
+<span class="err">│</span><span class="w"> </span><span class="err">•</span><span class="w"> </span><span class="nx">Word</span><span class="w"> </span><span class="nx">Document</span><span class="w"> </span><span class="p">(.</span><span class="nx">docx</span><span class="p">)</span><span class="w">          </span><span class="err">│</span>
+<span class="err">│</span><span class="w"> </span><span class="err">•</span><span class="w"> </span><span class="nx">XML</span><span class="w">                            </span><span class="err">│</span>
+<span class="err">│</span><span class="w"> </span><span class="err">•</span><span class="w"> </span><span class="nx">JSON</span><span class="w">                           </span><span class="err">│</span>
+<span class="err">│</span><span class="w"> </span><span class="err">•</span><span class="w"> </span><span class="nx">Custom</span><span class="w"> </span><span class="nx">API</span><span class="w">                     </span><span class="err">│</span>
+<span class="err">│</span><span class="w"> </span><span class="err">•</span><span class="w"> </span><span class="nx">Gescande</span><span class="w"> </span><span class="nx">documenten</span><span class="w"> </span><span class="p">(</span><span class="nx">OCR</span><span class="p">)</span><span class="w">      </span><span class="err">│</span>
+<span class="err">└──────────────────────────────────┘</span>
+</code></pre></div>
+
+<h3 id="2-kolom-mappings">2. Kolom-Mappings<a class="headerlink" href="#2-kolom-mappings" title="Permanent link">&para;</a></h3>
+<p>Mapping van bronkolommen naar standaard Wasstraat schema:</p>
+<div class="codehilite"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;mapping&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;bron_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;amsterdam_gemeente_2024&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;kolom_mappings&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">&quot;VONDST_NR&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nt">&quot;target&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;object_id&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;string&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;verplicht&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span>
+<span class="w">      </span><span class="p">},</span>
+<span class="w">      </span><span class="nt">&quot;DATUM_VONDST&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nt">&quot;target&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;discovery_date&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;date&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;format&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;DD-MM-YYYY&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;transformatie&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;iso8601&quot;</span>
+<span class="w">      </span><span class="p">},</span>
+<span class="w">      </span><span class="nt">&quot;PLAATS&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nt">&quot;target&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;location_name&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;string&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;normalisatie&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;plaats_standaardisering&quot;</span>
+<span class="w">      </span><span class="p">},</span>
+<span class="w">      </span><span class="nt">&quot;X_COORD&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nt">&quot;target&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;longitude&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;float&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;bron_crs&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;EPSG:28992&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;target_crs&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;EPSG:4326&quot;</span>
+<span class="w">      </span><span class="p">},</span>
+<span class="w">      </span><span class="nt">&quot;Y_COORD&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nt">&quot;target&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;latitude&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;float&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;bron_crs&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;EPSG:28992&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;target_crs&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;EPSG:4326&quot;</span>
+<span class="w">      </span><span class="p">},</span>
+<span class="w">      </span><span class="nt">&quot;BESCHRIJVING&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nt">&quot;target&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;description&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;text&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;max_length&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">2000</span>
+<span class="w">      </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<h3 id="3-alternatieve-kolomnamen">3. Alternatieve Kolomnamen<a class="headerlink" href="#3-alternatieve-kolomnamen" title="Permanent link">&para;</a></h3>
+<p>Ondersteuning voor variatiebewuste kolommappings:</p>
+<div class="codehilite"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;kolom_aliassen&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;object_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">      </span><span class="s2">&quot;VONDST_NR&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="s2">&quot;object_number&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="s2">&quot;FIND_ID&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="s2">&quot;artefact_nummer&quot;</span>
+<span class="w">    </span><span class="p">],</span>
+<span class="w">    </span><span class="nt">&quot;discovery_date&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">      </span><span class="s2">&quot;DATUM_VONDST&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="s2">&quot;vondstdatum&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="s2">&quot;DISCOVERY_DATE&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="s2">&quot;datum_vondst&quot;</span>
+<span class="w">    </span><span class="p">],</span>
+<span class="w">    </span><span class="nt">&quot;location_name&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">      </span><span class="s2">&quot;PLAATS&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="s2">&quot;plaats&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="s2">&quot;LOCATION&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="s2">&quot;LOCATIE&quot;</span>
+<span class="w">    </span><span class="p">]</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<p>Dit vermindert handmatige configuratie door automatische herkenning van veelgebruikte naamgevingspatronen.</p>
+<h3 id="4-categorieen-en-woordenlijsten">4. Categorieën en Woordenlijsten<a class="headerlink" href="#4-categorieen-en-woordenlijsten" title="Permanent link">&para;</a></h3>
+<p>Lokale categorietisering en thesaurus-extensies:</p>
+<div class="codehilite"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;categorieen&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;artefact_type&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">&quot;standaard&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;aardewerk&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;werktuig&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;sieraad&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;structuur&quot;</span><span class="p">],</span>
+<span class="w">      </span><span class="nt">&quot;amsterdam_specifiek&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">        </span><span class="s2">&quot;houtwerk_amsterdam&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="s2">&quot;tegel_delft&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="s2">&quot;speelgoed_19e_eeuw&quot;</span>
+<span class="w">      </span><span class="p">]</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="nt">&quot;materiaal&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">&quot;standaard&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;aarde&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;steen&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;hout&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;metaal&quot;</span><span class="p">],</span>
+<span class="w">      </span><span class="nt">&quot;amsterdam_extensies&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">        </span><span class="s2">&quot;bakstenen&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="s2">&quot;tegelwerk&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="s2">&quot;touwwerk&quot;</span>
+<span class="w">      </span><span class="p">]</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="nt">&quot;periode&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">&quot;standaard_abr&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">        </span><span class="s2">&quot;Paleolithicum&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="s2">&quot;Mesolithicum&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="s2">&quot;Neolithicum&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="s2">&quot;Bronstijd&quot;</span>
+<span class="w">      </span><span class="p">],</span>
+<span class="w">      </span><span class="nt">&quot;amsterdam_lokaal&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">        </span><span class="s2">&quot;Vroeg Middeleeuwen Amsterdam&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="s2">&quot;Bloktijd (1000-1500)&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="s2">&quot;Amsterdamse Goudse Eeuw (1600-1700)&quot;</span>
+<span class="w">      </span><span class="p">]</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<h3 id="5-lokale-specifieke-uitbreidingen">5. Lokale Specifieke Uitbreidingen<a class="headerlink" href="#5-lokale-specifieke-uitbreidingen" title="Permanent link">&para;</a></h3>
+<p>Ondersteuning voor gemeentelijke unieke behoeften zonder kernmodel-breuk:</p>
+<div class="codehilite"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;lokale_extensies&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;amsterdam&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">&quot;extra_velden&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nt">&quot;grachtbouw_fase&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">          </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;enum&quot;</span><span class="p">,</span>
+<span class="w">          </span><span class="nt">&quot;opties&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;fase_I&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;fase_II&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;fase_III&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;fase_IV&quot;</span><span class="p">],</span>
+<span class="w">          </span><span class="nt">&quot;beschrijving&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Specifiek voor Amsterdam Grachtenonderzoeken&quot;</span>
+<span class="w">        </span><span class="p">},</span>
+<span class="w">        </span><span class="nt">&quot;pakhuis_relatie&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">          </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;string&quot;</span><span class="p">,</span>
+<span class="w">          </span><span class="nt">&quot;beschrijving&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Verwijzing naar historisch pakhuis&quot;</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">      </span><span class="p">},</span>
+<span class="w">      </span><span class="nt">&quot;validatieregels_extra&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">        </span><span class="p">{</span>
+<span class="w">          </span><span class="nt">&quot;regel&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;grachtbouw_fase_chronologie&quot;</span><span class="p">,</span>
+<span class="w">          </span><span class="nt">&quot;beschrijving&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Fase moet chronologisch consistent zijn&quot;</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">      </span><span class="p">]</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="nt">&quot;rotterdam&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">&quot;extra_velden&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nt">&quot;havenbouw_periode&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">          </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;enum&quot;</span><span class="p">,</span>
+<span class="w">          </span><span class="nt">&quot;opties&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;oud_havengebied&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;nieuwe_haven&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;container_terminal&quot;</span><span class="p">]</span>
+<span class="w">        </span><span class="p">},</span>
+<span class="w">        </span><span class="nt">&quot;bouwwerk_referentie&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">          </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;string&quot;</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">      </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<h2 id="configuratie-interface">Configuratie-Interface<a class="headerlink" href="#configuratie-interface" title="Permanent link">&para;</a></h2>
+<h3 id="web-dashboard">Web Dashboard<a class="headerlink" href="#web-dashboard" title="Permanent link">&para;</a></h3>
+<p>Beheerders kunnen configuraties beheren via een intuïtief dashboard:</p>
+<div class="codehilite"><pre><span></span><code><span class="err">┌──────────────────────────────────────────────┐</span>
+<span class="err">│</span><span class="w">  </span><span class="nx">Wasstraat</span><span class="w"> </span><span class="nx">Configuratie</span><span class="w"> </span><span class="nx">Dashboard</span><span class="w">            </span><span class="err">│</span>
+<span class="err">├──────────────────────────────────────────────┤</span>
+<span class="err">│</span><span class="w">                                              </span><span class="err">│</span>
+<span class="err">│</span><span class="w">  </span><span class="nx">Databronnen</span><span class="w">                                 </span><span class="err">│</span>
+<span class="err">│</span><span class="w">  </span><span class="err">├─</span><span class="w"> </span><span class="nx">Amsterdam</span><span class="w"> </span><span class="nx">Gemeente</span><span class="w"> </span><span class="p">(</span><span class="nx">actief</span><span class="p">)</span><span class="w">              </span><span class="err">│</span>
+<span class="err">│</span><span class="w">  </span><span class="err">├─</span><span class="w"> </span><span class="nx">Universiteit</span><span class="w"> </span><span class="nx">Amsterdam</span><span class="w"> </span><span class="p">(</span><span class="nx">actief</span><span class="p">)</span><span class="w">          </span><span class="err">│</span>
+<span class="err">│</span><span class="w">  </span><span class="err">└─</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="nx">Nieuwe</span><span class="w"> </span><span class="nx">Databron</span><span class="w"> </span><span class="nx">Toevoegen</span><span class="w">              </span><span class="err">│</span>
+<span class="err">│</span><span class="w">                                              </span><span class="err">│</span>
+<span class="err">│</span><span class="w">  </span><span class="nx">Kolom</span><span class="o">-</span><span class="nx">Mappings</span><span class="w">                              </span><span class="err">│</span>
+<span class="err">│</span><span class="w">  </span><span class="err">├─</span><span class="w"> </span><span class="nx">Amsterdam</span><span class="w"> </span><span class="nx">Mapping</span><span class="w"> </span><span class="p">(</span><span class="nx">bewerken</span><span class="p">)</span><span class="w">             </span><span class="err">│</span>
+<span class="err">│</span><span class="w">  </span><span class="err">├─</span><span class="w"> </span><span class="nx">Universiteit</span><span class="w"> </span><span class="nx">Mapping</span><span class="w"> </span><span class="p">(</span><span class="nx">bewerken</span><span class="p">)</span><span class="w">          </span><span class="err">│</span>
+<span class="err">│</span><span class="w">  </span><span class="err">└─</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="nx">Nieuwe</span><span class="w"> </span><span class="nx">Mapping</span><span class="w"> </span><span class="nx">Toevoegen</span><span class="w">               </span><span class="err">│</span>
+<span class="err">│</span><span class="w">                                              </span><span class="err">│</span>
+<span class="err">│</span><span class="w">  </span><span class="nx">Categorieën</span><span class="w"> </span><span class="o">&amp;</span><span class="w"> </span><span class="nx">Woordenlijsten</span><span class="w">                </span><span class="err">│</span>
+<span class="err">│</span><span class="w">  </span><span class="err">├─</span><span class="w"> </span><span class="nx">Artefacttypes</span><span class="w"> </span><span class="p">(</span><span class="nx">bewerken</span><span class="p">)</span><span class="w">                 </span><span class="err">│</span>
+<span class="err">│</span><span class="w">  </span><span class="err">├─</span><span class="w"> </span><span class="nx">Materialen</span><span class="w"> </span><span class="p">(</span><span class="nx">bewerken</span><span class="p">)</span><span class="w">                    </span><span class="err">│</span>
+<span class="err">│</span><span class="w">  </span><span class="err">├─</span><span class="w"> </span><span class="nx">Periodes</span><span class="w"> </span><span class="p">(</span><span class="nx">bewerken</span><span class="p">)</span><span class="w">                      </span><span class="err">│</span>
+<span class="err">│</span><span class="w">  </span><span class="err">└─</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="nx">Nieuwe</span><span class="w"> </span><span class="nx">Categorie</span><span class="w"> </span><span class="nx">Toevoegen</span><span class="w">             </span><span class="err">│</span>
+<span class="err">│</span><span class="w">                                              </span><span class="err">│</span>
+<span class="err">│</span><span class="w">  </span><span class="nx">Validatieregels</span><span class="w">                             </span><span class="err">│</span>
+<span class="err">│</span><span class="w">  </span><span class="err">├─</span><span class="w"> </span><span class="nx">Basis</span><span class="w"> </span><span class="nx">Validatieregels</span><span class="w"> </span><span class="p">(</span><span class="nx">alleen</span><span class="o">-</span><span class="nx">lezen</span><span class="p">)</span><span class="w">    </span><span class="err">│</span>
+<span class="err">│</span><span class="w">  </span><span class="err">├─</span><span class="w"> </span><span class="nx">Amsterdam</span><span class="w"> </span><span class="nx">Regels</span><span class="w"> </span><span class="p">(</span><span class="nx">bewerken</span><span class="p">)</span><span class="w">              </span><span class="err">│</span>
+<span class="err">│</span><span class="w">  </span><span class="err">└─</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="nx">Nieuwe</span><span class="w"> </span><span class="nx">Regel</span><span class="w"> </span><span class="nx">Toevoegen</span><span class="w">                 </span><span class="err">│</span>
+<span class="err">│</span><span class="w">                                              </span><span class="err">│</span>
+<span class="err">│</span><span class="w">  </span><span class="nx">Gebruikersbeheer</span><span class="w">                            </span><span class="err">│</span>
+<span class="err">│</span><span class="w">  </span><span class="err">├─</span><span class="w"> </span><span class="nx">Rollen</span><span class="w"> </span><span class="nx">en</span><span class="w"> </span><span class="nx">Toestemmingen</span><span class="w">                  </span><span class="err">│</span>
+<span class="err">│</span><span class="w">  </span><span class="err">├─</span><span class="w"> </span><span class="nx">API</span><span class="o">-</span><span class="nx">sleutels</span><span class="w">                             </span><span class="err">│</span>
+<span class="err">│</span><span class="w">  </span><span class="err">└─</span><span class="w"> </span><span class="nx">Logboek</span><span class="w">                                  </span><span class="err">│</span>
+<span class="err">│</span><span class="w">                                              </span><span class="err">│</span>
+<span class="err">└──────────────────────────────────────────────┘</span>
+</code></pre></div>
+
+<h2 id="gegevensuitwisselingsbeheer">Gegevensuitwisselingsbeheer<a class="headerlink" href="#gegevensuitwisselingsbeheer" title="Permanent link">&para;</a></h2>
+<h3 id="importexport-configuraties">Import/Export Configuraties<a class="headerlink" href="#importexport-configuraties" title="Permanent link">&para;</a></h3>
+<p>Overzicht van gegevensstromingen:</p>
+<div class="codehilite"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;gegevensuitwisselingen&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">&quot;id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;exchange_amsterdam_gemeente&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;import&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;bron&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;amsterdam_gemeente_2024&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;frequentie&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;maandelijks&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;volgende_uitvoering&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2024-04-09&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;status&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;actief&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;statistieken&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nt">&quot;invoervermeldingen&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1247</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;succesvol&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1243</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;fouten&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">4</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;waarschuwingen&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">12</span>
+<span class="w">      </span><span class="p">}</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">&quot;id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;export_abr_integratie&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;export&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;bestemming&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;ABR Centrale Dienst&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;frequentie&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;driemaandelijks&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;volgende_uitvoering&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2024-04-15&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;status&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;actief&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;statistieken&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nt">&quot;geëxporteerde_records&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">3847</span>
+<span class="w">      </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">]</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<h3 id="logging-en-auditing">Logging en Auditing<a class="headerlink" href="#logging-en-auditing" title="Permanent link">&para;</a></h3>
+<p>Gedetailleerde verslaglegging van alle configuratie- en datautilischanges:</p>
+<div class="codehilite"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;logboekvermelding&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2024-03-09T10:30:00Z&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;gebruiker&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;beheerder@amsterdam.nl&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;actie&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;KOLOMAPPING_WIJZIGING&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;bron&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;amsterdam_gemeente_2024&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;wijzigingen&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">      </span><span class="p">{</span>
+<span class="w">        </span><span class="nt">&quot;veld&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;PLAATS&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;oud_doel&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;location_name&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;nieuw_doel&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;location_name_norm&quot;</span>
+<span class="w">      </span><span class="p">}</span>
+<span class="w">    </span><span class="p">],</span>
+<span class="w">    </span><span class="nt">&quot;status&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;GOEDGEKEURD&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;goedkeuring_door&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;systeembeheerder@amsterdam.nl&quot;</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<h2 id="architectuur">Architectuur<a class="headerlink" href="#architectuur" title="Permanent link">&para;</a></h2>
+<div class="codehilite"><pre><span></span><code><span class="err">┌────────────────────────────────────────────┐</span>
+<span class="err">│</span><span class="w">      </span><span class="n">Configuratie</span><span class="w"> </span><span class="n">Module</span><span class="w">                   </span><span class="err">│</span>
+<span class="err">├────────────────────────────────────────────┤</span>
+<span class="err">│</span><span class="w">                                            </span><span class="err">│</span>
+<span class="err">│</span><span class="w">  </span><span class="err">┌─────────────────────────────────────┐</span><span class="w">   </span><span class="err">│</span>
+<span class="err">│</span><span class="w">  </span><span class="err">│</span><span class="w">  </span><span class="n">Webinterface</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">API</span><span class="w">                 </span><span class="err">│</span><span class="w">   </span><span class="err">│</span>
+<span class="err">│</span><span class="w">  </span><span class="err">│</span><span class="w">  </span><span class="p">(</span><span class="n">Beheerders</span><span class="w"> </span><span class="o">&amp;</span><span class="w"> </span><span class="n">Operators</span><span class="p">)</span><span class="w">           </span><span class="err">│</span><span class="w">   </span><span class="err">│</span>
+<span class="err">│</span><span class="w">  </span><span class="err">└────────────┬────────────────────────┘</span><span class="w">   </span><span class="err">│</span>
+<span class="err">│</span><span class="w">               </span><span class="err">│</span><span class="w">                            </span><span class="err">│</span>
+<span class="err">│</span><span class="w">  </span><span class="err">┌────────────▼────────────────────────┐</span><span class="w">   </span><span class="err">│</span>
+<span class="err">│</span><span class="w">  </span><span class="err">│</span><span class="w">  </span><span class="n">Configuratie</span><span class="w"> </span><span class="n">Storage</span><span class="w">               </span><span class="err">│</span><span class="w">   </span><span class="err">│</span>
+<span class="err">│</span><span class="w">  </span><span class="err">│</span><span class="w">  </span><span class="p">(</span><span class="nl">MongoDB:</span><span class="w"> </span><span class="n">config_db</span><span class="p">)</span><span class="w">               </span><span class="err">│</span><span class="w">   </span><span class="err">│</span>
+<span class="err">│</span><span class="w">  </span><span class="err">├─────────────────────────────────────┤</span><span class="w">   </span><span class="err">│</span>
+<span class="err">│</span><span class="w">  </span><span class="err">│</span><span class="w"> </span><span class="err">•</span><span class="w"> </span><span class="n">Databronnen</span><span class="w">                       </span><span class="err">│</span><span class="w">   </span><span class="err">│</span>
+<span class="err">│</span><span class="w">  </span><span class="err">│</span><span class="w"> </span><span class="err">•</span><span class="w"> </span><span class="n">Kolom</span><span class="o">-</span><span class="n">mappings</span><span class="w">                    </span><span class="err">│</span><span class="w">   </span><span class="err">│</span>
+<span class="err">│</span><span class="w">  </span><span class="err">│</span><span class="w"> </span><span class="err">•</span><span class="w"> </span><span class="n">Validatieregels</span><span class="w">                   </span><span class="err">│</span><span class="w">   </span><span class="err">│</span>
+<span class="err">│</span><span class="w">  </span><span class="err">│</span><span class="w"> </span><span class="err">•</span><span class="w"> </span><span class="n">Categorieën</span><span class="w">                       </span><span class="err">│</span><span class="w">   </span><span class="err">│</span>
+<span class="err">│</span><span class="w">  </span><span class="err">│</span><span class="w"> </span><span class="err">•</span><span class="w"> </span><span class="n">Lokale</span><span class="w"> </span><span class="n">Extensies</span><span class="w">                  </span><span class="err">│</span><span class="w">   </span><span class="err">│</span>
+<span class="err">│</span><span class="w">  </span><span class="err">└────────────┬────────────────────────┘</span><span class="w">   </span><span class="err">│</span>
+<span class="err">│</span><span class="w">               </span><span class="err">│</span><span class="w">                            </span><span class="err">│</span>
+<span class="err">│</span><span class="w">  </span><span class="err">┌────────────▼────────────────────────┐</span><span class="w">   </span><span class="err">│</span>
+<span class="err">│</span><span class="w">  </span><span class="err">│</span><span class="w">  </span><span class="n">Configuratie</span><span class="w"> </span><span class="n">Services</span><span class="w">              </span><span class="err">│</span><span class="w">   </span><span class="err">│</span>
+<span class="err">│</span><span class="w">  </span><span class="err">│</span><span class="w">  </span><span class="err">├─</span><span class="w"> </span><span class="n">Validator</span><span class="w">                       </span><span class="err">│</span><span class="w">   </span><span class="err">│</span>
+<span class="err">│</span><span class="w">  </span><span class="err">│</span><span class="w">  </span><span class="err">├─</span><span class="w"> </span><span class="n">Applier</span><span class="w">                         </span><span class="err">│</span><span class="w">   </span><span class="err">│</span>
+<span class="err">│</span><span class="w">  </span><span class="err">│</span><span class="w">  </span><span class="err">└─</span><span class="w"> </span><span class="n">Auditlog</span><span class="w">                        </span><span class="err">│</span><span class="w">   </span><span class="err">│</span>
+<span class="err">│</span><span class="w">  </span><span class="err">└────────────┬────────────────────────┘</span><span class="w">   </span><span class="err">│</span>
+<span class="err">│</span><span class="w">               </span><span class="err">│</span><span class="w">                            </span><span class="err">│</span>
+<span class="err">│</span><span class="w">  </span><span class="err">┌────────────▼────────────────────────┐</span><span class="w">   </span><span class="err">│</span>
+<span class="err">│</span><span class="w">  </span><span class="err">│</span><span class="w">  </span><span class="n">Systeemcomponenten</span><span class="w">                 </span><span class="err">│</span><span class="w">   </span><span class="err">│</span>
+<span class="err">│</span><span class="w">  </span><span class="err">│</span><span class="w">  </span><span class="p">(</span><span class="n">Extractie</span><span class="p">,</span><span class="w"> </span><span class="n">Transformatie</span><span class="p">,</span><span class="w"> </span><span class="n">etc</span><span class="p">.)</span><span class="w">   </span><span class="err">│</span><span class="w">   </span><span class="err">│</span>
+<span class="err">│</span><span class="w">  </span><span class="err">└─────────────────────────────────────┘</span><span class="w">   </span><span class="err">│</span>
+<span class="err">│</span><span class="w">                                            </span><span class="err">│</span>
+<span class="err">└────────────────────────────────────────────┘</span>
+</code></pre></div>
+
+<h2 id="best-practices">Best Practices<a class="headerlink" href="#best-practices" title="Permanent link">&para;</a></h2>
+<div class="admonition warning">
+<p class="admonition-title">Configuratievalidatie</p>
+<p>Alle configuratieveranderingen moeten worden gevalideerd voordat deze van kracht worden. Ongeldig instellingen kunnen systeemverstoring veroorzaken.</p>
+</div>
+<ul>
+<li>Test configuraties op een testomgeving eerst</li>
+<li>Documenteer alle aangepaste instellingen</li>
+<li>Zorg voor regelmatige backups van configuraties</li>
+<li>Voer configuratiewijzigingen stap voor stap door</li>
+</ul>
+<div class="admonition success">
+<p class="admonition-title">Versiebeheer</p>
+<p>Configuraties kunnen als code worden behandeld. Gebruik versiebeheer (Git) voor:
+- Sporen van wijzigingen
+- Rollback-mogelijkheid
+- Samenwerkingsoptimalisatie</p>
+</div>
+<h2 id="integratie-met-andere-lagen">Integratie met andere Lagen<a class="headerlink" href="#integratie-met-andere-lagen" title="Permanent link">&para;</a></h2>
+<p>De configuratiemodule ondersteunt:</p>
+<ul>
+<li><strong>Extractie</strong>: Definiëert databronnen en import-schema's</li>
+<li><strong>Transformatie</strong>: Specificeert transformatieregels per gemeent</li>
+<li><strong>Validatie</strong>: Biedt aangepaste validatieregels</li>
+<li><strong>Crossviews</strong>: Kan ML-trainingsparameters configureren</li>
+<li><strong>Zoeken</strong>: Configureert indexerings-strategieën</li>
+</ul>
+<h2 id="rollen-toestemmingen">Rollen &amp; Toestemmingen<a class="headerlink" href="#rollen-toestemmingen" title="Permanent link">&para;</a></h2>
+<div class="codehilite"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;rollen&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">&quot;rol&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;systeembeheerder&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;rechten&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">        </span><span class="s2">&quot;alle_configuraties_lezen&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="s2">&quot;alle_configuraties_wijzigen&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="s2">&quot;gebruikersbeheer&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="s2">&quot;auditlog_lezen&quot;</span>
+<span class="w">      </span><span class="p">]</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">&quot;rol&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;gemeente_beheerder&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;rechten&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">        </span><span class="s2">&quot;eigen_databronnen_configureren&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="s2">&quot;eigen_mappings_wijzigen&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="s2">&quot;lokale_categorieën_beheren&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="s2">&quot;eigen_logs_lezen&quot;</span>
+<span class="w">      </span><span class="p">]</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">&quot;rol&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;operator&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;rechten&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">        </span><span class="s2">&quot;import_activeren&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="s2">&quot;export_activeren&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="s2">&quot;logs_lezen&quot;</span>
+<span class="w">      </span><span class="p">]</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">]</span>
+<span class="p">}</span>
+</code></pre></div>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../validatie/" class="btn btn-neutral float-left" title="Validatielaag"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../zoeken/" class="btn btn-neutral float-right" title="Zoek- en Indexeringslaag">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../validatie/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../zoeken/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../..";</script>
+    <script src="../../js/theme_extra.js"></script>
+    <script src="../../js/theme.js"></script>
+      <script src="../../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

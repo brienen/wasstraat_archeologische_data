@@ -1,0 +1,12 @@
+/* Custom styling for Wasstraat documentatie */
+.wy-nav-content { max-width: 960px; }
+table { width: 100%; border-collapse: collapse; margin: 1em 0; }
+th, td { border: 1px solid #ddd; padding: 8px 12px; text-align: left; }
+th { background-color: #2980b9; color: white; }
+tr:nth-child(even) { background-color: #f9f9f9; }
+.admonition { border-left: 4px solid #2980b9; padding: 12px; margin: 1em 0; background: #f0f7fd; }
+.admonition.warning { border-left-color: #e67e22; background: #fdf6ec; }
+.admonition.danger { border-left-color: #e74c3c; background: #fdf0ef; }
+.admonition.tip { border-left-color: #27ae60; background: #edfaf1; }
+code { background: #f4f4f4; padding: 2px 6px; border-radius: 3px; }
+img { max-width: 100%; height: auto; }

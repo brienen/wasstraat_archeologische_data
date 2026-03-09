@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="nl" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="author" content="E-Space / Arjen Brienen" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>Crossviews - Wasstraat Archeologische Data</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+        <link href="../../assets/extra.css" rel="stylesheet" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Crossviews";
+        var mkdocs_page_input_path = "componenten/crossviews.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> Wasstraat Archeologische Data
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Home</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Projectoverzicht</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../overzicht/inleiding/">Inleiding</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../overzicht/probleemstelling/">Probleemstelling</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../overzicht/doelstellingen/">Doelstellingen</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Architectuur</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../architectuur/systeem/">Systeemarchitectuur</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../architectuur/dataflow/">Dataflow Pipeline</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../architectuur/componenten/">Componentenmodel</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../architectuur/gegevensmodel/">Gegevensmodel & Semantiek</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../architectuur/stack/">Technische Stack</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Componenten</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../extractie/">Extractielaag</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../singlestore/">SingleStore & Clusterlaag</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../transformatie/">Transformatielaag</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Crossviews</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#overzicht">Overzicht</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#functionaliteit">Functionaliteit</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#1-relatie-identificatie">1. Relatie-Identificatie</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#2-record-matching">2. Record-Matching</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#voorbeeld-matching">Voorbeeld Matching</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#3-bronenintuitie">3. Bronenintuïtie</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#4-machine-learning-mogelijkheden-in-ontwikkeling">4. Machine Learning Mogelijkheden (In Ontwikkeling)</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#zelf-lerend-systeem">Zelf-Lerend Systeem</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#automatische-fouterkenning">Automatische Fouterkenning</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#uitbijtingsdetectie">Uitbijtingsdetectie</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#architectuur">Architectuur</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#verwerkingsfases">Verwerkingsfases</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#fase-1-voorbereiding">Fase 1: Voorbereiding</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#fase-2-paarsgewijze-vergelijking">Fase 2: Paarsgewijze Vergelijking</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#fase-3-contextanalyse">Fase 3: Contextanalyse</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#fase-4-ml-classificatie">Fase 4: ML-Classificatie</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#fase-5-rapportage">Fase 5: Rapportage</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#uitvoer">Uitvoer</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#deduplicatie-aanbevelingen">Deduplicatie-Aanbevelingen</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#anomalierapporten">Anomalierapporten</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#best-practices">Best Practices</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#integratie">Integratie</a>
+    </li>
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../validatie/">Validatielaag</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../configuratie/">Configuratiemodule</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../zoeken/">Zoek- en Indexeringslaag</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Deployment</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../deployment/omgevingen/">Omgevingen & Docker Compose</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../deployment/airflow-vs-app/">Airflow Transformatie vs. Web Applicatie</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../deployment/proefdata/">Proefdata Inlezen</a>
+                  </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../diagrammen/">Diagrammen</a>
+                </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">Wasstraat Archeologische Data</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">Componenten</li>
+      <li class="breadcrumb-item active">Crossviews</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="crossviews">Crossviews<a class="headerlink" href="#crossviews" title="Permanent link">&para;</a></h1>
+<h2 id="overzicht">Overzicht<a class="headerlink" href="#overzicht" title="Permanent link">&para;</a></h2>
+<p>Crossviews is het geavanceerde relatieidentificatie-systeem van Wasstraat Archeologische Data. Dit innovatieve onderdeel vormt de backbone voor herkenning van verbanden tussen gegevens, deduplicatie en gegevensintelligentie.</p>
+<div class="admonition success">
+<p class="admonition-title">Kerninnov </p>
+<p>Crossviews wordt momenteel ontwikkeld als zelf-leerend (machine learning) systeem voor verhoogde universaliteit en automatische inlierzoeking. Dit is een sleutelinnovatie van het platform.</p>
+</div>
+<h2 id="functionaliteit">Functionaliteit<a class="headerlink" href="#functionaliteit" title="Permanent link">&para;</a></h2>
+<h3 id="1-relatie-identificatie">1. Relatie-Identificatie<a class="headerlink" href="#1-relatie-identificatie" title="Permanent link">&para;</a></h3>
+<p>Crossviews identificeert verborgen relaties tussen records die aanvankelijk niet verbonden lijken:</p>
+<div class="codehilite"><pre><span></span><code>Record A: &quot;Potscherf, Amsterdam, Bronstijd&quot;
+Record B: &quot;Aardewerk fragment, Amsterdam, 1800 vC&quot;
+Record C: &quot;Pottery sherd, Amsterdam, Bronze Age&quot;
+
+           │
+           ▼
+      Crossviews
+           │
+    ┌──────┼──────┐
+    │      │      │
+    ▼      ▼      ▼
+ Taal   Context Periode
+analyse analyse analyse
+    │      │      │
+    └──────┼──────┘
+           │
+           ▼
+   Waarschijnlijke Verbanden:
+   - B en A: dezelfde plaats, soortgelijke periode
+   - C en B: dezelfde semantiek (aardewerk/pottery)
+   - A en C: waarschijnlijk hetzelfde object
+</code></pre></div>
+
+<h3 id="2-record-matching">2. Record-Matching<a class="headerlink" href="#2-record-matching" title="Permanent link">&para;</a></h3>
+<p>Geavanceerde algoritmes voor het paarsgewijze vergelijken van records:</p>
+<div class="codehilite"><pre><span></span><code>Gelijkenismetriek               Score
+──────────────────────────────  ─────
+Exacte tekstovereenkomst        95-100%
+Fuzzy string matching           70-94%
+Semantische gelijkenis          50-69%
+Contextafhankelijke gelijkenis  30-49%
+Geen gelijkenis                 &lt;30%
+</code></pre></div>
+
+<h4 id="voorbeeld-matching">Voorbeeld Matching<a class="headerlink" href="#voorbeeld-matching" title="Permanent link">&para;</a></h4>
+<div class="codehilite"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;record_a&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;WSTR-001&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;beschrijving&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;handgevormd aardewerk&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;periode&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Vroeg Bronstijd&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;locatie&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Amsterdam&quot;</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="w">  </span><span class="nt">&quot;record_b&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;AMS-47&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;beschrijving&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;hand made pottery&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;periode&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2000-1500 vC&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;locatie&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Amsterdam&quot;</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="w">  </span><span class="nt">&quot;match_score&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.87</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;overeenkomsten&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">    </span><span class="s2">&quot;locatie: exact (Amsterdam)&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="s2">&quot;periode: zeer waarschijnlijk (chronologische overlap)&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="s2">&quot;beschrijving: semantisch equivalent (aardewerk)&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="s2">&quot;vervaardigingstechniek: match (handgevormd)&quot;</span>
+<span class="w">  </span><span class="p">],</span>
+<span class="w">  </span><span class="nt">&quot;aanbeveling&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;WAARSCHIJNLIJK_DUPLICATE&quot;</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<h3 id="3-bronenintuitie">3. Bronenintuïtie<a class="headerlink" href="#3-bronenintuitie" title="Permanent link">&para;</a></h3>
+<p>Crossviews herkennen welke bronnen elkaar overlappen of aanvullen:</p>
+<div class="codehilite"><pre><span></span><code><span class="n">Bron</span><span class="w"> </span><span class="mh">1</span><span class="w"> </span><span class="p">(</span><span class="n">Amsterdam</span><span class="w"> </span><span class="n">Gemeente</span><span class="p">)</span><span class="o">:</span>
+<span class="err">├─</span><span class="w"> </span><span class="mh">450</span><span class="w"> </span><span class="n">records</span>
+<span class="err">├─</span><span class="w"> </span><span class="nl">Periode:</span><span class="w"> </span><span class="mh">2500</span><span class="o">-</span><span class="mh">1000</span><span class="w"> </span><span class="n">vC</span>
+<span class="err">├─</span><span class="w"> </span><span class="n">Thema</span><span class="p">&#39;</span><span class="nl">s:</span><span class="w"> </span><span class="n">huishoudartefacten</span>
+<span class="err">└─</span><span class="w"> </span><span class="nl">Dekking:</span><span class="w"> </span><span class="n">Amsterdam</span><span class="w"> </span><span class="n">centrum</span>
+
+<span class="n">Bron</span><span class="w"> </span><span class="mh">2</span><span class="w"> </span><span class="p">(</span><span class="n">Universiteit</span><span class="w"> </span><span class="n">Amsterdam</span><span class="p">)</span><span class="o">:</span>
+<span class="err">├─</span><span class="w"> </span><span class="mh">320</span><span class="w"> </span><span class="n">records</span>
+<span class="err">├─</span><span class="w"> </span><span class="nl">Periode:</span><span class="w"> </span><span class="mh">2000</span><span class="o">-</span><span class="mh">500</span><span class="w"> </span><span class="n">vC</span>
+<span class="err">├─</span><span class="w"> </span><span class="n">Thema</span><span class="p">&#39;</span><span class="nl">s:</span><span class="w"> </span><span class="n">speciale</span><span class="w"> </span><span class="n">vondsten</span>
+<span class="err">└─</span><span class="w"> </span><span class="nl">Dekking:</span><span class="w"> </span><span class="n">Amsterdam</span><span class="w"> </span><span class="n">regio</span>
+
+<span class="w">         </span><span class="err">│</span>
+<span class="w">         </span><span class="err">▼</span>
+<span class="w">    </span><span class="n">Crossviews</span><span class="w"> </span><span class="n">Analyse</span>
+<span class="w">         </span><span class="err">│</span>
+<span class="w">    </span><span class="err">┌────┴────┐</span>
+<span class="w">    </span><span class="err">│</span><span class="w">          </span><span class="err">│</span>
+<span class="w">    </span><span class="err">▼</span><span class="w">          </span><span class="err">▼</span>
+<span class="w"> </span><span class="n">Overlap</span><span class="w">   </span><span class="n">Aanvulling</span>
+<span class="w"> </span><span class="p">(</span><span class="o">~</span><span class="mh">220</span><span class="w">     </span><span class="p">(</span><span class="o">~</span><span class="mh">230</span><span class="w"> </span><span class="n">unieke</span>
+<span class="w">  </span><span class="n">records</span><span class="p">)</span><span class="w">  </span><span class="n">records</span><span class="w"> </span><span class="n">per</span><span class="w"> </span><span class="n">bron</span><span class="p">)</span>
+
+<span class="nl">Bevinding:</span><span class="w"> </span><span class="o">~</span><span class="mh">49</span><span class="o">%</span><span class="w"> </span><span class="n">overlap</span><span class="p">,</span><span class="w"> </span><span class="n">complementaire</span><span class="w"> </span><span class="n">datasets</span>
+</code></pre></div>
+
+<h3 id="4-machine-learning-mogelijkheden-in-ontwikkeling">4. Machine Learning Mogelijkheden (In Ontwikkeling)<a class="headerlink" href="#4-machine-learning-mogelijkheden-in-ontwikkeling" title="Permanent link">&para;</a></h3>
+<p>Het systeem wordt momenteel uitgebreid met ML-capaciteiten:</p>
+<h4 id="zelf-lerend-systeem">Zelf-Lerend Systeem<a class="headerlink" href="#zelf-lerend-systeem" title="Permanent link">&para;</a></h4>
+<ul>
+<li><strong>Trainingsfase</strong>: Systeem leert van handmatig geverifieerde matches</li>
+<li><strong>Generalisering</strong>: Patronen worden gegeneraliseerd naar nieuwe datasituaties</li>
+<li><strong>Adaptatie</strong>: Algoritmes verbeteren naarmate meer data wordt verwerkt</li>
+</ul>
+<h4 id="automatische-fouterkenning">Automatische Fouterkenning<a class="headerlink" href="#automatische-fouterkenning" title="Permanent link">&para;</a></h4>
+<div class="codehilite"><pre><span></span><code><span class="n">Fuzzy</span><span class="w"> </span><span class="n">Matching</span><span class="w"> </span><span class="n">Voorbeelden</span><span class="p">:</span>
+<span class="s2">&quot;aardewerk&quot;</span><span class="w">      </span><span class="err">≈</span><span class="w"> </span><span class="s2">&quot;aardewerken&quot;</span><span class="w">     </span><span class="p">(</span><span class="n">spellingsvariant</span><span class="p">)</span>
+<span class="s2">&quot;potscherf&quot;</span><span class="w">      </span><span class="err">≈</span><span class="w"> </span><span class="s2">&quot;potscherf&quot;</span><span class="w">       </span><span class="p">(</span><span class="n">exact</span><span class="p">)</span>
+<span class="s2">&quot;Bronstijd&quot;</span><span class="w">      </span><span class="err">≈</span><span class="w"> </span><span class="s2">&quot;Bronze Age&quot;</span><span class="w">      </span><span class="p">(</span><span class="n">semantiek</span><span class="p">)</span>
+<span class="s2">&quot;52.3702&quot;</span><span class="w">        </span><span class="err">≈</span><span class="w"> </span><span class="s2">&quot;52.37&quot;</span><span class="w">           </span><span class="p">(</span><span class="n">afrondingsfout</span><span class="p">)</span>
+</code></pre></div>
+
+<h4 id="uitbijtingsdetectie">Uitbijtingsdetectie<a class="headerlink" href="#uitbijtingsdetectie" title="Permanent link">&para;</a></h4>
+<p>Automatische herkenning van anomalieën en ongewone waarden:</p>
+<div class="codehilite"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;anomalieën_gedetecteerd&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">&quot;record&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;WSTR-2024-042&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;veld&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;diepte&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;waarde&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">125.5</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;eenheid&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;meter&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;waarschijnlijkheid&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.94</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;verklaring&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Diepte onplausibel voor oppervlakte-vondsten&quot;</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">&quot;record&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;WSTR-2024-089&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;veld&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;datum_vondst&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;waarde&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2127-03-15&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;waarschijnlijkheid&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.99</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;verklaring&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Toekomstige datum, waarschijnlijk invoerfout&quot;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">]</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<h2 id="architectuur">Architectuur<a class="headerlink" href="#architectuur" title="Permanent link">&para;</a></h2>
+<div class="codehilite"><pre><span></span><code>┌─────────────────────────────────┐
+│  Opgeslagen Data (SingleStore)  │
+└────────────┬────────────────────┘
+             │
+             ▼
+┌─────────────────────────────────┐
+│   Crossviews Engine             │
+├─────────────────────────────────┤
+│ ✓ Tekstvergelijking             │
+│ ✓ Semantische analyse           │
+│ ✓ Contextafhankelijke matching  │
+│ ✓ ML-gebaseerde patroonherkenning│
+└────────────┬────────────────────┘
+             │
+         ┌───┴───┐
+         │       │
+         ▼       ▼
+    Relatie- Anomalie-
+    grafiek  rapportage
+         │       │
+         └───┬───┘
+             │
+             ▼
+┌─────────────────────────────────┐
+│  Deduplica-analyse &amp; Rapporten  │
+└─────────────────────────────────┘
+</code></pre></div>
+
+<h2 id="verwerkingsfases">Verwerkingsfases<a class="headerlink" href="#verwerkingsfases" title="Permanent link">&para;</a></h2>
+<h3 id="fase-1-voorbereiding">Fase 1: Voorbereiding<a class="headerlink" href="#fase-1-voorbereiding" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Normalisatie van invoegegevens</li>
+<li>Indeksering voor snelle opzoeking</li>
+<li>Cacheconstructie voor veelgebruikte queries</li>
+</ul>
+<h3 id="fase-2-paarsgewijze-vergelijking">Fase 2: Paarsgewijze Vergelijking<a class="headerlink" href="#fase-2-paarsgewijze-vergelijking" title="Permanent link">&para;</a></h3>
+<div class="codehilite"><pre><span></span><code><span class="c1"># Pseudo-code</span>
+<span class="k">for</span> <span class="n">record_a</span> <span class="ow">in</span> <span class="n">dataset</span><span class="p">:</span>
+    <span class="k">for</span> <span class="n">record_b</span> <span class="ow">in</span> <span class="n">dataset</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">record_a</span><span class="o">.</span><span class="n">id</span> <span class="o">&lt;</span> <span class="n">record_b</span><span class="o">.</span><span class="n">id</span><span class="p">:</span>  <span class="c1"># Geen dubbele vergelijking</span>
+            <span class="n">similarity</span> <span class="o">=</span> <span class="n">calculate_similarity</span><span class="p">(</span>
+                <span class="n">record_a</span><span class="p">,</span> <span class="n">record_b</span><span class="p">,</span>
+                <span class="n">metrics</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;text&#39;</span><span class="p">,</span> <span class="s1">&#39;semantic&#39;</span><span class="p">,</span> <span class="s1">&#39;context&#39;</span><span class="p">]</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="n">similarity</span> <span class="o">&gt;</span> <span class="n">threshold</span><span class="p">:</span>
+                <span class="n">candidates</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">record_a</span><span class="p">,</span> <span class="n">record_b</span><span class="p">,</span> <span class="n">similarity</span><span class="p">))</span>
+</code></pre></div>
+
+<h3 id="fase-3-contextanalyse">Fase 3: Contextanalyse<a class="headerlink" href="#fase-3-contextanalyse" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Geografische nabijheid</li>
+<li>Chronologische overlap</li>
+<li>Materiaalconsistentie</li>
+<li>Bronspiegel</li>
+</ul>
+<h3 id="fase-4-ml-classificatie">Fase 4: ML-Classificatie<a class="headerlink" href="#fase-4-ml-classificatie" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Training op handmatig geverifieerde matches</li>
+<li>Classificatie van onbekende paren</li>
+<li>Continuous learning van feedback</li>
+</ul>
+<h3 id="fase-5-rapportage">Fase 5: Rapportage<a class="headerlink" href="#fase-5-rapportage" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Generatie van deduplicatie-aanbevelingen</li>
+<li>Anomalieverslagen</li>
+<li>Relatiegrafiek</li>
+</ul>
+<h2 id="uitvoer">Uitvoer<a class="headerlink" href="#uitvoer" title="Permanent link">&para;</a></h2>
+<h3 id="deduplicatie-aanbevelingen">Deduplicatie-Aanbevelingen<a class="headerlink" href="#deduplicatie-aanbevelingen" title="Permanent link">&para;</a></h3>
+<div class="codehilite"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;potentiële_duplicaten&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">&quot;paar&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;WSTR-001&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;AMS-047&quot;</span><span class="p">],</span>
+<span class="w">      </span><span class="nt">&quot;overeenkomsten_percentage&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">87</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;vertrouwensniveau&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;hoog&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;aanbeveling&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;WAARSCHIJNLIJK_DUPLICATE&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;details&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nt">&quot;locatie_match&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;exact&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;periode_match&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;zeer waarschijnlijk&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;beschrijving_match&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;fuzzy (87%)&quot;</span>
+<span class="w">      </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">]</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<h3 id="anomalierapporten">Anomalierapporten<a class="headerlink" href="#anomalierapporten" title="Permanent link">&para;</a></h3>
+<div class="codehilite"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;anomalieën&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">&quot;record_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;WSTR-2024-042&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;anomalie_type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;onplausibele_waarde&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;veld&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;diepte&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;verwachte_bereik&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;0.0 - 10.0&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;geobserveerde_waarde&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">125.5</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;aanbeveling&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;HANDMATIGE_VERIFICATIE_VEREIST&quot;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">]</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<h2 id="best-practices">Best Practices<a class="headerlink" href="#best-practices" title="Permanent link">&para;</a></h2>
+<div class="admonition warning">
+<p class="admonition-title">Handmatige Verificatie</p>
+<p>Hoewel Crossviews zeer accuraat is, wordt altijd handmatige verificatie van kritieke matches aanbevolen voordat records worden geconsolideerd.</p>
+</div>
+<ul>
+<li>Controleer matches met hoge vertrouwensscore eerst</li>
+<li>Verifieer anomaliedetectie tegen bronwaarden</li>
+<li>Documenteer alle handmatig aangepaste matches</li>
+<li>Train het ML-systeem met feedback</li>
+</ul>
+<h2 id="integratie">Integratie<a class="headerlink" href="#integratie" title="Permanent link">&para;</a></h2>
+<p>Crossviews werkt samen met:</p>
+<ul>
+<li><strong>Transformatie</strong>: Leert van transformatiepatronen</li>
+<li><strong>Validatie</strong>: Kan abnormaliteiten valideren</li>
+<li><strong>Zoeken</strong>: Ondersteunt "vind gelijkaardige records"</li>
+<li><strong>Configuratie</strong>: Kan per gemeente fijn afgestemd worden</li>
+</ul>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../transformatie/" class="btn btn-neutral float-left" title="Transformatielaag"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../validatie/" class="btn btn-neutral float-right" title="Validatielaag">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../transformatie/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../validatie/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../..";</script>
+    <script src="../../js/theme_extra.js"></script>
+    <script src="../../js/theme.js"></script>
+      <script src="../../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

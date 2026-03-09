@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="nl" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="author" content="E-Space / Arjen Brienen" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>Proefdata Inlezen - Wasstraat Archeologische Data</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+        <link href="../../assets/extra.css" rel="stylesheet" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Proefdata Inlezen";
+        var mkdocs_page_input_path = "deployment/proefdata.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> Wasstraat Archeologische Data
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Home</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Projectoverzicht</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../overzicht/inleiding/">Inleiding</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../overzicht/probleemstelling/">Probleemstelling</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../overzicht/doelstellingen/">Doelstellingen</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Architectuur</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../architectuur/systeem/">Systeemarchitectuur</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../architectuur/dataflow/">Dataflow Pipeline</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../architectuur/componenten/">Componentenmodel</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../architectuur/gegevensmodel/">Gegevensmodel & Semantiek</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../architectuur/stack/">Technische Stack</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Componenten</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../componenten/extractie/">Extractielaag</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../componenten/singlestore/">SingleStore & Clusterlaag</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../componenten/transformatie/">Transformatielaag</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../componenten/crossviews/">Crossviews</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../componenten/validatie/">Validatielaag</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../componenten/configuratie/">Configuratiemodule</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../componenten/zoeken/">Zoek- en Indexeringslaag</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Deployment</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../omgevingen/">Omgevingen & Docker Compose</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../airflow-vs-app/">Airflow Transformatie vs. Web Applicatie</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Proefdata Inlezen</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#vereisten">Vereisten</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#stap-1-bronbestanden-klaarzetten">Stap 1: Bronbestanden klaarzetten</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#locatie-van-invoerdata">Locatie van invoerdata</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#proefdata-plaatsen">Proefdata plaatsen</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#stap-2-airflow-ui-openen">Stap 2: Airflow UI openen</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#stap-3-volledige-etl-cyclus-starten">Stap 3: Volledige ETL-cyclus starten</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#optie-a-via-airflow-ui-aanbevolen">Optie A: Via Airflow UI (aanbevolen)</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#optie-b-stapsgewijs-voor-debugging">Optie B: Stapsgewijs (voor debugging)</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#stap-4-verwerking-volgen">Stap 4: Verwerking volgen</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#airflow-task-logs">Airflow task logs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#mongodb-controleren">MongoDB controleren</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#postgresql-controleren">PostgreSQL controleren</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#stap-5-data-bekijken-in-de-web-applicatie">Stap 5: Data bekijken in de web-applicatie</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#wat-je-ziet">Wat je ziet</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#elasticsearch-index-controleren">Elasticsearch-index controleren</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#veelvoorkomende-problemen">Veelvoorkomende problemen</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#extractie-mislukt">Extractie mislukt</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#mongodb-verbinding-faalt">MongoDB-verbinding faalt</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#postgresql-tabellen-zijn-leeg">PostgreSQL-tabellen zijn leeg</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#elasticsearch-toont-geen-resultaten">Elasticsearch toont geen resultaten</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#jupyter-notebooks-voor-exploratie">Jupyter Notebooks voor Exploratie</a>
+    </li>
+    </ul>
+                  </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../diagrammen/">Diagrammen</a>
+                </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">Wasstraat Archeologische Data</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">Deployment</li>
+      <li class="breadcrumb-item active">Proefdata Inlezen</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="proefdata-inlezen-en-omzetten">Proefdata Inlezen en Omzetten<a class="headerlink" href="#proefdata-inlezen-en-omzetten" title="Permanent link">&para;</a></h1>
+<p>Deze pagina beschrijft hoe je een eerste set proefdata kunt inlezen, transformeren en beschikbaar maken in de Wasstraat.</p>
+<h2 id="vereisten">Vereisten<a class="headerlink" href="#vereisten" title="Permanent link">&para;</a></h2>
+<p>Zorg dat alle Docker-containers draaien:</p>
+<div class="codehilite"><pre><span></span><code>./runws.sh<span class="w"> </span>dev<span class="w">    </span><span class="c1"># Of: ./runws.sh app</span>
+</code></pre></div>
+
+<p>Controleer of alle services actief zijn:</p>
+<div class="codehilite"><pre><span></span><code>docker<span class="w"> </span>ps<span class="w"> </span>--format<span class="w"> </span><span class="s2">&quot;table {{.Names}}\t{{.Status}}\t{{.Ports}}&quot;</span>
+</code></pre></div>
+
+<p>Je zou minimaal de volgende containers moeten zien:</p>
+<ul>
+<li><code>wasstraat_postgres</code> (poort 5432)</li>
+<li><code>wasstraat_mongo</code> (poort 27017)</li>
+<li><code>wasstraat_airflow</code> (poort 8080)</li>
+<li><code>wasstraat_flask</code> (poort 5051)</li>
+<li><code>wasstraat_elasticsearch</code> (poort 9200)</li>
+</ul>
+<h2 id="stap-1-bronbestanden-klaarzetten">Stap 1: Bronbestanden klaarzetten<a class="headerlink" href="#stap-1-bronbestanden-klaarzetten" title="Permanent link">&para;</a></h2>
+<h3 id="locatie-van-invoerdata">Locatie van invoerdata<a class="headerlink" href="#locatie-van-invoerdata" title="Permanent link">&para;</a></h3>
+<p>De Airflow-container verwacht invoerdata op specifieke paden. Deze worden via Docker-volumes gemount vanuit de <code>data/input/basefiles/</code> directory:</p>
+<div class="codehilite"><pre><span></span><code><span class="n">data</span><span class="o">/</span><span class="k">input</span><span class="o">/</span><span class="n">basefiles</span><span class="o">/</span><span class="n">projectdatabase</span><span class="o">/</span>
+<span class="err">├──</span><span class="w"> </span><span class="n">digidepot</span><span class="o">/</span><span class="w">          </span><span class="p">#</span><span class="w"> </span><span class="n">Projectdatabases</span><span class="w"> </span><span class="p">(</span><span class="n">MDB</span><span class="o">-</span><span class="n">bestanden</span><span class="p">)</span>
+<span class="err">├──</span><span class="w"> </span><span class="n">Delf</span><span class="o">-</span><span class="n">IT</span><span class="o">/</span><span class="w">            </span><span class="p">#</span><span class="w"> </span><span class="n">DelfIT</span><span class="w"> </span><span class="n">administratie</span>
+<span class="err">├──</span><span class="w"> </span><span class="n">magazijnlijst</span><span class="o">/</span><span class="w">      </span><span class="p">#</span><span class="w"> </span><span class="n">Depot</span><span class="o">-</span><span class="n">registratie</span>
+<span class="err">├──</span><span class="w"> </span><span class="n">digifotos</span><span class="o">/</span><span class="w">          </span><span class="p">#</span><span class="w"> </span><span class="n">Foto</span><span class="o">-</span><span class="n">metadata</span><span class="w"> </span><span class="n">database</span>
+<span class="err">├──</span><span class="w"> </span><span class="n">monsterdatabase</span><span class="o">/</span><span class="w">    </span><span class="p">#</span><span class="w"> </span><span class="n">Monster</span><span class="o">-</span><span class="n">registratie</span>
+<span class="err">├──</span><span class="w"> </span><span class="n">rapporten</span><span class="o">/</span><span class="w">          </span><span class="p">#</span><span class="w"> </span><span class="n">Rapportendatabases</span>
+<span class="err">└──</span><span class="w"> </span><span class="n">referentietabellen</span><span class="o">/</span><span class="w"> </span><span class="p">#</span><span class="w"> </span><span class="n">ABR</span><span class="o">-</span><span class="n">codes</span><span class="w"> </span><span class="n">en</span><span class="w"> </span><span class="n">standaardtabellen</span>
+</code></pre></div>
+
+<h3 id="proefdata-plaatsen">Proefdata plaatsen<a class="headerlink" href="#proefdata-plaatsen" title="Permanent link">&para;</a></h3>
+<p>Voor een eerste proef is het voldoende om een beperkte set bestanden te plaatsen:</p>
+<ol>
+<li><strong>Projectdatabase</strong>: Kopieer een of meerdere <code>.mdb</code> bestanden naar <code>data/input/basefiles/projectdatabase/digidepot/</code></li>
+<li><strong>Referentietabellen</strong>: Zorg dat de standaard referentietabellen aanwezig zijn in <code>data/input/basefiles/projectdatabase/referentietabellen/</code></li>
+<li><strong>Foto's</strong> (optioneel): Plaats testfoto's in de bijbehorende directory</li>
+</ol>
+<div class="admonition tip">
+<p class="admonition-title">Minimale proefset</p>
+<p>Voor een snelle test volstaat het om één <code>.mdb</code> projectdatabase in de <code>digidepot/</code> directory te plaatsen. De extractie zal dan alleen dat project verwerken.</p>
+</div>
+<h2 id="stap-2-airflow-ui-openen">Stap 2: Airflow UI openen<a class="headerlink" href="#stap-2-airflow-ui-openen" title="Permanent link">&para;</a></h2>
+<p>Open de Airflow web-interface in je browser:</p>
+<div class="codehilite"><pre><span></span><code>http://localhost:8080
+</code></pre></div>
+
+<p>Je ziet een overzicht van alle beschikbare DAGs. De belangrijkste voor het eerste inlezen:</p>
+<table>
+<thead>
+<tr>
+<th>DAG</th>
+<th>Beschrijving</th>
+<th>Gebruik</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Extract_Transform_Load_Full_Cycle</code></td>
+<td>Volledige pipeline (extract + transform + load)</td>
+<td>Eerste keer, volledige run</td>
+</tr>
+<tr>
+<td><code>Extract_Only</code></td>
+<td>Alleen extractie uit bronbestanden</td>
+<td>Testen of extractie werkt</td>
+</tr>
+<tr>
+<td><code>Transform1_Harmonize_Only</code></td>
+<td>Alleen veldnaam-harmonisatie</td>
+<td>Stapsgewijs debuggen</td>
+</tr>
+<tr>
+<td><code>Load_Only</code></td>
+<td>Alleen laden naar PostgreSQL</td>
+<td>Na handmatige correcties in MongoDB</td>
+</tr>
+</tbody>
+</table>
+<h2 id="stap-3-volledige-etl-cyclus-starten">Stap 3: Volledige ETL-cyclus starten<a class="headerlink" href="#stap-3-volledige-etl-cyclus-starten" title="Permanent link">&para;</a></h2>
+<h3 id="optie-a-via-airflow-ui-aanbevolen">Optie A: Via Airflow UI (aanbevolen)<a class="headerlink" href="#optie-a-via-airflow-ui-aanbevolen" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Klik op de DAG <strong><code>Extract_Transform_Load_Full_Cycle</code></strong></li>
+<li>Klik rechtsboven op de <strong>play-knop</strong> (▶) → <strong>Trigger DAG</strong></li>
+<li>De DAG start nu de volledige verwerking</li>
+</ol>
+<p>Je kunt de voortgang volgen in de <strong>Graph</strong>-weergave. Elke stap wordt groen bij succes, rood bij een fout.</p>
+<h3 id="optie-b-stapsgewijs-voor-debugging">Optie B: Stapsgewijs (voor debugging)<a class="headerlink" href="#optie-b-stapsgewijs-voor-debugging" title="Permanent link">&para;</a></h3>
+<p>Als je stap voor stap wilt werken, kun je de individuele DAGs in volgorde starten:</p>
+<div class="codehilite"><pre><span></span><code><span class="mf">1.</span><span class="w"> </span><span class="n">Extract_Only</span><span class="w">                      </span><span class="err">→</span><span class="w"> </span><span class="n">Laadt</span><span class="w"> </span><span class="n">ruwe</span><span class="w"> </span><span class="kd">data</span><span class="w"> </span><span class="n">in</span><span class="w"> </span><span class="n">MongoDB</span>
+<span class="mf">2.</span><span class="w"> </span><span class="n">Transform1_Harmonize_Only</span><span class="w">         </span><span class="err">→</span><span class="w"> </span><span class="n">Harmoniseert</span><span class="w"> </span><span class="n">veldnamen</span>
+<span class="mf">3.</span><span class="w"> </span><span class="n">Transform2_Enhance_Attributes_Only</span><span class="w"> </span><span class="err">→</span><span class="w"> </span><span class="n">Schoont</span><span class="w"> </span><span class="n">attributen</span><span class="w"> </span><span class="n">op</span>
+<span class="mf">4.</span><span class="w"> </span><span class="n">Transform3_Keys_Only</span><span class="w">              </span><span class="err">→</span><span class="w"> </span><span class="n">Genereert</span><span class="w"> </span><span class="n">unieke</span><span class="w"> </span><span class="n">sleutels</span>
+<span class="mf">5.</span><span class="w"> </span><span class="n">Transform_Move_Only</span><span class="w">               </span><span class="err">→</span><span class="w"> </span><span class="n">Verplaatst</span><span class="w"> </span><span class="n">en</span><span class="w"> </span><span class="n">merged</span><span class="w"> </span><span class="kd">data</span>
+<span class="mf">6.</span><span class="w"> </span><span class="n">Transform4_Refs_Only</span><span class="w">              </span><span class="err">→</span><span class="w"> </span><span class="n">Zet</span><span class="w"> </span><span class="n">referenties</span><span class="w"> </span><span class="n">om</span>
+<span class="mf">7.</span><span class="w"> </span><span class="kr">Load</span><span class="n">_Only</span><span class="w">                         </span><span class="err">→</span><span class="w"> </span><span class="n">Laadt</span><span class="w"> </span><span class="n">naar</span><span class="w"> </span><span class="nb">Pos</span><span class="n">tgreSQL</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">Elasticsearch</span>
+</code></pre></div>
+
+<div class="admonition warning">
+<p class="admonition-title">Volgorde is belangrijk</p>
+<p>De transformatiestappen moeten in de juiste volgorde worden uitgevoerd. Elke stap bouwt voort op het resultaat van de vorige. De volledige ETL-cyclus DAG handelt deze volgorde automatisch af.</p>
+</div>
+<h2 id="stap-4-verwerking-volgen">Stap 4: Verwerking volgen<a class="headerlink" href="#stap-4-verwerking-volgen" title="Permanent link">&para;</a></h2>
+<h3 id="airflow-task-logs">Airflow task logs<a class="headerlink" href="#airflow-task-logs" title="Permanent link">&para;</a></h3>
+<p>Klik in de Airflow UI op een specifieke task om de logs te bekijken. Hier zie je:</p>
+<ul>
+<li>Aantal verwerkte records per entiteitstype</li>
+<li>Waarschuwingen over onbekende velden of formaten</li>
+<li>Foutmeldingen bij corrupte of ontbrekende data</li>
+</ul>
+<h3 id="mongodb-controleren">MongoDB controleren<a class="headerlink" href="#mongodb-controleren" title="Permanent link">&para;</a></h3>
+<p>Je kunt de tussenresultaten direct in MongoDB bekijken:</p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># Verbind met MongoDB in de container</span>
+docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>-it<span class="w"> </span>wasstraat_mongo<span class="w"> </span>mongosh<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--username<span class="w"> </span>&lt;user&gt;<span class="w"> </span>--password<span class="w"> </span>&lt;wachtwoord&gt;<span class="w"> </span>--authenticationDatabase<span class="w"> </span>admin
+
+<span class="c1"># Bekijk beschikbare databases</span>
+show<span class="w"> </span>dbs
+
+<span class="c1"># Bekijk staging-collecties</span>
+use<span class="w"> </span>staging
+show<span class="w"> </span>collections
+
+<span class="c1"># Tel records per collectie</span>
+db.getCollectionNames<span class="o">()</span>.forEach<span class="o">(</span><span class="nv">c</span><span class="w"> </span><span class="o">=</span>&gt;<span class="w"> </span>print<span class="o">(</span>c<span class="w"> </span>+<span class="w"> </span><span class="s2">&quot;: &quot;</span><span class="w"> </span>+<span class="w"> </span>db<span class="o">[</span>c<span class="o">]</span>.countDocuments<span class="o">()))</span>
+
+<span class="c1"># Bekijk een voorbeeld-record</span>
+db.Project.findOne<span class="o">()</span>
+</code></pre></div>
+
+<h3 id="postgresql-controleren">PostgreSQL controleren<a class="headerlink" href="#postgresql-controleren" title="Permanent link">&para;</a></h3>
+<p>Na de laadstap kun je de definitieve tabellen controleren:</p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># Verbind met PostgreSQL in de container</span>
+docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>-it<span class="w"> </span>wasstraat_postgres<span class="w"> </span>psql<span class="w"> </span>-U<span class="w"> </span>airflow<span class="w"> </span>-d<span class="w"> </span>flask
+
+<span class="c1"># Lijst van tabellen</span>
+<span class="se">\d</span>t<span class="w"> </span>public.<span class="s2">&quot;Def_*&quot;</span>
+
+<span class="c1"># Tel records</span>
+SELECT<span class="w"> </span><span class="s1">&#39;Def_Project&#39;</span><span class="w"> </span>as<span class="w"> </span>tabel,<span class="w"> </span>count<span class="o">(</span>*<span class="o">)</span><span class="w"> </span>FROM<span class="w"> </span>public.<span class="s2">&quot;Def_Project&quot;</span>
+UNION<span class="w"> </span>ALL
+SELECT<span class="w"> </span><span class="s1">&#39;Def_Put&#39;</span>,<span class="w"> </span>count<span class="o">(</span>*<span class="o">)</span><span class="w"> </span>FROM<span class="w"> </span>public.<span class="s2">&quot;Def_Put&quot;</span>
+UNION<span class="w"> </span>ALL
+SELECT<span class="w"> </span><span class="s1">&#39;Def_Spoor&#39;</span>,<span class="w"> </span>count<span class="o">(</span>*<span class="o">)</span><span class="w"> </span>FROM<span class="w"> </span>public.<span class="s2">&quot;Def_Spoor&quot;</span>
+UNION<span class="w"> </span>ALL
+SELECT<span class="w"> </span><span class="s1">&#39;Def_Vondst&#39;</span>,<span class="w"> </span>count<span class="o">(</span>*<span class="o">)</span><span class="w"> </span>FROM<span class="w"> </span>public.<span class="s2">&quot;Def_Vondst&quot;</span><span class="p">;</span>
+</code></pre></div>
+
+<h2 id="stap-5-data-bekijken-in-de-web-applicatie">Stap 5: Data bekijken in de web-applicatie<a class="headerlink" href="#stap-5-data-bekijken-in-de-web-applicatie" title="Permanent link">&para;</a></h2>
+<p>Na succesvolle verwerking is de data beschikbaar in de Flask-applicatie:</p>
+<div class="codehilite"><pre><span></span><code>http://localhost:5051
+</code></pre></div>
+
+<h3 id="wat-je-ziet">Wat je ziet<a class="headerlink" href="#wat-je-ziet" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Projectenlijst</strong>: Alle geïmporteerde opgravingsprojecten</li>
+<li><strong>Entiteiten</strong>: Klik door naar putten, vlakken, sporen, vondsten</li>
+<li><strong>Foto's</strong>: Gekoppelde afbeeldingen (als deze zijn geïmporteerd)</li>
+<li><strong>Zoeken</strong>: Gebruik de zoekbalk voor fulltext-doorzoeken</li>
+</ul>
+<h3 id="elasticsearch-index-controleren">Elasticsearch-index controleren<a class="headerlink" href="#elasticsearch-index-controleren" title="Permanent link">&para;</a></h3>
+<p>De zoekfunctie werkt via Elasticsearch. Controleer of de index is opgebouwd:</p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># Bekijk beschikbare indices</span>
+curl<span class="w"> </span>-s<span class="w"> </span>http://localhost:9200/_cat/indices?v
+
+<span class="c1"># Tel documenten in de index</span>
+curl<span class="w"> </span>-s<span class="w"> </span>http://localhost:9200/_count<span class="w"> </span><span class="p">|</span><span class="w"> </span>python3<span class="w"> </span>-m<span class="w"> </span>json.tool
+</code></pre></div>
+
+<h2 id="veelvoorkomende-problemen">Veelvoorkomende problemen<a class="headerlink" href="#veelvoorkomende-problemen" title="Permanent link">&para;</a></h2>
+<h3 id="extractie-mislukt">Extractie mislukt<a class="headerlink" href="#extractie-mislukt" title="Permanent link">&para;</a></h3>
+<p><strong>Probleem</strong>: <code>Extract_Data_From_Projecten</code> faalt met <code>mdb-export</code> error.</p>
+<p><strong>Oorzaak</strong>: Het <code>.mdb</code> bestand is mogelijk corrupt of in een niet-ondersteund formaat.</p>
+<p><strong>Oplossing</strong>: Controleer of het bestand een geldig Access 2000/2003 bestand is. De <code>mdbtools</code>-suite ondersteunt geen <code>.accdb</code> (Access 2007+) bestanden.</p>
+<h3 id="mongodb-verbinding-faalt">MongoDB-verbinding faalt<a class="headerlink" href="#mongodb-verbinding-faalt" title="Permanent link">&para;</a></h3>
+<p><strong>Probleem</strong>: Airflow-tasks falen met <code>pymongo.errors.ConnectionFailure</code>.</p>
+<p><strong>Oorzaak</strong>: MongoDB-container is nog niet volledig opgestart.</p>
+<p><strong>Oplossing</strong>: Wacht tot MongoDB klaar is (<code>docker logs wasstraat_mongo</code> toont "Waiting for connections"). Herstart de DAG.</p>
+<h3 id="postgresql-tabellen-zijn-leeg">PostgreSQL-tabellen zijn leeg<a class="headerlink" href="#postgresql-tabellen-zijn-leeg" title="Permanent link">&para;</a></h3>
+<p><strong>Probleem</strong>: Na de Load-stap zijn de <code>Def_*</code> tabellen leeg.</p>
+<p><strong>Oorzaak</strong>: De transformatiestappen zijn niet (volledig) uitgevoerd.</p>
+<p><strong>Oplossing</strong>: Draai de volledige ETL-cyclus of controleer in MongoDB of de staging-collecties data bevatten.</p>
+<h3 id="elasticsearch-toont-geen-resultaten">Elasticsearch toont geen resultaten<a class="headerlink" href="#elasticsearch-toont-geen-resultaten" title="Permanent link">&para;</a></h3>
+<p><strong>Probleem</strong>: De zoekfunctie in de Flask-app geeft geen resultaten.</p>
+<p><strong>Oorzaak</strong>: De Elasticsearch-index is niet opgebouwd na de Load-stap.</p>
+<p><strong>Oplossing</strong>: Controleer of Elasticsearch draait (<code>curl localhost:9200</code>) en herstart eventueel de Load-stap.</p>
+<h2 id="jupyter-notebooks-voor-exploratie">Jupyter Notebooks voor Exploratie<a class="headerlink" href="#jupyter-notebooks-voor-exploratie" title="Permanent link">&para;</a></h2>
+<p>Voor diepgaande data-exploratie kun je Jupyter Lab gebruiken:</p>
+<div class="codehilite"><pre><span></span><code>http://localhost:8888
+</code></pre></div>
+
+<p>De notebook-omgeving heeft toegang tot:</p>
+<ul>
+<li>De bronbestanden (via <code>/home/jovyan/basefiles/</code>)</li>
+<li>De Airflow verwerkingslogica (via <code>/opt/wasstraat/</code>)</li>
+<li>De gedeelde configuratie (via <code>/home/jovyan/shared/</code>)</li>
+<li>De Wasstraat-configuratie (via <code>/home/jovyan/wasstraat_config/</code>)</li>
+</ul>
+<p>Er zijn 68+ bestaande notebooks beschikbaar in de <code>notebooks/</code> directory die voorbeelden bevatten van data-exploratie, transformatie-validatie en analyse.</p>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../airflow-vs-app/" class="btn btn-neutral float-left" title="Airflow Transformatie vs. Web Applicatie"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../../diagrammen/" class="btn btn-neutral float-right" title="Diagrammen">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../airflow-vs-app/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../../diagrammen/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../..";</script>
+    <script src="../../js/theme_extra.js"></script>
+    <script src="../../js/theme.js"></script>
+      <script src="../../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>
