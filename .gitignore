@@ -21,3 +21,4 @@ app/uwsgi-2.0.20/
 *.DS_Store
 .entry_point.lock
 site
+*.bkp
