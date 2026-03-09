@@ -197,7 +197,7 @@ def parseFotobestanden():
                         doc['artefactsoort'] = const.ARTF_STEEN
                     elif 'kleipijp' in strFN:
                         doc['artefactsoort'] = const.ARTF_KLEIPIJP
-                    elif 'hout/':
+                    elif 'hout/' in strFN:
                         doc['artefactsoort'] = const.ARTF_HOUT
                     elif 'bouwaardewerk' in strFN:
                         doc['artefactsoort'] = const.ARTF_BOUWAARDEWERK

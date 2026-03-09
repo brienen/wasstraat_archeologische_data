@@ -129,31 +129,74 @@ def loadAll():
     engine = create_engine(config.SQLALCHEMY_DATABASE_URI)
     logger.info("Connecting to " + config.SQLALCHEMY_DATABASE_URI)
 
+    lst_tables = ['Def_ABR', 'Def_Project', 'Def_Put', 'Def_Vondst', 'Def_Spoor', 'Def_Stelling', 'Def_Doos', 'Def_Standplaats', 'Def_Plaatsing', 'Def_Vlak', 'Def_Vindplaats', 'Def_Artefact', 'Def_Bestand', 'Def_Vulling', 'Def_Monster', 'Def_Monster_Botanie', 'Def_Monster_Schelp', 'Def_DT_Soort_Plant', 'Def_DT_Soort_Schelp', 'Def_DT_Soort_Deel', 'Def_DT_Soort_Staat']
+
+    # Extra tabellen die ook getruncated worden (niet in de hoofdlijst)
+    extra_truncate_tables = ['Def_artefact_abr', 'Def_Bruikleen', 'Def_artefact_conservering', 'Def_Conserveringsproject']
+
     with engine.connect() as connection:
-        connection = connection.execution_options( 
-            isolation_level="SERIALIZABLE",
-            postgresql_deferrable=True # Does not seem to work. Work imn progress 
-        )
         with connection.begin():
-            connection.execute('SET CONSTRAINTS ALL DEFERRED') # Does not seem to work. Work in progress https://stackoverflow.com/questions/48038807/sqlalchemy-orm-deferring-constraint-checking 
-            #  ... work with transaction
-            lst_tables = database.getAllTables()
-            lst_tables = ['Def_ABR', 'Def_Project', 'Def_Put', 'Def_Vondst', 'Def_Spoor', 'Def_Stelling', 'Def_Doos', 'Def_Standplaats', 'Def_Plaatsing', 'Def_Vlak', 'Def_Vindplaats', 'Def_Artefact', 'Def_Bestand', 'Def_Vulling', 'Def_Monster', 'Def_Monster_Botanie', 'Def_Monster_Schelp', 'Def_DT_Soort_Plant', 'Def_DT_Soort_Schelp', 'Def_DT_Soort_Deel', 'Def_DT_Soort_Staat']
+            logger.info("FASE 1: Laden naar tijdelijke tabellen...")
             logger.info("Loading all data for " + str(lst_tables))
-            
-            # To make a comma separated string with substrings between double quotes
-            f = lambda x: "\""+str(x)+"\""
-            lst = map(f,lst_tables)
 
-            # Truncate all tables
-            logger.info("Deleting all data from " + str(lst_tables))
-            connection.execute('TRUNCATE "Def_artefact_abr", "Def_Bruikleen", "Def_artefact_conservering", "Def_Conserveringsproject", ' + ','.join(lst) + ';')
+            # Houd bij welke temp-tabellen aangemaakt zijn voor opruiming bij falen
+            temp_tables_created = []
 
-            # Set table_lst to avoid relational integrity issues
-            # Then load new data
-            for table in lst_tables:            
-                if table.startswith('Def_'):
-                    soort = table[4:] # Remove Def_ 
-                    tablename = table
-                    transferToDB(table, soort, tablename, connection)
-        
+            try:
+                for table in lst_tables:
+                    if table.startswith('Def_'):
+                        soort = table[4:]  # Remove Def_
+                        temp_table = f"{table}_new"
+
+                        # Drop eventuele oude temp-tabel
+                        connection.execute(f'DROP TABLE IF EXISTS "{temp_table}"')
+
+                        # Maak temp-tabel aan met dezelfde structuur (inclusief constraints)
+                        connection.execute(
+                            f'CREATE TABLE "{temp_table}" (LIKE "{table}" INCLUDING ALL)'
+                        )
+                        temp_tables_created.append((table, temp_table))
+
+                        # Laad data in de temp-tabel
+                        transferToDB(table, soort, temp_table, connection)
+                        logger.info(f"Geladen: {soort} -> {temp_table}")
+
+            except Exception as err:
+                # Bij falen: ruim temp-tabellen op, bestaande data blijft intact
+                logger.error(f"Laden naar temp-tabellen mislukt: {err}. Opruimen...")
+                for orig, temp in temp_tables_created:
+                    try:
+                        connection.execute(f'DROP TABLE IF EXISTS "{temp}"')
+                    except Exception:
+                        pass
+                raise
+
+            logger.info("FASE 2: Atomic swap van tabellen...")
+
+            # Schakel foreign key checks tijdelijk uit voor de swap
+            connection.execute('SET session_replication_role = replica;')
+
+            try:
+                # Atomic swap: rename old -> _old, rename new -> current
+                for orig, temp in temp_tables_created:
+                    old_table = f"{orig}_old"
+                    connection.execute(f'DROP TABLE IF EXISTS "{old_table}"')
+                    connection.execute(f'ALTER TABLE "{orig}" RENAME TO "{old_table}"')
+                    connection.execute(f'ALTER TABLE "{temp}" RENAME TO "{orig}"')
+
+                # Truncate de extra tabellen
+                f = lambda x: '"' + str(x) + '"'
+                lst_extra = list(map(f, extra_truncate_tables))
+                connection.execute('TRUNCATE ' + ','.join(lst_extra) + ';')
+
+            finally:
+                # Herstel foreign key checks
+                connection.execute('SET session_replication_role = DEFAULT;')
+
+            # Ruim oude tabellen op
+            logger.info("FASE 3: Opruimen oude tabellen...")
+            for orig, temp in temp_tables_created:
+                old_table = f"{orig}_old"
+                connection.execute(f'DROP TABLE IF EXISTS "{old_table}"')
+
+            logger.info("Laden naar database succesvol afgerond.")
