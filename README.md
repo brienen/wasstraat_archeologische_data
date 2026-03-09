@@ -75,6 +75,7 @@ Elke artefactcategorie kent eigen specifieke velden:
 ### Vereisten
 
 - [Docker](https://www.docker.com/) en Docker Compose
+- [GNU Make](https://www.gnu.org/software/make/) (standaard aanwezig op macOS en Linux)
 - Minimaal 8 GB RAM beschikbaar voor Docker
 
 ### Installatie
@@ -84,22 +85,26 @@ Elke artefactcategorie kent eigen specifieke velden:
 git clone https://github.com/brienen/wasstraat_archeologische_data.git
 cd wasstraat_archeologische_data
 
-# Start de ontwikkelomgeving
+# Start de wasstraat
 # (config/*.env bestanden worden automatisch gegenereerd met unieke wachtwoorden)
-./runws.sh dev
+make app
 ```
 
 > **Tip:** Bij de eerste start genereert `init-config.sh` automatisch alle `config/*.env` bestanden met unieke wachtwoorden. Om handmatig opnieuw te genereren: `./init-config.sh --force`
 
+Typ `make help` voor een overzicht van alle beschikbare commando's.
+
 ### Omgevingen starten
 
 ```bash
-./runws.sh dev      # Ontwikkelomgeving (met debugpy)
-./runws.sh app      # Lokale modus (basis)
-./runws.sh acc      # Acceptatieomgeving
-./runws.sh prod     # Productie (gepubliceerde images)
-./runws.sh stop     # Stop alle containers
-./runws.sh start    # Herstart gestopte containers
+make dev          # Ontwikkelomgeving (met hot-reload volumes)
+make app          # Lokale modus (alle services)
+make acc          # Acceptatieomgeving
+make prod         # Productie (gepubliceerde images)
+make stop         # Stop alle containers
+make start        # Herstart gestopte containers
+make logs         # Toon live logs
+make ps           # Toon status van alle services
 ```
 
 ### Eerste data verwerken
@@ -112,9 +117,18 @@ cd wasstraat_archeologische_data
 ### Backup en restore
 
 ```bash
-./runws.sh backup                        # Backup PostgreSQL + MongoDB
-./runws.sh restore 2024-03-15_14-30-00   # Restore vanuit timestamp
-./runws.sh export                        # Exporteer alle tabellen als CSV
+make backup                              # Backup PostgreSQL + MongoDB
+make restore TS=2024-03-15_14-30-00      # Restore vanuit timestamp
+make export                              # Exporteer alle tabellen als CSV
+```
+
+### Testen
+
+```bash
+make install      # Eenmalig: maakt .venv aan met test-dependencies
+make test         # Draai unit tests
+make integration  # Draai integratietests (start/stopt Docker automatisch)
+make test-all     # Unit + integratietests
 ```
 
 ## Projectstructuur
@@ -131,14 +145,16 @@ wasstraat_archeologische_data/
 ├── services/             # Dockerfiles per service
 ├── data/                 # Input- en outputdata
 │   └── input/basefiles/  # Bronbestanden
+├── tests/                # Unit- en integratietests
 ├── notebooks/            # Jupyter notebooks voor analyse
 ├── docs/                 # MkDocs documentatie
 ├── image/                # Afbeeldingen voor README
+├── Makefile              # Alle commando's (make help)
 ├── docker-compose.yml    # Basis service-definities
+├── docker-compose.test.yml     # Lichtgewicht test-databases
 ├── docker-compose.develop.yml  # Development overrides
 ├── docker-compose.acc.yml      # Acceptatie overrides
-├── docker-compose.prod.yml     # Productie overrides
-└── runws.sh              # Start/stop/backup script
+└── docker-compose.prod.yml     # Productie overrides
 ```
 
 ## Documentatie
@@ -146,17 +162,18 @@ wasstraat_archeologische_data/
 De volledige technische documentatie is beschikbaar als [MkDocs-site](https://brienen.github.io/wasstraat_archeologische_data/):
 
 ```bash
-# Of draai lokaal:
-pip install mkdocs mkdocs-material
-mkdocs serve
+make docs       # Start MkDocs dev-server op localhost:8000
+make docs-build # Bouw statische site
 ```
 
 De documentatie bevat:
 
 - **Projectoverzicht** — Inleiding, probleemstelling en doelstellingen
+- **Aan de slag** — Stap-voor-stap handleiding voor eerste gebruik
 - **Architectuur** — Systeemarchitectuur, dataflow, componentenmodel, gegevensmodel en stack
 - **Componenten** — Extractie, SingleStore, Transformatie, Crossviews, Validatie, Configuratie, Zoeken
 - **Deployment** — Omgevingen, Airflow vs. App, proefdata inlezen
+- **Testen** — Unit tests, integratietests en testinfrastructuur
 - **Diagrammen** — draw.io architectuurdiagrammen
 
 ## Technische stack

@@ -41,7 +41,7 @@ De configuratiebestanden worden aangemaakt in `config/` op basis van de meegelev
 Start de wasstraat:
 
 ```bash
-./runws.sh app
+make app
 ```
 
 Bij de allereerste start duurt het enkele minuten omdat Docker alle images moet downloaden en bouwen. Je ziet de voortgang in de terminal.
@@ -49,7 +49,7 @@ Bij de allereerste start duurt het enkele minuten omdat Docker alle images moet 
 Controleer of alle containers draaien:
 
 ```bash
-docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+make ps
 ```
 
 Je zou deze 8 containers moeten zien:
@@ -68,7 +68,9 @@ Je zou deze 8 containers moeten zien:
 !!! warning "Containers starten niet?"
     Als een container niet wil starten, bekijk de logs:
     ```bash
-    docker logs wasstraat_airflow    # Vervang met de containernaam
+    make logs
+    # Of voor één specifieke container:
+    docker logs wasstraat_airflow
     ```
     De meest voorkomende oorzaak is onvoldoende geheugen in Docker Desktop.
 

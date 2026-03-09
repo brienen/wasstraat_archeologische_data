@@ -15,9 +15,12 @@ Typ `make help` voor alle beschikbare targets.
 ## Structuur
 
 ```
+Makefile                                 # Alle commando's (make help)
+requirements-test.txt                    # Python test-dependencies
+docker-compose.test.yml                  # Lichtgewicht test-databases
 tests/
 ├── conftest.py                          # Mocks voor shared.config, roman, etc.
-├── run_tests.py                         # Fallback runner (zonder pytest/venv)
+├── run_tests.py                         # Fallback runner (zonder venv/pytest)
 ├── unit/
 │   ├── test_archutils.py                # convertToInt, convertToBool, fixDatering
 │   ├── test_rijksdriehoek.py            # RD ↔ WGS84 coördinaatconversie
@@ -29,7 +32,7 @@ tests/
 
 ## Vereisten
 
-De `Makefile` regelt automatisch een Python virtual environment. Bij `make install` wordt een `.venv` aangemaakt met Python 3.11 (of 3.12/3.10 als fallback) en worden alle dependencies uit `requirements-test.txt` geïnstalleerd.
+Bij `make install` wordt automatisch een `.venv` aangemaakt met Python 3.11 (of 3.12/3.10 als fallback) en worden alle dependencies uit `requirements-test.txt` geïnstalleerd. Je hoeft zelf geen venv aan te maken.
 
 De integratietests hebben daarnaast Docker nodig.
 
