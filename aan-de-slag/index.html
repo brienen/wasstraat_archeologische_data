@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="nl" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="author" content="E-Space / Arjen Brienen" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>Handleiding - Wasstraat Archeologische Data</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+        <link href="../assets/extra.css" rel="stylesheet" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Handleiding";
+        var mkdocs_page_input_path = "aan-de-slag.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href=".." class="icon icon-home"> Wasstraat Archeologische Data
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="..">Home</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Projectoverzicht</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../overzicht/inleiding/">Inleiding</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../overzicht/probleemstelling/">Probleemstelling</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../overzicht/doelstellingen/">Doelstellingen</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Aan de slag</span></p>
+              <ul class="current">
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Handleiding</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#1-downloaden-en-installeren">1. Downloaden en installeren</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#vereisten">Vereisten</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#repository-clonen">Repository clonen</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#configuratie">Configuratie</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#2-wasstraat-starten">2. Wasstraat starten</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#3-webpaginas-bekijken">3. Webpagina's bekijken</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#airflow-data-verwerken-etl">Airflow — Data verwerken (ETL)</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#flask-app-data-inzien">Flask App — Data inzien</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#jupyter-lab-data-analyseren">Jupyter Lab — Data analyseren</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#4-bestanden-klaarzetten">4. Bestanden klaarzetten</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#wat-moet-waar">Wat moet waar?</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#hoe-worden-bestanden-gevonden">Hoe worden bestanden gevonden?</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#fotos-en-media">Foto's en media</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#5-wasstraat_config_harmonize-configureren">5. Wasstraat_Config_Harmonize configureren</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#structuur-van-het-configuratiebestand">Structuur van het configuratiebestand</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#tabblad-objecten-het-hoofdoverzicht">Tabblad "Objecten" — Het hoofdoverzicht</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#overerving-van-artefacten">Overerving van artefacten</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#attributen-tabbladen-een-per-objecttype">Attributen-tabbladen — Eén per objecttype</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#aanpassen-voor-je-eigen-situatie">Aanpassen voor je eigen situatie</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#stap-1-tabellen-herkennen">Stap 1: Tabellen herkennen</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    </ul>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Architectuur</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../architectuur/systeem/">Systeemarchitectuur</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../architectuur/dataflow/">Dataflow Pipeline</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../architectuur/componenten/">Componentenmodel</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../architectuur/gegevensmodel/">Gegevensmodel & Semantiek</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../architectuur/stack/">Technische Stack</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Componenten</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../componenten/extractie/">Extractielaag</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../componenten/singlestore/">SingleStore & Clusterlaag</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../componenten/transformatie/">Transformatielaag</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../componenten/crossviews/">Crossviews</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../componenten/validatie/">Validatielaag</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../componenten/configuratie/">Configuratiemodule</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../componenten/zoeken/">Zoek- en Indexeringslaag</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Deployment</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../deployment/omgevingen/">Omgevingen & Docker Compose</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../deployment/airflow-vs-app/">Airflow Transformatie vs. Web Applicatie</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../deployment/proefdata/">Proefdata Inlezen</a>
+                  </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../diagrammen/">Diagrammen</a>
+                </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="..">Wasstraat Archeologische Data</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">Aan de slag</li>
+      <li class="breadcrumb-item active">Handleiding</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="aan-de-slag">Aan de slag<a class="headerlink" href="#aan-de-slag" title="Permanent link">&para;</a></h1>
+<p>Deze handleiding neemt je stap voor stap mee om de Wasstraat Archeologische Data voor het eerst te installeren, te configureren en te draaien. Na het doorlopen heb je een werkende omgeving met verwerkte archeologische data die je kunt bekijken in de webapplicatie.</p>
+<h2 id="1-downloaden-en-installeren">1. Downloaden en installeren<a class="headerlink" href="#1-downloaden-en-installeren" title="Permanent link">&para;</a></h2>
+<h3 id="vereisten">Vereisten<a class="headerlink" href="#vereisten" title="Permanent link">&para;</a></h3>
+<p>Zorg dat de volgende software op je systeem is geïnstalleerd:</p>
+<ul>
+<li><strong><a href="https://www.docker.com/products/docker-desktop/">Docker Desktop</a></strong> — Minimaal versie 20.10</li>
+<li><strong>Docker Compose</strong> — Wordt meegeleverd met Docker Desktop</li>
+<li><strong>Git</strong> — Voor het clonen van de repository</li>
+<li><strong>Minimaal 8 GB RAM</strong> beschikbaar voor Docker (stel dit in via Docker Desktop → Settings → Resources)</li>
+</ul>
+<div class="admonition tip">
+<p class="admonition-title">Docker Desktop geheugen</p>
+<p>De Wasstraat draait 8 containers tegelijk. Stel in Docker Desktop het beschikbare geheugen in op minimaal 8 GB, bij voorkeur 12 GB als je veel data gaat verwerken.</p>
+</div>
+<h3 id="repository-clonen">Repository clonen<a class="headerlink" href="#repository-clonen" title="Permanent link">&para;</a></h3>
+<div class="codehilite"><pre><span></span><code>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/brienen/wasstraat_archeologische_data.git
+<span class="nb">cd</span><span class="w"> </span>wasstraat_archeologische_data
+</code></pre></div>
+
+<h3 id="configuratie">Configuratie<a class="headerlink" href="#configuratie" title="Permanent link">&para;</a></h3>
+<p>Bij de eerste start genereert het systeem automatisch alle configuratiebestanden met unieke wachtwoorden. Je hoeft zelf niets in te stellen — het werkt direct out-of-the-box.</p>
+<p>De configuratiebestanden worden aangemaakt in <code>config/</code> op basis van de meegeleverde <code>.env.example</code> templates. Elk bestand krijgt automatisch een veilig, willekeurig wachtwoord. De gegenereerde wachtwoorden worden in de terminal getoond zodat je ze kunt bewaren.</p>
+<div class="admonition tip">
+<p class="admonition-title">Handmatig configureren</p>
+<p>Wil je de configuratie handmatig aanpassen? Kopieer de <code>.env.example</code> bestanden:
+<code>bash
+for f in config/*.env.example; do cp "$f" "${f%.example}"; done</code>
+Pas vervolgens de wachtwoorden in <code>config/*.env</code> aan naar wens.</p>
+</div>
+<h2 id="2-wasstraat-starten">2. Wasstraat starten<a class="headerlink" href="#2-wasstraat-starten" title="Permanent link">&para;</a></h2>
+<p>Start de ontwikkelomgeving:</p>
+<div class="codehilite"><pre><span></span><code>./runws.sh<span class="w"> </span>dev
+</code></pre></div>
+
+<p>Bij de allereerste start duurt het enkele minuten omdat Docker alle images moet downloaden en bouwen. Je ziet de voortgang in de terminal.</p>
+<p>Controleer of alle containers draaien:</p>
+<div class="codehilite"><pre><span></span><code>docker<span class="w"> </span>ps<span class="w"> </span>--format<span class="w"> </span><span class="s2">&quot;table {{.Names}}\t{{.Status}}\t{{.Ports}}&quot;</span>
+</code></pre></div>
+
+<p>Je zou deze 8 containers moeten zien:</p>
+<table>
+<thead>
+<tr>
+<th>Container</th>
+<th>Poort</th>
+<th>Status verwacht</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>wasstraat_airflow</code></td>
+<td>:8080</td>
+<td>Up</td>
+</tr>
+<tr>
+<td><code>wasstraat_flask</code></td>
+<td>:5051</td>
+<td>Up</td>
+</tr>
+<tr>
+<td><code>wasstraat_postgres</code></td>
+<td>:5432</td>
+<td>Up</td>
+</tr>
+<tr>
+<td><code>wasstraat_mongo</code></td>
+<td>:27017</td>
+<td>Up</td>
+</tr>
+<tr>
+<td><code>wasstraat_elasticsearch</code></td>
+<td>:9200</td>
+<td>Up</td>
+</tr>
+<tr>
+<td><code>wasstraat_redis</code></td>
+<td>:6379</td>
+<td>Up</td>
+</tr>
+<tr>
+<td><code>wasstraat_apache</code></td>
+<td>:5052</td>
+<td>Up</td>
+</tr>
+<tr>
+<td><code>wasstraat_jupyter</code></td>
+<td>:8888</td>
+<td>Up</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition warning">
+<p class="admonition-title">Containers starten niet?</p>
+<p>Als een container niet wil starten, bekijk de logs:
+<code>bash
+docker logs wasstraat_airflow    # Vervang met de containernaam</code>
+De meest voorkomende oorzaak is onvoldoende geheugen in Docker Desktop.</p>
+</div>
+<h2 id="3-webpaginas-bekijken">3. Webpagina's bekijken<a class="headerlink" href="#3-webpaginas-bekijken" title="Permanent link">&para;</a></h2>
+<p>Na het starten zijn er drie webapplicaties beschikbaar:</p>
+<h3 id="airflow-data-verwerken-etl">Airflow — Data verwerken (ETL)<a class="headerlink" href="#airflow-data-verwerken-etl" title="Permanent link">&para;</a></h3>
+<div class="codehilite"><pre><span></span><code>http://localhost:8080
+</code></pre></div>
+
+<p>Hier beheer je de dataverwerkingspipeline. Je ziet een overzicht van alle beschikbare DAGs (Directed Acyclic Graphs — de verwerkingsprocessen). Inloggen doe je met de standaard Airflow-credentials die bij de installatie zijn gegenereerd (standaard: <code>admin</code> / het gegenereerde wachtwoord, te vinden in <code>config/airflow.env</code> onder <code>SECURITY__ADMIN_PASSWORD</code>).</p>
+<h3 id="flask-app-data-inzien">Flask App — Data inzien<a class="headerlink" href="#flask-app-data-inzien" title="Permanent link">&para;</a></h3>
+<div class="codehilite"><pre><span></span><code>http://localhost:5051
+</code></pre></div>
+
+<p>De webapplicatie voor het bekijken van de verwerkte data. Na een succesvolle verwerking zie je hier een interactieve kaart van Delft met alle opgravingslocaties, en kun je doorklikken naar projecten, vondsten, artefacten, foto's en meer.</p>
+<div class="admonition tip">
+<p class="admonition-title">Nog geen data?</p>
+<p>Bij een verse installatie is de Flask App nog leeg. Dat klopt — je moet eerst data verwerken via Airflow (stap 5–7 van deze handleiding).</p>
+</div>
+<h3 id="jupyter-lab-data-analyseren">Jupyter Lab — Data analyseren<a class="headerlink" href="#jupyter-lab-data-analyseren" title="Permanent link">&para;</a></h3>
+<div class="codehilite"><pre><span></span><code>http://localhost:8888
+</code></pre></div>
+
+<p>Jupyter Lab voor eigen data-analyse. Er zijn 68+ bestaande notebooks beschikbaar met voorbeelden van data-exploratie en transformatie-validatie. Het wachtwoord staat in <code>config/jupyter.env</code>.</p>
+<h2 id="4-bestanden-klaarzetten">4. Bestanden klaarzetten<a class="headerlink" href="#4-bestanden-klaarzetten" title="Permanent link">&para;</a></h2>
+<p>De Wasstraat leest brondata uit de directory <code>data/input/basefiles/projectdatabase/</code>. Elke subdirectory heeft een specifiek doel:</p>
+<div class="codehilite"><pre><span></span><code><span class="n">data</span><span class="o">/</span><span class="k">input</span><span class="o">/</span><span class="n">basefiles</span><span class="o">/</span><span class="n">projectdatabase</span><span class="o">/</span>
+<span class="err">├──</span><span class="w"> </span><span class="n">digidepot</span><span class="o">/</span><span class="w">           </span><span class="err">←</span><span class="w"> </span><span class="n">Projectdatabases</span><span class="w"> </span><span class="p">(.</span><span class="n">mdb</span><span class="o">/</span><span class="p">.</span><span class="n">accdb</span><span class="p">)</span>
+<span class="err">├──</span><span class="w"> </span><span class="n">Delf</span><span class="o">-</span><span class="n">IT</span><span class="o">/</span><span class="w">             </span><span class="err">←</span><span class="w"> </span><span class="n">DelfIT</span><span class="w"> </span><span class="n">administratie</span><span class="w"> </span><span class="p">(.</span><span class="n">mdb</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="p">.</span><span class="n">xlsx</span><span class="p">)</span>
+<span class="err">├──</span><span class="w"> </span><span class="n">magazijnlijst</span><span class="o">/</span><span class="w">       </span><span class="err">←</span><span class="w"> </span><span class="n">Depotregistratie</span><span class="w"> </span><span class="p">(.</span><span class="n">mdb</span><span class="p">)</span>
+<span class="err">├──</span><span class="w"> </span><span class="n">digifotos</span><span class="o">/</span><span class="w">           </span><span class="err">←</span><span class="w"> </span><span class="n">Foto</span><span class="o">-</span><span class="n">metadata</span><span class="w"> </span><span class="p">(.</span><span class="n">mdb</span><span class="p">)</span>
+<span class="err">├──</span><span class="w"> </span><span class="n">monsterdatabase</span><span class="o">/</span><span class="w">     </span><span class="err">←</span><span class="w"> </span><span class="n">Monsterregistratie</span><span class="w"> </span><span class="p">(.</span><span class="n">mdb</span><span class="o">/</span><span class="p">.</span><span class="n">accdb</span><span class="p">)</span>
+<span class="err">├──</span><span class="w"> </span><span class="n">rapporten</span><span class="o">/</span><span class="w">           </span><span class="err">←</span><span class="w"> </span><span class="n">Rapportendatabases</span><span class="w"> </span><span class="p">(.</span><span class="n">mdb</span><span class="p">)</span>
+<span class="err">│</span><span class="w">   </span><span class="err">├──</span><span class="w"> </span><span class="n">DAN</span><span class="o">/</span><span class="w">             </span><span class="err">←</span><span class="w"> </span><span class="n">Delfts</span><span class="w"> </span><span class="n">Archeologische</span><span class="w"> </span><span class="n">Notities</span>
+<span class="err">│</span><span class="w">   </span><span class="err">└──</span><span class="w"> </span><span class="n">DAR</span><span class="o">/</span><span class="w">             </span><span class="err">←</span><span class="w"> </span><span class="n">Delfts</span><span class="w"> </span><span class="n">Archeologische</span><span class="w"> </span><span class="n">Rapporten</span>
+<span class="err">└──</span><span class="w"> </span><span class="n">referentietabellen</span><span class="o">/</span><span class="w">  </span><span class="err">←</span><span class="w"> </span><span class="n">ABR</span><span class="o">-</span><span class="n">codes</span><span class="w"> </span><span class="n">en</span><span class="w"> </span><span class="n">standaardtabellen</span><span class="w"> </span><span class="p">(.</span><span class="n">xlsx</span><span class="o">/</span><span class="p">.</span><span class="n">mdb</span><span class="p">)</span>
+</code></pre></div>
+
+<h3 id="wat-moet-waar">Wat moet waar?<a class="headerlink" href="#wat-moet-waar" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Directory</th>
+<th>Wat erin hoort</th>
+<th>Bestandstype</th>
+<th>Verplicht?</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>digidepot/</code></td>
+<td>Per opgraving een subdirectory met de projectdatabase</td>
+<td><code>.mdb</code> / <code>.accdb</code></td>
+<td>Ja — dit is de hoofdbron</td>
+</tr>
+<tr>
+<td><code>Delf-IT/</code></td>
+<td>De centrale administratiedatabase en projecttabel</td>
+<td><code>.mdb</code> + <code>.xlsx</code></td>
+<td>Ja — bevat projectoverzicht</td>
+</tr>
+<tr>
+<td><code>magazijnlijst/</code></td>
+<td>Depot- en magazijnadministratie</td>
+<td><code>.mdb</code></td>
+<td>Aanbevolen</td>
+</tr>
+<tr>
+<td><code>digifotos/</code></td>
+<td>Digitale fotolijst met metadata</td>
+<td><code>.mdb</code></td>
+<td>Aanbevolen (voor foto-koppeling)</td>
+</tr>
+<tr>
+<td><code>monsterdatabase/</code></td>
+<td>Monster- en residuregistratie</td>
+<td><code>.mdb</code> / <code>.accdb</code></td>
+<td>Optioneel</td>
+</tr>
+<tr>
+<td><code>rapporten/DAN/</code> en <code>DAR/</code></td>
+<td>Rapportenlijstdatabases</td>
+<td><code>.mdb</code></td>
+<td>Optioneel</td>
+</tr>
+<tr>
+<td><code>referentietabellen/</code></td>
+<td>ABR-classificatie, bestandslijsten</td>
+<td><code>.xlsx</code> / <code>.mdb</code></td>
+<td>Ja — nodig voor harmonisatie</td>
+</tr>
+</tbody>
+</table>
+<h3 id="hoe-worden-bestanden-gevonden">Hoe worden bestanden gevonden?<a class="headerlink" href="#hoe-worden-bestanden-gevonden" title="Permanent link">&para;</a></h3>
+<p>De Wasstraat doorzoekt elke directory <strong>recursief</strong> op <code>.mdb</code> en <code>.accdb</code> bestanden. Je kunt dus subdirectories gebruiken om bestanden te organiseren. In <code>digidepot/</code> is het gebruikelijk om per project een subdirectory aan te maken:</p>
+<div class="codehilite"><pre><span></span><code>digidepot/
+├── DB008_Leeuwenstein/
+│   └── DB008.mdb
+├── DC001_Oude_Delft_96/
+│   └── DC001.mdb
+└── DC002_Oude_Delft_188/
+    └── DC002.mdb
+</code></pre></div>
+
+<h3 id="fotos-en-media">Foto's en media<a class="headerlink" href="#fotos-en-media" title="Permanent link">&para;</a></h3>
+<p>Foto's en andere mediabestanden worden verwacht in een aparte directory die via een Docker-volume gemount wordt als <code>/input/images</code>. De standaard locatie hiervoor is <code>data/input/basefiles/</code> (de bovenliggende map). De Wasstraat zoekt daar naar bestanden in mappen die <code>velddocument</code>, <code>fotos</code>, <code>tekening</code>, <code>DAN</code> of <code>DAR</code> in het pad bevatten.</p>
+<p>Ondersteunde bestandstypen voor media: <code>.jpg</code>, <code>.jpeg</code>, <code>.png</code>, <code>.gif</code>, <code>.tif</code>, <code>.psd</code>, <code>.pdf</code>, <code>.jp2</code>, <code>.doc</code>, <code>.docx</code>.</p>
+<div class="admonition tip">
+<p class="admonition-title">Minimale proefset</p>
+<p>Voor een eerste test volstaat het om één <code>.mdb</code> projectdatabase in <code>digidepot/</code> te plaatsen, samen met de referentietabellen. De extractie verwerkt dan alleen dat ene project.</p>
+</div>
+<h2 id="5-wasstraat_config_harmonize-configureren">5. Wasstraat_Config_Harmonize configureren<a class="headerlink" href="#5-wasstraat_config_harmonize-configureren" title="Permanent link">&para;</a></h2>
+<p>Het bestand <code>Wasstraat_Config_HarmonizeV3.xlsx</code> is het hart van de dataverwerkingsconfiguratie. Het vertelt de Wasstraat hoe brondata uit diverse Access-databases moet worden omgezet naar een geüniformeerd datamodel.</p>
+<p>Het bestand bevindt zich in:</p>
+<div class="codehilite"><pre><span></span><code>data/wasstraat_config/Wasstraat_Config_HarmonizeV3.xlsx
+</code></pre></div>
+
+<p>De locatie wordt geconfigureerd via de environment-variabele <code>AIRFLOW_WASSTRAAT_CONFIG</code> in <code>config/airflow.env</code>.</p>
+<h3 id="structuur-van-het-configuratiebestand">Structuur van het configuratiebestand<a class="headerlink" href="#structuur-van-het-configuratiebestand" title="Permanent link">&para;</a></h3>
+<p>Het Excel-bestand bevat twee soorten tabbladen:</p>
+<h4 id="tabblad-objecten-het-hoofdoverzicht">Tabblad "Objecten" — Het hoofdoverzicht<a class="headerlink" href="#tabblad-objecten-het-hoofdoverzicht" title="Permanent link">&para;</a></h4>
+<p>Dit tabblad definieert welke entiteiten (objecten) de Wasstraat herkent en hoe tabellen in de brondatabases daaraan worden gekoppeld:</p>
+<table>
+<thead>
+<tr>
+<th>Kolom</th>
+<th>Uitleg</th>
+<th>Voorbeeld</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Object</strong></td>
+<td>Naam van het entiteitstype</td>
+<td><code>Vondst</code>, <code>Artefact</code>, <code>Aardewerk</code></td>
+</tr>
+<tr>
+<td><strong>Tabellen</strong></td>
+<td>Regex-patronen die brontabellen matchen</td>
+<td><code>["^VONDSTENLIJST", "^VONDST$"]</code></td>
+</tr>
+<tr>
+<td><strong>Overerven</strong></td>
+<td>Ouder-entiteit waarvan attributen worden overgenomen</td>
+<td><code>Artefact</code> (voor <code>Aardewerk</code>, <code>Glas</code>, etc.)</td>
+</tr>
+<tr>
+<td><strong>Samenvoegen</strong></td>
+<td>Entiteit waarmee samengevoegd wordt</td>
+<td>—</td>
+</tr>
+<tr>
+<td><strong>ABR-materiaal</strong></td>
+<td>URI naar ABR-materiaalclassificatie</td>
+<td><code>https://data.cultureelerfgoed.nl/...</code></td>
+</tr>
+<tr>
+<td><strong>ABR-submateriaal</strong></td>
+<td>URI naar ABR-submateriaalclassificatie</td>
+<td><code>https://data.cultureelerfgoed.nl/...</code></td>
+</tr>
+</tbody>
+</table>
+<p>De kolom <strong>Tabellen</strong> bevat regex-patronen als JSON-lijst. Wanneer een tabel in een brondatabase overeenkomt met een van deze patronen, wordt deze herkend als dat objecttype. Bijvoorbeeld: een tabel genaamd <code>VONDSTENLIJST_2019</code> matcht het patroon <code>^VONDSTENLIJST</code> en wordt dus behandeld als <code>Vondst</code>.</p>
+<p>De speciale rij <strong>Ignore</strong> bevat patronen voor tabellen die moeten worden overgeslagen, zoals <code>.*backup.*</code>, <code>.*kopie.*</code> en <code>.*tijdelijk.*</code>.</p>
+<h4 id="overerving-van-artefacten">Overerving van artefacten<a class="headerlink" href="#overerving-van-artefacten" title="Permanent link">&para;</a></h4>
+<p>Artefacttypen zoals <code>Aardewerk</code>, <code>Glas</code>, <code>Metaal</code>, <code>Hout</code> enzovoort hebben in de kolom <strong>Overerven</strong> de waarde <code>Artefact</code>. Dit betekent dat ze eerst de standaard artefact-attributen overnemen en daar hun eigen specifieke attributen aan toevoegen. Zo heeft Aardewerk naast de algemene artefactvelden ook velden voor baksel, glazuur en vormcode.</p>
+<h4 id="attributen-tabbladen-een-per-objecttype">Attributen-tabbladen — Eén per objecttype<a class="headerlink" href="#attributen-tabbladen-een-per-objecttype" title="Permanent link">&para;</a></h4>
+<p>Voor elk objecttype in het Objecten-tabblad bestaat een apart tabblad met dezelfde naam (bijv. "Vondst", "Spoor", "Aardewerk"). Elk attributen-tabblad heeft twee kolommen:</p>
+<table>
+<thead>
+<tr>
+<th>Kolom</th>
+<th>Uitleg</th>
+<th>Voorbeeld</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Attribute</strong></td>
+<td>De geharmoniseerde veldnaam in het doelmodel</td>
+<td><code>putnr</code>, <code>spoornr</code>, <code>datum</code></td>
+</tr>
+<tr>
+<td><strong>Kolommen</strong></td>
+<td>Bronkolommen als JSON-lijst met fallback-volgorde</td>
+<td><code>["PUT", "PUTNO"]</code></td>
+</tr>
+</tbody>
+</table>
+<p>De <strong>Kolommen</strong>-lijst werkt als een prioriteitsvolgorde: de Wasstraat probeert eerst de eerste kolomnaam, dan de tweede, enzovoort. Dit is essentieel omdat verschillende brondatabases andere kolomnamen gebruiken voor hetzelfde gegeven. Bijvoorbeeld: het putnummer kan in de ene database <code>PUT</code> heten en in een andere <code>PUTNO</code>.</p>
+<p>Voorbeeld uit het tabblad "Spoor":</p>
+<table>
+<thead>
+<tr>
+<th>Attribute</th>
+<th>Kolommen</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>aard</code></td>
+<td><code>["AARD", "INTERPRET", "INTERPRETATIE", "SPOORAARD"]</code></td>
+</tr>
+<tr>
+<td><code>putnr</code></td>
+<td><code>["PUT", "PUTNO"]</code></td>
+</tr>
+<tr>
+<td><code>spoornr</code></td>
+<td><code>["SPOOR", "SPOORNO"]</code></td>
+</tr>
+<tr>
+<td><code>beschrijving</code></td>
+<td><code>["BESCHRIJVING"]</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="aanpassen-voor-je-eigen-situatie">Aanpassen voor je eigen situatie<a class="headerlink" href="#aanpassen-voor-je-eigen-situatie" title="Permanent link">&para;</a></h3>
+<p>Om de Wasstraat te gebruiken voor je eigen archeologische data, pas je het configuratiebestand aan in drie stappen:</p>
+<h4 id="stap-1-tabellen-herkennen">Stap 1: Tabellen herkennen<a class="headerlink" href="#stap-1-tabellen-herkennen" title="Permanent link">&para;</a></h4>
+<p>Open je eigen <code>.mdb</code>-bestanden en noteer welke tabellen erin zitten. Pas vervolgens de regex-patronen in het tabblad "Objecten" aan zodat jouw tabelnamen worden herkend. Als jouw vondstentabel bijvoorbeeld <code>Vondsten_Registratie</code> heet, voeg dan <code>"Vondsten_Registratie"</code> toe aan de Tabellen-lijst van het object "Vondst".</p>
+<div class="admonition tip">
+<p class="admonition-title">Tabellen bekijken</p>
+<p>Je kunt de tabellen in een <code>.mdb</code>-bestand bekijken met:
+```bash</p>
+<h1 id="vanuit-de-airflow-container">Vanuit de Airflow-container:<a class="headerlink" href="#vanuit-de-airflow-container" title="Permanent link">&para;</a></h1>
+<p>docker exec wasstraat_airflow mdb-tables /input/projecten/<jouw_bestand>.mdb
+```</p>
+</div>
+<h4 id="stap-2-kolomnamen-toevoegen">Stap 2: Kolomnamen toevoegen<a class="headerlink" href="#stap-2-kolomnamen-toevoegen" title="Permanent link">&para;</a></h4>
+<p>Bekijk de kolomnamen in je tabellen en voeg ontbrekende namen toe aan de Kolommen-lijsten in het attributen-tabblad. Als jouw database het veld <code>PUTNUMMER</code> gebruikt in plaats van <code>PUT</code> of <code>PUTNO</code>, voeg je dit toe:</p>
+<p>Van: <code>["PUT", "PUTNO"]</code>
+Naar: <code>["PUT", "PUTNO", "PUTNUMMER"]</code></p>
+<div class="admonition tip">
+<p class="admonition-title">Kolomnamen bekijken</p>
+<p><code>bash
+docker exec wasstraat_airflow mdb-export -H /input/projecten/&lt;bestand&gt;.mdb &lt;tabelnaam&gt; | head -1</code></p>
+</div>
+<h4 id="stap-3-nieuwe-objecttypen-toevoegen-optioneel">Stap 3: Nieuwe objecttypen toevoegen (optioneel)<a class="headerlink" href="#stap-3-nieuwe-objecttypen-toevoegen-optioneel" title="Permanent link">&para;</a></h4>
+<p>Als je een entiteitstype hebt dat nog niet bestaat (bijvoorbeeld een specifiek artefacttype), voeg dan een nieuwe rij toe aan het "Objecten"-tabblad en maak een bijbehorend attributen-tabblad aan. Als het een artefacttype is, zet dan <code>Artefact</code> in de kolom "Overerven" zodat de standaard artefact-attributen worden overgenomen.</p>
+<h3 id="huidige-objecttypen">Huidige objecttypen<a class="headerlink" href="#huidige-objecttypen" title="Permanent link">&para;</a></h3>
+<p>Het configuratiebestand bevat de volgende objecttypen:</p>
+<p><strong>Basisentiteiten</strong>: Put, Vlak, Spoor, Vulling, Vondst, Monster, Tekening, Foto, Rapport</p>
+<p><strong>Artefacttypen</strong> (overerven van Artefact): Aardewerk, Bouwaardewerk, Dierlijk Bot, Glas, Hout, Kleipijp, Leer, Menselijk Bot, Metaal, Munt, Schelp, Steen, Textiel</p>
+<p><strong>Referentiedata</strong>: ABR, DT_Soort_Plant, DT_Soort_Schelp, DT_Soort_Deel, DT_Soort_Staat</p>
+<p><strong>Speciaal</strong>: Monster_Botanie, Monster_Schelp, Fotobeschrijving, Fotokoppel</p>
+<h2 id="6-voor-de-eerste-keer-draaien">6. Voor de eerste keer draaien<a class="headerlink" href="#6-voor-de-eerste-keer-draaien" title="Permanent link">&para;</a></h2>
+<h3 id="airflow-ui-openen">Airflow UI openen<a class="headerlink" href="#airflow-ui-openen" title="Permanent link">&para;</a></h3>
+<p>Ga naar <a href="http://localhost:8080">http://localhost:8080</a> en log in. Je ziet een overzicht van alle beschikbare DAGs:</p>
+<table>
+<thead>
+<tr>
+<th>DAG</th>
+<th>Beschrijving</th>
+<th>Wanneer gebruiken</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Extract_Transform_Load_Full_Cycle</code></td>
+<td>Volledige pipeline</td>
+<td><strong>Eerste keer — gebruik deze</strong></td>
+</tr>
+<tr>
+<td><code>Extract_Only</code></td>
+<td>Alleen data inlezen</td>
+<td>Testen of extractie werkt</td>
+</tr>
+<tr>
+<td><code>Transform1_Harmonize_Only</code></td>
+<td>Alleen harmonisatie</td>
+<td>Stapsgewijs debuggen</td>
+</tr>
+<tr>
+<td><code>Load_Only</code></td>
+<td>Alleen naar PostgreSQL laden</td>
+<td>Na handmatige correcties</td>
+</tr>
+</tbody>
+</table>
+<h3 id="volledige-verwerking-starten">Volledige verwerking starten<a class="headerlink" href="#volledige-verwerking-starten" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Klik op de DAG <strong><code>Extract_Transform_Load_Full_Cycle</code></strong></li>
+<li>Zet de DAG aan met de schakelaar links (van "paused" naar "active")</li>
+<li>Klik rechtsboven op de <strong>play-knop</strong> (▶) → <strong>Trigger DAG</strong></li>
+<li>De verwerking start nu automatisch</li>
+</ol>
+<h3 id="voortgang-volgen">Voortgang volgen<a class="headerlink" href="#voortgang-volgen" title="Permanent link">&para;</a></h3>
+<p>Klik op de DAG en open de <strong>Graph</strong>-weergave om de voortgang live te volgen. Elke stap wordt gekleurd:</p>
+<ul>
+<li><strong>Groen</strong> — Succesvol afgerond</li>
+<li><strong>Geel</strong> — Bezig met uitvoeren</li>
+<li><strong>Rood</strong> — Fout opgetreden (klik op de stap voor details in de logs)</li>
+</ul>
+<p>De volledige verwerking doorloopt deze stappen:</p>
+<ol>
+<li><strong>Drop All Databases</strong> — Schoont de tussentijdse databases op</li>
+<li><strong>Extract</strong> — Leest alle bronbestanden in naar MongoDB (as-is, zonder transformatie)</li>
+<li><strong>Transform1 Harmonize</strong> — Harmoniseert veldnamen over alle bronnen heen</li>
+<li><strong>Transform2 Enhance Attributes</strong> — Normaliseert inhoud (datumformaten, codes, metadata)</li>
+<li><strong>Transform3 Set Keys</strong> — Genereert unieke sleutels per entiteit</li>
+<li><strong>Transform4 Move and Merge</strong> — Voegt dubbele entiteiten samen</li>
+<li><strong>Transform5 Set References</strong> — Zet referenties om naar integer-sleutels</li>
+<li><strong>Load to Database &amp; Index</strong> — Kopieert naar PostgreSQL en bouwt de Elasticsearch-index</li>
+</ol>
+<div class="admonition warning">
+<p class="admonition-title">Verwerkingstijd</p>
+<p>Voor een kleine proefset (1–5 projectdatabases) duurt de verwerking enkele minuten. Voor de volledige Delft-dataset (1.000+ databases, ~1 TB) kan het enkele uren duren.</p>
+</div>
+<h3 id="stapsgewijs-draaien-optioneel">Stapsgewijs draaien (optioneel)<a class="headerlink" href="#stapsgewijs-draaien-optioneel" title="Permanent link">&para;</a></h3>
+<p>Als je stap voor stap wilt werken, draai de individuele DAGs in deze volgorde:</p>
+<div class="codehilite"><pre><span></span><code><span class="mf">1.</span><span class="w"> </span><span class="n">Extract_Only</span>
+<span class="mf">2.</span><span class="w"> </span><span class="n">Transform1_Harmonize_Only</span>
+<span class="mf">3.</span><span class="w"> </span><span class="n">Transform2_Enhance_Attributes_Only</span>
+<span class="mf">4.</span><span class="w"> </span><span class="n">Transform3_Keys_Only</span>
+<span class="mf">5.</span><span class="w"> </span><span class="n">Transform_Move_Only</span>
+<span class="mf">6.</span><span class="w"> </span><span class="n">Transform4_Refs_Only</span>
+<span class="mf">7.</span><span class="w"> </span><span class="kr">Load</span><span class="n">_Only</span>
+</code></pre></div>
+
+<p>Dit is handig voor het debuggen van je configuratie: na stap 3 (Harmonize) kun je in MongoDB controleren of de veldnamen correct zijn geharmoniseerd.</p>
+<h2 id="7-resultaten-bekijken">7. Resultaten bekijken<a class="headerlink" href="#7-resultaten-bekijken" title="Permanent link">&para;</a></h2>
+<h3 id="flask-webapplicatie">Flask webapplicatie<a class="headerlink" href="#flask-webapplicatie" title="Permanent link">&para;</a></h3>
+<p>Open <a href="http://localhost:5051">http://localhost:5051</a>. Na een succesvolle verwerking zie je:</p>
+<ul>
+<li><strong>Interactieve kaart</strong> — Een kaart van Delft met alle opgravingslocaties. Blauwe markers zijn projecten zonder verwerkte artefacten, rode markers projecten mét verwerkte artefacten. Klik op een marker om naar het project te navigeren.</li>
+<li><strong>Projecten</strong> — Overzicht van alle geïmporteerde opgravingsprojecten met doorklik naar details</li>
+<li><strong>Vondsten, Sporen, Putten</strong> — Alle archeologische entiteiten met relaties onderling</li>
+<li><strong>Artefacten</strong> — Per materiaalcategorie (aardewerk, glas, metaal, etc.) met hun specifieke attributen</li>
+<li><strong>Bestanden</strong> — Foto's, tekeningen en rapporten, gekoppeld aan de bijbehorende entiteiten</li>
+<li><strong>Depot</strong> — Dozen, stellingen en bruiklenen</li>
+<li><strong>Zoeken</strong> — Fulltext-zoekmogelijkheid via Elasticsearch over alle data</li>
+</ul>
+<h3 id="tussenresultaten-in-mongodb">Tussenresultaten in MongoDB<a class="headerlink" href="#tussenresultaten-in-mongodb" title="Permanent link">&para;</a></h3>
+<p>Je kunt de ruwe en getransformeerde data direct in MongoDB bekijken:</p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># Verbind met MongoDB</span>
+docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>-it<span class="w"> </span>wasstraat_mongo<span class="w"> </span>mongosh<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--username<span class="w"> </span>root<span class="w"> </span>--password<span class="w"> </span>&lt;wachtwoord&gt;<span class="w"> </span>--authenticationDatabase<span class="w"> </span>admin
+
+<span class="c1"># Bekijk staging-data</span>
+use<span class="w"> </span>Arch_Staging
+db.getCollectionNames<span class="o">()</span>.forEach<span class="o">(</span><span class="nv">c</span><span class="w"> </span><span class="o">=</span>&gt;<span class="w"> </span>print<span class="o">(</span>c<span class="w"> </span>+<span class="w"> </span><span class="s2">&quot;: &quot;</span><span class="w"> </span>+<span class="w"> </span>db<span class="o">[</span>c<span class="o">]</span>.countDocuments<span class="o">()))</span>
+
+<span class="c1"># Bekijk getransformeerde data</span>
+use<span class="w"> </span>Arch_Analyse
+db.getCollectionNames<span class="o">()</span>.forEach<span class="o">(</span><span class="nv">c</span><span class="w"> </span><span class="o">=</span>&gt;<span class="w"> </span>print<span class="o">(</span>c<span class="w"> </span>+<span class="w"> </span><span class="s2">&quot;: &quot;</span><span class="w"> </span>+<span class="w"> </span>db<span class="o">[</span>c<span class="o">]</span>.countDocuments<span class="o">()))</span>
+</code></pre></div>
+
+<p>Het MongoDB-wachtwoord vind je in <code>config/mongo.env</code> (variabele <code>MONGO_INITDB_ROOT_PASSWORD</code>).</p>
+<h3 id="definitieve-data-in-postgresql">Definitieve data in PostgreSQL<a class="headerlink" href="#definitieve-data-in-postgresql" title="Permanent link">&para;</a></h3>
+<p>De uiteindelijke, gestructureerde data staat in PostgreSQL:</p>
+<div class="codehilite"><pre><span></span><code>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>-it<span class="w"> </span>wasstraat_postgres<span class="w"> </span>psql<span class="w"> </span>-U<span class="w"> </span>airflow<span class="w"> </span>-d<span class="w"> </span>flask
+
+--<span class="w"> </span>Overzicht<span class="w"> </span>van<span class="w"> </span>alle<span class="w"> </span>tabellen<span class="w"> </span>met<span class="w"> </span>aantallen
+SELECT<span class="w"> </span>schemaname,<span class="w"> </span>tablename<span class="w"> </span>FROM<span class="w"> </span>pg_tables<span class="w"> </span>WHERE<span class="w"> </span><span class="nv">schemaname</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;public&#39;</span><span class="w"> </span>ORDER<span class="w"> </span>BY<span class="w"> </span>tablename<span class="p">;</span>
+
+--<span class="w"> </span>Aantal<span class="w"> </span>records<span class="w"> </span>per<span class="w"> </span>hoofdtabel
+SELECT<span class="w"> </span><span class="s1">&#39;Def_Project&#39;</span><span class="w"> </span>as<span class="w"> </span>tabel,<span class="w"> </span>count<span class="o">(</span>*<span class="o">)</span><span class="w"> </span>FROM<span class="w"> </span>public.<span class="s2">&quot;Def_Project&quot;</span>
+UNION<span class="w"> </span>ALL<span class="w"> </span>SELECT<span class="w"> </span><span class="s1">&#39;Def_Vondst&#39;</span>,<span class="w"> </span>count<span class="o">(</span>*<span class="o">)</span><span class="w"> </span>FROM<span class="w"> </span>public.<span class="s2">&quot;Def_Vondst&quot;</span>
+UNION<span class="w"> </span>ALL<span class="w"> </span>SELECT<span class="w"> </span><span class="s1">&#39;Def_Artefact&#39;</span>,<span class="w"> </span>count<span class="o">(</span>*<span class="o">)</span><span class="w"> </span>FROM<span class="w"> </span>public.<span class="s2">&quot;Def_Artefact&quot;</span>
+UNION<span class="w"> </span>ALL<span class="w"> </span>SELECT<span class="w"> </span><span class="s1">&#39;Def_Spoor&#39;</span>,<span class="w"> </span>count<span class="o">(</span>*<span class="o">)</span><span class="w"> </span>FROM<span class="w"> </span>public.<span class="s2">&quot;Def_Spoor&quot;</span><span class="p">;</span>
+</code></pre></div>
+
+<h3 id="elasticsearch-zoekindex">Elasticsearch zoekindex<a class="headerlink" href="#elasticsearch-zoekindex" title="Permanent link">&para;</a></h3>
+<p>Controleer of de zoekindex is opgebouwd:</p>
+<div class="codehilite"><pre><span></span><code>curl<span class="w"> </span>-s<span class="w"> </span>http://localhost:9200/_cat/indices?v
+curl<span class="w"> </span>-s<span class="w"> </span>http://localhost:9200/_count<span class="w"> </span><span class="p">|</span><span class="w"> </span>python3<span class="w"> </span>-m<span class="w"> </span>json.tool
+</code></pre></div>
+
+<h2 id="veelvoorkomende-problemen">Veelvoorkomende problemen<a class="headerlink" href="#veelvoorkomende-problemen" title="Permanent link">&para;</a></h2>
+<h3 id="containers-starten-niet-op">Containers starten niet op<a class="headerlink" href="#containers-starten-niet-op" title="Permanent link">&para;</a></h3>
+<p><strong>Oorzaak</strong>: Onvoldoende geheugen of poortconflicten.</p>
+<p><strong>Oplossing</strong>: Controleer dat poorten 8080, 5051, 5432, 27017, 9200, 6379, 5052 en 8888 niet door andere applicaties worden gebruikt. Verhoog het Docker-geheugen naar minimaal 8 GB.</p>
+<h3 id="extractie-mislukt-met-mdb-export-error">Extractie mislukt met mdb-export error<a class="headerlink" href="#extractie-mislukt-met-mdb-export-error" title="Permanent link">&para;</a></h3>
+<p><strong>Oorzaak</strong>: Het <code>.mdb</code>-bestand is corrupt of in een niet-ondersteund formaat.</p>
+<p><strong>Oplossing</strong>: De <code>mdbtools</code>-suite werkt het best met Access 2000/2003 bestanden (<code>.mdb</code>). Modernere <code>.accdb</code> bestanden worden beperkt ondersteund.</p>
+<h3 id="tabellen-worden-niet-herkend-bij-harmonisatie">Tabellen worden niet herkend bij harmonisatie<a class="headerlink" href="#tabellen-worden-niet-herkend-bij-harmonisatie" title="Permanent link">&para;</a></h3>
+<p><strong>Oorzaak</strong>: De tabelnamen in je database matchen niet met de regex-patronen in het configuratiebestand.</p>
+<p><strong>Oplossing</strong>: Bekijk de tabelnamen in je database en pas de patronen aan in <code>Wasstraat_Config_HarmonizeV3.xlsx</code> (zie sectie 5).</p>
+<h3 id="flask-app-toont-lege-lijsten">Flask App toont lege lijsten<a class="headerlink" href="#flask-app-toont-lege-lijsten" title="Permanent link">&para;</a></h3>
+<p><strong>Oorzaak</strong>: De data is niet (volledig) verwerkt of de Load-stap is niet uitgevoerd.</p>
+<p><strong>Oplossing</strong>: Controleer in Airflow of alle stappen groen zijn. Controleer in PostgreSQL of de <code>Def_*</code>-tabellen records bevatten.</p>
+<h3 id="zoekfunctie-werkt-niet">Zoekfunctie werkt niet<a class="headerlink" href="#zoekfunctie-werkt-niet" title="Permanent link">&para;</a></h3>
+<p><strong>Oorzaak</strong>: Elasticsearch-index is niet opgebouwd.</p>
+<p><strong>Oplossing</strong>: Controleer of Elasticsearch draait (<code>curl localhost:9200</code>) en herstart eventueel de <code>Load_Only</code> DAG.</p>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../overzicht/doelstellingen/" class="btn btn-neutral float-left" title="Doelstellingen"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../architectuur/systeem/" class="btn btn-neutral float-right" title="Systeemarchitectuur">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../overzicht/doelstellingen/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../architectuur/systeem/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "..";</script>
+    <script src="../js/theme_extra.js"></script>
+    <script src="../js/theme.js"></script>
+      <script src="../assets/lightbox.js"></script>
+      <script src="../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>
