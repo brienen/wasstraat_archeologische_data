@@ -1,0 +1,16 @@
+# Dependencies voor het draaien van de Wasstraat tests
+# Installeer met: pip install -r requirements-test.txt
+
+# Test framework
+pytest>=7.0
+
+# Vereist door wasstraat modules
+pandas>=1.4
+numpy>=1.22
+openpyxl>=3.0
+roman>=3.0
+# timeperiod2daterange is een lokaal bestand (airflow_app/dags/timeperiod2daterange.py)
+
+# Integratietests
+pymongo>=4.0
+psycopg2-binary>=2.9

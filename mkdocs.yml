@@ -33,6 +33,8 @@ nav:
     - Omgevingen & Docker Compose: deployment/omgevingen.md
     - Airflow Transformatie vs. Web Applicatie: deployment/airflow-vs-app.md
     - Proefdata Inlezen: deployment/proefdata.md
+  - Testen:
+    - Unit & Integratietests: testen.md
   - Diagrammen: diagrammen.md
 
 markdown_extensions:

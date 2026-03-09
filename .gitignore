@@ -23,3 +23,7 @@ app/uwsgi-2.0.20/
 site
 *.bkp
 *sstraat_Analyse_en_Verbeterplan*
+
+# Python virtual environment
+.venv/
+__pycache__/

@@ -1,0 +1,34 @@
+# docker-compose.test.yml
+# Lichtgewicht testomgeving met alleen MongoDB en PostgreSQL.
+#
+# Gebruik:
+#   docker compose -f docker-compose.test.yml up -d
+#   python -m pytest tests/ -v
+#   docker compose -f docker-compose.test.yml down -v
+#
+# Of via het test-script:
+#   ./tests/run_integration.sh
+
+services:
+  mongo-test:
+    image: mongo:4.2.21
+    container_name: "wasstraat_mongo_test"
+    ports:
+      - "27117:27017"   # afwijkende poort om conflict met productie te vermijden
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: testroot
+      MONGO_INITDB_ROOT_PASSWORD: testpass
+    tmpfs:
+      - /data/db         # in-memory voor snelheid
+
+  postgres-test:
+    image: postgres:13
+    container_name: "wasstraat_postgres_test"
+    ports:
+      - "5433:5432"     # afwijkende poort
+    environment:
+      POSTGRES_DB: wasstraat_test
+      POSTGRES_USER: testuser
+      POSTGRES_PASSWORD: testpass
+    tmpfs:
+      - /var/lib/postgresql/data
