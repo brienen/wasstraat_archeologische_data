@@ -15,6 +15,10 @@ De Wasstraat functioneert als een digitale wasstraat voor archeologische data. V
 
 Ontwikkeld voor de **gemeente Delft**, waar meer dan 1.000 opgravingen met tienduizenden foto's, vondstlijsten en rapporten (bijna 1 Terabyte aan data) zijn gedigitaliseerd.
 
+## Documentatie 
+
+Zie de [volledige documentatie](https://brienen.github.io/wasstraat_archeologische_data/) voor het uitgeklapte procesmodel en gedetailleerde uitleg per stap.
+
 ## Architectuur
 
 Het platform bestaat uit twee hoofdapplicaties die als Docker-containers draaien:
@@ -49,8 +53,6 @@ Het verwerken van alle archeologische data is uitgewerkt in procesmodellen in [A
 6. **Transform4 Move and Merge** — Voeg dubbele entiteiten samen met behoud van [polymorfisme](https://nl.wikipedia.org/wiki/Polymorfisme_(informatica)). Artefacten en Bestanden kunnen zo verschillende soorten hebben met eigen attributen.
 7. **Transform5 Set References** — Ken integer-sleutels toe voor gebruik in de relationele database.
 8. **Load to Database & Index** — Kopieer data naar PostgreSQL en bouw de Elasticsearch-zoekindex op.
-
-Zie de [volledige documentatie](https://brienen.github.io/wasstraat_archeologische_data/) voor het uitgeklapte procesmodel en gedetailleerde uitleg per stap.
 
 ## Ondersteunde data
 
