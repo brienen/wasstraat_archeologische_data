@@ -169,7 +169,7 @@ def convertToDateDoc(d, attr, force):
             del d[attr] 
 
 def convertToDate(attr, force):
-    return pd.to_datetime(attr, dayfirst=True, cache=True, errors='coerce' if force else 'ignore')
+    return pd.to_datetime(attr, dayfirst=True, format='mixed', errors='coerce' if force else 'ignore')
 
 
 

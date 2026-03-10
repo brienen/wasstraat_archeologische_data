@@ -292,12 +292,14 @@ def mergeFotoinfo():
         df_merge['brondata'] = df_merge.apply(lambda x: [x['brondata'], x['brondata_beschr']], axis=1)
         df_merge['wasstraat'] = df_merge.apply(lambda x: [{'projectcd': x['projectcd'], 'table': getTable(elem)} for elem in x['brondata'] if getTable(elem)], axis=1)  
         df_merge['materiaal'] = df_merge.apply(lambda x: util.firstValue(x['materiaal'], x['materiaalgroep']) if 'materiaal' in df_merge.columns else x['materiaalgroep'],axis=1)
-        df_merge = df_merge[['_id', 'fileName', 'imageID', 'imageMiddleID', 'imageThumbID',
+        desired_columns = ['_id', 'fileName', 'imageID', 'imageMiddleID', 'imageThumbID',
             'fileType', 'directory', 'mime_type', 'fototype', 'soort', 'projectcd',
             'materiaal', 'putnr', 'vondstnr', 'fotonr', 'vondstkey_met_putnr',
             'key', 'key_project', 'key_project_type', 'key_vondst',
             'key_artefact', 'subnr', 'brondata', 'key_foto1', 'key_foto2', 'key_foto3',
-            'pad', 'spoornr', 'profiel', 'subnr', 'datum', 'omschrijving', 'vlaknr', 'richting', 'wasstraat', 'bestandsoort', 'bestandsoort_XX']]
+            'pad', 'spoornr', 'profiel', 'omschrijving', 'vlaknr', 'richting', 'wasstraat', 'bestandsoort', 'bestandsoort_XX']
+        available_columns = [c for c in desired_columns if c in df_merge.columns]
+        df_merge = df_merge[available_columns]
 
 
         updates= [ pymongo.ReplaceOne({"_id": record['_id']}, record, upsert=True) for record in [v.dropna().to_dict() for k,v in df_merge.iterrows()]]  # 

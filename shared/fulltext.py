@@ -79,14 +79,27 @@ def indexTable(table):
                     es.indices.delete(index=new_index, ignore=[400, 404])
                     raise
 
-                # Stap 2: Zoek bestaande indexen onder de alias
+                # Stap 2: Migratie - als er een fysieke index bestaat met de
+                # alias-naam (oude situatie vóór de upgrade naar aliassen),
+                # moet die EERST verwijderd worden. Anders blokkeert
+                # Elasticsearch het aanmaken van een alias met dezelfde naam.
+                if es.indices.exists(index=alias_name):
+                    is_alias = es.indices.exists_alias(name=alias_name)
+                    if not is_alias:
+                        logger.info(
+                            f"Migratie: fysieke index '{alias_name}' gevonden "
+                            f"(geen alias). Verwijderen om alias mogelijk te maken..."
+                        )
+                        es.indices.delete(index=alias_name, ignore=[400, 404])
+
+                # Stap 3: Zoek bestaande indexen onder de alias
                 old_indices = []
                 if es.indices.exists_alias(name=alias_name):
                     old_indices = list(
                         es.indices.get_alias(name=alias_name).keys()
                     )
 
-                # Stap 3: Atomic alias swap
+                # Stap 4: Atomic alias swap
                 actions = [{"add": {"index": new_index, "alias": alias_name}}]
                 for old_idx in old_indices:
                     actions.append({"remove": {"index": old_idx, "alias": alias_name}})
@@ -94,18 +107,10 @@ def indexTable(table):
                 es.indices.update_aliases(body={"actions": actions})
                 logger.info(f"Alias {alias_name} now points to {new_index}")
 
-                # Stap 4: Ruim oude indexen op
+                # Stap 5: Ruim oude indexen op
                 for old_idx in old_indices:
                     es.indices.delete(index=old_idx, ignore=[400, 404])
                     logger.info(f"Deleted old index {old_idx}")
-
-                # Stap 5: Migratie - als de alias nog niet bestond maar de oude
-                # index wel (eerste keer na upgrade), verwijder de oude index
-                if not old_indices and es.indices.exists(index=alias_name):
-                    # Er is een fysieke index met de alias-naam: rename scenario
-                    # Dit treedt alleen op bij de eerste run na de upgrade
-                    logger.info(f"Migratie: oude index {alias_name} gevonden zonder alias, opruimen...")
-                    es.indices.delete(index=alias_name, ignore=[400, 404])
 
             else:
                 logger.error(f"Trying to index table {table}, but table not available in {lst_tables}")

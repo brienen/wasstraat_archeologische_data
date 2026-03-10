@@ -209,6 +209,8 @@ def parseFotobestanden():
                         doc['artefactsoort'] = const.ARTF_SCHELP
                     elif 'textiel' in strFN:
                         doc['artefactsoort'] = const.ARTF_TEXTIEL
+                    else:
+                        doc['artefactsoort'] = const.ARTF_ONBEKEND
 
                     analyseCol.replace_one({"_id": doc['_id']}, doc, upsert=True)
                     continue

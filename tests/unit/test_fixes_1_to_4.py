@@ -186,16 +186,110 @@ class TestFix2_AtomicTableSwap(unittest.TestCase):
     def test_has_phase_logging(self):
         """Verifieer dat er duidelijke fase-logging is."""
         self.assertIn('FASE 1', self.func_source, "FASE 1 logging ontbreekt")
-        self.assertIn('FASE 2', self.func_source, "FASE 2 logging ontbreekt")
+        self.assertIn('FASE 2a', self.func_source, "FASE 2a logging ontbreekt")
+        self.assertIn('FASE 2b', self.func_source, "FASE 2b logging ontbreekt")
         self.assertIn('FASE 3', self.func_source, "FASE 3 logging ontbreekt")
 
-    def test_disables_fk_during_swap(self):
-        """Verifieer dat foreign key checks worden uitgeschakeld tijdens swap."""
-        self.assertIn('session_replication_role', self.func_source,
-            "FK-deactivatie via session_replication_role ontbreekt")
-        # Check dat het ook weer wordt hersteld
-        self.assertIn("session_replication_role = DEFAULT", self.func_source,
-            "FK-heractivatie (DEFAULT) ontbreekt")
+    def test_handles_fk_constraints_during_swap(self):
+        """Verifieer dat FK constraints worden gedropt en hersteld (zonder superuser)."""
+        self.assertNotIn('session_replication_role', self.func_source,
+            "session_replication_role vereist superuser-rechten!")
+        self.assertIn('FOREIGN KEY', self.func_source,
+            "FK constraint query ontbreekt")
+        self.assertIn('DROP CONSTRAINT', self.func_source,
+            "DROP CONSTRAINT voor FK ontbreekt")
+        self.assertIn('ADD CONSTRAINT', self.func_source,
+            "ADD CONSTRAINT voor FK-herstel ontbreekt")
+
+    def test_fk_query_filters_def_tables_only(self):
+        """Verifieer dat de FK-query alleen Def_-tabellen selecteert.
+
+        Systeemtabellen (ab_user, ab_role etc.) mogen niet worden aangeraakt:
+        ze zijn in gebruik door de webapplicatie en veroorzaken lock timeouts.
+        """
+        # De query bevat LIKE 'Def\_%%' met SQL escaping
+        self.assertIn("table_name LIKE", self.func_source,
+            "FK-query mist een LIKE-filter op table_name. Zonder filter worden "
+            "ook systeemtabellen (ab_user) meegenomen, wat lock timeouts veroorzaakt.")
+        self.assertIn("Def", self.func_source.split("table_name LIKE")[1][:30] if "table_name LIKE" in self.func_source else '',
+            "FK-query filtert niet op Def_-tabellen.")
+
+    def test_uses_not_valid_for_fk_restore(self):
+        """Verifieer dat NOT VALID wordt gebruikt bij FK-herstel (voorkomt trage validatie)."""
+        self.assertIn('NOT VALID', self.func_source,
+            "NOT VALID ontbreekt bij ADD CONSTRAINT. Zonder NOT VALID "
+            "valideert PostgreSQL alle rijen, wat minuten kan duren.")
+
+    def test_has_lock_timeout(self):
+        """Verifieer dat er een lock_timeout is ingesteld (voorkomt eindeloos wachten)."""
+        self.assertIn('lock_timeout', self.func_source,
+            "lock_timeout ontbreekt. Zonder timeout kan de swap "
+            "eindeloos wachten als de webapplicatie een query open heeft.")
+
+    def test_validate_constraint_after_swap(self):
+        """Verifieer dat FK constraints achteraf alsnog gevalideerd worden."""
+        self.assertIn('VALIDATE CONSTRAINT', self.func_source,
+            "VALIDATE CONSTRAINT ontbreekt. Na NOT VALID moeten "
+            "constraints alsnog gevalideerd worden in een aparte stap.")
+
+    def test_fk_restore_uses_savepoints(self):
+        """Verifieer dat SAVEPOINT wordt gebruikt bij FK-restore.
+
+        Zonder SAVEPOINTs vergiftigt één falende ADD CONSTRAINT de hele
+        transactie, waardoor alle volgende FK-constraints ook falen.
+        """
+        self.assertIn('SAVEPOINT', self.func_source,
+            "SAVEPOINT ontbreekt bij FK-restore. Eén falende ADD CONSTRAINT "
+            "zou alle overige FK-constraints blokkeren (poisoned transaction).")
+        self.assertIn('ROLLBACK TO SAVEPOINT', self.func_source,
+            "ROLLBACK TO SAVEPOINT ontbreekt. Na een falende ADD CONSTRAINT "
+            "moet de SAVEPOINT worden teruggedraaid.")
+
+    def test_fk_restore_in_separate_transaction(self):
+        """Verifieer dat FK-restore in een aparte transactie zit.
+
+        Als FK-restore in dezelfde transactie als de swap zit en faalt,
+        draait de hele swap terug. Door het te scheiden kan de swap slagen
+        zelfs als sommige FK-constraints niet hersteld kunnen worden.
+        """
+        self.assertIn('FASE 2b', self.func_source,
+            "FASE 2b ontbreekt: FK-restore moet in een aparte transactie")
+
+    def test_truncate_uses_cascade(self):
+        """Verifieer dat TRUNCATE CASCADE wordt gebruikt voor extra tabellen.
+
+        Tabellen als Def_Bruikleen kunnen FKs hebben naar tabellen buiten
+        de hoofdlijst (bijv. Def_Partij). CASCADE voorkomt FK-conflicten.
+        """
+        # Zoek de TRUNCATE-regel voor extra tabellen
+        self.assertRegex(self.func_source, r'TRUNCATE.*CASCADE',
+            "TRUNCATE zonder CASCADE. Extra tabellen kunnen FK-referenties "
+            "hebben naar tabellen buiten de lijst (bijv. Def_Partij).")
+
+    def test_enum_detection_excludes_geometry(self):
+        """Verifieer dat ENUM-detectie geen geometry-kolommen meeneemt.
+
+        De information_schema query voor USER-DEFINED types vangt ook
+        PostGIS geometry-kolommen. Als die als ENUM behandeld worden,
+        krijgen ze de waarde 'Onbekend' in plaats van None, wat PostGIS
+        niet als WKT kan parsen ('parse error at position 2').
+        """
+        source = read_source('../airflow_app/dags/wasstraat/loadToDatabase_functions.py')
+        # De query moet filteren op pg_type.typtype = 'e' (enum)
+        self.assertIn("typtype = 'e'", source,
+            "ENUM-detectie filtert niet op pg_type.typtype = 'e'. "
+            "Zonder dit filter worden ook geometry-kolommen als ENUM behandeld, "
+            "wat leidt tot 'Onbekend' in de location kolom (PostGIS parse error).")
+
+    def test_has_pre_cleanup(self):
+        """Verifieer dat restanten van een vorige afgebroken run worden opgeruimd."""
+        self.assertIn('Pre-cleanup', self.func_source,
+            "Pre-cleanup fase ontbreekt. Als een vorige run is afgebroken "
+            "kunnen _new/_old tabellen achterblijven die de volgende run blokkeren.")
+        # CASCADE is nodig om orphan pg_type entries te verwijderen
+        self.assertIn('CASCADE', self.func_source,
+            "CASCADE ontbreekt bij DROP TABLE. Zonder CASCADE kunnen "
+            "orphan PostgreSQL type-entries de CREATE TABLE blokkeren.")
 
     def test_old_data_preserved_until_swap(self):
         """Verifieer dat de originele tabellen intact blijven tot de swap."""
@@ -295,6 +389,30 @@ class TestFix3_ElasticsearchAlias(unittest.TestCase):
         """Verifieer dat er migratiecode is voor de eerste run na upgrade."""
         self.assertIn('Migratie', self.func_source,
             "Migratie-afhandeling voor de eerste run na upgrade ontbreekt")
+
+    def test_migration_before_alias_swap(self):
+        """Verifieer dat migratie (verwijderen fysieke index) VOOR de alias swap plaatsvindt.
+
+        Als er een fysieke index 'def_abr' bestaat (oude situatie), moet die
+        verwijderd worden VOOR update_aliases, anders faalt Elasticsearch met
+        'an index or data stream exists with the same name as the alias'.
+        """
+        lines = self.func_source.split('\n')
+        migration_line = None
+        alias_swap_line = None
+        for i, line in enumerate(lines):
+            if 'Migratie' in line and migration_line is None:
+                migration_line = i
+            if 'update_aliases' in line and alias_swap_line is None:
+                alias_swap_line = i
+
+        self.assertIsNotNone(migration_line,
+            "Migratie-code niet gevonden")
+        self.assertIsNotNone(alias_swap_line,
+            "update_aliases niet gevonden")
+        self.assertLess(migration_line, alias_swap_line,
+            "Migratie moet VOOR update_aliases plaatsvinden, niet erna. "
+            "Anders faalt de alias swap als er een fysieke index met dezelfde naam bestaat.")
 
 
 # ===========================================================================
