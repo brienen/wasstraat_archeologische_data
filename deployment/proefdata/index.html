@@ -151,6 +151,11 @@
     </ul>
                   </li>
               </ul>
+              <p class="caption"><span class="caption-text">Testen</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../testen/">Unit & Integratietests</a>
+                  </li>
+              </ul>
               <ul>
                 <li class="toctree-l1"><a class="reference internal" href="../../diagrammen/">Diagrammen</a>
                 </li>
@@ -183,11 +188,11 @@
 <p>Deze pagina beschrijft hoe je een eerste set proefdata kunt inlezen, transformeren en beschikbaar maken in de Wasstraat.</p>
 <h2 id="vereisten">Vereisten<a class="headerlink" href="#vereisten" title="Permanent link">&para;</a></h2>
 <p>Zorg dat alle Docker-containers draaien:</p>
-<div class="codehilite"><pre><span></span><code>./runws.sh<span class="w"> </span>dev<span class="w">    </span><span class="c1"># Of: ./runws.sh app</span>
+<div class="codehilite"><pre><span></span><code>make<span class="w"> </span>dev<span class="w">    </span><span class="c1"># Of: make app</span>
 </code></pre></div>
 
 <p>Controleer of alle services actief zijn:</p>
-<div class="codehilite"><pre><span></span><code>docker<span class="w"> </span>ps<span class="w"> </span>--format<span class="w"> </span><span class="s2">&quot;table {{.Names}}\t{{.Status}}\t{{.Ports}}&quot;</span>
+<div class="codehilite"><pre><span></span><code>make<span class="w"> </span>ps
 </code></pre></div>
 
 <p>Je zou minimaal de volgende containers moeten zien:</p>
@@ -384,7 +389,7 @@ curl<span class="w"> </span>-s<span class="w"> </span>http://localhost:9200/_cou
           </div><footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
         <a href="../airflow-vs-app/" class="btn btn-neutral float-left" title="Airflow Transformatie vs. Web Applicatie"><span class="icon icon-circle-arrow-left"></span> Previous</a>
-        <a href="../../diagrammen/" class="btn btn-neutral float-right" title="Diagrammen">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="../../testen/" class="btn btn-neutral float-right" title="Unit & Integratietests">Next <span class="icon icon-circle-arrow-right"></span></a>
     </div>
 
   <hr/>
@@ -410,7 +415,7 @@ curl<span class="w"> </span>-s<span class="w"> </span>http://localhost:9200/_cou
       <span><a href="../airflow-vs-app/" style="color: #fcfcfc">&laquo; Previous</a></span>
     
     
-      <span><a href="../../diagrammen/" style="color: #fcfcfc">Next &raquo;</a></span>
+      <span><a href="../../testen/" style="color: #fcfcfc">Next &raquo;</a></span>
     
   </span>
 </div>

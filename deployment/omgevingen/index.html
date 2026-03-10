@@ -135,6 +135,11 @@
                   <li class="toctree-l1"><a class="reference internal" href="../proefdata/">Proefdata Inlezen</a>
                   </li>
               </ul>
+              <p class="caption"><span class="caption-text">Testen</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../testen/">Unit & Integratietests</a>
+                  </li>
+              </ul>
               <ul>
                 <li class="toctree-l1"><a class="reference internal" href="../../diagrammen/">Diagrammen</a>
                 </li>
@@ -266,30 +271,43 @@
 <h3 id="docker-composeexampleyml-voorbeeldconfiguratie"><code>docker-compose.example.yml</code> — Voorbeeldconfiguratie<a class="headerlink" href="#docker-composeexampleyml-voorbeeldconfiguratie" title="Permanent link">&para;</a></h3>
 <p>Template voor een minimale configuratie, bruikbaar als startpunt voor nieuwe omgevingen.</p>
 <h2 id="starten-en-stoppen">Starten en Stoppen<a class="headerlink" href="#starten-en-stoppen" title="Permanent link">&para;</a></h2>
-<p>Het startscript <code>runws.sh</code> combineert de juiste compose-bestanden per omgeving:</p>
-<div class="codehilite"><pre><span></span><code><span class="c1"># Ontwikkelomgeving (met debugpy)</span>
-./runws.sh<span class="w"> </span>dev
+<p>De <code>Makefile</code> bevat targets voor elke omgeving. Bij het starten wordt automatisch <code>init-config.sh</code> aangeroepen om eventueel ontbrekende <code>.env</code>-bestanden te genereren.</p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># Ontwikkelomgeving (met debugpy en hot-reload)</span>
+make<span class="w"> </span>dev
 
-<span class="c1"># Lokale modus (basis compose)</span>
-./runws.sh<span class="w"> </span>app
+<span class="c1"># Lokale modus (alle services)</span>
+make<span class="w"> </span>app
+
+<span class="c1"># Voorbeeldconfiguratie</span>
+make<span class="w"> </span>example
 
 <span class="c1"># Acceptatieomgeving</span>
-./runws.sh<span class="w"> </span>acc
+make<span class="w"> </span>acc
 
 <span class="c1"># Productieomgeving (met gepubliceerde images)</span>
-./runws.sh<span class="w"> </span>prod
+make<span class="w"> </span>prod
 
 <span class="c1"># Stoppen van alle containers</span>
-./runws.sh<span class="w"> </span>stop
+make<span class="w"> </span>stop
 
 <span class="c1"># Starten van gestopte containers</span>
-./runws.sh<span class="w"> </span>start
+make<span class="w"> </span>start
+
+<span class="c1"># Stop en verwijder alle containers</span>
+make<span class="w"> </span>down
+
+<span class="c1"># Toon live logs</span>
+make<span class="w"> </span>logs
+
+<span class="c1"># Toon status van alle services</span>
+make<span class="w"> </span>ps
 </code></pre></div>
 
 <div class="admonition tip">
 <p class="admonition-title">Achterliggend commando</p>
-<p>Elk commando voert het bijbehorende <code>docker-compose</code> commando uit. Bijvoorbeeld <code>./runws.sh dev</code> draait:
-<code>docker-compose -f docker-compose.yml -f docker-compose.develop.yml up -d</code></p>
+<p>Elk target voert het bijbehorende <code>docker compose</code> commando uit. Bijvoorbeeld <code>make dev</code> draait:
+<code>docker compose -f docker-compose.yml -f docker-compose.develop.yml up -d</code>
+Typ <code>make help</code> voor een overzicht van alle beschikbare commando's.</p>
 </div>
 <h2 id="configuratie-via-environment-bestanden">Configuratie via Environment-bestanden<a class="headerlink" href="#configuratie-via-environment-bestanden" title="Permanent link">&para;</a></h2>
 <p>Alle services lezen configuratie uit bestanden in <code>config/</code>:</p>
@@ -361,12 +379,12 @@
 <h3 id="gedeelde-code">Gedeelde code<a class="headerlink" href="#gedeelde-code" title="Permanent link">&para;</a></h3>
 <p>De <code>shared/</code> directory wordt in zowel Airflow als Flask gemount en bevat de gezamenlijke configuratie (<code>config.py</code>), database-utilities en constanten.</p>
 <h2 id="backup-en-restore">Backup en Restore<a class="headerlink" href="#backup-en-restore" title="Permanent link">&para;</a></h2>
-<p>Het startscript biedt ingebouwde backup-functionaliteit:</p>
+<p>De Makefile bevat targets voor backup en restore:</p>
 <div class="codehilite"><pre><span></span><code><span class="c1"># Backup van PostgreSQL en MongoDB (met timestamp)</span>
-./runws.sh<span class="w"> </span>backup
+make<span class="w"> </span>backup
 
 <span class="c1"># Restore vanuit een eerder backup-timestamp</span>
-./runws.sh<span class="w"> </span>restore<span class="w"> </span><span class="m">2024</span>-03-15_14-30-00
+make<span class="w"> </span>restore<span class="w"> </span><span class="nv">TS</span><span class="o">=</span><span class="m">2024</span>-03-15_14-30-00
 </code></pre></div>
 
 <p>Bij een backup worden de Flask- en Airflow-containers tijdelijk gestopt. De backup bevat:</p>
@@ -377,14 +395,14 @@
 <p>De backups worden opgeslagen in de <code>backup/</code> directory.</p>
 <h2 id="csv-export">CSV-export<a class="headerlink" href="#csv-export" title="Permanent link">&para;</a></h2>
 <p>Alle definitieve tabellen kunnen als CSV worden geëxporteerd:</p>
-<div class="codehilite"><pre><span></span><code>./runws.sh<span class="w"> </span><span class="nb">export</span>
+<div class="codehilite"><pre><span></span><code>make<span class="w"> </span><span class="nb">export</span>
 </code></pre></div>
 
 <p>Dit exporteert alle <code>Def_*</code> tabellen (Project, Put, Spoor, Vondst, Artefact, Monster, etc.) naar CSV-bestanden in <code>backup/postgres_&lt;timestamp&gt;/</code>.</p>
 <h2 id="release-en-publicatie">Release en Publicatie<a class="headerlink" href="#release-en-publicatie" title="Permanent link">&para;</a></h2>
 <p>Voor het publiceren van een nieuwe versie:</p>
-<div class="codehilite"><pre><span></span><code>./runws.sh<span class="w"> </span>release<span class="w"> </span>&lt;versie&gt;<span class="w"> </span><span class="s2">&quot;&lt;beschrijving&gt;&quot;</span>
-<span class="c1"># Voorbeeld: ./runws.sh release 1.1.0 &quot;Nieuwe zoekfunctionaliteit&quot;</span>
+<div class="codehilite"><pre><span></span><code>make<span class="w"> </span>release<span class="w"> </span><span class="nv">VERSION</span><span class="o">=</span>&lt;versie&gt;<span class="w"> </span><span class="nv">MSG</span><span class="o">=</span><span class="s2">&quot;&lt;beschrijving&gt;&quot;</span>
+<span class="c1"># Voorbeeld: make release VERSION=1.1.0 MSG=&quot;Nieuwe zoekfunctionaliteit&quot;</span>
 </code></pre></div>
 
 <p>Dit voert de volgende stappen uit:</p>

@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="nl" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="author" content="E-Space / Arjen Brienen" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>Unit & Integratietests - Wasstraat Archeologische Data</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+        <link href="../assets/extra.css" rel="stylesheet" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Unit \u0026 Integratietests";
+        var mkdocs_page_input_path = "testen.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href=".." class="icon icon-home"> Wasstraat Archeologische Data
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="..">Home</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Projectoverzicht</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../overzicht/inleiding/">Inleiding</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../overzicht/probleemstelling/">Probleemstelling</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../overzicht/doelstellingen/">Doelstellingen</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Aan de slag</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../aan-de-slag/">Handleiding</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Architectuur</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../architectuur/systeem/">Systeemarchitectuur</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../architectuur/dataflow/">Dataflow Pipeline</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../architectuur/componenten/">Componentenmodel</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../architectuur/gegevensmodel/">Gegevensmodel & Semantiek</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../architectuur/stack/">Technische Stack</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Componenten</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../componenten/extractie/">Extractielaag</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../componenten/singlestore/">SingleStore & Clusterlaag</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../componenten/transformatie/">Transformatielaag</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../componenten/crossviews/">Crossviews</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../componenten/validatie/">Validatielaag</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../componenten/configuratie/">Configuratiemodule</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../componenten/zoeken/">Zoek- en Indexeringslaag</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Deployment</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../deployment/omgevingen/">Omgevingen & Docker Compose</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../deployment/airflow-vs-app/">Airflow Transformatie vs. Web Applicatie</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../deployment/proefdata/">Proefdata Inlezen</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Testen</span></p>
+              <ul class="current">
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Unit & Integratietests</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#quickstart">Quickstart</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#structuur">Structuur</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#vereisten">Vereisten</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#unit-tests">Unit tests</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#fallback-zonder-venv">Fallback zonder venv</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#integratietests">Integratietests</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#handmatig">Handmatig</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#wat-wordt-getest">Wat wordt getest?</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#unit-tests-128-tests">Unit tests (128 tests)</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#integratietests-4-tests">Integratietests (4 tests)</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#nieuwe-tests-toevoegen">Nieuwe tests toevoegen</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#opruimen">Opruimen</a>
+    </li>
+    </ul>
+                  </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../diagrammen/">Diagrammen</a>
+                </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="..">Wasstraat Archeologische Data</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">Testen</li>
+      <li class="breadcrumb-item active">Unit & Integratietests</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="testen">Testen<a class="headerlink" href="#testen" title="Permanent link">&para;</a></h1>
+<p>De Wasstraat heeft een testsuite met twee niveaus: unit tests voor individuele functies en integratietests die de volledige harmonisatie-pipeline testen met een echte MongoDB.</p>
+<h2 id="quickstart">Quickstart<a class="headerlink" href="#quickstart" title="Permanent link">&para;</a></h2>
+<div class="codehilite"><pre><span></span><code>make<span class="w"> </span>install<span class="w">    </span><span class="c1"># eenmalig: maakt .venv aan met alle dependencies</span>
+make<span class="w"> </span><span class="nb">test</span><span class="w">       </span><span class="c1"># draai unit tests</span>
+make<span class="w"> </span>integration<span class="w"> </span><span class="c1"># draai integratietests (start/stopt Docker automatisch)</span>
+</code></pre></div>
+
+<p>Typ <code>make help</code> voor alle beschikbare targets.</p>
+<h2 id="structuur">Structuur<a class="headerlink" href="#structuur" title="Permanent link">&para;</a></h2>
+<div class="codehilite"><pre><span></span><code>Makefile                                 # Alle commando&#39;s (make help)
+requirements-test.txt                    # Python test-dependencies
+docker-compose.test.yml                  # Lichtgewicht test-databases
+tests/
+├── conftest.py                          # Mocks voor shared.config, roman, etc.
+├── run_tests.py                         # Fallback runner (zonder venv/pytest)
+├── unit/
+│   ├── test_archutils.py                # convertToInt, convertToBool, fixDatering
+│   ├── test_rijksdriehoek.py            # RD ↔ WGS84 coördinaatconversie
+│   ├── test_harmonizer.py               # Pipeline-opbouw uit Excel config
+│   └── test_foto_parsing.py             # Regex-patronen voor bestandsclassificatie
+└── integration/
+    └── test_harmonize_pipeline.py       # Harmonisatie met echte MongoDB
+</code></pre></div>
+
+<h2 id="vereisten">Vereisten<a class="headerlink" href="#vereisten" title="Permanent link">&para;</a></h2>
+<p>Bij <code>make install</code> wordt automatisch een <code>.venv</code> aangemaakt met Python 3.11 (of 3.12/3.10 als fallback) en worden alle dependencies uit <code>requirements-test.txt</code> geïnstalleerd. Je hoeft zelf geen venv aan te maken.</p>
+<p>De integratietests hebben daarnaast Docker nodig.</p>
+<h2 id="unit-tests">Unit tests<a class="headerlink" href="#unit-tests" title="Permanent link">&para;</a></h2>
+<div class="codehilite"><pre><span></span><code>make<span class="w"> </span><span class="nb">test</span><span class="w">       </span><span class="c1"># uitgebreide output</span>
+make<span class="w"> </span>test-quick<span class="w"> </span><span class="c1"># korte output</span>
+</code></pre></div>
+
+<p>Of handmatig:</p>
+<div class="codehilite"><pre><span></span><code><span class="nb">source</span><span class="w"> </span>.venv/bin/activate
+python<span class="w"> </span>-m<span class="w"> </span>pytest<span class="w"> </span>tests/unit/<span class="w"> </span>-v
+python<span class="w"> </span>-m<span class="w"> </span>pytest<span class="w"> </span>tests/unit/test_archutils.py<span class="w"> </span>-v<span class="w">   </span><span class="c1"># één module</span>
+</code></pre></div>
+
+<h3 id="fallback-zonder-venv">Fallback zonder venv<a class="headerlink" href="#fallback-zonder-venv" title="Permanent link">&para;</a></h3>
+<p>Als je geen venv wilt of kunt gebruiken en de basispackages (pandas, numpy, openpyxl) al beschikbaar zijn:</p>
+<div class="codehilite"><pre><span></span><code>python3<span class="w"> </span>tests/run_tests.py
+</code></pre></div>
+
+<h2 id="integratietests">Integratietests<a class="headerlink" href="#integratietests" title="Permanent link">&para;</a></h2>
+<div class="codehilite"><pre><span></span><code>make<span class="w"> </span>integration
+</code></pre></div>
+
+<p>Dit target:</p>
+<ol>
+<li>Maakt de <code>.venv</code> aan als die nog niet bestaat</li>
+<li>Start MongoDB 4.2 en PostgreSQL 13 in Docker (tmpfs voor snelheid, poorten 27117/5433)</li>
+<li>Wacht tot beide databases beschikbaar zijn</li>
+<li>Draait de integratietests met pytest</li>
+<li>Ruimt de containers en volumes op</li>
+</ol>
+<h3 id="handmatig">Handmatig<a class="headerlink" href="#handmatig" title="Permanent link">&para;</a></h3>
+<div class="codehilite"><pre><span></span><code>docker<span class="w"> </span>compose<span class="w"> </span>-f<span class="w"> </span>docker-compose.test.yml<span class="w"> </span>up<span class="w"> </span>-d
+
+<span class="nb">source</span><span class="w"> </span>.venv/bin/activate
+<span class="nv">MONGO_TEST_URI</span><span class="o">=</span><span class="s2">&quot;mongodb://testroot:testpass@localhost:27117/&quot;</span><span class="w"> </span><span class="se">\</span>
+python<span class="w"> </span>-m<span class="w"> </span>pytest<span class="w"> </span>tests/integration/<span class="w"> </span>-v<span class="w"> </span>-m<span class="w"> </span>integration
+
+docker<span class="w"> </span>compose<span class="w"> </span>-f<span class="w"> </span>docker-compose.test.yml<span class="w"> </span>down<span class="w"> </span>-v
+</code></pre></div>
+
+<h2 id="wat-wordt-getest">Wat wordt getest?<a class="headerlink" href="#wat-wordt-getest" title="Permanent link">&para;</a></h2>
+<h3 id="unit-tests-128-tests">Unit tests (128 tests)<a class="headerlink" href="#unit-tests-128-tests" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Module</th>
+<th>Wat wordt getest</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>archutils.py</code></td>
+<td><code>convertToInt</code> (type-conversie, force/no-force), <code>convertToBool</code> (ja/nee/true/false), <code>fixDatering</code> (eeuw-kwart notatie, Romeinse cijfers, LMEb, RT, gecombineerde dateringen)</td>
+</tr>
+<tr>
+<td><code>rijksdriehoek.py</code></td>
+<td>RD→WGS84 conversie met referentiepunten (Amsterdam, Rotterdam, Maastricht, Delft), WGS84→RD inversie, roundtrip-nauwkeurigheid</td>
+</tr>
+<tr>
+<td><code>harmonizer.py</code></td>
+<td><code>getKolomValues</code> ($ifNull-ketens), <code>getAggrTables</code> (regex-matching), <code>loadHarmonizer</code> (Excel → DataFrame), pipeline-structuur ($match, $merge), overerving (Artefact→Aardewerk)</td>
+</tr>
+<tr>
+<td>foto parsing</td>
+<td>Objectfoto-regex (met put/subnr/BP), tekening-types (A-E, P, T, LZW), projectfoto's (F/G), DAN/DAR rapporten, artefactsoort-detectie uit bestandspad</td>
+</tr>
+</tbody>
+</table>
+<h3 id="integratietests-4-tests">Integratietests (4 tests)<a class="headerlink" href="#integratietests-4-tests" title="Permanent link">&para;</a></h3>
+<p>De integratietests plaatsen testdocumenten in MongoDB en draaien de harmonisatie-pipeline:</p>
+<ul>
+<li>Vondst-harmonisatie: controleert dat de pipeline draait en output produceert met correcte structuur</li>
+<li>Spoor-harmonisatie: controleert dat spoor-documenten correct verwerkt worden</li>
+<li>Alle objecttypen: draait alle standaard pipelines om te controleren dat ze geldig zijn</li>
+</ul>
+<h2 id="nieuwe-tests-toevoegen">Nieuwe tests toevoegen<a class="headerlink" href="#nieuwe-tests-toevoegen" title="Permanent link">&para;</a></h2>
+<ol>
+<li>Maak een nieuw bestand aan in <code>tests/unit/</code> of <code>tests/integration/</code></li>
+<li>Gebruik <code>pytest.mark.unit</code> of <code>pytest.mark.integration</code> als marker</li>
+<li>De <code>conftest.py</code> mockt automatisch <code>shared.config</code> en <code>shared.const</code></li>
+<li>Voor integratietests: gebruik de <code>mongo_client</code>, <code>staging_db</code> en <code>analyse_db</code> fixtures</li>
+</ol>
+<h2 id="opruimen">Opruimen<a class="headerlink" href="#opruimen" title="Permanent link">&para;</a></h2>
+<div class="codehilite"><pre><span></span><code>make<span class="w"> </span>clean<span class="w">          </span><span class="c1"># verwijder .venv en caches</span>
+make<span class="w"> </span>clean-test-db<span class="w">  </span><span class="c1"># stop test-database containers</span>
+</code></pre></div>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../deployment/proefdata/" class="btn btn-neutral float-left" title="Proefdata Inlezen"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../diagrammen/" class="btn btn-neutral float-right" title="Diagrammen">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../deployment/proefdata/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../diagrammen/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "..";</script>
+    <script src="../js/theme_extra.js"></script>
+    <script src="../js/theme.js"></script>
+      <script src="../assets/lightbox.js"></script>
+      <script src="../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

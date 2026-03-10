@@ -69,46 +69,6 @@
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#2-wasstraat-starten">2. Wasstraat starten</a>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#3-webpaginas-bekijken">3. Webpagina's bekijken</a>
-        <ul>
-    <li class="toctree-l3"><a class="reference internal" href="#airflow-data-verwerken-etl">Airflow — Data verwerken (ETL)</a>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#flask-app-data-inzien">Flask App — Data inzien</a>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#jupyter-lab-data-analyseren">Jupyter Lab — Data analyseren</a>
-    </li>
-        </ul>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#4-bestanden-klaarzetten">4. Bestanden klaarzetten</a>
-        <ul>
-    <li class="toctree-l3"><a class="reference internal" href="#wat-moet-waar">Wat moet waar?</a>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#hoe-worden-bestanden-gevonden">Hoe worden bestanden gevonden?</a>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#fotos-en-media">Foto's en media</a>
-    </li>
-        </ul>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#5-wasstraat_config_harmonize-configureren">5. Wasstraat_Config_Harmonize configureren</a>
-        <ul>
-    <li class="toctree-l3"><a class="reference internal" href="#structuur-van-het-configuratiebestand">Structuur van het configuratiebestand</a>
-        <ul>
-    <li class="toctree-l4"><a class="reference internal" href="#tabblad-objecten-het-hoofdoverzicht">Tabblad "Objecten" — Het hoofdoverzicht</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#overerving-van-artefacten">Overerving van artefacten</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#attributen-tabbladen-een-per-objecttype">Attributen-tabbladen — Eén per objecttype</a>
-    </li>
-        </ul>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#aanpassen-voor-je-eigen-situatie">Aanpassen voor je eigen situatie</a>
-        <ul>
-    <li class="toctree-l4"><a class="reference internal" href="#stap-1-tabellen-herkennen">Stap 1: Tabellen herkennen</a>
-    </li>
-        </ul>
-    </li>
-        </ul>
-    </li>
     </ul>
                   </li>
               </ul>
@@ -151,6 +111,11 @@
                   <li class="toctree-l1"><a class="reference internal" href="../deployment/proefdata/">Proefdata Inlezen</a>
                   </li>
               </ul>
+              <p class="caption"><span class="caption-text">Testen</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../testen/">Unit & Integratietests</a>
+                  </li>
+              </ul>
               <ul>
                 <li class="toctree-l1"><a class="reference internal" href="../diagrammen/">Diagrammen</a>
                 </li>
@@ -188,11 +153,14 @@
 <li><strong><a href="https://www.docker.com/products/docker-desktop/">Docker Desktop</a></strong> — Minimaal versie 20.10</li>
 <li><strong>Docker Compose</strong> — Wordt meegeleverd met Docker Desktop</li>
 <li><strong>Git</strong> — Voor het clonen van de repository</li>
-<li><strong>Minimaal 8 GB RAM</strong> beschikbaar voor Docker (stel dit in via Docker Desktop → Settings → Resources)</li>
+<li><strong>Minimaal 12 GB RAM</strong> beschikbaar voor Docker (stel dit in via Docker Desktop → Settings → Resources)</li>
+<li><strong>Minimaal 2 Cores</strong> beschikbaar voor Docker (stel dit in via Docker Desktop → Settings → Resources)</li>
+<li><strong>Minimaal 256 GB</strong> schijfruimte beschikbaar voor Docker (stel dit in via Docker Desktop → Settings → Resources)</li>
 </ul>
 <div class="admonition tip">
-<p class="admonition-title">Docker Desktop geheugen</p>
-<p>De Wasstraat draait 8 containers tegelijk. Stel in Docker Desktop het beschikbare geheugen in op minimaal 8 GB, bij voorkeur 12 GB als je veel data gaat verwerken.</p>
+<p class="admonition-title">Docker Desktop resources</p>
+<p>De Wasstraat draait 8 containers tegelijk. Stel in Docker Desktop het beschikbare geheugen in op minimaal 12 GB met 2 cores. Bij productiegebruik zijn meer resources aangeraden; voor Delft is gewerkt met 32 GB RAM, 10 Cores en 521 GB Schijfruimte. </p>
+<p>Je hebt deze resources overigens maar heel tijdelijk nodig: denk aan een run om alle data te "wassen" van 20 min tot uiterlijk 24 uut.  </p>
 </div>
 <h3 id="repository-clonen">Repository clonen<a class="headerlink" href="#repository-clonen" title="Permanent link">&para;</a></h3>
 <div class="codehilite"><pre><span></span><code>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/brienen/wasstraat_archeologische_data.git
@@ -210,13 +178,13 @@ for f in config/*.env.example; do cp "$f" "${f%.example}"; done</code>
 Pas vervolgens de wachtwoorden in <code>config/*.env</code> aan naar wens.</p>
 </div>
 <h2 id="2-wasstraat-starten">2. Wasstraat starten<a class="headerlink" href="#2-wasstraat-starten" title="Permanent link">&para;</a></h2>
-<p>Start de ontwikkelomgeving:</p>
-<div class="codehilite"><pre><span></span><code>./runws.sh<span class="w"> </span>dev
+<p>Start de wasstraat:</p>
+<div class="codehilite"><pre><span></span><code>make<span class="w"> </span>app
 </code></pre></div>
 
 <p>Bij de allereerste start duurt het enkele minuten omdat Docker alle images moet downloaden en bouwen. Je ziet de voortgang in de terminal.</p>
 <p>Controleer of alle containers draaien:</p>
-<div class="codehilite"><pre><span></span><code>docker<span class="w"> </span>ps<span class="w"> </span>--format<span class="w"> </span><span class="s2">&quot;table {{.Names}}\t{{.Status}}\t{{.Ports}}&quot;</span>
+<div class="codehilite"><pre><span></span><code>make<span class="w"> </span>ps
 </code></pre></div>
 
 <p>Je zou deze 8 containers moeten zien:</p>
@@ -274,8 +242,11 @@ Pas vervolgens de wachtwoorden in <code>config/*.env</code> aan naar wens.</p>
 <div class="admonition warning">
 <p class="admonition-title">Containers starten niet?</p>
 <p>Als een container niet wil starten, bekijk de logs:
-<code>bash
-docker logs wasstraat_airflow    # Vervang met de containernaam</code>
+```bash
+make logs</p>
+<h1 id="of-voor-een-specifieke-container">Of voor één specifieke container:<a class="headerlink" href="#of-voor-een-specifieke-container" title="Permanent link">&para;</a></h1>
+<p>docker logs wasstraat_airflow
+```
 De meest voorkomende oorzaak is onvoldoende geheugen in Docker Desktop.</p>
 </div>
 <h2 id="3-webpaginas-bekijken">3. Webpagina's bekijken<a class="headerlink" href="#3-webpaginas-bekijken" title="Permanent link">&para;</a></h2>
