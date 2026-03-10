@@ -18,7 +18,7 @@ Zorg dat de volgende software op je systeem is geïnstalleerd:
 !!! tip "Docker Desktop resources"
     De Wasstraat draait 8 containers tegelijk. Stel in Docker Desktop het beschikbare geheugen in op minimaal 12 GB met 2 cores. Bij productiegebruik zijn meer resources aangeraden; voor Delft is gewerkt met 32 GB RAM, 10 Cores en 521 GB Schijfruimte. 
 
-    Je hebt deze resources overigens maar heel tijdelijk nodig: denk aan een run om alle data te "wassen" van 20 min tot uiterlijk 24 uut.  
+    Je hebt deze resources overigens maar heel tijdelijk nodig: denk aan een run om alle data te "wassen" van 20 min tot uiterlijk 24 uur.  
 
 ### Repository clonen
 
