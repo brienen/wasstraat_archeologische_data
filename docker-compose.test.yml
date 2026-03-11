@@ -1,34 +1,128 @@
 # docker-compose.test.yml
-# Lichtgewicht testomgeving met alleen MongoDB en PostgreSQL.
+# Testomgeving: MongoDB + PostgreSQL (Airflow metadata) + Airflow.
+# Geen Flask, geen load naar PostgreSQL — alleen MongoDB-verificatie.
 #
-# Gebruik:
-#   docker compose -f docker-compose.test.yml up -d
-#   python -m pytest tests/ -v
-#   docker compose -f docker-compose.test.yml down -v
-#
-# Of via het test-script:
-#   ./tests/run_integration.sh
+# Gebruik: make integration-real-data
 
 services:
   mongo-test:
     image: mongo:4.2.21
     container_name: "wasstraat_mongo_test"
     ports:
-      - "27117:27017"   # afwijkende poort om conflict met productie te vermijden
+      - "27117:27017"
     environment:
       MONGO_INITDB_ROOT_USERNAME: testroot
       MONGO_INITDB_ROOT_PASSWORD: testpass
+    networks:
+      testnet:
+        aliases:
+          - mongo
     tmpfs:
-      - /data/db         # in-memory voor snelheid
+      - /data/db
 
   postgres-test:
     image: postgres:13
     container_name: "wasstraat_postgres_test"
-    ports:
-      - "5433:5432"     # afwijkende poort
     environment:
-      POSTGRES_DB: wasstraat_test
+      POSTGRES_DB: airflow_test
       POSTGRES_USER: testuser
       POSTGRES_PASSWORD: testpass
+    networks:
+      testnet:
+        aliases:
+          - postgres
     tmpfs:
       - /var/lib/postgresql/data
+
+  airflow-test:
+    build:
+      context: .
+      dockerfile: services/airflow/Dockerfile
+    container_name: "wasstraat_airflow_test"
+    depends_on:
+      - mongo-test
+      - postgres-test
+    ports:
+      - "8081:8080"
+    networks:
+      - testnet
+    environment:
+      # Airflow metadata
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__CORE__LOAD_EXAMPLES: "False"
+      AIRFLOW__SCHEDULER__MIN_FILE_PROCESS_INTERVAL: "10"
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: "postgresql+psycopg2://testuser:testpass@postgres:5432/airflow_test"
+      DB__HOST: postgres
+      DB__PORT: "5432"
+      DB__USERNAME: testuser
+      DB__PASSWORD: testpass
+      DB__NAME: airflow_test
+      PGPASSWORD: testpass
+      SECURITY__ADMIN_USERNAME: admin
+      SECURITY__ADMIN_PASSWORD: admin
+      SECURITY__ADMIN_FIRSTNAME: Test
+      SECURITY__ADMIN_LASTNAME: Admin
+      SECURITY__ADMIN_EMAIL: test@test.nl
+      # shared.config vereist deze drie, anders KeyError
+      POSTGRES_DB: airflow_test
+      POSTGRES_USER: testuser
+      POSTGRES_PASSWORD: testpass
+      FLASK_PGUSER: testuser
+      FLASK_PGPASSWORD: testpass
+      FLASK_PGDATABASE: airflow_test
+      # MongoDB
+      MONGO_SERVER: mongo
+      MONGO_INITDB_ROOT_USERNAME: testroot
+      MONGO_INITDB_ROOT_PASSWORD: testpass
+      DB_STAGING: Arch_Staging_Test
+      DB_FILES: Arch_Files_Test
+      DB_ANALYSE: Arch_Analyse_Test
+      COLL_ANALYSE: Single_Store
+      COLL_ANALYSE_CLEAN: Single_Store_Clean
+      COLL_PLAATJES: Plaatjes
+      COLL_FILENAMES: Filenames
+      COLL_STAGING_METAINFO: Kolominformatie
+      COLL_STAGING_OUD: Staging_Projecten_Oud
+      COLL_STAGING_NIEUW: Staging_Projecten_Nieuw
+      COLL_STAGING_MAGAZIJNLIJST: Staging_Projecten_Magazijnlijst
+      COLL_STAGING_DELFIT: Staging_Projecten_DelfIT
+      COLL_STAGING_DIGIFOTOS: Staging_Projecten_Digifotos
+      COLL_STAGING_MONSTER: Staging_Projecten_Monster
+      COLL_ANALYSE_FOTO: Def_Fotos
+      COLL_ANALYSE_ARTEFACT: Def_Artefact
+      COLL_ANALYSE_PROJECT: Def_Project
+      COLL_ANALYSE_VONDST: Def_Vondst
+      COLL_ANALYSE_SPOOR: Def_Spoor
+      COLL_ANALYSE_VLAK: Def_Vlak
+      COLL_ANALYSE_PUT: Def_Put
+      COLL_ANALYSE_DOOS: Def_Doos
+      COLL_ANALYSE_STANDPLAATS: Def_Standplaats
+      COLL_ANALYSE_STELLING: Def_Stelling
+      COLL_ANALYSE_PLAATSING: Def_Plaatsing
+      COLL_ANALYSE_VINDPLAATS: Def_Vindplaats
+      MONGO_MINPOOLSIZE: "10"
+      # Paden
+      AIRFLOW_TEMPDIR: /opt/airflow/tmp
+      AIRFLOW_LOGDIR: /opt/airflow/logs
+      AIRFLOW_WASSTRAAT_CONFIG: /opt/airflow/config/Wasstraat_Config_HarmonizeV3.xlsx
+      AIRFLOW_INPUT_PROJECTEN: /input/projecten
+      AIRFLOW_INPUT_IMAGES: /input/projecten
+      AIRFLOW_INPUT_DELFIT: /input/delfit
+      AIRFLOW_INPUT_MAGAZIJNLIJST: /input/magazijnlijst
+      AIRFLOW_INPUT_DIGIFOTOS: /input/digifotos
+      AIRFLOW_INPUT_MONSTER: /input/monsterdatabase
+      AIRFLOW_INPUT_RAPPORTEN: /input/rapporten
+      AIRFLOW_OUTPUT_MEDIA: /tmp/archeomedia_test
+      ES_HOST: "http://localhost:9200"
+    volumes:
+      - ./airflow_app/dags:/opt/airflow/dags
+      - ./airflow_app/scripts:/opt/airflow/scripts
+      - ./shared:/opt/airflow/dags/shared
+      - ./data/wasstraat_config:/opt/airflow/config
+      - ./data/test/projecten:/input/projecten:ro
+      - ./data/test/projectenlijst:/input/delfit:ro
+      - ./data/test/referentietabellen:/input/referentietabellen:ro
+
+networks:
+  testnet:
+    driver: bridge

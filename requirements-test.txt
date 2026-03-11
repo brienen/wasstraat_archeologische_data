@@ -1,5 +1,9 @@
 # Dependencies voor het draaien van de Wasstraat tests
 # Installeer met: pip install -r requirements-test.txt
+#
+# NB: De volledige pipeline-test (test_full_pipeline_real_data.py) draait
+# binnen de Airflow Docker-container waar alle Flask/GeoAlchemy/mdbtools
+# dependencies al beschikbaar zijn. Zie docker-compose.test.yml.
 
 # Test framework
 pytest>=7.0
@@ -11,7 +15,6 @@ openpyxl>=3.0
 roman>=3.0
 # timeperiod2daterange is een lokaal bestand (airflow_app/dags/timeperiod2daterange.py)
 
-# Integratietests
+# Integratietests (MongoDB-stappen draaien ook vanuit de host)
 pymongo>=4.0
-psycopg2-binary>=2.9
 simplejson>=3.0

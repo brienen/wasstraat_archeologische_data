@@ -1,3 +1,5 @@
+import os
+
 import shared.config as config
 import pymongo
 import pandas as pd
@@ -7,6 +9,10 @@ logger = logging.getLogger("airflow.task")
 
 
 def extractExtraProjects():
+    if not os.path.isfile(config.FILE_EXTRA_PROJECTS):
+        logger.info(f"Bestand {config.FILE_EXTRA_PROJECTS} niet gevonden — overslaan.")
+        return
+
     df = pd.read_excel(config.FILE_EXTRA_PROJECTS)
 
     logger.info(f'Found file {config.FILE_EXTRA_PROJECTS} with extra projects processing...')

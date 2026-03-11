@@ -33,7 +33,7 @@ PYTEST := $(BIN)/python -m pytest
 
 # --- Docker Compose ---
 DC := docker compose
-COMPOSE_TEST := $(DC) -f docker-compose.test.yml
+COMPOSE_TEST := $(DC) -p wasstraat-test -f docker-compose.test.yml
 DT := $(shell date +"%Y-%m-%d_%H-%M-%S")
 
 # --- Init-config: genereer .env uit .env.example als ze nog niet bestaan ---
@@ -94,6 +94,26 @@ integration: install ## Draai integratietests (start/stopt Docker containers)
 	echo "➜ Test-databases opruimen..."; \
 	$(COMPOSE_TEST) down -v; \
 	exit $$EXIT
+
+.PHONY: integration-real-data
+integration-real-data: install ## Draai volledige pipeline-test met echte data (via DAGs)
+	@echo "➜ Test-omgeving starten (mongo + postgres + airflow)..."
+	$(COMPOSE_TEST) up -d
+	@echo "➜ Wachten tot services klaar zijn (pytest doet de rest)..."
+	$(PYTEST) tests/integration/test_full_pipeline_real_data.py \
+		-v -s -m integration --tb=short; \
+	EXIT=$$?; \
+	echo "➜ Test-omgeving opruimen..."; \
+	$(COMPOSE_TEST) down -v; \
+	exit $$EXIT
+
+.PHONY: integration-real-data-keep
+integration-real-data-keep: install ## Zelfde als integration-real-data maar laat containers draaien
+	@echo "➜ Test-omgeving starten..."
+	$(COMPOSE_TEST) up -d
+	$(PYTEST) tests/integration/test_full_pipeline_real_data.py \
+		-v -s -m integration --tb=short
+	@echo "➜ Containers draaien nog. Stop met: $(COMPOSE_TEST) down -v"
 
 .PHONY: test-all
 test-all: test integration ## Draai unit + integratietests

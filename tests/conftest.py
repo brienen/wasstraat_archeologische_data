@@ -114,16 +114,18 @@ mock_config.FLASK_PGPASSWORD = "test"
 mock_config.FLASK_PGDATABASE = "test_db"
 mock_config.SQLALCHEMY_DATABASE_URI = "postgresql://test:test@localhost/test_db"
 
-# Airflow paden
+# Airflow paden — gebruik environment variabelen als die gezet zijn (container),
+# anders fallback naar host-paden relatief aan de project root.
 _project_root = os.path.dirname(os.path.dirname(__file__))
-mock_config.AIRFLOW_WASSTRAAT_CONFIG = os.path.join(
-    _project_root, "data", "wasstraat_config", "Wasstraat_Config_HarmonizeV3.xlsx"
+mock_config.AIRFLOW_WASSTRAAT_CONFIG = os.getenv(
+    "AIRFLOW_WASSTRAAT_CONFIG",
+    os.path.join(_project_root, "data", "wasstraat_config", "Wasstraat_Config_HarmonizeV3.xlsx")
 )
-mock_config.AIRFLOW_TEMPDIR = "/tmp/wasstraat_test"
-mock_config.AIRFLOW_LOGDIR = "/tmp/wasstraat_test/logs"
-mock_config.AIRFLOW_INPUT_PROJECTEN = "/input/projecten"
-mock_config.AIRFLOW_INPUT_IMAGES = "/input/images"
-mock_config.AIRFLOW_INPUT_DELFIT = "/input/delfit"
+mock_config.AIRFLOW_TEMPDIR = os.getenv("AIRFLOW_TEMPDIR", "/tmp/wasstraat_test")
+mock_config.AIRFLOW_LOGDIR = os.getenv("AIRFLOW_LOGDIR", "/tmp/wasstraat_test/logs")
+mock_config.AIRFLOW_INPUT_PROJECTEN = os.getenv("AIRFLOW_INPUT_PROJECTEN", "/input/projecten")
+mock_config.AIRFLOW_INPUT_IMAGES = os.getenv("AIRFLOW_INPUT_IMAGES", "/input/images")
+mock_config.AIRFLOW_INPUT_DELFIT = os.getenv("AIRFLOW_INPUT_DELFIT", "/input/delfit")
 mock_config.AIRFLOW_INPUT_MAGAZIJNLIJST = "/input/magazijnlijst"
 mock_config.AIRFLOW_INPUT_DIGIFOTOS = "/input/digifotos"
 mock_config.AIRFLOW_INPUT_MONSTER = "/input/monsterdatabase"

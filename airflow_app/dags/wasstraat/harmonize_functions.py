@@ -58,18 +58,28 @@ def fixMonsterProjectcds():
     Old projectnames are matched with the data from DeltIT Opgravingen, where both old and new values are found.
     """
     
-    try: 
+    try:
         logger.info("Starting fix of old projectcodes of Monster Database...")
         myclient = pymongo.MongoClient(str(config.MONGO_URI))
         analyseDb = myclient[str(config.DB_ANALYSE)]
         analyseCol = analyseDb[config.COLL_ANALYSE]
 
+        # Early return als er geen Monster-records in de database zitten
+        monster_count = analyseCol.count_documents({'soort': 'Monster'})
+        if monster_count == 0:
+            logger.info("Geen Monster-records gevonden in Single_Store — overslaan.")
+            return
+
         # Fisrt set all projeccd to Unknown
         analyseCol.update_many({'soort': 'Monster'}, { "$set": { "projectcd": None } })
 
         #Then get all Monsters with an old code
-        df_monsters = pd.DataFrame(list(analyseCol.find({'soort': 'Monster', 'brondata.PROJECT': {'$exists': True}}, {'projectcd':0})))        
-        
+        df_monsters = pd.DataFrame(list(analyseCol.find({'soort': 'Monster', 'brondata.PROJECT': {'$exists': True}}, {'projectcd':0})))
+
+        if df_monsters.empty or 'project' not in df_monsters.columns:
+            logger.info("Geen Monster-records met brondata.PROJECT gevonden — overslaan.")
+            return
+
         df_project = pd.DataFrame(list(analyseCol.find({'soort': 'Project'}, {'projectcd':1, 'project': 1, '_id':0})))
         df2_project = pd.concat([df_project['projectcd'], df_project['projectcd']], axis=1, ignore_index=True)
         df2_project.columns = ['projectcd', 'project']
@@ -78,7 +88,7 @@ def fixMonsterProjectcds():
         df_project.dropna(subset=['project'], inplace=True)
         df_project = pd.concat([df_project, df2_project], ignore_index=True)
         df_project.drop_duplicates(subset=['project'], inplace=True)
-        
+
         # Set alle projectcd of monster database
         df_monsters = df_monsters.merge(df_project, on=['project'], how='left')
         df_monsters['projectcd'] = df_monsters['projectcd'].fillna(value = const.ONBEKEND_PROJECT)
