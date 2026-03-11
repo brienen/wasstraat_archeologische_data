@@ -11,10 +11,14 @@ Zorg dat de volgende software op je systeem is geïnstalleerd:
 - **[Docker Desktop](https://www.docker.com/products/docker-desktop/)** — Minimaal versie 20.10
 - **Docker Compose** — Wordt meegeleverd met Docker Desktop
 - **Git** — Voor het clonen van de repository
-- **Minimaal 8 GB RAM** beschikbaar voor Docker (stel dit in via Docker Desktop → Settings → Resources)
+- **Minimaal 12 GB RAM** beschikbaar voor Docker (stel dit in via Docker Desktop → Settings → Resources)
+- **Minimaal 2 Cores** beschikbaar voor Docker (stel dit in via Docker Desktop → Settings → Resources)
+- **Minimaal 256 GB** schijfruimte beschikbaar voor Docker (stel dit in via Docker Desktop → Settings → Resources)
 
-!!! tip "Docker Desktop geheugen"
-    De Wasstraat draait 8 containers tegelijk. Stel in Docker Desktop het beschikbare geheugen in op minimaal 8 GB, bij voorkeur 12 GB als je veel data gaat verwerken.
+!!! tip "Docker Desktop resources"
+    De Wasstraat draait 8 containers tegelijk. Stel in Docker Desktop het beschikbare geheugen in op minimaal 12 GB met 2 cores. Bij productiegebruik zijn meer resources aangeraden; voor Delft is gewerkt met 32 GB RAM, 10 Cores en 521 GB Schijfruimte. 
+
+    Je hebt deze resources overigens maar heel tijdelijk nodig: denk aan een run om alle data te "wassen" van 20 min tot uiterlijk 24 uur.  
 
 ### Repository clonen
 
@@ -41,7 +45,7 @@ De configuratiebestanden worden aangemaakt in `config/` op basis van de meegelev
 Start de wasstraat:
 
 ```bash
-./runws.sh app
+make app
 ```
 
 Bij de allereerste start duurt het enkele minuten omdat Docker alle images moet downloaden en bouwen. Je ziet de voortgang in de terminal.
@@ -49,7 +53,7 @@ Bij de allereerste start duurt het enkele minuten omdat Docker alle images moet 
 Controleer of alle containers draaien:
 
 ```bash
-docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+make ps
 ```
 
 Je zou deze 8 containers moeten zien:
@@ -68,7 +72,9 @@ Je zou deze 8 containers moeten zien:
 !!! warning "Containers starten niet?"
     Als een container niet wil starten, bekijk de logs:
     ```bash
-    docker logs wasstraat_airflow    # Vervang met de containernaam
+    make logs
+    # Of voor één specifieke container:
+    docker logs wasstraat_airflow
     ```
     De meest voorkomende oorzaak is onvoldoende geheugen in Docker Desktop.
 

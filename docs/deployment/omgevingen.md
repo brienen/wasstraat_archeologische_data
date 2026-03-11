@@ -67,33 +67,46 @@ Template voor een minimale configuratie, bruikbaar als startpunt voor nieuwe omg
 
 ## Starten en Stoppen
 
-Het startscript `runws.sh` combineert de juiste compose-bestanden per omgeving:
+De `Makefile` bevat targets voor elke omgeving. Bij het starten wordt automatisch `init-config.sh` aangeroepen om eventueel ontbrekende `.env`-bestanden te genereren.
 
 ```bash
-# Ontwikkelomgeving (met debugpy)
-./runws.sh dev
+# Ontwikkelomgeving (met debugpy en hot-reload)
+make dev
 
-# Lokale modus (basis compose)
-./runws.sh app
+# Lokale modus (alle services)
+make app
+
+# Voorbeeldconfiguratie
+make example
 
 # Acceptatieomgeving
-./runws.sh acc
+make acc
 
 # Productieomgeving (met gepubliceerde images)
-./runws.sh prod
+make prod
 
 # Stoppen van alle containers
-./runws.sh stop
+make stop
 
 # Starten van gestopte containers
-./runws.sh start
+make start
+
+# Stop en verwijder alle containers
+make down
+
+# Toon live logs
+make logs
+
+# Toon status van alle services
+make ps
 ```
 
 !!! tip "Achterliggend commando"
-    Elk commando voert het bijbehorende `docker-compose` commando uit. Bijvoorbeeld `./runws.sh dev` draait:
+    Elk target voert het bijbehorende `docker compose` commando uit. Bijvoorbeeld `make dev` draait:
     ```
-    docker-compose -f docker-compose.yml -f docker-compose.develop.yml up -d
+    docker compose -f docker-compose.yml -f docker-compose.develop.yml up -d
     ```
+    Typ `make help` voor een overzicht van alle beschikbare commando's.
 
 ## Configuratie via Environment-bestanden
 
@@ -143,14 +156,14 @@ De `shared/` directory wordt in zowel Airflow als Flask gemount en bevat de geza
 
 ## Backup en Restore
 
-Het startscript biedt ingebouwde backup-functionaliteit:
+De Makefile bevat targets voor backup en restore:
 
 ```bash
 # Backup van PostgreSQL en MongoDB (met timestamp)
-./runws.sh backup
+make backup
 
 # Restore vanuit een eerder backup-timestamp
-./runws.sh restore 2024-03-15_14-30-00
+make restore TS=2024-03-15_14-30-00
 ```
 
 Bij een backup worden de Flask- en Airflow-containers tijdelijk gestopt. De backup bevat:
@@ -165,7 +178,7 @@ De backups worden opgeslagen in de `backup/` directory.
 Alle definitieve tabellen kunnen als CSV worden geëxporteerd:
 
 ```bash
-./runws.sh export
+make export
 ```
 
 Dit exporteert alle `Def_*` tabellen (Project, Put, Spoor, Vondst, Artefact, Monster, etc.) naar CSV-bestanden in `backup/postgres_<timestamp>/`.
@@ -175,8 +188,8 @@ Dit exporteert alle `Def_*` tabellen (Project, Put, Spoor, Vondst, Artefact, Mon
 Voor het publiceren van een nieuwe versie:
 
 ```bash
-./runws.sh release <versie> "<beschrijving>"
-# Voorbeeld: ./runws.sh release 1.1.0 "Nieuwe zoekfunctionaliteit"
+make release VERSION=<versie> MSG="<beschrijving>"
+# Voorbeeld: make release VERSION=1.1.0 MSG="Nieuwe zoekfunctionaliteit"
 ```
 
 Dit voert de volgende stappen uit:

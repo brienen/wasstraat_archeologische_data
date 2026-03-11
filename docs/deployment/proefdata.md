@@ -7,13 +7,13 @@ Deze pagina beschrijft hoe je een eerste set proefdata kunt inlezen, transformer
 Zorg dat alle Docker-containers draaien:
 
 ```bash
-./runws.sh dev    # Of: ./runws.sh app
+make dev    # Of: make app
 ```
 
 Controleer of alle services actief zijn:
 
 ```bash
-docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+make ps
 ```
 
 Je zou minimaal de volgende containers moeten zien:

@@ -2,7 +2,7 @@
 #
 # init-config.sh — Genereer config/*.env bestanden uit .env.example templates
 #
-# Dit script wordt automatisch aangeroepen door runws.sh als er nog geen
+# Dit script wordt automatisch aangeroepen door de Makefile als er nog geen
 # .env bestanden bestaan. Het genereert unieke, willekeurige wachtwoorden
 # zodat elke installatie eigen credentials heeft.
 #

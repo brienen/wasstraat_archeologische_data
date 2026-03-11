@@ -38,13 +38,16 @@ def indexTable(table):
     engine = create_engine(config.SQLALCHEMY_DATABASE_URI)
     logger.info("Connecting to " + config.SQLALCHEMY_DATABASE_URI)
     es = Elasticsearch(config.ES_HOST)
-    
-    index_name = table.lower()
+
+    alias_name = table.lower()
+    # Maak een timestamped index-naam voor zero-downtime indexering
+    import time
+    new_index = f"{alias_name}_{int(time.time())}"
 
     with engine.connect() as connection:
-        connection = connection.execution_options( 
+        connection = connection.execution_options(
             isolation_level="SERIALIZABLE",
-            postgresql_deferrable=True # Does not seem to work. Work imn progress 
+            postgresql_deferrable=True
         )
         with connection.begin():
             metadata = db.MetaData(bind=engine)
@@ -59,16 +62,55 @@ def indexTable(table):
                 db_cols = getCols(connection, table)
                 sql_col_names = ['"'+col['name']+ '"' for col in db_cols]
                 db_col_names = [col['name'] for col in db_cols]
-                
+
                 sql = f'SELECT {", ".join(sql_col_names)} FROM public."{table}"'
-                logger.info(f"Indexing index {index_name} with columns {db_col_names} ")
+                logger.info(f"Indexing new index {new_index} with columns {db_col_names}")
                 rs = connection.execute(sql)
-                
-                resp = es.indices.delete(index=index_name, ignore=[400,404])
-                logger.info(f"Deleted index {index_name} with response {resp} ")
-                logger.info(f"Indexing index {index_name} with columns {db_col_names} ")
-                es.indices.create(index = index_name, ignore=400)
-                helpers.bulk(es, generate_docs(rs, db_col_names, index_name))
-                logger.info(f"Indexed {es.count(index=index_name)} records")                
+
+                # Stap 1: Maak nieuwe index aan en vul met data
+                es.indices.create(index=new_index, ignore=400)
+                try:
+                    helpers.bulk(es, generate_docs(rs, db_col_names, new_index))
+                    new_count = es.count(index=new_index)['count']
+                    logger.info(f"New index {new_index} has {new_count} records")
+                except Exception as bulk_err:
+                    # Bij falen: verwijder de nieuwe index, de oude blijft intact
+                    logger.error(f"Bulk indexing failed for {new_index}: {bulk_err}")
+                    es.indices.delete(index=new_index, ignore=[400, 404])
+                    raise
+
+                # Stap 2: Migratie - als er een fysieke index bestaat met de
+                # alias-naam (oude situatie vóór de upgrade naar aliassen),
+                # moet die EERST verwijderd worden. Anders blokkeert
+                # Elasticsearch het aanmaken van een alias met dezelfde naam.
+                if es.indices.exists(index=alias_name):
+                    is_alias = es.indices.exists_alias(name=alias_name)
+                    if not is_alias:
+                        logger.info(
+                            f"Migratie: fysieke index '{alias_name}' gevonden "
+                            f"(geen alias). Verwijderen om alias mogelijk te maken..."
+                        )
+                        es.indices.delete(index=alias_name, ignore=[400, 404])
+
+                # Stap 3: Zoek bestaande indexen onder de alias
+                old_indices = []
+                if es.indices.exists_alias(name=alias_name):
+                    old_indices = list(
+                        es.indices.get_alias(name=alias_name).keys()
+                    )
+
+                # Stap 4: Atomic alias swap
+                actions = [{"add": {"index": new_index, "alias": alias_name}}]
+                for old_idx in old_indices:
+                    actions.append({"remove": {"index": old_idx, "alias": alias_name}})
+
+                es.indices.update_aliases(body={"actions": actions})
+                logger.info(f"Alias {alias_name} now points to {new_index}")
+
+                # Stap 5: Ruim oude indexen op
+                for old_idx in old_indices:
+                    es.indices.delete(index=old_idx, ignore=[400, 404])
+                    logger.info(f"Deleted old index {old_idx}")
+
             else:
                 logger.error(f"Trying to index table {table}, but table not available in {lst_tables}")

@@ -56,7 +56,7 @@ AGGREGATE_MERGE = [{'$match': {'soort': 'XXX'}},
  { "$merge": { "into": { "db": config.DB_ANALYSE, "coll": config.COLL_ANALYSE_CLEAN }, "on": "_id",  "whenMatched": "replace", "whenNotMatched": "insert" } }
 ]
 
-## Match phase aggregation specific for moving Artefacts: inverse of the merge phase. For alle artefacts that do not pass the merge match clause  
+## Match phase aggregation specific for moving Artefacts: inverse of the merge phase. For alle artefacts that do not pass the merge match clause
 INVERSE_MATCH_ARTEFACT = {
     "$match": {
         "$and": [
@@ -77,7 +77,10 @@ INVERSE_MATCH_ARTEFACT = {
                                 ["", "-", "onbekend"]
                             ]
                         }
-                    }
+                    },
+                    # Records uit artefactsoort-specifieke tabellen (MUNT, HOUT,
+                    # METAAL, etc.) hoeven niet gemerged te worden — direct moven.
+                    {"brondata.table": {"$not": {"$regex": "^ARTEFACT"}}}
                 ]
             }
         ]
@@ -277,27 +280,62 @@ def mergeFotoinfo():
         # get all Photo records
         df_foto = pd.DataFrame(list(collection.find({"soort": "Foto"})))
 
+        if df_foto.empty:
+            logger.info("Geen Foto-records gevonden in Single_Store — overslaan.")
+            return
+
         # get all Photo descr records
         df_fotobeschr = pd.DataFrame(list(collection.find({"soort": "Fotobeschrijving"})))
-        df_fotobeschr["abcd-nr"] = df_fotobeschr.apply(lambda x: x["pad"].split('\\')[-1].lower() if x["pad"] and type(x["pad"]) == str else '', axis=1) 
+        if not df_fotobeschr.empty and 'pad' in df_fotobeschr.columns:
+            df_fotobeschr["abcd-nr"] = df_fotobeschr.apply(lambda x: x["pad"].split('\\')[-1].lower() if x["pad"] and type(x["pad"]) == str else '', axis=1)
+        else:
+            df_fotobeschr = pd.DataFrame()
 
         df_fotokoppel = pd.DataFrame(list(collection.find({"soort": "Fotokoppel"})))
-        df_fotokoppel["abcd-nr"] = df_fotokoppel.apply(lambda x: x["abcd-nr"].lower() if x["abcd-nr"] and type(x["abcd-nr"]) == str else '', axis=1) 
+        if not df_fotokoppel.empty and 'abcd-nr' in df_fotokoppel.columns:
+            df_fotokoppel["abcd-nr"] = df_fotokoppel.apply(lambda x: x["abcd-nr"].lower() if x["abcd-nr"] and type(x["abcd-nr"]) == str else '', axis=1)
+        else:
+            df_fotokoppel = pd.DataFrame()
 
-        # Merge dataframes to get a complete Photo-dataframe
-        df_merge = df_foto.merge(df_fotokoppel, how="left", right_on="bestandsnaam", left_on="fileName", suffixes=("", "_koppel"))
-        df_merge = df_merge.merge(df_fotobeschr, how="left", on=["abcd-nr", "projectcd"], suffixes=("", "_beschr"))
-        df_merge['soort'] = 'Bestand'
-        df_merge['bestandsoort_XX'] = 'Foto'
-        df_merge['brondata'] = df_merge.apply(lambda x: [x['brondata'], x['brondata_beschr']], axis=1)
-        df_merge['wasstraat'] = df_merge.apply(lambda x: [{'projectcd': x['projectcd'], 'table': getTable(elem)} for elem in x['brondata'] if getTable(elem)], axis=1)  
-        df_merge['materiaal'] = df_merge.apply(lambda x: util.firstValue(x['materiaal'], x['materiaalgroep']) if 'materiaal' in df_merge.columns else x['materiaalgroep'],axis=1)
-        df_merge = df_merge[['_id', 'fileName', 'imageID', 'imageMiddleID', 'imageThumbID',
-            'fileType', 'directory', 'mime_type', 'fototype', 'soort', 'projectcd',
-            'materiaal', 'putnr', 'vondstnr', 'fotonr', 'vondstkey_met_putnr',
-            'key', 'key_project', 'key_project_type', 'key_vondst',
-            'key_artefact', 'subnr', 'brondata', 'key_foto1', 'key_foto2', 'key_foto3',
-            'pad', 'spoornr', 'profiel', 'subnr', 'datum', 'omschrijving', 'vlaknr', 'richting', 'wasstraat', 'bestandsoort', 'bestandsoort_XX']]
+        # Als er geen koppeldata is, foto's direct als Bestand overnemen
+        if df_fotokoppel.empty and df_fotobeschr.empty:
+            logger.info("Geen Fotokoppel- of Fotobeschrijving-records — foto's worden direct overgenomen.")
+            df_foto['soort'] = 'Bestand'
+            df_foto['bestandsoort_XX'] = 'Foto'
+            df_foto['brondata'] = df_foto['brondata'].apply(lambda x: [x])
+            df_foto['wasstraat'] = df_foto.apply(lambda x: [{'projectcd': x.get('projectcd'), 'table': getTable(x.get('brondata', [{}])[0])}], axis=1)
+            desired_columns = ['_id', 'fileName', 'imageID', 'imageMiddleID', 'imageThumbID',
+                'fileType', 'directory', 'mime_type', 'fototype', 'soort', 'projectcd',
+                'key', 'key_project', 'key_project_type', 'brondata', 'wasstraat', 'bestandsoort_XX']
+            available_columns = [c for c in desired_columns if c in df_foto.columns]
+            df_merge = df_foto[available_columns]
+        else:
+            # Merge dataframes to get a complete Photo-dataframe
+            if not df_fotokoppel.empty:
+                df_merge = df_foto.merge(df_fotokoppel, how="left", right_on="bestandsnaam", left_on="fileName", suffixes=("", "_koppel"))
+            else:
+                df_merge = df_foto.copy()
+                df_merge['abcd-nr'] = ''
+
+            if not df_fotobeschr.empty:
+                df_merge = df_merge.merge(df_fotobeschr, how="left", on=["abcd-nr", "projectcd"], suffixes=("", "_beschr"))
+
+            df_merge['soort'] = 'Bestand'
+            df_merge['bestandsoort_XX'] = 'Foto'
+            df_merge['brondata'] = df_merge.apply(lambda x: [x['brondata'], x.get('brondata_beschr')], axis=1)
+            df_merge['wasstraat'] = df_merge.apply(lambda x: [{'projectcd': x['projectcd'], 'table': getTable(elem)} for elem in x['brondata'] if getTable(elem)], axis=1)
+            if 'materiaal' in df_merge.columns and 'materiaalgroep' in df_merge.columns:
+                df_merge['materiaal'] = df_merge.apply(lambda x: util.firstValue(x['materiaal'], x['materiaalgroep']), axis=1)
+            elif 'materiaalgroep' in df_merge.columns:
+                df_merge['materiaal'] = df_merge['materiaalgroep']
+            desired_columns = ['_id', 'fileName', 'imageID', 'imageMiddleID', 'imageThumbID',
+                'fileType', 'directory', 'mime_type', 'fototype', 'soort', 'projectcd',
+                'materiaal', 'putnr', 'vondstnr', 'fotonr', 'vondstkey_met_putnr',
+                'key', 'key_project', 'key_project_type', 'key_vondst',
+                'key_artefact', 'subnr', 'brondata', 'key_foto1', 'key_foto2', 'key_foto3',
+                'pad', 'spoornr', 'profiel', 'omschrijving', 'vlaknr', 'richting', 'wasstraat', 'bestandsoort', 'bestandsoort_XX']
+            available_columns = [c for c in desired_columns if c in df_merge.columns]
+            df_merge = df_merge[available_columns]
 
 
         updates= [ pymongo.ReplaceOne({"_id": record['_id']}, record, upsert=True) for record in [v.dropna().to_dict() for k,v in df_merge.iterrows()]]  # 

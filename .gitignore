@@ -12,6 +12,10 @@ data/postgres/*
 app/app/static/uploads/*
 !app/app/static/uploads/.gitkeep 
 app/uwsgi-2.0.20/
+Analyse/*
+!Analyse/.gitkeep 
+
+
 
 # Geen .env bestanden in Github, zitten vaak wachtwoorden in 
 *.env
@@ -23,3 +27,7 @@ app/uwsgi-2.0.20/
 site
 *.bkp
 *sstraat_Analyse_en_Verbeterplan*
+
+# Python virtual environment
+.venv/
+__pycache__/
