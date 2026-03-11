@@ -120,6 +120,7 @@ services:
       - ./shared:/opt/airflow/dags/shared
       - ./data/wasstraat_config:/opt/airflow/config
       - ./data/test/projecten:/input/projecten:ro
+      - ./data/test/projecten:/input/images:ro
       - ./data/test/projectenlijst:/input/delfit:ro
       - ./data/test/referentietabellen:/input/referentietabellen:ro
 

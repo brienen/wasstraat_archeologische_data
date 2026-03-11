@@ -55,6 +55,13 @@ EXPECTED_MIN_SOORT_COUNTS = {
     "Vulling": 425,
 }
 
+# Verwachte aantallen voor afbeeldingen.
+# In de testdata zitten 96 jpg-bestanden in L Fotos/.
+# Na verwerking komen deze in Plaatjes (Arch_Files_Test)
+# en via mergeFotoinfo als "Bestand"-records in Single_Store_Clean.
+EXPECTED_MIN_PLAATJES = 21        # minimaal verwacht in Plaatjes collectie
+EXPECTED_MIN_BESTAND_CLEAN = 21   # minimaal verwacht als soort "Bestand" in Clean
+
 
 # ============================================================
 # Helpers
@@ -312,9 +319,105 @@ class TestFullPipelineRealData:
         assert actual >= expected
 
     # ----------------------------------------------------------
+    # Stap 4: Verificatie van afbeeldingen
+    # ----------------------------------------------------------
+    def test_11_verify_filenames_collection(self, mongo_client):
+        """Filenames-collectie in Arch_Files_Test is gevuld na Extract."""
+        db = mongo_client[DB_FILES]
+        filenames_count = db["Filenames"].count_documents({})
+        processed_count = db["Filenames"].count_documents({"processed": True})
+        print(f"\n  Filenames collectie: {filenames_count} totaal, {processed_count} verwerkt")
+        assert filenames_count > 0, "Filenames collectie is leeg — image discovery heeft niets gevonden"
+        assert processed_count > 0, "Geen enkel bestand is verwerkt (processed=True)"
+
+    def test_12_verify_plaatjes_collection(self, mongo_client):
+        """Plaatjes-collectie in Arch_Staging_Test bevat verwerkte afbeeldingen."""
+        db = mongo_client[DB_STAGING]
+        plaatjes_count = db["Plaatjes"].count_documents({})
+        print(f"\n  Plaatjes collectie: {plaatjes_count} documenten")
+
+        # Diagnostiek: toon verdeling per projectcd
+        pipeline = [
+            {"$group": {"_id": "$projectcd", "count": {"$sum": 1}}},
+            {"$sort": {"count": -1}},
+        ]
+        per_project = {d["_id"]: d["count"]
+                       for d in db["Plaatjes"].aggregate(pipeline)}
+        print(f"  Per projectcd:")
+        for proj, cnt in sorted(per_project.items(), key=lambda x: -x[1]):
+            print(f"    {proj}: {cnt}")
+
+        # Diagnostiek: toon verdeling per fileType
+        pipeline_ft = [
+            {"$group": {"_id": "$fileType", "count": {"$sum": 1}}},
+            {"$sort": {"count": -1}},
+        ]
+        per_type = {d["_id"]: d["count"]
+                    for d in db["Plaatjes"].aggregate(pipeline_ft)}
+        print(f"  Per fileType: {per_type}")
+
+        assert plaatjes_count >= EXPECTED_MIN_PLAATJES, \
+            f"Plaatjes: verwacht >= {EXPECTED_MIN_PLAATJES}, gevonden {plaatjes_count}"
+
+    def test_13_verify_plaatjes_fields(self, mongo_client):
+        """Plaatjes-documenten bevatten de vereiste velden."""
+        db = mongo_client[DB_STAGING]
+        sample = db["Plaatjes"].find_one()
+        assert sample is not None, "Geen Plaatjes-documenten gevonden"
+
+        required_fields = ["fileName", "fullFileName", "imageID", "imageMiddleID",
+                           "imageThumbID", "fileType", "directory", "mime_type"]
+        missing = [f for f in required_fields if f not in sample]
+        print(f"\n  Voorbeeld Plaatjes-document velden: {sorted(sample.keys())}")
+        assert not missing, f"Plaatjes-document mist velden: {missing}"
+
+        # Elk document moet een projectcd of rapportnr hebben
+        has_project = db["Plaatjes"].count_documents({"projectcd": {"$exists": True}})
+        has_rapport = db["Plaatjes"].count_documents({"rapportnr": {"$exists": True}})
+        print(f"  Met projectcd: {has_project}, met rapportnr: {has_rapport}")
+        assert (has_project + has_rapport) > 0, \
+            "Geen enkel Plaatjes-document heeft projectcd of rapportnr"
+
+    def test_14_verify_foto_in_single_store(self, mongo_client):
+        """Single_Store bevat Foto-records (geharmoniseerde foto-metadata uit MDB)."""
+        coll = mongo_client[DB_ANALYSE]["Single_Store"]
+        foto_count = coll.count_documents({"soort": "Foto"})
+        print(f"\n  Foto-records in Single_Store: {foto_count}")
+
+        # Diagnostiek: toon fototypes
+        pipeline = [
+            {"$match": {"soort": "Foto"}},
+            {"$group": {"_id": "$fototype", "count": {"$sum": 1}}},
+            {"$sort": {"count": -1}},
+        ]
+        per_type = {d["_id"]: d["count"] for d in coll.aggregate(pipeline)}
+        print(f"  Per fototype: {per_type}")
+
+        assert foto_count > 0, "Geen Foto-records in Single_Store"
+
+    def test_15_verify_bestand_in_clean(self, mongo_client):
+        """Single_Store_Clean bevat Bestand-records (output van mergeFotoinfo)."""
+        coll = mongo_client[DB_ANALYSE]["Single_Store_Clean"]
+        bestand_count = coll.count_documents({"soort": "Bestand"})
+        print(f"\n  Bestand-records in Single_Store_Clean: {bestand_count}")
+
+        # Diagnostiek: toon bestandsoorten
+        pipeline = [
+            {"$match": {"soort": "Bestand"}},
+            {"$group": {"_id": "$bestandsoort_1", "count": {"$sum": 1}}},
+            {"$sort": {"count": -1}},
+        ]
+        per_soort = {d["_id"]: d["count"] for d in coll.aggregate(pipeline)}
+        if per_soort:
+            print(f"  Per bestandsoort_1: {per_soort}")
+
+        assert bestand_count >= EXPECTED_MIN_BESTAND_CLEAN, \
+            f"Bestand in Clean: verwacht >= {EXPECTED_MIN_BESTAND_CLEAN}, gevonden {bestand_count}"
+
+    # ----------------------------------------------------------
     # Samenvatting
     # ----------------------------------------------------------
-    def test_11_summary(self, mongo_client):
+    def test_16_summary(self, mongo_client):
         """Eindoverzicht van alle aantallen."""
         counts = mongo_soort_counts(DB_ANALYSE, "Single_Store_Clean", mongo_client)
         artefact_counts = mongo_artefact_counts(DB_ANALYSE, mongo_client)
@@ -346,5 +449,21 @@ class TestFullPipelineRealData:
             act = counts.get(soort, 0)
             ok = "✓" if act >= exp else "✗"
             print(f"  {soort + ' (>=' + str(exp) + ')':<25} {act:>8,} {'':>8}  {ok}")
+
+        # Afbeeldingen
+        print(f"\n  Afbeeldingen:")
+        print("  " + "-" * 47)
+        db_files = mongo_client[DB_FILES]
+        db_staging = mongo_client[DB_STAGING]
+        plaatjes = db_staging["Plaatjes"].count_documents({})
+        filenames_total = db_files["Filenames"].count_documents({})
+        filenames_done = db_files["Filenames"].count_documents({"processed": True})
+        bestand = counts.get("Bestand", 0)
+
+        ok_p = "✓" if plaatjes >= EXPECTED_MIN_PLAATJES else "✗"
+        ok_b = "✓" if bestand >= EXPECTED_MIN_BESTAND_CLEAN else "✗"
+        print(f"  {'Filenames':<25} {filenames_total:>8,} (verwerkt: {filenames_done})")
+        print(f"  {'Plaatjes (>=' + str(EXPECTED_MIN_PLAATJES) + ')':<25} {plaatjes:>8,} {'':>8}  {ok_p}")
+        print(f"  {'Bestand (>=' + str(EXPECTED_MIN_BESTAND_CLEAN) + ')':<25} {bestand:>8,} {'':>8}  {ok_b}")
 
         print("=" * 60)
