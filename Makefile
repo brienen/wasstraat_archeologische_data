@@ -6,11 +6,12 @@
 #   make help         Toon alle targets
 #
 # Ontwikkelen:
-#   make install      Maak .venv aan en installeer test-dependencies
-#   make test         Draai unit tests
-#   make integration  Draai integratietests (start/stopt Docker)
-#   make test-all     Draai unit + integratietests
-#   make docs         Start MkDocs dev-server
+#   make install          Maak .venv aan en installeer test-dependencies
+#   make test             Draai unit tests
+#   make integration      Draai alle integratietests (Docker + Airflow + DAGs)
+#   make integration-keep Zelfde, maar laat containers draaien (debugging)
+#   make test-all         Draai unit + integratietests
+#   make docs             Start MkDocs dev-server
 #
 # Wasstraat draaien:
 #   make app          Start de wasstraat (standaard)
@@ -70,48 +71,22 @@ test-quick: install ## Draai unit tests (korte output)
 	$(PYTEST) tests/unit/ -q
 
 .PHONY: integration
-integration: install ## Draai integratietests (start/stopt Docker containers)
-	@echo "➜ Test-databases starten..."
-	$(COMPOSE_TEST) up -d
-	@echo "➜ Wachten tot databases beschikbaar zijn..."
-	@for i in $$(seq 1 30); do \
-		docker exec wasstraat_mongo_test mongo --eval "db.adminCommand('ping')" \
-			-u testroot -p testpass --authenticationDatabase admin \
-			--quiet 2>/dev/null | grep -q "ok" && break; \
-		sleep 1; \
-	done
-	@for i in $$(seq 1 30); do \
-		docker exec wasstraat_postgres_test pg_isready -U testuser -d wasstraat_test \
-			--quiet 2>/dev/null && break; \
-		sleep 1; \
-	done
-	@echo "➜ Integratietests draaien..."
-	MONGO_TEST_URI="mongodb://testroot:testpass@localhost:27117/" \
-	DB_STAGING="Arch_Staging_Test" \
-	DB_ANALYSE="Arch_Analyse_Test" \
-	$(PYTEST) tests/integration/ -v -m integration; \
-	EXIT=$$?; \
-	echo "➜ Test-databases opruimen..."; \
-	$(COMPOSE_TEST) down -v; \
-	exit $$EXIT
-
-.PHONY: integration-real-data
-integration-real-data: install ## Draai volledige pipeline-test met echte data (via DAGs)
+integration: install ## Draai alle integratietests (start/stopt Docker containers + Airflow)
 	@echo "➜ Test-omgeving starten (mongo + postgres + airflow)..."
 	$(COMPOSE_TEST) up -d
 	@echo "➜ Wachten tot services klaar zijn (pytest doet de rest)..."
-	$(PYTEST) tests/integration/test_full_pipeline_real_data.py \
+	$(PYTEST) tests/integration/ \
 		-v -s -m integration --tb=short; \
 	EXIT=$$?; \
 	echo "➜ Test-omgeving opruimen..."; \
 	$(COMPOSE_TEST) down -v; \
 	exit $$EXIT
 
-.PHONY: integration-real-data-keep
-integration-real-data-keep: install ## Zelfde als integration-real-data maar laat containers draaien
+.PHONY: integration-keep
+integration-keep: install ## Zelfde als integration maar laat containers draaien
 	@echo "➜ Test-omgeving starten..."
 	$(COMPOSE_TEST) up -d
-	$(PYTEST) tests/integration/test_full_pipeline_real_data.py \
+	$(PYTEST) tests/integration/ \
 		-v -s -m integration --tb=short
 	@echo "➜ Containers draaien nog. Stop met: $(COMPOSE_TEST) down -v"
 
