@@ -37,4 +37,13 @@ def firstValue(*kargs):
         if not_empty(x):
             return x
     return None
-    
+
+
+def safe_row_to_dict(row, keep_fields=None):
+    """Converteer DataFrame-rij naar dict, verwijder NaN maar behoud essenti\u00eble velden."""
+    d = row.dropna().to_dict()
+    if keep_fields:
+        for field in keep_fields:
+            if field in row.index and field not in d:
+                d[field] = None  # Behoud veld met None i.p.v. het te verwijderen
+    return d

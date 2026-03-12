@@ -235,7 +235,7 @@ def mergeMissing(soort):
                     logger.info(f"No missing records for type: {soort} nothing inserted in collection.")
                     return
 
-                inserts=[ InsertOne(record) for record in [v.dropna().to_dict() for k,v in df.iterrows()]]  # 
+                inserts=[ InsertOne(record) for record in [util.safe_row_to_dict(v, keep_fields=['_id', 'key', 'soort']) for k,v in df.iterrows()]]
                 result = cleancollection.bulk_write(inserts)
             else:
                 logger.warning(f"trying to insert empty dataframe of soort: {soort} into collection.")
@@ -338,7 +338,7 @@ def mergeFotoinfo():
             df_merge = df_merge[available_columns]
 
 
-        updates= [ pymongo.ReplaceOne({"_id": record['_id']}, record, upsert=True) for record in [v.dropna().to_dict() for k,v in df_merge.iterrows()]]  # 
+        updates= [ pymongo.ReplaceOne({"_id": record['_id']}, record, upsert=True) for record in [util.safe_row_to_dict(v, keep_fields=['_id', 'soort']) for k,v in df_merge.iterrows()]]
         if len(updates) > 0:
             logger.info(f"Upserting {len(updates)} photo records.")
             result = cleancollection.bulk_write(updates)

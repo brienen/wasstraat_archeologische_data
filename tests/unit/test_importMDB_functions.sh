@@ -360,6 +360,110 @@ else
 fi
 
 
+# ================================================================
+# SECTIE D: importMDB.sh directory- en bestandsvalidatie
+#
+# Test dat het script correct omgaat met:
+#   - niet-bestaande directories (exit 0, INFO-melding)
+#   - lege directories zonder MDB/ACCDB-bestanden (exit 0, INFO-melding)
+#   - directories met bestanden (loop wordt uitgevoerd)
+#   - geen valse ERROR-meldingen bij ontbrekende bestandstypen
+# ================================================================
+echo ""
+echo -e "${YELLOW}--- D. Directory- en bestandsvalidatie (glob fix) ---${NC}"
+
+# We draaien importMDB.sh direct met dummy-argumenten.
+# Het script verwacht environment-variabelen en een MongoDB-connectie,
+# maar de directory/glob-checks komen vóór de MongoDB-aanroepen.
+# We zetten de benodigde variabelen en laten mongoimport falen (dat is ok).
+
+# Test D1: Niet-bestaande directory -> exit 0 met INFO-melding
+D1_DIR="$TMPDIR/niet_bestaand_pad_xyz"
+D1_OUTPUT=$(bash -c "
+export AIRFLOW_TEMPDIR='$TMPDIR'
+export DB_STAGING='testdb'
+export AIRFLOW_LOGDIR='$TMPDIR'
+export MONGO_INITDB_ROOT_USERNAME='test'
+export MONGO_INITDB_ROOT_PASSWORD='test'
+export MONGO_SERVER='localhost'
+export COLL_STAGING_METAINFO='metainfo'
+bash '$IMPORT_SCRIPT' '$D1_DIR' 'test_collection'
+" 2>/dev/null)
+D1_EXIT=$?
+if [ $D1_EXIT -eq 0 ] && echo "$D1_OUTPUT" | grep -q "INFO: Input-directory.*bestaat niet"; then
+    pass "D1: Niet-bestaande directory -> exit 0 + INFO-melding"
+else
+    fail "D1: Niet-bestaande directory" "exit=$D1_EXIT, output: $D1_OUTPUT"
+fi
+
+# Test D2: Bestaande maar lege directory -> exit 0 met INFO-melding
+D2_DIR="$TMPDIR/lege_dir"
+mkdir -p "$D2_DIR/subdir"
+touch "$D2_DIR/subdir/readme.txt"  # Geen .mdb of .accdb bestanden
+D2_OUTPUT=$(bash -c "
+export AIRFLOW_TEMPDIR='$TMPDIR'
+export DB_STAGING='testdb'
+export AIRFLOW_LOGDIR='$TMPDIR'
+export MONGO_INITDB_ROOT_USERNAME='test'
+export MONGO_INITDB_ROOT_PASSWORD='test'
+export MONGO_SERVER='localhost'
+export COLL_STAGING_METAINFO='metainfo'
+bash '$IMPORT_SCRIPT' '$D2_DIR' 'test_collection'
+" 2>/dev/null)
+D2_EXIT=$?
+if [ $D2_EXIT -eq 0 ] && echo "$D2_OUTPUT" | grep -q "INFO: Geen MDB/ACCDB-bestanden gevonden"; then
+    pass "D2: Lege directory (geen MDB/ACCDB) -> exit 0 + INFO-melding"
+else
+    fail "D2: Lege directory" "exit=$D2_EXIT, output: $D2_OUTPUT"
+fi
+
+# Test D3: Geen ERROR-meldingen bij niet-bestaande of lege directory
+D3_ERRORS_1=$(echo "$D1_OUTPUT" | grep -c "^ERROR:" || true)
+D3_ERRORS_2=$(echo "$D2_OUTPUT" | grep -c "^ERROR:" || true)
+if [ "$D3_ERRORS_1" -eq 0 ] && [ "$D3_ERRORS_2" -eq 0 ]; then
+    pass "D3: Geen ERROR-meldingen bij ontbrekende/lege directories"
+else
+    fail "D3: Onverwachte ERROR-meldingen" "niet-bestaand=$D3_ERRORS_1, leeg=$D3_ERRORS_2"
+fi
+
+# Test D4: Directory met alleen .txt bestanden -> geen valse glob-patronen in output
+D4_OUTPUT="$D2_OUTPUT"
+if ! echo "$D4_OUTPUT" | grep -q '\*\.mdb' && ! echo "$D4_OUTPUT" | grep -q '\*\.accdb'; then
+    pass "D4: Geen letterlijke glob-patronen (*.mdb/*.accdb) in output"
+else
+    fail "D4: Letterlijke glob-patronen" "output bevat ongeëxpandeerde globs"
+fi
+
+# Test D5: Directory met een nep-.mdb bestand -> loop wordt wél uitgevoerd
+D5_DIR="$TMPDIR/met_mdb"
+mkdir -p "$D5_DIR/PROJ01"
+touch "$D5_DIR/PROJ01/test.mdb"  # Leeg bestand, zal falen bij mdb-tables
+D5_OUTPUT=$(bash -c "
+export AIRFLOW_TEMPDIR='$TMPDIR'
+export DB_STAGING='testdb'
+export AIRFLOW_LOGDIR='$TMPDIR'
+export MONGO_INITDB_ROOT_USERNAME='test'
+export MONGO_INITDB_ROOT_PASSWORD='test'
+export MONGO_SERVER='localhost'
+export COLL_STAGING_METAINFO='metainfo'
+bash '$IMPORT_SCRIPT' '$D5_DIR' 'test_collection'
+" 2>/dev/null)
+D5_EXIT=$?
+# Het script moet het bestand vinden en proberen te verwerken (en falen op mdb-tables, dat is ok)
+if echo "$D5_OUTPUT" | grep -q "Processing.*test.mdb"; then
+    pass "D5: Directory met .mdb bestand -> loop wordt uitgevoerd"
+else
+    fail "D5: Directory met .mdb" "exit=$D5_EXIT, output: $D5_OUTPUT"
+fi
+
+# Test D6: Mix van .mdb en geen .accdb -> geen glob-fouten voor .accdb
+if ! echo "$D5_OUTPUT" | grep -q '\*\.accdb'; then
+    pass "D6: Alleen .mdb aanwezig -> geen letterlijke *.accdb in output"
+else
+    fail "D6: .accdb glob-patroon" "output bevat ongeëxpandeerde *.accdb"
+fi
+
+
 # Opruimen
 rm -rf "$TMPDIR"
 

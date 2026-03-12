@@ -7,6 +7,7 @@ import numpy as np
 import roman
 import wasstraat.meta as meta
 import wasstraat.mongoUtils as mongoUtil
+import wasstraat.util as util
 import simplejson
  
 # Import app code
@@ -48,14 +49,14 @@ def setReferenceKeys(pipeline, soort, col='analyse'):
         
         if not df.empty:
             # Update soort documents 
-            updates=[ UpdateOne({'_id':x['_id']}, {'$set':x}, upsert=True) for x in [v.dropna().to_dict() for k,v in df.iterrows()]]  # 
+            updates=[ UpdateOne({'_id':x['_id']}, {'$set':x}, upsert=True) for x in [util.safe_row_to_dict(v, keep_fields=['_id', 'key', 'soort']) for k,v in df.iterrows()]]
             result = collection.bulk_write(updates)
         else:
             logger.warning(f"trying to insert empty dataframe of soort: {soort} into collection {col}.")
-        
+
     except Exception as err:
         msg = "Onbekende fout bij het aanroepen van een aggregation met melding: " + str(err)
-        logger.error(msg)    
+        logger.error(msg)
         raise Exception(msg) from err
 
     finally:
@@ -83,8 +84,7 @@ def setPrimaryKeys(soort, col='analyse'):
         
         if not df.empty:
             # Update soort documents 
-            #updates=[ UpdateOne({'_id':x['_id']}, {'$set':x}, upsert=True) for x in df.to_dict('records')]  # v.dropna().to_dict() for k,v in df.iterrows()
-            updates=[ UpdateOne({'_id':x['_id']}, {'$set':x}, upsert=True) for x in [v.dropna().to_dict() for k,v in df.iterrows()]]  # 
+            updates=[ UpdateOne({'_id':x['_id']}, {'$set':x}, upsert=True) for x in [util.safe_row_to_dict(v, keep_fields=['_id', 'soort']) for k,v in df.iterrows()]]
             result = collection.bulk_write(updates)
         else:
             logger.warning(f"trying to insert empty dataframe of soort: {soort} into collection {col}.")
@@ -155,7 +155,7 @@ def setReferences(soort, col='analyseclean', key='key', refkey=None):
             return
 
         # Update soort documents 
-        updates=[ UpdateOne({'_id':x['_id']}, {'$set':x}) for x in [v.dropna().to_dict() for k,v in df_merge.iterrows()]] # 
+        updates=[ UpdateOne({'_id':x['_id']}, {'$set':x}) for x in [util.safe_row_to_dict(v, keep_fields=['_id']) for k,v in df_merge.iterrows()]]
         result = collection.bulk_write(updates)
 
         return result.bulk_api_result

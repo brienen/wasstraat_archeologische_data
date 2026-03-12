@@ -226,8 +226,39 @@ print()  # newline aan het eind
 
 
 DB_STAGING_URI=mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@${MONGO_SERVER}
-shopt -s globstar
-for mdbfile in "$1"/**/*.{mdb,accdb}
+
+# Controleer of de input-directory bestaat
+if [ ! -d "$1" ]; then
+    echo "INFO: Input-directory '$1' bestaat niet, overgeslagen."
+    echo ""
+    echo "========================================================"
+    echo "ENCODING RAPPORT - $(date --iso-8601=seconds)"
+    echo "========================================================"
+    echo "Input-directory '$1' niet gevonden — geen bestanden verwerkt."
+    echo "========================================================"
+    exit 0
+fi
+
+# Zoek alle MDB/ACCDB-bestanden in de input-directory
+shopt -s globstar nullglob
+MDB_FILES=("$1"/**/*.mdb "$1"/**/*.accdb)
+shopt -u nullglob
+
+# Controleer of er bestanden gevonden zijn
+if [ ${#MDB_FILES[@]} -eq 0 ]; then
+    echo "INFO: Geen MDB/ACCDB-bestanden gevonden in '$1', overgeslagen."
+    echo ""
+    echo "========================================================"
+    echo "ENCODING RAPPORT - $(date --iso-8601=seconds)"
+    echo "========================================================"
+    echo "Geen MDB/ACCDB-bestanden in '$1' — geen bestanden verwerkt."
+    echo "========================================================"
+    exit 0
+fi
+
+echo "INFO: ${#MDB_FILES[@]} MDB/ACCDB-bestand(en) gevonden in '$1'."
+
+for mdbfile in "${MDB_FILES[@]}"
 do
 	TOTAL_FILES=$((TOTAL_FILES + 1))
 	PROJECT_R=${mdbfile#$1"/"}
