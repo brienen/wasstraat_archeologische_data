@@ -272,21 +272,27 @@ def extractImagedataFromFileNames():
 
             file_dict.update({dr: dr_dict})
           
-        # Set missing values in foto's       
-        lst_foto = list(col.find({'soort': 'Foto'}))            
+        # Set missing values in foto's
+        lst_foto = list(col.find({'soort': 'Foto'}))
         for foto in lst_foto:
             try:
-                if not foto.get('projectcd'):
-                    foto['projectcd'] = file_dict.get(foto.get('directory')).get('projectcd')
-                if not foto.get('fototype'):
-                    foto['fototype'] = file_dict.get(foto.get('directory')).get('fototype')
+                dir_info = file_dict.get(foto.get('directory'))
+                if dir_info is None:
+                    logger.warning(f"Geen directory-info gevonden voor foto {foto.get('fileName')} "
+                                 f"met directory '{foto.get('directory')}'")
+                    continue
 
-                foto['materiaal'] = file_dict.get(foto.get('directory')).get('materiaal')  
-                foto['fotosoort'] = file_dict.get(foto.get('directory')).get('fotosoort')                
+                if not foto.get('projectcd'):
+                    foto['projectcd'] = dir_info.get('projectcd')
+                if not foto.get('fototype'):
+                    foto['fototype'] = dir_info.get('fototype')
+
+                foto['materiaal'] = dir_info.get('materiaal')
+                foto['fotosoort'] = dir_info.get('fotosoort')
                 col.replace_one({'_id': foto['_id']}, foto)
 
             except Exception as exp2:
-                filename = foto['fileName']
+                filename = foto.get('fileName', 'onbekend')
                 logger.error(f'Error while setting missing values in foto {filename} with message: {str(exp2)} ')
     except Exception as exp1:
         msg = f'Severe error while while setting missing values on fotos: {str(exp1)} '

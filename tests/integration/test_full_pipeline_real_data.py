@@ -12,6 +12,7 @@ Geen PostgreSQL-verificatie — alleen MongoDB.
 Draaien:
   make integration-real-data
 """
+import json
 import os
 import subprocess
 import time
@@ -67,47 +68,157 @@ EXPECTED_MIN_BESTAND_CLEAN = 21   # minimaal verwacht als soort "Bestand" in Cle
 # Helpers
 # ============================================================
 
-def run_dag(dag_id: str, timeout: int = 1800) -> subprocess.CompletedProcess:
-    """Draai een Airflow DAG synchroon via ``airflow dags test``.
+def run_dag(dag_id: str, timeout: int = 1800, poll_interval: int = 3) -> str:
+    """Trigger een Airflow DAG en wacht op voltooiing via polling.
 
-    Raise AssertionError wanneer de DAG faalt.
+    Gebruikt ``airflow dags trigger`` + poll i.p.v. ``dags test`` zodat de
+    LocalExecutor taken parallel kan uitvoeren volgens de DAG-structuur.
+    ``dags test`` draait alles sequentieel, wat onnodig traag is.
+
+    Raise AssertionError wanneer de DAG faalt of timeout bereikt.
     """
-    cmd = [
+    run_id = f"integration_test_{dag_id}_{int(time.time())}"
+
+    # Unpause de DAG (nodig voor trigger; dags test deed dit impliciet)
+    subprocess.run(
+        ["docker", "exec", AIRFLOW_CONTAINER,
+         "airflow", "dags", "unpause", dag_id],
+        capture_output=True, text=True, timeout=30,
+    )
+
+    # Trigger de DAG
+    trigger_cmd = [
         "docker", "exec", AIRFLOW_CONTAINER,
-        "airflow", "dags", "test", dag_id, "2024-01-01",
+        "airflow", "dags", "trigger",
+        "--run-id", run_id,
+        dag_id,
     ]
-    print(f"\n  ▶ {' '.join(cmd)}")
-    result = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
+    print(f"\n  ▶ {' '.join(trigger_cmd)}")
+    t_start = time.time()
+    trigger_result = subprocess.run(
+        trigger_cmd, capture_output=True, text=True, timeout=30,
+    )
+    if trigger_result.returncode != 0:
+        print(f"  ⚠  Trigger gefaald:\n    {trigger_result.stderr}")
+        assert False, f"DAG {dag_id} kon niet getriggerd worden"
+    print(f"  ✓  DAG {dag_id} getriggerd (run_id={run_id})")
 
-    # Toon altijd de laatste regels stdout (DAG taak-overzicht)
-    if result.stdout:
-        lines = result.stdout.strip().split("\n")
-        print(f"\n  --- stdout (laatste 40 regels) ---")
-        for line in lines[-40:]:
-            print(f"    {line}")
+    # Poll tot de DAG klaar is (success/failed)
+    print(f"  ⏳ Wachten op voltooiing van {dag_id} (poll elke {poll_interval}s)...")
+    final_state = None
+    while time.time() - t_start < timeout:
+        time.sleep(poll_interval)
+        state_cmd = [
+            "docker", "exec", AIRFLOW_CONTAINER,
+            "airflow", "dags", "list-runs", "-d", dag_id, "-o", "json",
+        ]
+        state_result = subprocess.run(
+            state_cmd, capture_output=True, text=True, timeout=30,
+        )
+        if state_result.returncode != 0 or not state_result.stdout.strip():
+            continue
 
-    if result.returncode != 0:
-        print(f"\n  ⚠  DAG {dag_id} GEFAALD (exit code {result.returncode})")
-        if result.stderr:
-            print(f"\n  --- stderr (laatste 40 regels) ---")
-            for line in result.stderr.strip().split("\n")[-40:]:
+        try:
+            runs = json.loads(state_result.stdout)
+        except json.JSONDecodeError:
+            continue
+
+        for run in runs:
+            if run.get("run_id") == run_id:
+                final_state = run.get("state")
+                break
+
+        if final_state in ("success", "failed"):
+            break
+
+    t_elapsed = time.time() - t_start
+    print(f"  ⏱  {dag_id} duurde {t_elapsed:.1f}s (state={final_state})")
+
+    # Bij falen: toon gefaalde taken voor debugging
+    if final_state != "success":
+        _print_failed_tasks(dag_id, run_id)
+        if final_state is None:
+            assert False, f"DAG {dag_id} timeout na {timeout}s"
+        assert False, f"DAG {dag_id} gefaald (state={final_state})"
+
+    print(f"  ✓  DAG {dag_id} succesvol")
+
+    # Check op ERROR-regels in de taak-logs (optioneel, voor waarschuwingen)
+    _check_dag_errors(dag_id, run_id)
+
+    return final_state
+
+
+def _print_failed_tasks(dag_id: str, run_id: str):
+    """Toon gefaalde taken en hun logs voor debugging."""
+    try:
+        cmd = [
+            "docker", "exec", AIRFLOW_CONTAINER,
+            "airflow", "tasks", "states-for-dag-run", dag_id, run_id, "-o", "json",
+        ]
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+        if result.returncode == 0 and result.stdout.strip():
+            tasks = json.loads(result.stdout)
+            failed = [t for t in tasks if t.get("state") == "failed"]
+            if failed:
+                print(f"\n  ⚠  {len(failed)} gefaalde taken:")
+                for t in failed:
+                    task_id = t.get("task_id", "?")
+                    print(f"    - {task_id}")
+                    # Probeer de log van de eerste gefaalde taak op te halen
+                    _print_task_log(dag_id, task_id, run_id)
+    except (subprocess.TimeoutExpired, json.JSONDecodeError, Exception) as e:
+        print(f"  (kon gefaalde taken niet ophalen: {e})")
+
+
+def _print_task_log(dag_id: str, task_id: str, run_id: str, tail: int = 30):
+    """Haal de laatste regels van een taak-log op voor debugging."""
+    try:
+        # Zoek het logbestand in de container
+        log_cmd = [
+            "docker", "exec", AIRFLOW_CONTAINER,
+            "find", "/opt/airflow/logs", "-path", f"*{dag_id}*{task_id}*",
+            "-name", "*.log", "-type", "f",
+        ]
+        result = subprocess.run(log_cmd, capture_output=True, text=True, timeout=10)
+        if result.returncode == 0 and result.stdout.strip():
+            log_file = result.stdout.strip().split("\n")[-1]
+            tail_cmd = [
+                "docker", "exec", AIRFLOW_CONTAINER,
+                "tail", f"-{tail}", log_file,
+            ]
+            tail_result = subprocess.run(
+                tail_cmd, capture_output=True, text=True, timeout=10,
+            )
+            if tail_result.stdout:
+                print(f"      --- log {task_id} (laatste {tail} regels) ---")
+                for line in tail_result.stdout.strip().split("\n"):
+                    print(f"      {line}")
+    except Exception:
+        pass
+
+
+def _check_dag_errors(dag_id: str, run_id: str):
+    """Zoek ERROR-regels in de taak-logs van een succesvolle DAG run."""
+    try:
+        log_cmd = [
+            "docker", "exec", AIRFLOW_CONTAINER,
+            "bash", "-c",
+            f"grep -r 'ERROR' /opt/airflow/logs/dag_id={dag_id}/ 2>/dev/null | tail -20",
+        ]
+        result = subprocess.run(log_cmd, capture_output=True, text=True, timeout=15)
+        if result.returncode == 0 and result.stdout.strip():
+            error_lines = result.stdout.strip().split("\n")
+            print(f"\n  ⚠  {len(error_lines)} ERROR-regels gevonden in DAG logs:")
+            for line in error_lines[:20]:
                 print(f"    {line}")
-        assert False, f"DAG {dag_id} faalde met exit code {result.returncode}"
-    else:
-        print(f"  ✓  DAG {dag_id} succesvol (exit code 0)")
-
-    # Check ook of er FAILED tasks in de output staan
-    if result.stdout and "ERROR" in result.stdout:
-        error_lines = [l for l in result.stdout.split("\n") if "ERROR" in l]
-        print(f"\n  ⚠  {len(error_lines)} ERROR-regels gevonden in DAG output:")
-        for line in error_lines[:20]:
-            print(f"    {line}")
-
-    return result
+    except Exception:
+        pass
 
 
 def wait_for_airflow(max_wait: int = 180):
-    """Wacht tot Airflow DAGs beschikbaar zijn."""
+    """Wacht tot Airflow scheduler actief is en DAGs beschikbaar zijn."""
+    # Stap 1: wacht tot DAGs geparsed zijn
     for _ in range(max_wait):
         try:
             r = subprocess.run(
@@ -116,11 +227,34 @@ def wait_for_airflow(max_wait: int = 180):
                 capture_output=True, text=True, timeout=10,
             )
             if r.returncode == 0 and "Extract" in r.stdout:
+                break
+        except (subprocess.TimeoutExpired, FileNotFoundError):
+            pass
+        time.sleep(1)
+    else:
+        return False
+
+    # Stap 2: wacht tot de scheduler draait (nodig voor trigger-aanpak)
+    print("  ⏳ Wachten tot scheduler actief is...")
+    for _ in range(30):
+        try:
+            r = subprocess.run(
+                ["docker", "exec", AIRFLOW_CONTAINER,
+                 "airflow", "jobs", "check", "--job-type", "SchedulerJob",
+                 "--allow-hierarchical-mapping"],
+                capture_output=True, text=True, timeout=10,
+            )
+            if r.returncode == 0:
+                print("  ✓ Scheduler actief")
                 return True
         except (subprocess.TimeoutExpired, FileNotFoundError):
             pass
         time.sleep(1)
-    return False
+
+    # Fallback: als jobs check niet werkt, wacht kort en ga door
+    print("  ⚠ Scheduler-check niet beschikbaar, wacht 5s extra")
+    time.sleep(5)
+    return True
 
 
 def mongo_soort_counts(db_name, collection, client):
