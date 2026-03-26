@@ -102,7 +102,7 @@ synthetic: install ## Genereer synthetische voorbeelddata (MDB-bestanden)
 	@echo "➜ Synthetische data genereren..."
 	JAVA_HOME=$$(brew --prefix openjdk 2>/dev/null || echo "/usr/lib/jvm/java-21-openjdk") \
 	PATH="$$(brew --prefix openjdk 2>/dev/null || echo "/usr/lib/jvm/java-21-openjdk")/bin:$$PATH" \
-	$(BIN)/python data/synthetic/generate_synthetic_data.py
+	$(BIN)/python data/synthetic/generatie/generate_synthetic_data.py
 
 # ============================================================
 # Documentatie

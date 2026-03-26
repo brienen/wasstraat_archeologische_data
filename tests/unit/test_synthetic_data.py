@@ -8,8 +8,8 @@ import pytest
 import sys
 import os
 
-# Voeg data/synthetic toe aan het pad zodat we de generator kunnen importeren
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "data", "synthetic"))
+# Voeg data/synthetic/generatie toe aan het pad zodat we de generator kunnen importeren
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "data", "synthetic", "generatie"))
 from generate_synthetic_data import (
     getAlleScenarioData,
     dataKleinProject,

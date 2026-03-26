@@ -12,23 +12,28 @@ Fictieve maar realistische archeologische data voor de Wasstraat, als vervanging
 - 4 putten, 8 sporen, 12 vondsten, 20 artefacten (8 materiaalsoorten)
 - Datering: 1200-1800
 
-## Bestanden
+## Structuur
 
 ```
-output/
-  projecten/SY001/C Database/opgravingSY001.mdb   # Klein project
-  projecten/SY002/C Database/opgravingSY002.mdb   # Groot project
-  delfit/DELF-IT.mdb                               # Projectenlijst
-  magazijnlijst/MAGAZIJN.mdb                       # Depotdata
-  digifotos/Digifotos.mdb                          # Fotocatalogus
+data/synthetic/
+  data/                                             # Gegenereerde MDB-bestanden
+    projecten/SY001/C Database/opgravingSY001.mdb    # Klein project
+    projecten/SY002/C Database/opgravingSY002.mdb    # Groot project
+    delfit/DELF-IT.mdb                               # Projectenlijst
+    magazijnlijst/MAGAZIJN.mdb                       # Depotdata
+    digifotos/Digifotos.mdb                          # Fotocatalogus
+  generatie/                                         # Alles voor (her)generatie
+    generate_synthetic_data.py                       # Generator-script
+    requirements-synthetic.txt                       # Python dependencies
+    jars/                                            # Jackcess JARs
 ```
 
 ## Opnieuw genereren
 
 Vereisten:
 - Java JRE (`brew install openjdk` op macOS)
-- Python packages: `pip install -r requirements-synthetic.txt`
-- Jackcess JARs in `jars/` (al aanwezig in de repo)
+- Python packages: `pip install -r generatie/requirements-synthetic.txt`
+- Jackcess JARs in `generatie/jars/` (al aanwezig in de repo)
 
 ```bash
 make synthetic
@@ -40,8 +45,8 @@ Mount de synthetische data als input-volumes in Docker Compose:
 
 ```yaml
 volumes:
-  - ./data/synthetic/output/projecten:/input/projecten
-  - ./data/synthetic/output/delfit:/input/delfit
-  - ./data/synthetic/output/magazijnlijst:/input/magazijnlijst
-  - ./data/synthetic/output/digifotos:/input/digifotos
+  - ./data/synthetic/data/projecten:/input/projecten
+  - ./data/synthetic/data/delfit:/input/delfit
+  - ./data/synthetic/data/magazijnlijst:/input/magazijnlijst
+  - ./data/synthetic/data/digifotos:/input/digifotos
 ```

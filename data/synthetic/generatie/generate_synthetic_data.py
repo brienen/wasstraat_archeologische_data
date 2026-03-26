@@ -29,8 +29,9 @@ JClass = None
 # ============================================================
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+SYNTHETIC_DIR = os.path.dirname(SCRIPT_DIR)
 JARS_DIR = os.path.join(SCRIPT_DIR, "jars")
-OUTPUT_DIR = os.path.join(SCRIPT_DIR, "output")
+OUTPUT_DIR = os.path.join(SYNTHETIC_DIR, "data")
 
 JAR_FILES = [
     os.path.join(JARS_DIR, "jackcess-4.0.5.jar"),
