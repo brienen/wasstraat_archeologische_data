@@ -94,6 +94,17 @@ integration-keep: install ## Zelfde als integration maar laat containers draaien
 test-all: test integration ## Draai unit + integratietests
 
 # ============================================================
+# Synthetische data
+# ============================================================
+
+.PHONY: synthetic
+synthetic: install ## Genereer synthetische voorbeelddata (MDB-bestanden)
+	@echo "➜ Synthetische data genereren..."
+	JAVA_HOME=$$(brew --prefix openjdk 2>/dev/null || echo "/usr/lib/jvm/java-21-openjdk") \
+	PATH="$$(brew --prefix openjdk 2>/dev/null || echo "/usr/lib/jvm/java-21-openjdk")/bin:$$PATH" \
+	$(BIN)/python data/synthetic/generate_synthetic_data.py
+
+# ============================================================
 # Documentatie
 # ============================================================
 
