@@ -94,6 +94,8 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../deployment/airflow-vs-app/">Airflow Transformatie vs. Web Applicatie</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../deployment/voorbeelddata/">Voorbeelddata</a>
+                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../deployment/proefdata/">Proefdata Inlezen</a>
                   </li>
               </ul>
@@ -115,15 +117,19 @@
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#integratietests">Integratietests</a>
         <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#standaard-synthetische-data">Standaard: synthetische data</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#delft-specifiek-echte-data">Delft-specifiek: echte data</a>
+    </li>
     <li class="toctree-l3"><a class="reference internal" href="#handmatig">Handmatig</a>
     </li>
         </ul>
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#wat-wordt-getest">Wat wordt getest?</a>
         <ul>
-    <li class="toctree-l3"><a class="reference internal" href="#unit-tests-128-tests">Unit tests (128 tests)</a>
+    <li class="toctree-l3"><a class="reference internal" href="#unit-tests_1">Unit tests</a>
     </li>
-    <li class="toctree-l3"><a class="reference internal" href="#integratietests-4-tests">Integratietests (4 tests)</a>
+    <li class="toctree-l3"><a class="reference internal" href="#integratietests_1">Integratietests</a>
     </li>
         </ul>
     </li>
@@ -163,28 +169,43 @@
             <div class="section" itemprop="articleBody">
               
                 <h1 id="testen">Testen<a class="headerlink" href="#testen" title="Permanent link">&para;</a></h1>
-<p>De Wasstraat heeft een testsuite met twee niveaus: unit tests voor individuele functies en integratietests die de volledige harmonisatie-pipeline testen met een echte MongoDB.</p>
+<p>De Wasstraat heeft een testsuite met twee niveaus: unit tests voor individuele functies en integratietests die de volledige verwerkingspipeline testen met echte databases in Docker.</p>
 <h2 id="quickstart">Quickstart<a class="headerlink" href="#quickstart" title="Permanent link">&para;</a></h2>
-<div class="codehilite"><pre><span></span><code>make<span class="w"> </span>install<span class="w">    </span><span class="c1"># eenmalig: maakt .venv aan met alle dependencies</span>
-make<span class="w"> </span><span class="nb">test</span><span class="w">       </span><span class="c1"># draai unit tests</span>
-make<span class="w"> </span>integration<span class="w"> </span><span class="c1"># draai integratietests (start/stopt Docker automatisch)</span>
+<div class="codehilite"><pre><span></span><code>make<span class="w"> </span>install<span class="w">          </span><span class="c1"># eenmalig: maakt .venv aan met alle dependencies</span>
+make<span class="w"> </span><span class="nb">test</span><span class="w">             </span><span class="c1"># draai unit tests</span>
+make<span class="w"> </span>integration<span class="w">      </span><span class="c1"># integratietests met synthetische voorbeelddata</span>
+make<span class="w"> </span>integration-delft<span class="w"> </span><span class="c1"># integratietests met Delftse data (indien aanwezig)</span>
+make<span class="w"> </span>test-all<span class="w">         </span><span class="c1"># unit + integratietests</span>
 </code></pre></div>
 
 <p>Typ <code>make help</code> voor alle beschikbare targets.</p>
 <h2 id="structuur">Structuur<a class="headerlink" href="#structuur" title="Permanent link">&para;</a></h2>
-<div class="codehilite"><pre><span></span><code>Makefile                                 # Alle commando&#39;s (make help)
-requirements-test.txt                    # Python test-dependencies
-docker-compose.test.yml                  # Lichtgewicht test-databases
-tests/
-├── conftest.py                          # Mocks voor shared.config, roman, etc.
-├── run_tests.py                         # Fallback runner (zonder venv/pytest)
-├── unit/
-│   ├── test_archutils.py                # convertToInt, convertToBool, fixDatering
-│   ├── test_rijksdriehoek.py            # RD ↔ WGS84 coördinaatconversie
-│   ├── test_harmonizer.py               # Pipeline-opbouw uit Excel config
-│   └── test_foto_parsing.py             # Regex-patronen voor bestandsclassificatie
-└── integration/
-    └── test_harmonize_pipeline.py       # Harmonisatie met echte MongoDB
+<div class="codehilite"><pre><span></span><code><span class="nx">Makefile</span><span class="w">                                      </span><span class="err">#</span><span class="w"> </span><span class="nx">Alle</span><span class="w"> </span><span class="nx">commando</span><span class="err">&#39;</span><span class="nx">s</span><span class="w"> </span><span class="p">(</span><span class="nx">make</span><span class="w"> </span><span class="nx">help</span><span class="p">)</span>
+<span class="nx">requirements</span><span class="o">-</span><span class="nx">test</span><span class="p">.</span><span class="nx">txt</span><span class="w">                         </span><span class="err">#</span><span class="w"> </span><span class="nx">Python</span><span class="w"> </span><span class="nx">test</span><span class="o">-</span><span class="nx">dependencies</span>
+<span class="nx">docker</span><span class="o">-</span><span class="nx">compose</span><span class="p">.</span><span class="nx">test</span><span class="p">.</span><span class="nx">yml</span><span class="w">                       </span><span class="err">#</span><span class="w"> </span><span class="nx">Lichtgewicht</span><span class="w"> </span><span class="nx">test</span><span class="o">-</span><span class="nx">databases</span><span class="w"> </span><span class="p">(</span><span class="nx">synthetische</span><span class="w"> </span><span class="nx">data</span><span class="p">)</span>
+<span class="nx">docker</span><span class="o">-</span><span class="nx">compose</span><span class="p">.</span><span class="nx">test</span><span class="o">-</span><span class="nx">delft</span><span class="p">.</span><span class="nx">yml</span><span class="w">                 </span><span class="err">#</span><span class="w"> </span><span class="nx">Override</span><span class="w"> </span><span class="nx">voor</span><span class="w"> </span><span class="nx">Delftse</span><span class="w"> </span><span class="nx">data</span><span class="w"> </span><span class="nx">volumes</span>
+<span class="nx">tests</span><span class="o">/</span>
+<span class="err">├──</span><span class="w"> </span><span class="nx">conftest</span><span class="p">.</span><span class="nx">py</span><span class="w">                               </span><span class="err">#</span><span class="w"> </span><span class="nx">Mocks</span><span class="w"> </span><span class="nx">voor</span><span class="w"> </span><span class="nx">shared</span><span class="p">.</span><span class="nx">config</span><span class="p">,</span><span class="w"> </span><span class="nx">roman</span><span class="p">,</span><span class="w"> </span><span class="nx">etc</span><span class="p">.</span>
+<span class="err">├──</span><span class="w"> </span><span class="nx">run_tests</span><span class="p">.</span><span class="nx">py</span><span class="w">                              </span><span class="err">#</span><span class="w"> </span><span class="nx">Fallback</span><span class="w"> </span><span class="nx">runner</span><span class="w"> </span><span class="p">(</span><span class="nx">zonder</span><span class="w"> </span><span class="nx">venv</span><span class="o">/</span><span class="nx">pytest</span><span class="p">)</span>
+<span class="err">├──</span><span class="w"> </span><span class="nx">unit</span><span class="o">/</span>
+<span class="err">│</span><span class="w">   </span><span class="err">├──</span><span class="w"> </span><span class="nx">test_archutils</span><span class="p">.</span><span class="nx">py</span><span class="w">                     </span><span class="err">#</span><span class="w"> </span><span class="nx">convertToInt</span><span class="p">,</span><span class="w"> </span><span class="nx">convertToBool</span><span class="p">,</span><span class="w"> </span><span class="nx">fixDatering</span>
+<span class="err">│</span><span class="w">   </span><span class="err">├──</span><span class="w"> </span><span class="nx">test_rijksdriehoek</span><span class="p">.</span><span class="nx">py</span><span class="w">                 </span><span class="err">#</span><span class="w"> </span><span class="nx">RD</span><span class="w"> </span><span class="err">↔</span><span class="w"> </span><span class="nx">WGS84</span><span class="w"> </span><span class="nx">coördinaatconversie</span>
+<span class="err">│</span><span class="w">   </span><span class="err">├──</span><span class="w"> </span><span class="nx">test_harmonizer</span><span class="p">.</span><span class="nx">py</span><span class="w">                    </span><span class="err">#</span><span class="w"> </span><span class="nx">Pipeline</span><span class="o">-</span><span class="nx">opbouw</span><span class="w"> </span><span class="nx">uit</span><span class="w"> </span><span class="nx">Excel</span><span class="w"> </span><span class="nx">config</span>
+<span class="err">│</span><span class="w">   </span><span class="err">├──</span><span class="w"> </span><span class="nx">test_foto_parsing</span><span class="p">.</span><span class="nx">py</span><span class="w">                  </span><span class="err">#</span><span class="w"> </span><span class="nx">Regex</span><span class="o">-</span><span class="nx">patronen</span><span class="w"> </span><span class="nx">voor</span><span class="w"> </span><span class="nx">bestandsclassificatie</span>
+<span class="err">│</span><span class="w">   </span><span class="err">├──</span><span class="w"> </span><span class="nx">test_encoding</span><span class="p">.</span><span class="nx">py</span><span class="w">                      </span><span class="err">#</span><span class="w"> </span><span class="nx">UTF</span><span class="o">-</span><span class="mi">8</span><span class="w"> </span><span class="nx">encoding</span><span class="w"> </span><span class="nx">en</span><span class="w"> </span><span class="nx">conversie</span>
+<span class="err">│</span><span class="w">   </span><span class="err">├──</span><span class="w"> </span><span class="nx">test_fixes_1_to_4</span><span class="p">.</span><span class="nx">py</span><span class="w">                  </span><span class="err">#</span><span class="w"> </span><span class="nx">Bugfixes</span><span class="w"> </span><span class="nx">validatie</span>
+<span class="err">│</span><span class="w">   </span><span class="err">├──</span><span class="w"> </span><span class="nx">test_fix_5_nonetype_foto</span><span class="p">.</span><span class="nx">py</span><span class="w">           </span><span class="err">#</span><span class="w"> </span><span class="nx">NoneType</span><span class="w"> </span><span class="nx">fotobestanden</span>
+<span class="err">│</span><span class="w">   </span><span class="err">├──</span><span class="w"> </span><span class="nx">test_fix_6_coordinaatvalidatie</span><span class="p">.</span><span class="nx">py</span><span class="w">      </span><span class="err">#</span><span class="w"> </span><span class="nx">Rijksdriehoek</span><span class="w"> </span><span class="nx">coördinaatvalidatie</span>
+<span class="err">│</span><span class="w">   </span><span class="err">├──</span><span class="w"> </span><span class="nx">test_fix_7_kolomselectie</span><span class="p">.</span><span class="nx">py</span><span class="w">           </span><span class="err">#</span><span class="w"> </span><span class="nx">Kolomselectie</span><span class="w"> </span><span class="nx">robuustheid</span>
+<span class="err">│</span><span class="w">   </span><span class="err">├──</span><span class="w"> </span><span class="nx">test_fix_8_dropna</span><span class="p">.</span><span class="nx">py</span><span class="w">                  </span><span class="err">#</span><span class="w"> </span><span class="nx">dropna</span><span class="p">()</span><span class="w"> </span><span class="nx">edge</span><span class="w"> </span><span class="nx">cases</span>
+<span class="err">│</span><span class="w">   </span><span class="err">├──</span><span class="w"> </span><span class="nx">test_importMDB_bash</span><span class="p">.</span><span class="nx">py</span><span class="w">                </span><span class="err">#</span><span class="w"> </span><span class="nx">Bash</span><span class="w"> </span><span class="kn">import</span><span class="o">-</span><span class="nx">functietests</span>
+<span class="err">│</span><span class="w">   </span><span class="err">└──</span><span class="w"> </span><span class="nx">test_synthetic_data</span><span class="p">.</span><span class="nx">py</span><span class="w">                </span><span class="err">#</span><span class="w"> </span><span class="nx">Validatie</span><span class="w"> </span><span class="nx">synthetische</span><span class="w"> </span><span class="nx">voorbeelddata</span>
+<span class="err">└──</span><span class="w"> </span><span class="nx">integration</span><span class="o">/</span>
+<span class="w">    </span><span class="err">├──</span><span class="w"> </span><span class="nx">test_full_pipeline</span><span class="p">.</span><span class="nx">py</span><span class="w">                 </span><span class="err">#</span><span class="w"> </span><span class="nx">Pipeline</span><span class="w"> </span><span class="nx">met</span><span class="w"> </span><span class="nx">directe</span><span class="w"> </span><span class="nx">MongoDB</span><span class="o">-</span><span class="nx">seeding</span>
+<span class="w">    </span><span class="err">├──</span><span class="w"> </span><span class="nx">test_full_pipeline_synthetic_data</span><span class="p">.</span><span class="nx">py</span><span class="w">   </span><span class="err">#</span><span class="w"> </span><span class="nx">Volledige</span><span class="w"> </span><span class="nx">pipeline</span><span class="w"> </span><span class="nx">via</span><span class="w"> </span><span class="nx">Airflow</span><span class="w"> </span><span class="p">(</span><span class="nx">synthetische</span><span class="w"> </span><span class="nx">data</span><span class="p">)</span>
+<span class="w">    </span><span class="err">├──</span><span class="w"> </span><span class="nx">test_full_pipeline_delft_data</span><span class="p">.</span><span class="nx">py</span><span class="w">       </span><span class="err">#</span><span class="w"> </span><span class="nx">Volledige</span><span class="w"> </span><span class="nx">pipeline</span><span class="w"> </span><span class="nx">via</span><span class="w"> </span><span class="nx">Airflow</span><span class="w"> </span><span class="p">(</span><span class="nx">Delftse</span><span class="w"> </span><span class="nx">data</span><span class="p">)</span>
+<span class="w">    </span><span class="err">├──</span><span class="w"> </span><span class="nx">test_harmonize_pipeline</span><span class="p">.</span><span class="nx">py</span><span class="w">            </span><span class="err">#</span><span class="w"> </span><span class="nx">Harmonisatie</span><span class="w"> </span><span class="nx">met</span><span class="w"> </span><span class="nx">echte</span><span class="w"> </span><span class="nx">MongoDB</span>
+<span class="w">    </span><span class="err">└──</span><span class="w"> </span><span class="nx">test_importMDB_bash</span><span class="p">.</span><span class="nx">py</span><span class="w">                </span><span class="err">#</span><span class="w"> </span><span class="nx">MDB</span><span class="o">-</span><span class="kn">import</span><span class="w"> </span><span class="nx">en</span><span class="w"> </span><span class="nx">encoding</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="nx">Docker</span>
 </code></pre></div>
 
 <h2 id="vereisten">Vereisten<a class="headerlink" href="#vereisten" title="Permanent link">&para;</a></h2>
@@ -207,17 +228,25 @@ python<span class="w"> </span>-m<span class="w"> </span>pytest<span class="w"> <
 </code></pre></div>
 
 <h2 id="integratietests">Integratietests<a class="headerlink" href="#integratietests" title="Permanent link">&para;</a></h2>
+<h3 id="standaard-synthetische-data">Standaard: synthetische data<a class="headerlink" href="#standaard-synthetische-data" title="Permanent link">&para;</a></h3>
 <div class="codehilite"><pre><span></span><code>make<span class="w"> </span>integration
 </code></pre></div>
 
-<p>Dit target:</p>
+<p>Dit target gebruikt de <strong>synthetische voorbeelddata</strong> uit <code>data/synthetic/data/</code>. De tests controleren dat de volledige ETL-pipeline (Extract → Transform → Load) correct werkt met de meegeleverde fictieve opgravingsprojecten SY001 en SY002.</p>
+<p>Het target:</p>
 <ol>
 <li>Maakt de <code>.venv</code> aan als die nog niet bestaat</li>
-<li>Start MongoDB 4.2 en PostgreSQL 13 in Docker (tmpfs voor snelheid, poorten 27117/5433)</li>
-<li>Wacht tot beide databases beschikbaar zijn</li>
-<li>Draait de integratietests met pytest</li>
+<li>Start MongoDB 4.2, PostgreSQL 13 en Airflow in Docker (tmpfs voor snelheid)</li>
+<li>Mount de synthetische data als input-volumes</li>
+<li>Triggert de Airflow DAGs (Extract, Transform) en valideert de resultaten</li>
+<li>Controleert verwachte aantallen per entiteitstype (sporen, vondsten, artefacten)</li>
 <li>Ruimt de containers en volumes op</li>
 </ol>
+<h3 id="delft-specifiek-echte-data">Delft-specifiek: echte data<a class="headerlink" href="#delft-specifiek-echte-data" title="Permanent link">&para;</a></h3>
+<div class="codehilite"><pre><span></span><code>make<span class="w"> </span>integration-delft
+</code></pre></div>
+
+<p>Dit target test met de echte Delftse opgravingsdata en controleert op Delft-specifieke aantallen. De Delftse data is niet opgenomen in de repository — deze tests worden automatisch overgeslagen als de data niet aanwezig is in <code>data/test/</code>.</p>
 <h3 id="handmatig">Handmatig<a class="headerlink" href="#handmatig" title="Permanent link">&para;</a></h3>
 <div class="codehilite"><pre><span></span><code>docker<span class="w"> </span>compose<span class="w"> </span>-f<span class="w"> </span>docker-compose.test.yml<span class="w"> </span>up<span class="w"> </span>-d
 
@@ -229,7 +258,7 @@ docker<span class="w"> </span>compose<span class="w"> </span>-f<span class="w"> 
 </code></pre></div>
 
 <h2 id="wat-wordt-getest">Wat wordt getest?<a class="headerlink" href="#wat-wordt-getest" title="Permanent link">&para;</a></h2>
-<h3 id="unit-tests-128-tests">Unit tests (128 tests)<a class="headerlink" href="#unit-tests-128-tests" title="Permanent link">&para;</a></h3>
+<h3 id="unit-tests_1">Unit tests<a class="headerlink" href="#unit-tests_1" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
 <tr>
@@ -251,22 +280,59 @@ docker<span class="w"> </span>compose<span class="w"> </span>-f<span class="w"> 
 <td><code>getKolomValues</code> ($ifNull-ketens), <code>getAggrTables</code> (regex-matching), <code>loadHarmonizer</code> (Excel → DataFrame), pipeline-structuur ($match, $merge), overerving (Artefact→Aardewerk)</td>
 </tr>
 <tr>
-<td>foto parsing</td>
+<td><code>foto_parsing.py</code></td>
 <td>Objectfoto-regex (met put/subnr/BP), tekening-types (A-E, P, T, LZW), projectfoto's (F/G), DAN/DAR rapporten, artefactsoort-detectie uit bestandspad</td>
+</tr>
+<tr>
+<td><code>encoding.py</code></td>
+<td>UTF-8 conversie, CP1252-detectie, dubbele CSV-headers</td>
+</tr>
+<tr>
+<td><code>fixes_*.py</code></td>
+<td>Robuustheid van transformaties bij ontbrekende/ongeldige data</td>
+</tr>
+<tr>
+<td><code>synthetic_data.py</code></td>
+<td>Validatie dat de synthetische MDB-bestanden de juiste tabellen en kolomstructuur bevatten</td>
 </tr>
 </tbody>
 </table>
-<h3 id="integratietests-4-tests">Integratietests (4 tests)<a class="headerlink" href="#integratietests-4-tests" title="Permanent link">&para;</a></h3>
-<p>De integratietests plaatsen testdocumenten in MongoDB en draaien de harmonisatie-pipeline:</p>
-<ul>
-<li>Vondst-harmonisatie: controleert dat de pipeline draait en output produceert met correcte structuur</li>
-<li>Spoor-harmonisatie: controleert dat spoor-documenten correct verwerkt worden</li>
-<li>Alle objecttypen: draait alle standaard pipelines om te controleren dat ze geldig zijn</li>
-</ul>
+<h3 id="integratietests_1">Integratietests<a class="headerlink" href="#integratietests_1" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Test</th>
+<th>Wat wordt getest</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>test_full_pipeline.py</code></td>
+<td>Volledige harmonisatie-pipeline met directe MongoDB-seeding: harmonisatie, enhance, keys, move &amp; merge, references</td>
+</tr>
+<tr>
+<td><code>test_full_pipeline_synthetic_data.py</code></td>
+<td>Volledige ETL via Airflow DAGs met synthetische MDB-data: extract, transform, verwachte aantallen per soort</td>
+</tr>
+<tr>
+<td><code>test_full_pipeline_delft_data.py</code></td>
+<td>Zelfde pipeline maar met Delftse data en Delft-specifieke verwachte aantallen</td>
+</tr>
+<tr>
+<td><code>test_harmonize_pipeline.py</code></td>
+<td>Individuele harmonisatie-pipelines (Vondst, Spoor, alle objecttypen)</td>
+</tr>
+<tr>
+<td><code>test_importMDB_bash.py</code></td>
+<td>MDB-import shell-script: encoding-conversie, CSV-generatie, mongoimport</td>
+</tr>
+</tbody>
+</table>
 <h2 id="nieuwe-tests-toevoegen">Nieuwe tests toevoegen<a class="headerlink" href="#nieuwe-tests-toevoegen" title="Permanent link">&para;</a></h2>
 <ol>
 <li>Maak een nieuw bestand aan in <code>tests/unit/</code> of <code>tests/integration/</code></li>
 <li>Gebruik <code>pytest.mark.unit</code> of <code>pytest.mark.integration</code> als marker</li>
+<li>Gebruik <code>pytest.mark.delft</code> voor tests die Delftse data vereisen</li>
 <li>De <code>conftest.py</code> mockt automatisch <code>shared.config</code> en <code>shared.const</code></li>
 <li>Voor integratietests: gebruik de <code>mongo_client</code>, <code>staging_db</code> en <code>analyse_db</code> fixtures</li>
 </ol>

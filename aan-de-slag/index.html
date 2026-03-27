@@ -108,6 +108,8 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../deployment/airflow-vs-app/">Airflow Transformatie vs. Web Applicatie</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../deployment/voorbeelddata/">Voorbeelddata</a>
+                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../deployment/proefdata/">Proefdata Inlezen</a>
                   </li>
               </ul>
@@ -271,6 +273,14 @@ De meest voorkomende oorzaak is onvoldoende geheugen in Docker Desktop.</p>
 
 <p>Jupyter Lab voor eigen data-analyse. Er zijn 68+ bestaande notebooks beschikbaar met voorbeelden van data-exploratie en transformatie-validatie. Het wachtwoord staat in <code>config/jupyter.env</code>.</p>
 <h2 id="4-bestanden-klaarzetten">4. Bestanden klaarzetten<a class="headerlink" href="#4-bestanden-klaarzetten" title="Permanent link">&para;</a></h2>
+<h3 id="voorbeelddata-direct-aan-de-slag">Voorbeelddata: direct aan de slag<a class="headerlink" href="#voorbeelddata-direct-aan-de-slag" title="Permanent link">&para;</a></h3>
+<p>De repository bevat <strong>synthetische voorbeelddata</strong> in <code>data/synthetic/data/</code> — twee fictieve opgravingsprojecten waarmee je de volledige pipeline kunt testen zonder eigen brondata. Deze data wordt automatisch gebruikt bij <code>make integration</code> en dient als werkend voorbeeld van de verwachte bestandsstructuur.</p>
+<div class="admonition tip">
+<p class="admonition-title">Snel testen zonder eigen data</p>
+<p>De synthetische data is klaar voor gebruik. Start de Wasstraat met <code>make app</code> en trigger de verwerkingspipeline in Airflow om te zien hoe het platform werkt. Zie <code>data/synthetic/README.md</code> voor de inhoud van de voorbeeldprojecten.</p>
+</div>
+<h3 id="eigen-data-klaarzetten">Eigen data klaarzetten<a class="headerlink" href="#eigen-data-klaarzetten" title="Permanent link">&para;</a></h3>
+<p>Gemeenten kunnen hun eigen opgravingsdata klaarzetten conform dezelfde directorystructuur als de Delftse pijplijn. De echte Delftse data is niet opgenomen in de repository, maar de synthetische voorbeelddata in <code>data/synthetic/data/</code> toont exact welke bestanden en structuren het platform verwacht.</p>
 <p>De Wasstraat leest brondata uit de directory <code>data/input/basefiles/projectdatabase/</code>. Elke subdirectory heeft een specifiek doel:</p>
 <div class="codehilite"><pre><span></span><code><span class="n">data</span><span class="o">/</span><span class="k">input</span><span class="o">/</span><span class="n">basefiles</span><span class="o">/</span><span class="n">projectdatabase</span><span class="o">/</span>
 <span class="err">├──</span><span class="w"> </span><span class="n">digidepot</span><span class="o">/</span><span class="w">           </span><span class="err">←</span><span class="w"> </span><span class="n">Projectdatabases</span><span class="w"> </span><span class="p">(.</span><span class="n">mdb</span><span class="o">/</span><span class="p">.</span><span class="n">accdb</span><span class="p">)</span>

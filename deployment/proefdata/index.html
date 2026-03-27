@@ -94,6 +94,8 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../airflow-vs-app/">Airflow Transformatie vs. Web Applicatie</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../voorbeelddata/">Voorbeelddata</a>
+                  </li>
                   <li class="toctree-l1 current"><a class="reference internal current" href="#">Proefdata Inlezen</a>
     <ul class="current">
     <li class="toctree-l2"><a class="reference internal" href="#vereisten">Vereisten</a>
@@ -186,6 +188,10 @@
               
                 <h1 id="proefdata-inlezen-en-omzetten">Proefdata Inlezen en Omzetten<a class="headerlink" href="#proefdata-inlezen-en-omzetten" title="Permanent link">&para;</a></h1>
 <p>Deze pagina beschrijft hoe je een eerste set proefdata kunt inlezen, transformeren en beschikbaar maken in de Wasstraat.</p>
+<div class="admonition tip">
+<p class="admonition-title">Synthetische voorbeelddata</p>
+<p>De repository bevat kant-en-klare <strong>synthetische voorbeelddata</strong> in <code>data/synthetic/data/</code> — twee fictieve opgravingsprojecten (SY001 en SY002) waarmee je direct de volledige pipeline kunt testen zonder eigen brondata. Gemeenten die hun eigen data willen verwerken, kunnen de voorbeelddata als referentie gebruiken voor de verwachte bestandsstructuur. Zie <code>data/synthetic/README.md</code> voor details.</p>
+</div>
 <h2 id="vereisten">Vereisten<a class="headerlink" href="#vereisten" title="Permanent link">&para;</a></h2>
 <p>Zorg dat alle Docker-containers draaien:</p>
 <div class="codehilite"><pre><span></span><code>make<span class="w"> </span>dev<span class="w">    </span><span class="c1"># Of: make app</span>
@@ -388,7 +394,7 @@ curl<span class="w"> </span>-s<span class="w"> </span>http://localhost:9200/_cou
             </div>
           </div><footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
-        <a href="../airflow-vs-app/" class="btn btn-neutral float-left" title="Airflow Transformatie vs. Web Applicatie"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../voorbeelddata/" class="btn btn-neutral float-left" title="Voorbeelddata"><span class="icon icon-circle-arrow-left"></span> Previous</a>
         <a href="../../testen/" class="btn btn-neutral float-right" title="Unit & Integratietests">Next <span class="icon icon-circle-arrow-right"></span></a>
     </div>
 
@@ -412,7 +418,7 @@ curl<span class="w"> </span>-s<span class="w"> </span>http://localhost:9200/_cou
   <span class="rst-current-version" data-toggle="rst-current-version">
     
     
-      <span><a href="../airflow-vs-app/" style="color: #fcfcfc">&laquo; Previous</a></span>
+      <span><a href="../voorbeelddata/" style="color: #fcfcfc">&laquo; Previous</a></span>
     
     
       <span><a href="../../testen/" style="color: #fcfcfc">Next &raquo;</a></span>
