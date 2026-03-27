@@ -18,7 +18,9 @@ tests/integration/         # Integratietests (Docker-based)
 docs/                      # MkDocs documentatie (Nederlands)
 config/                    # Environment-bestanden (.env, gegenereerd door init-config.sh)
 services/                  # Dockerfiles per service
-data/input/basefiles/      # Bronbestanden (.mdb Access-databases)
+data/input/basefiles/      # Bronbestanden (.mdb Access-databases, niet in repo)
+data/synthetic/data/       # Synthetische voorbeelddata (MDB-bestanden, in repo)
+data/synthetic/generatie/  # Generator-script voor synthetische data
 notebooks/                 # Jupyter notebooks voor analyse
 ```
 
@@ -66,8 +68,12 @@ make app              # Start alle services
 
 # Testen
 make test             # Unit tests (tests/unit/)
-make integration      # Integratietests (start/stopt Docker automatisch)
+make integration      # Integratietests met synthetische data
+make integration-delft # Integratietests met Delftse data (indien aanwezig)
 make test-all         # Unit + integratietests
+
+# Synthetische data
+make synthetic        # Genereer synthetische MDB-bestanden opnieuw
 
 # Documentatie
 make docs             # MkDocs dev-server op localhost:8000
@@ -83,7 +89,7 @@ make clean            # Verwijder .venv en caches
 
 ## Testconventies
 
-- **Framework:** pytest met markers `@pytest.mark.unit` en `@pytest.mark.integration`
+- **Framework:** pytest met markers `@pytest.mark.unit`, `@pytest.mark.integration` en `@pytest.mark.delft`
 - **Structuur:** Testklassen per functiegroep (`TestConvertToInt`, `TestFixDatering`)
 - **Naamgeving:** `test_[scenario]` (bijv. `test_single_year`, `test_invalid_date_force_returns_nat`)
 - **Parametrized tests:** Gebruik `@pytest.mark.parametrize` voor meerdere inputs

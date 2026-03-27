@@ -109,10 +109,13 @@ make ps           # Toon status van alle services
 
 ### Eerste data verwerken
 
-1. Plaats bronbestanden (`.mdb`) in `data/input/basefiles/projectdatabase/digidepot/`
-2. Open Airflow UI op [http://localhost:8080](http://localhost:8080)
-3. Start de DAG **`Extract_Transform_Load_Full_Cycle`**
-4. Bekijk het resultaat in de Flask App op [http://localhost:5051](http://localhost:5051)
+De repo bevat **synthetische voorbeelddata** in `data/synthetic/data/` — twee fictieve opgravingsprojecten (SY001 en SY002) waarmee je de volledige pipeline kunt testen zonder eigen brondata. Dit is het startpunt om het platform te leren kennen.
+
+**Eigen data gebruiken?** Gemeenten kunnen hun eigen opgravingsdata klaarzetten conform dezelfde directorystructuur als de Delftse pijplijn. Plaats bronbestanden (`.mdb`) in `data/input/basefiles/projectdatabase/digidepot/` en de overige bestanden in de bijbehorende subdirectories. Zie `data/synthetic/data/` als werkend voorbeeld voor de verwachte structuur. De echte Delftse data is niet opgenomen in de repository.
+
+1. Open Airflow UI op [http://localhost:8080](http://localhost:8080)
+2. Start de DAG **`Extract_Transform_Load_Full_Cycle`**
+3. Bekijk het resultaat in de Flask App op [http://localhost:5051](http://localhost:5051)
 
 ### Backup en restore
 
@@ -125,10 +128,11 @@ make export                              # Exporteer alle tabellen als CSV
 ### Testen
 
 ```bash
-make install      # Eenmalig: maakt .venv aan met test-dependencies
-make test         # Draai unit tests
-make integration  # Draai integratietests (start/stopt Docker automatisch)
-make test-all     # Unit + integratietests
+make install          # Eenmalig: maakt .venv aan met test-dependencies
+make test             # Draai unit tests
+make integration      # Integratietests met synthetische data
+make integration-delft # Integratietests met Delftse data (indien aanwezig)
+make test-all         # Unit + integratietests
 ```
 
 ## Projectstructuur
@@ -144,7 +148,8 @@ wasstraat_archeologische_data/
 ├── config/               # Environment-bestanden (.env)
 ├── services/             # Dockerfiles per service
 ├── data/                 # Input- en outputdata
-│   └── input/basefiles/  # Bronbestanden
+│   ├── input/basefiles/  # Bronbestanden (eigen data, niet in repo)
+│   └── synthetic/        # Synthetische voorbeelddata (in repo)
 ├── tests/                # Unit- en integratietests
 ├── notebooks/            # Jupyter notebooks voor analyse
 ├── docs/                 # MkDocs documentatie

@@ -112,6 +112,17 @@ Jupyter Lab voor eigen data-analyse. Er zijn 68+ bestaande notebooks beschikbaar
 
 ## 4. Bestanden klaarzetten
 
+### Voorbeelddata: direct aan de slag
+
+De repository bevat **synthetische voorbeelddata** in `data/synthetic/data/` — twee fictieve opgravingsprojecten waarmee je de volledige pipeline kunt testen zonder eigen brondata. Deze data wordt automatisch gebruikt bij `make integration` en dient als werkend voorbeeld van de verwachte bestandsstructuur.
+
+!!! tip "Snel testen zonder eigen data"
+    De synthetische data is klaar voor gebruik. Start de Wasstraat met `make app` en trigger de verwerkingspipeline in Airflow om te zien hoe het platform werkt. Zie `data/synthetic/README.md` voor de inhoud van de voorbeeldprojecten.
+
+### Eigen data klaarzetten
+
+Gemeenten kunnen hun eigen opgravingsdata klaarzetten conform dezelfde directorystructuur als de Delftse pijplijn. De echte Delftse data is niet opgenomen in de repository, maar de synthetische voorbeelddata in `data/synthetic/data/` toont exact welke bestanden en structuren het platform verwacht.
+
 De Wasstraat leest brondata uit de directory `data/input/basefiles/projectdatabase/`. Elke subdirectory heeft een specifiek doel:
 
 ```
