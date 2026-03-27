@@ -302,7 +302,10 @@ def mergeFotoinfo():
             logger.info("Geen Fotokoppel- of Fotobeschrijving-records — foto's worden direct overgenomen.")
             df_foto['soort'] = 'Bestand'
             df_foto['bestandsoort_XX'] = 'Foto'
-            df_foto['brondata'] = df_foto['brondata'].apply(lambda x: [x])
+            if 'brondata' in df_foto.columns:
+                df_foto['brondata'] = df_foto['brondata'].apply(lambda x: [x])
+            else:
+                df_foto['brondata'] = df_foto.apply(lambda x: [{}], axis=1)
             df_foto['wasstraat'] = df_foto.apply(lambda x: [{'projectcd': x.get('projectcd'), 'table': getTable(x.get('brondata', [{}])[0])}], axis=1)
             desired_columns = ['_id', 'fileName', 'imageID', 'imageMiddleID', 'imageThumbID',
                 'fileType', 'directory', 'mime_type', 'fototype', 'soort', 'projectcd',

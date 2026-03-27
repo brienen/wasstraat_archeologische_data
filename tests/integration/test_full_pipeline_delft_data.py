@@ -1,5 +1,5 @@
 """
-Integratietest: draai Extract + Transform met echte testdata (DB034).
+Integratietest: draai Extract + Transform met echte Delftse testdata (DB034).
 
 Triggert Extract_only en DAG_Transform_Only via ``docker exec`` en
 verifieert daarna de record-aantallen in de drie MongoDB databases:
@@ -7,10 +7,11 @@ verifieert daarna de record-aantallen in de drie MongoDB databases:
   - Arch_Analyse_Test  (Single_Store + Single_Store_Clean)
   - Arch_Files_Test
 
-Geen PostgreSQL-verificatie — alleen MongoDB.
+Verwacht de echte Delftse data in de Docker volumes.
+Wordt overgeslagen als de Delftse data niet beschikbaar is.
 
 Draaien:
-  make integration-real-data
+  make integration-delft
 """
 import json
 import os
@@ -319,7 +320,7 @@ def airflow_ready():
     """Wacht tot Airflow klaar is."""
     print("\n  Wachten op Airflow...")
     if not wait_for_airflow():
-        pytest.skip("Airflow niet klaar — start met: make integration-real-data")
+        pytest.skip("Airflow niet klaar — start met: make integration-delft")
     print("  ✓ Airflow klaar")
 
 
@@ -327,8 +328,8 @@ def airflow_ready():
 # Tests
 # ============================================================
 
-@pytest.mark.integration
-class TestFullPipelineRealData:
+@pytest.mark.delft
+class TestFullPipelineDelft:
     """Extract + Transform met echte data, verifieer MongoDB."""
 
     # ----------------------------------------------------------

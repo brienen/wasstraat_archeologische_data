@@ -98,6 +98,9 @@ def getAndStoreImageFilenames():
         col.drop()
 
         inserts=[ InsertOne({'iter': i, 'filename': v, 'processed': False}) for i,v in enumerate(lst_filenames) ]
+        if not inserts:
+            logger.info("Geen afbeeldingen gevonden om te verwerken — overslaan.")
+            return
         result = col.bulk_write(inserts)
         col.create_index([ ("iter", 1) ])
         col.create_index([ ("filename", 1) ])

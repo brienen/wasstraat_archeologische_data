@@ -297,7 +297,7 @@ do
 		LENGTE=`wc -l < $CSV`
 		let LENGTE=$LENGTE-1 # To correct for the header
 		echo Length of tabel $CSV in file $mdbfile is: $LENGTE
-		if [ $LENGTE -lt 2 ]; then # on empty CSV stop loop and continue to nect cycle
+		if [ $LENGTE -lt 1 ]; then # on empty CSV stop loop and continue to next cycle
 			rm "$CSV"
 			continue
     	fi
