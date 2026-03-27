@@ -4,12 +4,12 @@ services:
     image: wasstraat_postgres
     env_file:
        - ./config/postgres.env
+       - ./config/flask.env
     ports:
       - "5432:5432"
     volumes:
-      - wasstraat_postgres_volume:/data/postgres
-      #- ./scripts/postgres/:/docker-entrypoint-initdb.d/
-      - /Users/arjen/stack2/Wasstraat/backup:/backup
+      - wasstraat_postgres_volume:/var/lib/postgresql/data
+      - ${backup_dir}/postgres:/backup
     build: 
       dockerfile: ./services/postgres/Dockerfile
       context: .
@@ -31,18 +31,18 @@ services:
       - elasticsearch
     volumes:
       # Production settings
-      # - /Volumes/Extreme SSD/Depot Projecten nieuw:/input/projecten
-      # - /Volumes/Extreme SSD/Depot Projecten nieuw:/input/images
+      # - ${input_dir}/projecten:/input/projecten
+      # - ${input_dir}/images:/input/images
       # Testing settings
-       - ./data/input/basefiles/projectdatabase/digidepot:/input/projecten
-       - ./data/input/basefiles/projectdatabase/digidepot:/input/images
-       - ./data/input/basefiles/projectdatabase/rapporten:/input/rapporten
-       - ./data/input/basefiles/projectdatabase/monsterdatabase:/input/monsterdatabase
-       - ./data/input/basefiles/projectdatabase/Delf-IT:/input/delfit
-       - ./data/input/basefiles/projectdatabase/magazijnlijst:/input/magazijnlijst
-       - ./data/input/basefiles/projectdatabase/digifotos:/input/digifotos
-       - ./data/input/basefiles/projectdatabase/referentietabellen:/input/referentietabellen
-       - /Users/arjen/stack2/Wasstraat/files/archeomedia:/output/archeomedia
+       - ${input_dir}/projecten:/input/projecten
+       - ${input_dir}/images:/input/images
+       - ${input_dir}/rapporten:/input/rapporten
+       - ${input_dir}/monsterdatabase:/input/monsterdatabase
+       - ${input_dir}/Delf-IT:/input/delfit
+       - ${input_dir}/magazijnlijst:/input/magazijnlijst
+       - ${input_dir}/digifotos:/input/digifotos
+       - ${input_dir}/referentietabellen:/input/referentietabellen
+       - ${output_dir}/archeomedia:/output/archeomedia
        - ./airflow_app/dags:/opt/airflow/dags
        - ./airflow_app/scripts:/opt/airflow/scripts
        - ./airflow_app/.vscode:/opt/airflow/.vscode
@@ -79,7 +79,7 @@ services:
       - elasticsearch
       - apache
     volumes:
-      - /Users/arjen/stack2/Wasstraat/files/archeomedia:/output/archeomedia
+      - ${output_dir}/archeomedia:/output/archeomedia
 
 
   mongo:
@@ -91,7 +91,8 @@ services:
       - ./config/mongo.env
     volumes:
       - wasstraat_mongo_volume:/data/db
-      - /Users/arjen/stack2/Wasstraat/backup:/backup
+      - wasstraat_mongo_config_volume:/data/configdb
+      - ${backup_dir}/mongo:/backup
     restart: unless-stopped
 
   jupyter:
@@ -105,12 +106,12 @@ services:
       - ./notebooks:/home/jovyan/
       - ./data/wasstraat_config:/home/jovyan/wasstraat_config/
       - ./airflow_app/dags:/opt/wasstraat/
-      - ./data/input/basefiles:/home/jovyan/basefiles
       - ./shared:/home/jovyan/shared/
-      - ./data/input/basefiles/projectdatabase/digidepot:/input/images
-      - /Users/arjen/stack2/Wasstraat/files/archeomedia:/output/archeomedia
-      - ./data/input/basefiles/projectdatabase/referentietabellen:/input/referentietabellen
-      # - /Volumes/Extreme SSD/Depot Projecten:/input/sdschijf
+      - ${input_dir}:/home/jovyan/basefiles
+      - ${input_dir}/images:/input/images
+      - ${input_dir}/referentietabellen:/input/referentietabellen
+      - ${output_dir}/archeomedia:/output/archeomedia
+      # - ${input_dir}:/input/sdschijf
     environment:
       JUPYTER_ENABLE_LAB: "yes"
     command: "start-notebook.sh --NotebookApp.token='' --NotebookApp.password=''"
@@ -126,7 +127,7 @@ services:
       dockerfile: ./services/apache/Dockerfile
       context: .
     volumes:
-      - /Users/arjen/stack2/Wasstraat/files:/usr/local/apache2/htdocs
+      - ${output_dir}:/usr/local/apache2/htdocs
     ports:
       - '5052:5052'
 
@@ -158,5 +159,6 @@ services:
 volumes:
     wasstraat_postgres_volume:
     wasstraat_mongo_volume:
+    wasstraat_mongo_config_volume:
     elasticsearch-data:
       #driver: local

@@ -1,4 +1,4 @@
-FROM jupyter/datascience-notebook:aarch64-ubuntu-22.04
+FROM jupyter/datascience-notebook:ubuntu-22.04
 
 USER root 
 RUN apt-get update && apt-get upgrade -y && apt-get install -y libmagic-dev gdal-bin libgdal-dev g++ poppler-utils
