@@ -1,0 +1,16 @@
+0 verbose cli /opt/conda/bin/node /opt/conda/bin/npm
+1 info using npm@10.8.3
+2 info using node@v22.9.0
+3 silly config load:file:/opt/conda/lib/node_modules/npm/npmrc
+4 silly config load:file:/home/jovyan/.npmrc
+5 silly config load:file:/opt/conda/etc/npmrc
+6 verbose title npm prefix
+7 verbose argv "prefix" "--global"
+8 verbose logfile logs-max:10 dir:/home/jovyan/.npm/_logs/2026-03-27T14_56_06_363Z-
+9 verbose logfile /home/jovyan/.npm/_logs/2026-03-27T14_56_06_363Z-debug-0.log
+10 verbose cwd /home/jovyan
+11 verbose os Linux 6.12.72-linuxkit
+12 verbose node v22.9.0
+13 verbose npm  v10.8.3
+14 verbose exit 0
+15 info ok

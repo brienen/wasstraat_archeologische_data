@@ -9,7 +9,7 @@ services:
       - "5432:5432"
     volumes:
       - wasstraat_postgres_volume:/var/lib/postgresql/data
-      - ${backup_dir}/postgres:/backup
+      - ./data/backup/postgres:/backup
     build:
       dockerfile: ./services/postgres/Dockerfile
       context: .
@@ -31,18 +31,18 @@ services:
       - elasticsearch
     volumes:
       # Production settings
-      # - ${input_dir}/projecten:/input/projecten
-      # - ${input_dir}/images:/input/images
+      # - ./data/input/projecten:/input/projecten
+      # - ./data/input/images:/input/images
       # Testing settings
-       - ${input_dir}/projecten:/input/projecten
-       - ${input_dir}/images:/input/images
-       - ${input_dir}/rapporten:/input/rapporten
-       - ${input_dir}/monsterdatabase:/input/monsterdatabase
-       - ${input_dir}/Delf-IT:/input/delfit
-       - ${input_dir}/magazijnlijst:/input/magazijnlijst
-       - ${input_dir}/digifotos:/input/digifotos
-       - ${input_dir}/referentietabellen:/input/referentietabellen
-       - ${output_dir}/archeomedia:/output/archeomedia
+       - ./data/input/projecten:/input/projecten
+       - ./data/input/images:/input/images
+       - ./data/input/rapporten:/input/rapporten
+       - ./data/input/monsterdatabase:/input/monsterdatabase
+       - ./data/input/Delf-IT:/input/delfits
+       - ./data/input/magazijnlijst:/input/magazijnlijst
+       - ./data/input/digifotos:/input/digifotos
+       - ./data/input/referentietabellen:/input/referentietabellen
+       - ./data/output/archeomedia:/output/archeomedia
        - ./airflow_app/dags:/opt/airflow/dags
        - ./airflow_app/scripts:/opt/airflow/scripts
        - ./airflow_app/.vscode:/opt/airflow/.vscode
@@ -51,7 +51,6 @@ services:
     build:
       dockerfile: ./services/airflow/Dockerfile
       context: .
-
 
   redis:
     image: redis:7.2-alpine
@@ -67,6 +66,10 @@ services:
 # Computation
   flask:
     container_name: "wasstraat_flask"
+    image: wasstraat_flask
+    build:
+      dockerfile: ./services/flask/Dockerfile
+      context: .
     env_file:
       - ./config/flask.env
       - ./config/postgres.env
@@ -81,7 +84,7 @@ services:
       - elasticsearch
       - apache
     volumes:
-      - ${output_dir}/archeomedia:/output/archeomedia
+      - ./data/output/archeomedia:/output/archeomedia
 
 
   mongo:
@@ -94,7 +97,7 @@ services:
     volumes:
       - wasstraat_mongo_volume:/data/db
       - wasstraat_mongo_config_volume:/data/configdb
-      - ${backup_dir}/mongo:/backup
+      - ./data/backup/mongo:/backup
     restart: unless-stopped
 
   jupyter:
@@ -109,11 +112,11 @@ services:
       - ./data/wasstraat_config:/home/jovyan/wasstraat_config/
       - ./airflow_app/dags:/opt/wasstraat/
       - ./shared:/home/jovyan/shared/
-      - ${input_dir}:/home/jovyan/basefiles
-      - ${input_dir}/images:/input/images
-      - ${input_dir}/referentietabellen:/input/referentietabellen
-      - ${output_dir}/archeomedia:/output/archeomedia
-      # - ${input_dir}:/input/sdschijf
+      - ./data/input:/home/jovyan/basefiles
+      - ./data/input/images:/input/images
+      - ./data/input/referentietabellen:/input/referentietabellen
+      - ./data/output/archeomedia:/output/archeomedia
+      # - ./data/input:/input/sdschijf
     environment:
       JUPYTER_ENABLE_LAB: "yes"
     command: "start-notebook.sh --NotebookApp.token='' --NotebookApp.password=''"
@@ -129,7 +132,7 @@ services:
       dockerfile: ./services/apache/Dockerfile
       context: .
     volumes:
-      - ${output_dir}:/usr/local/apache2/htdocs
+      - ./data/output:/usr/local/apache2/htdocs
     ports:
       - '5052:5052'
 

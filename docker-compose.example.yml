@@ -1,23 +1,15 @@
-# All available services
+# docker-compose.example.yml
+# Override voor lokale ontwikkeling met hot-reload van de Flask app.
+# Gebruik: make example
 services:
   flask:
-    entrypoint: 'bash -c "while true; do sleep 1; done"' #'flask run --host=0.0.0.0 --port=5051'
-    #entrypoint: 'flask run --host=0.0.0.0 --port=5051'
-    environment: 
-      #- FLASK_APP=app/app.py
+    environment:
       - env=dev
       - FLASK_DEBUG=1
-    build: 
+    build:
       dockerfile: ./services/flask/Dockerfile
       context: .
     image: wasstraat_flask
-
     volumes:
-      #- ./examples/polymorph:/app
-      #- ./data/images:/images
-      # - ./app:/app
-      - /Users/arjen/Dropbox/Development/Flask-AppBuilder/examples/crud_rest_api:/app
-      - ./data/input/basefiles/projectdatabase/referentietabellen:/input/referentietabellen
-      # - ./shared:/app/app/shared/
-
-   
+      - ./app:/app
+      - ./shared:/app/app/shared/

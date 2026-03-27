@@ -33,7 +33,7 @@ BIN := $(VENV)/bin
 PYTEST := $(BIN)/python -m pytest
 
 # --- Docker Compose ---
-DC := docker compose
+DC := docker compose 
 COMPOSE_TEST := $(DC) -p wasstraat-test -f docker-compose.test.yml
 COMPOSE_TEST_DELFT := $(DC) -p wasstraat-test -f docker-compose.test.yml -f docker-compose.test-delft.yml
 DT := $(shell date +"%Y-%m-%d_%H-%M-%S")
@@ -74,7 +74,7 @@ test-quick: install ## Draai unit tests (korte output)
 .PHONY: integration
 integration: install ## Draai integratietests met synthetische data (SY001 + SY002)
 	@echo "➜ Test-omgeving starten (synthetische data)..."
-	$(COMPOSE_TEST) up -d
+	$(COMPOSE_TEST) up -d mongo-test postgres-test airflow-test
 	@echo "➜ Wachten tot services klaar zijn (pytest doet de rest)..."
 	$(PYTEST) tests/integration/ \
 		-v -s -m "integration and not delft" --tb=short; \
@@ -103,8 +103,20 @@ integration-delft: install ## Draai integratietests met echte Delftse data (DB03
 	$(COMPOSE_TEST_DELFT) down -v; \
 	exit $$EXIT
 
+.PHONY: test-flask
+test-flask: install ## Draai Flask smoke tests (start Flask + PostGIS + Redis in Docker)
+	@echo "➜ Flask test-omgeving starten..."
+	$(COMPOSE_TEST) up -d postgres-test redis-test flask-test
+	@echo "➜ Wachten tot Flask klaar is..."
+	$(PYTEST) tests/integration/ \
+		-v -s -m flask_smoke --tb=short; \
+	EXIT=$$?; \
+	echo "➜ Flask test-omgeving opruimen..."; \
+	$(COMPOSE_TEST) down -v; \
+	exit $$EXIT
+
 .PHONY: test-all
-test-all: test integration ## Draai unit + integratietests
+test-all: test integration test-flask ## Draai unit + integratie + Flask smoke tests
 
 # ============================================================
 # Synthetische data
@@ -138,12 +150,12 @@ docs-build: install ## Bouw statische documentatie
 .PHONY: build
 build: ## Bouw alle Docker images opnieuw
 	$(init-config)
-	input_dir=. output_dir=. backup_dir=. $(DC) build postgres airflow flask jupyter apache
+	$(DC) build postgres airflow flask jupyter apache
 
 .PHONY: build-force
 build-force: ## Bouw alle Docker images opnieuw van de grond af aan (geen cache)
 	$(init-config)
-	input_dir=. output_dir=. backup_dir=. $(DC) build --no-cache --pull postgres airflow flask jupyter apache
+	$(DC) build --no-cache --pull postgres airflow flask jupyter apache
 
 .PHONY: app
 app: ## Start de wasstraat (alle services)
@@ -198,7 +210,7 @@ ps: ## Toon status van alle services
 backup: ## Backup Postgres + MongoDB (naar backup/)
 	@echo "Backing up met timestamp $(DT)..."
 	$(DC) stop flask airflow
-	docker exec -u airflow -w /backup wasstraat_postgres bash -c \
+	docker exec -u postgres -w /backup wasstraat_postgres bash -c \
 		"pg_dump -v -F t -f postgres_$(DT).tar flask"
 	docker exec -w /backup wasstraat_mongo bash -c \
 		"mongodump --uri mongodb://\$$MONGO_INITDB_ROOT_USERNAME:\$$MONGO_INITDB_ROOT_PASSWORD@localhost:27017/\$$DB_STAGING?authSource=admin --out mongo_$(DT)"
@@ -227,7 +239,7 @@ endif
 export: ## Exporteer Postgres tabellen naar CSV (backup/)
 	@echo "Exporting Postgres data naar CSV met timestamp $(DT)..."
 	$(DC) stop flask airflow
-	docker exec -u airflow -w /backup wasstraat_postgres bash -c "mkdir -p postgres_$(DT)"
+	docker exec -u postgres -w /backup wasstraat_postgres bash -c "mkdir -p postgres_$(DT)"
 	@for table in Def_Vulling Def_Conserveringsproject Def_artefact_conservering \
 		Def_DT_Soort_Plant Def_Project Def_Put Def_Spoor Def_Vondst Def_Plaatsing \
 		Def_Vlak Def_artefact_abr Def_Doos Def_Standplaats Def_Bruikleen Def_Partij \
@@ -235,7 +247,7 @@ export: ## Exporteer Postgres tabellen naar CSV (backup/)
 		Def_Bestand Def_DT_Soort_Deel Def_DT_Soort_Staat Def_Monster \
 		Def_Monster_Botanie Def_Monster_Schelp; do \
 		echo "  Exporting $$table..."; \
-		docker exec -u airflow wasstraat_postgres bash -c \
+		docker exec -u postgres wasstraat_postgres bash -c \
 			"psql -t -d flask -c \"COPY public.\\\"$$table\\\" TO '/backup/postgres_$(DT)/$$table.csv' DELIMITER ';' CSV HEADER QUOTE '\"' ESCAPE '\"'; \""; \
 	done
 	$(DC) start flask airflow

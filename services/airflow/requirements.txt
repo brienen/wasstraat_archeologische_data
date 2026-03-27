@@ -6,7 +6,8 @@ matplotlib>=3.9,<4
 altair>=5.5,<6
 shapely>=2.0,<3
 geopandas>=1.0,<2
-pandas>=2.2,<3
+# Airflow 2.10.x pint SQLAlchemy < 2.0; pandas >= 2.2 vereist SQLAlchemy >= 2.0
+pandas>=2.1,<2.2
 openpyxl>=3.1,<4
 pillow>=11.0,<12
 python-magic>=0.4.27,<0.5

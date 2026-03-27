@@ -38,3 +38,7 @@ folium>=0.18,<1
 redis>=5.0,<6
 flask_caching>=2.3,<3
 flask_migrate>=4.0,<5
+flask_dropzone>=1.6,<2
+flask_debugtoolbar>=0.14,<1
+requests>=2.31,<3
+sqlalchemy_utils>=0.41,<1

@@ -1,11 +1,13 @@
 # docker-compose.test.yml
-# Testomgeving: MongoDB + PostgreSQL (Airflow metadata) + Airflow.
-# Geen Flask, geen load naar PostgreSQL — alleen MongoDB-verificatie.
+# Testomgeving: MongoDB + PostgreSQL/PostGIS + Airflow + Flask + Redis.
+# Alle services delen dezelfde PostgreSQL database (airflow_test).
 #
 # Standaard: synthetische data (SY001 + SY002).
 # Voor Delftse data: make integration-delft (gebruikt docker-compose.test-delft.yml override)
 #
-# Gebruik: make integration
+# Gebruik: make integration       (Airflow pipeline tests)
+#          make test-flask         (Flask smoke tests)
+#          make test-all           (Alles)
 
 services:
   mongo-test:
@@ -24,18 +26,30 @@ services:
       - /data/db
 
   postgres-test:
-    image: postgres:16
+    image: postgis/postgis:16-3.4
+    platform: linux/amd64
     container_name: "wasstraat_postgres_test"
     environment:
       POSTGRES_DB: airflow_test
       POSTGRES_USER: testuser
       POSTGRES_PASSWORD: testpass
+      FLASK_PGUSER: testuser
+      FLASK_PGPASSWORD: testpass
+      FLASK_PGDATABASE: airflow_test
     networks:
       testnet:
         aliases:
           - postgres
     tmpfs:
       - /var/lib/postgresql/data
+
+  redis-test:
+    image: redis:7.2-alpine
+    container_name: "wasstraat_redis_test"
+    networks:
+      testnet:
+        aliases:
+          - redis
 
   airflow-test:
     build:
@@ -127,6 +141,61 @@ services:
       - ./data/synthetic/data/magazijnlijst:/input/magazijnlijst:ro
       - ./data/synthetic/data/digifotos:/input/digifotos:ro
       - ./data/test/referentietabellen:/input/referentietabellen:ro
+
+  flask-test:
+    build:
+      context: .
+      dockerfile: services/flask/Dockerfile
+    container_name: "wasstraat_flask_test"
+    depends_on:
+      - postgres-test
+      - redis-test
+    ports:
+      - "5061:5051"
+    networks:
+      - testnet
+    environment:
+      POSTGRES_DB: airflow_test
+      POSTGRES_USER: testuser
+      POSTGRES_PASSWORD: testpass
+      FLASK_PGUSER: testuser
+      FLASK_PGPASSWORD: testpass
+      FLASK_PGDATABASE: airflow_test
+      CACHE_REDIS_HOST: redis
+      CACHE_REDIS_PASSWORD: ""
+      REDIS_PASSWORD: ""
+      CACHE_DEFAULT_TIMEOUT: "60"
+      ES_HOST: ""
+      SECRET_KEY: test-secret-key-voor-flask-smoke-tests
+      MONGO_SERVER: mongo
+      MONGO_INITDB_ROOT_USERNAME: testroot
+      MONGO_INITDB_ROOT_PASSWORD: testpass
+      DB_STAGING: Arch_Staging_Test
+      DB_FILES: Arch_Files_Test
+      DB_ANALYSE: Arch_Analyse_Test
+      COLL_ANALYSE: Single_Store
+      COLL_ANALYSE_CLEAN: Single_Store_Clean
+      COLL_PLAATJES: Plaatjes
+      COLL_FILENAMES: Filenames
+      COLL_STAGING_METAINFO: Kolominformatie
+      COLL_STAGING_OUD: Staging_Projecten_Oud
+      COLL_STAGING_NIEUW: Staging_Projecten_Nieuw
+      COLL_STAGING_MAGAZIJNLIJST: Staging_Projecten_Magazijnlijst
+      COLL_STAGING_DELFIT: Staging_Projecten_DelfIT
+      COLL_STAGING_DIGIFOTOS: Staging_Projecten_Digifotos
+      COLL_STAGING_MONSTER: Staging_Projecten_Monster
+      COLL_ANALYSE_FOTO: Def_Fotos
+      COLL_ANALYSE_ARTEFACT: Def_Artefact
+      COLL_ANALYSE_PROJECT: Def_Project
+      COLL_ANALYSE_VONDST: Def_Vondst
+      COLL_ANALYSE_SPOOR: Def_Spoor
+      COLL_ANALYSE_VLAK: Def_Vlak
+      COLL_ANALYSE_PUT: Def_Put
+      COLL_ANALYSE_DOOS: Def_Doos
+      COLL_ANALYSE_STANDPLAATS: Def_Standplaats
+      COLL_ANALYSE_STELLING: Def_Stelling
+      COLL_ANALYSE_PLAATSING: Def_Plaatsing
+      COLL_ANALYSE_VINDPLAATS: Def_Vindplaats
 
 networks:
   testnet:
