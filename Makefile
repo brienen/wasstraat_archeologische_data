@@ -35,6 +35,7 @@ PYTEST := $(BIN)/python -m pytest
 # --- Docker Compose ---
 DC := docker compose
 COMPOSE_TEST := $(DC) -p wasstraat-test -f docker-compose.test.yml
+COMPOSE_TEST_DELFT := $(DC) -p wasstraat-test -f docker-compose.test.yml -f docker-compose.test-delft.yml
 DT := $(shell date +"%Y-%m-%d_%H-%M-%S")
 
 # --- Init-config: genereer .env uit .env.example als ze nog niet bestaan ---
@@ -71,12 +72,12 @@ test-quick: install ## Draai unit tests (korte output)
 	$(PYTEST) tests/unit/ -q
 
 .PHONY: integration
-integration: install ## Draai alle integratietests (start/stopt Docker containers + Airflow)
-	@echo "➜ Test-omgeving starten (mongo + postgres + airflow)..."
+integration: install ## Draai integratietests met synthetische data (SY001 + SY002)
+	@echo "➜ Test-omgeving starten (synthetische data)..."
 	$(COMPOSE_TEST) up -d
 	@echo "➜ Wachten tot services klaar zijn (pytest doet de rest)..."
 	$(PYTEST) tests/integration/ \
-		-v -s -m integration --tb=short; \
+		-v -s -m "integration and not delft" --tb=short; \
 	EXIT=$$?; \
 	echo "➜ Test-omgeving opruimen..."; \
 	$(COMPOSE_TEST) down -v; \
@@ -84,14 +85,37 @@ integration: install ## Draai alle integratietests (start/stopt Docker container
 
 .PHONY: integration-keep
 integration-keep: install ## Zelfde als integration maar laat containers draaien
-	@echo "➜ Test-omgeving starten..."
+	@echo "➜ Test-omgeving starten (synthetische data)..."
 	$(COMPOSE_TEST) up -d
 	$(PYTEST) tests/integration/ \
-		-v -s -m integration --tb=short
+		-v -s -m "integration and not delft" --tb=short
 	@echo "➜ Containers draaien nog. Stop met: $(COMPOSE_TEST) down -v"
+
+.PHONY: integration-delft
+integration-delft: install ## Draai integratietests met echte Delftse data (DB034)
+	@echo "➜ Test-omgeving starten (Delftse data)..."
+	$(COMPOSE_TEST_DELFT) up -d
+	@echo "➜ Wachten tot services klaar zijn..."
+	$(PYTEST) tests/integration/ \
+		-v -s -m delft --tb=short; \
+	EXIT=$$?; \
+	echo "➜ Test-omgeving opruimen..."; \
+	$(COMPOSE_TEST_DELFT) down -v; \
+	exit $$EXIT
 
 .PHONY: test-all
 test-all: test integration ## Draai unit + integratietests
+
+# ============================================================
+# Synthetische data
+# ============================================================
+
+.PHONY: synthetic
+synthetic: install ## Genereer synthetische voorbeelddata (MDB-bestanden)
+	@echo "➜ Synthetische data genereren..."
+	JAVA_HOME=$$(brew --prefix openjdk 2>/dev/null || echo "/usr/lib/jvm/java-21-openjdk") \
+	PATH="$$(brew --prefix openjdk 2>/dev/null || echo "/usr/lib/jvm/java-21-openjdk")/bin:$$PATH" \
+	$(BIN)/python data/synthetic/generatie/generate_synthetic_data.py
 
 # ============================================================
 # Documentatie

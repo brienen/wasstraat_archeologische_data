@@ -249,8 +249,18 @@ def enhanceAllAttributes():
 def extractImagedataFromFileNames():
     try:        
         col = getAnalyseCollection()
-        dirs = pd.DataFrame(list(col.find({'soort': 'Foto'}, projection={'directory':1}))).dropna()['directory'].unique()
-        projs = pd.DataFrame(list(col.find({'soort': 'Project'}, projection={'projectcd':1}))).dropna()['projectcd'].unique()
+        foto_docs = list(col.find({'soort': 'Foto'}, projection={'directory':1}))
+        if not foto_docs:
+            logger.info("Geen Foto-records gevonden — overslaan.")
+            return
+        df_dirs = pd.DataFrame(foto_docs).dropna()
+        if 'directory' not in df_dirs.columns or df_dirs.empty:
+            logger.info("Geen Foto-records met directory-veld — overslaan.")
+            return
+        dirs = df_dirs['directory'].unique()
+        proj_docs = list(col.find({'soort': 'Project'}, projection={'projectcd':1}))
+        df_projs = pd.DataFrame(proj_docs).dropna() if proj_docs else pd.DataFrame()
+        projs = df_projs['projectcd'].unique() if 'projectcd' in df_projs.columns else []
 
         # Build dict with dirs as entry to projectcd, materiaal and fototype
         file_dict = {}

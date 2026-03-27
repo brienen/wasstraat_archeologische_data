@@ -17,6 +17,7 @@ RUN pip install --upgrade --no-cache-dir pip
 RUN pip install --no-cache-dir gunicorn gevent psycogreen 
 COPY ./services/flask/requirements.txt /tmp/requirements.txt
 RUN pip install --no-cache-dir -r /tmp/requirements.txt
+RUN python -m pip install --upgrade pip "setuptools<70" wheel
 
 ENV PYTHONPATH=/app:/app/app
 

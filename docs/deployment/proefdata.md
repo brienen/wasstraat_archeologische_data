@@ -2,6 +2,9 @@
 
 Deze pagina beschrijft hoe je een eerste set proefdata kunt inlezen, transformeren en beschikbaar maken in de Wasstraat.
 
+!!! tip "Synthetische voorbeelddata"
+    De repository bevat kant-en-klare **synthetische voorbeelddata** in `data/synthetic/data/` — twee fictieve opgravingsprojecten (SY001 en SY002) waarmee je direct de volledige pipeline kunt testen zonder eigen brondata. Gemeenten die hun eigen data willen verwerken, kunnen de voorbeelddata als referentie gebruiken voor de verwachte bestandsstructuur. Zie `data/synthetic/README.md` voor details.
+
 ## Vereisten
 
 Zorg dat alle Docker-containers draaien:

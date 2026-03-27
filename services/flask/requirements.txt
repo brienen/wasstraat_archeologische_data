@@ -1,5 +1,6 @@
 ###### Requirements without Version Specifiers ######
-redis 
+setuptools<70
+redis
 flask_caching 
 flask_dropzone 
 python-magic 

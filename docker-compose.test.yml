@@ -2,7 +2,10 @@
 # Testomgeving: MongoDB + PostgreSQL (Airflow metadata) + Airflow.
 # Geen Flask, geen load naar PostgreSQL — alleen MongoDB-verificatie.
 #
-# Gebruik: make integration-real-data
+# Standaard: synthetische data (SY001 + SY002).
+# Voor Delftse data: make integration-delft (gebruikt docker-compose.test-delft.yml override)
+#
+# Gebruik: make integration
 
 services:
   mongo-test:
@@ -119,9 +122,10 @@ services:
       - ./airflow_app/scripts:/opt/airflow/scripts
       - ./shared:/opt/airflow/dags/shared
       - ./data/wasstraat_config:/opt/airflow/config
-      - ./data/test/projecten:/input/projecten:ro
-      - ./data/test/projecten:/input/images:ro
-      - ./data/test/projectenlijst:/input/delfit:ro
+      - ./data/synthetic/data/projecten:/input/projecten:ro
+      - ./data/synthetic/data/delfit:/input/delfit:ro
+      - ./data/synthetic/data/magazijnlijst:/input/magazijnlijst:ro
+      - ./data/synthetic/data/digifotos:/input/digifotos:ro
       - ./data/test/referentietabellen:/input/referentietabellen:ro
 
 networks:
