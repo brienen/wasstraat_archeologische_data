@@ -89,7 +89,12 @@ def transferToDB(objecttype, soort, table, connection):
             logger.warning("Bij het laden van data van " + soort + ' naar tabel ' + table + ' verwachtte de tabel de volgende data die niet werd aangeboden: ' + str(db_columnnames_nomatch))
         
         lst = list(map(itemgetter('name', 'type'), db_columns))
-        dict_intersect_columns = dict((x) for x in lst if x[0] in df_columnnames)
+        # Pandas 2.x vereist SQLAlchemy type instances in dtype dict.
+        # Geometry kolommen worden uitgesloten: die worden door GeoAlchemy2 afgehandeld.
+        dict_intersect_columns = {}
+        for name, col_type in lst:
+            if name in df_columnnames:
+                dict_intersect_columns[name] = col_type
         df_load = df_load[lst_intersect_columnnames]
 
         # Bepaal welke kolommen een ENUM type hebben via PostgreSQL

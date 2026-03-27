@@ -1,39 +1,29 @@
-# Airflow & database
-apache-airflow==2.3.3
-psycopg2-binary
-
-# Airflow/Flask dependencies: versiepins vanwege Airflow 2.3.3 compatibiliteit
-flask<2.1.0
-jinja2<3.1.0
-werkzeug<2.1.0
-click<8.1.0
-itsdangerous<2.1.0
-markupsafe<2.1
-importlib_metadata<5.0
+# Database
+psycopg2-binary>=2.9.9,<3
 
 # Data & visualisatie
-matplotlib
-altair
-shapely<2.0
-geopandas
-pandas
-openpyxl
-pillow
-python-magic
-simplejson
-nltk
-editdistance
+matplotlib>=3.9,<4
+altair>=5.5,<6
+shapely>=2.0,<3
+geopandas>=1.0,<2
+# Airflow 2.10.x pint SQLAlchemy < 2.0; pandas >= 2.2 vereist SQLAlchemy >= 2.0
+pandas>=2.1,<2.2
+openpyxl>=3.1,<4
+pillow>=11.0,<12
+python-magic>=0.4.27,<0.5
+simplejson>=3.19,<4
+nltk>=3.9,<4
+editdistance>=0.6,<1
 
-# Airflow integraties
-geoalchemy2
-pymongo
-tenacity
-passlib[bcrypt]
-pdf2image
-elasticsearch
-roman
-opentelemetry-api
+# Integraties
+geoalchemy2>=0.15,<1
+pymongo>=4.10,<5
+tenacity>=9.0,<10
+passlib[bcrypt]>=1.7.4,<2
+pdf2image>=1.17,<2
+elasticsearch>=8.17,<9
+roman>=4.2,<5
+opentelemetry-api>=1.29,<2
 
-# (optioneel) error logging
-raven
-debugpy
+# Development
+debugpy>=1.8,<2

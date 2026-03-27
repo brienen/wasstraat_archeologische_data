@@ -1,25 +1,52 @@
-FROM apache/airflow:2.3.3
+FROM apache/airflow:2.10.5-python3.11
 
 USER root
-# INSTALL TOOLS
-RUN ACCEPT_EULA=Y apt update && ACCEPT_EULA=Y apt -y upgrade && apt -y install software-properties-common mdbtools vim curl gnupg wget libmagic-dev file libaio-dev 
-RUN wget -qO - https://www.mongodb.org/static/pgp/server-4.2.asc | apt-key add -
-#RUN wget -qO - https://www.mongodb.org/static/pgp/server-4.4.asc | apt-key add -
-RUN echo "deb [ arch=arm64 ] https://repo.mongodb.org/apt/ubuntu bionic/mongodb-org/4.2 multiverse" | tee /etc/apt/sources.list.d/mongodb-org-4.2.list
-#RUN echo "deb [ arch=amd64 ] https://repo.mongodb.org/apt/ubuntu focal/mongodb-org/4.4 multiverse" | tee /etc/apt/sources.list.d/mongodb-org-4.4.list
-RUN apt-get update && apt-get -y upgrade && apt-get install -y mongodb-org-shell mongodb-org-tools poppler-utils
-RUN mkdir extra
 
-RUN apt-get install -y gdal-bin libgdal-dev g++
+# System tools + GDAL + mdbtools
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        mdbtools \
+        curl \
+        gnupg \
+        libmagic-dev \
+        file \
+        libaio-dev \
+        poppler-utils \
+        gdal-bin \
+        libgdal-dev \
+        g++ && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# MongoDB database tools + mongosh (multi-arch, directe .deb download)
+# MongoDB biedt geen Debian 12 arm64 packages, maar Ubuntu 22.04 arm64 is compatibel.
+# Voor x86_64 gebruiken we het Debian 12 pakket.
+ARG MONGO_TOOLS_VERSION=100.10.0
+ARG MONGOSH_VERSION=2.3.8
+RUN ARCH=$(dpkg --print-architecture) && \
+    if [ "$ARCH" = "arm64" ]; then TOOLS_PLATFORM="ubuntu2204-arm64"; \
+    else TOOLS_PLATFORM="debian12-x86_64"; fi && \
+    curl -fsSL "https://fastdl.mongodb.org/tools/db/mongodb-database-tools-${TOOLS_PLATFORM}-${MONGO_TOOLS_VERSION}.deb" \
+        -o /tmp/mongodb-database-tools.deb && \
+    apt-get update && \
+    apt-get install -y --no-install-recommends /tmp/mongodb-database-tools.deb && \
+    rm /tmp/mongodb-database-tools.deb && \
+    curl -fsSL "https://downloads.mongodb.com/compass/mongodb-mongosh_${MONGOSH_VERSION}_${ARCH}.deb" \
+        -o /tmp/mongosh.deb && \
+    apt-get install -y --no-install-recommends /tmp/mongosh.deb && \
+    rm /tmp/mongosh.deb && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# Python dependencies
 USER airflow
 COPY ./services/airflow/requirements.txt /tmp/requirements.txt
 RUN pip install --no-cache-dir -r /tmp/requirements.txt
-RUN mkdir tmp
+RUN mkdir -p tmp
 
-# COPY SQL SCRIPT
+# SQL en entrypoint scripts
 COPY scripts/airflow/check_init.sql ./extra/check_init.sql
 COPY scripts/airflow/set_init.sql ./extra/set_init.sql
-# ENTRYPOINT SCRIPT
 COPY scripts/airflow/*.sh .
 
 USER root

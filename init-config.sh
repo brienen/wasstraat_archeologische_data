@@ -71,28 +71,31 @@ process_example() {
     cp "$example" "$target"
 
     # Vervang placeholder-wachtwoorden op basis van het bestand
+    # Portable sed in-place: werkt op zowel macOS (BSD sed) als Linux (GNU sed)
+    _sed_inplace() { sed -i.bak "$@" && rm -f "${@: -1}.bak"; }
+
     case "$filename" in
         postgres.env)
-            sed -i "s/airflow_secret_42/$PW_POSTGRES/g" "$target"
-            sed -i "s/flask_secret_42/$PW_FLASK_DB/g" "$target"
+            _sed_inplace "s/airflow_secret_42/$PW_POSTGRES/g" "$target"
+            _sed_inplace "s/flask_secret_42/$PW_FLASK_DB/g" "$target"
             ;;
         airflow_db.env)
-            sed -i "s/airflow_secret_42/$PW_POSTGRES/g" "$target"
+            _sed_inplace "s/airflow_secret_42/$PW_POSTGRES/g" "$target"
             ;;
         mongo.env)
-            sed -i "s/mongo_secret_42/$PW_MONGO/g" "$target"
+            _sed_inplace "s/mongo_secret_42/$PW_MONGO/g" "$target"
             ;;
         redis.env)
-            sed -i "s/redis_secret_42/$PW_REDIS/g" "$target"
+            _sed_inplace "s/redis_secret_42/$PW_REDIS/g" "$target"
             ;;
         flask.env)
-            sed -i "s/wijzig_deze_geheime_sleutel/$PW_FLASK_SECRET/g" "$target"
+            _sed_inplace "s/wijzig_deze_geheime_sleutel/$PW_FLASK_SECRET/g" "$target"
             ;;
         airflow.env)
-            sed -i "s/SECURITY__ADMIN_PASSWORD=admin/SECURITY__ADMIN_PASSWORD=$PW_AIRFLOW_ADMIN/g" "$target"
+            _sed_inplace "s/SECURITY__ADMIN_PASSWORD=admin/SECURITY__ADMIN_PASSWORD=$PW_AIRFLOW_ADMIN/g" "$target"
             ;;
         jupyter.env)
-            sed -i "s/jupyter_secret_42/$PW_JUPYTER/g" "$target"
+            _sed_inplace "s/jupyter_secret_42/$PW_JUPYTER/g" "$target"
             ;;
         # elasticsearch.env en version.env hebben geen wachtwoorden
     esac

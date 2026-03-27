@@ -1,31 +1,43 @@
-###### Requirements without Version Specifiers ######
-setuptools<70
-redis
-flask_caching 
-flask_dropzone 
-python-magic 
-geopandas 
-pandas 
-numpy 
-folium 
-flask-appbuilder==3.4.5 
-pillow 
-Flask-Migrate 
-psycopg2-binary 
-pymongo 
-sqlacodegen 
-flask_debugtoolbar 
-pandas_datareader 
-geoalchemy2 
-typing_extensions
-pdf2image
-PyPDF2
-elasticsearch
-markupsafe<2.1
-Flask<2.1.0
-Werkzeug<2.1.0
-Jinja2<3.1.0
-itsdangerous<2.1.0
-click<8.1.0
+# Flask-AppBuilder 4.x (vereist Flask 2.x+)
+flask-appbuilder>=4.5,<5
+Flask>=2.3,<3
+Werkzeug>=2.3,<3
+Jinja2>=3.1,<4
+itsdangerous>=2.2,<3
+click>=8.1,<9
+markupsafe>=2.1,<3
 
-###### Requirements with Version Specifiers ######
+# Flask extensies
+Flask-Migrate>=4.0,<5
+Flask-WTF>=1.2,<2
+WTForms>=3.1,<4
+flask_caching>=2.3,<3
+flask_dropzone>=1.6,<2
+flask_debugtoolbar>=0.14,<1
+redis>=5.2,<6
+
+# Database
+psycopg2-binary>=2.9.9,<3
+pymongo>=4.10,<5
+geoalchemy2>=0.15,<1
+SQLAlchemy>=1.4.52,<2
+sqlacodegen>=2.3,<3
+
+# Data & geo
+geopandas>=1.0,<2
+pandas>=2.2,<3
+numpy>=2.1,<3
+folium>=0.18,<1
+pillow>=11.0,<12
+
+# Documenten
+python-magic>=0.4.27,<0.5
+pdf2image>=1.17,<2
+PyPDF2>=3.0,<4
+
+# Zoeken
+elasticsearch>=8.17,<9
+
+# Overig
+typing_extensions>=4.12,<5
+pandas_datareader>=0.10,<1

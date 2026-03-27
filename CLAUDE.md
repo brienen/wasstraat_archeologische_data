@@ -94,7 +94,7 @@ make clean            # Verwijder .venv en caches
 - **Naamgeving:** `test_[scenario]` (bijv. `test_single_year`, `test_invalid_date_force_returns_nat`)
 - **Parametrized tests:** Gebruik `@pytest.mark.parametrize` voor meerdere inputs
 - **Fixtures:** `conftest.py` mockt externe dependencies (MongoDB URI, config, etc.)
-- **Draai altijd `make test` na wijzigingen** om regressies te vangen
+- **Draai altijd `make test-all` na wijzigingen** om regressies te vangen
 
 ## Datamodel (kernentiteiten)
 
