@@ -1,4 +1,4 @@
-from flask_appbuilder.models.sqla.interface import SQLAInterface, _is_sqla_type
+from flask_appbuilder.models.sqla.interface import SQLAInterface
 from geoalchemy2 import Geometry
 import logging
 from .widgets import LatLonWidget
@@ -25,7 +25,7 @@ class GeoSQLAInterface(SQLAInterface):
             return False
         col = self.list_columns[col_name]
         try:
-            point = _is_sqla_type(col.type, Geometry) \
+            point = isinstance(col.type, Geometry) \
                 and col.type.geometry_type == 'POINT'
             log.debug('Point? {}'.format(point))
             return point

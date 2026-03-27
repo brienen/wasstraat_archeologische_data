@@ -1,6 +1,7 @@
 import datetime
 from email.policy import default
-from flask import url_for, Markup
+from flask import url_for
+from markupsafe import Markup
 from flask_appbuilder.models.decorators import renders
 
 from flask_appbuilder import Model

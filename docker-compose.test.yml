@@ -9,7 +9,7 @@
 
 services:
   mongo-test:
-    image: mongo:4.2.21
+    image: mongo:7.0
     container_name: "wasstraat_mongo_test"
     ports:
       - "27117:27017"
@@ -24,7 +24,7 @@ services:
       - /data/db
 
   postgres-test:
-    image: postgres:13
+    image: postgres:16
     container_name: "wasstraat_postgres_test"
     environment:
       POSTGRES_DB: airflow_test

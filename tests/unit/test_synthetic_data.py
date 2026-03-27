@@ -10,6 +10,10 @@ import os
 
 # Voeg data/synthetic/generatie toe aan het pad zodat we de generator kunnen importeren
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "data", "synthetic", "generatie"))
+
+# msaccessdb is een optionele Java-dependency; skip alle tests als die ontbreekt
+msaccessdb = pytest.importorskip("msaccessdb", reason="msaccessdb (Java) niet beschikbaar")
+
 from generate_synthetic_data import (
     getAlleScenarioData,
     dataKleinProject,

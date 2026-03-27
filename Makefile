@@ -135,6 +135,16 @@ docs-build: install ## Bouw statische documentatie
 # Wasstraat — omgevingen
 # ============================================================
 
+.PHONY: build
+build: ## Bouw alle Docker images opnieuw
+	$(init-config)
+	input_dir=. output_dir=. backup_dir=. $(DC) build postgres airflow flask jupyter apache
+
+.PHONY: build-force
+build-force: ## Bouw alle Docker images opnieuw van de grond af aan (geen cache)
+	$(init-config)
+	input_dir=. output_dir=. backup_dir=. $(DC) build --no-cache --pull postgres airflow flask jupyter apache
+
 .PHONY: app
 app: ## Start de wasstraat (alle services)
 	$(init-config)

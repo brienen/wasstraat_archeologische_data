@@ -2,7 +2,7 @@
 services:
   flask:
     image: brienen/wasstraat_flask:1.0.0
-    environment: 
+    environment:
       - env=prod
       - FLASK_DEBUG=0
       - PORT=5051

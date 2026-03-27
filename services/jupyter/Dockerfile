@@ -1,10 +1,13 @@
-FROM jupyter/datascience-notebook:ubuntu-22.04
+FROM quay.io/jupyter/datascience-notebook:python-3.11
 
-USER root 
-RUN apt-get update && apt-get upgrade -y && apt-get install -y libmagic-dev gdal-bin libgdal-dev g++ poppler-utils
+USER root
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends libmagic-dev gdal-bin libgdal-dev g++ poppler-utils && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 USER jovyan
 
-RUN python -m pip install --upgrade pip
-RUN pip install --upgrade setuptools
-RUN pip install backports.tarfile
-RUN pip install python-magic altair geopandas folium mongoengine psycopg2-binary pymongo sqlacodegen pandas_profiling openpyxl simplejson notebook opencv-python pdf2image elasticsearch
+RUN pip install --no-cache-dir \
+    python-magic altair geopandas folium mongoengine \
+    psycopg2-binary pymongo sqlacodegen openpyxl \
+    simplejson opencv-python pdf2image elasticsearch

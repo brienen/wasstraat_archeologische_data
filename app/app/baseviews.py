@@ -1,4 +1,5 @@
-from flask import url_for, Markup
+from flask import url_for
+from markupsafe import Markup
 
 from flask_appbuilder import ModelView
 from flask_appbuilder.baseviews import BaseCRUDView

@@ -66,10 +66,10 @@ if "timeperiod2daterange" not in sys.modules:
 mock_config = types.ModuleType("shared.config")
 
 # MongoDB
-mock_config.MONGO_URI = "mongodb://test:test@localhost:27017/"
-mock_config.MONGO_STAGING_URI = "mongodb://test:test@localhost:27017/test_staging"
-mock_config.MONGO_FILES_URI = "mongodb://test:test@localhost:27017/test_files"
-mock_config.MONGO_ANALYSE_URI = "mongodb://test:test@localhost:27017/test_analyse"
+mock_config.MONGO_URI = "mongodb://test:test@localhost:27017/?authSource=admin"
+mock_config.MONGO_STAGING_URI = "mongodb://test:test@localhost:27017/test_staging?authSource=admin"
+mock_config.MONGO_FILES_URI = "mongodb://test:test@localhost:27017/test_files?authSource=admin"
+mock_config.MONGO_ANALYSE_URI = "mongodb://test:test@localhost:27017/test_analyse?authSource=admin"
 mock_config.MONGO_SERVER = "localhost"
 mock_config.MONGO_INITDB_ROOT_USERNAME = "test"
 mock_config.MONGO_INITDB_ROOT_PASSWORD = "test"

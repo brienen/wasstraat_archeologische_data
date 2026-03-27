@@ -147,9 +147,15 @@ def sanitize_all_string_fields(doc, exclude_fields=None):
 # Conveniece methods
 def convertToInt(d, attr, force):
     if attr in d:
-        d[attr] = pd.to_numeric(d[attr], errors='coerce' if force else 'ignore')
-        if (d[attr] is np.nan or d[attr] != d[attr]): 
-            del d[attr] 
+        if force:
+            d[attr] = pd.to_numeric(d[attr], errors='coerce')
+        else:
+            try:
+                d[attr] = pd.to_numeric(d[attr])
+            except (ValueError, TypeError):
+                return
+        if (d[attr] is np.nan or d[attr] != d[attr]):
+            del d[attr]
         else:
             if 'numpy.float' in str(type(d[attr])): d[attr] = int(d[attr])
             if 'numpy.int' in str(type(d[attr])): d[attr] = int(d[attr])
