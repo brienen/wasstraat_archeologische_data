@@ -52,10 +52,18 @@ EXPECTED_MIN_ARTEFACT_COUNTS = {
 # Verwachte MINIMUM-aantallen per soort in Single_Store_Clean.
 # SY001: 3 sporen, 4 vondsten, 2 vullingen
 # SY002: 8 sporen, 12 vondsten, 4 vullingen
+# Monsters: 5 (3x SY001 + 2x SY002), 8 botanie, 4 schelp
 EXPECTED_MIN_SOORT_COUNTS = {
     "Spoor": 11,
     "Vondst": 16,
     "Vulling": 6,
+    "Monster": 5,
+    "Monster_Botanie": 8,
+    "Monster_Schelp": 4,
+    "DT_Soort_Plant": 5,
+    "DT_Soort_Schelp": 3,
+    "DT_Soort_Deel": 4,
+    "DT_Soort_Staat": 4,
 }
 
 
@@ -484,3 +492,114 @@ class TestFullPipelineSynthetic:
             print(f"  {soort + ' (>=' + str(exp) + ')':<25} {act:>8,} {'':>8}  {ok}")
 
         print("=" * 60)
+
+    # ----------------------------------------------------------
+    # Stap 4: Verificatie van monsterdata
+    # ----------------------------------------------------------
+    def test_12_verify_monster_staging(self, mongo_client):
+        """Staging_Monster bevat geëxtraheerde monstertabellen uit de MDB."""
+        db = mongo_client[DB_STAGING]
+        coll_names = db.list_collection_names()
+        staging_colls = [c for c in coll_names if "monster" in c.lower() or "Monster" in c]
+        print(f"\n  Monster-gerelateerde staging collecties: {staging_colls}")
+
+        for coll_name in staging_colls:
+            counts = mongo_table_counts(DB_STAGING, coll_name, mongo_client)
+            total = sum(counts.values())
+            print(f"\n  {coll_name} tabellen ({len(counts)}, totaal {total} docs):")
+            for table, count in sorted(counts.items(), key=lambda x: -x[1]):
+                print(f"    {table}: {count}")
+            if total > 0:
+                assert total >= 5, (
+                    f"Te weinig monster-staging documenten in {coll_name}: {total}"
+                )
+
+    def test_13_verify_monster_counts(self, mongo_client):
+        """Monster-documenten in clean-collectie >= verwacht."""
+        counts = mongo_soort_counts(DB_ANALYSE, "Single_Store_Clean", mongo_client)
+        actual = counts.get("Monster", 0)
+        expected = EXPECTED_MIN_SOORT_COUNTS["Monster"]
+        print(f"\n  Monsters: {actual} (verwacht >= {expected})")
+        assert actual >= expected, (
+            f"Monster: verwacht >= {expected}, gevonden {actual}"
+        )
+
+    def test_14_verify_monster_botanie_counts(self, mongo_client):
+        """Monster_Botanie-documenten in clean-collectie >= verwacht."""
+        counts = mongo_soort_counts(DB_ANALYSE, "Single_Store_Clean", mongo_client)
+        actual = counts.get("Monster_Botanie", 0)
+        expected = EXPECTED_MIN_SOORT_COUNTS["Monster_Botanie"]
+        print(f"\n  Monster_Botanie: {actual} (verwacht >= {expected})")
+        assert actual >= expected, (
+            f"Monster_Botanie: verwacht >= {expected}, gevonden {actual}"
+        )
+
+    def test_15_verify_monster_schelp_counts(self, mongo_client):
+        """Monster_Schelp-documenten in clean-collectie >= verwacht."""
+        counts = mongo_soort_counts(DB_ANALYSE, "Single_Store_Clean", mongo_client)
+        actual = counts.get("Monster_Schelp", 0)
+        expected = EXPECTED_MIN_SOORT_COUNTS["Monster_Schelp"]
+        print(f"\n  Monster_Schelp: {actual} (verwacht >= {expected})")
+        assert actual >= expected, (
+            f"Monster_Schelp: verwacht >= {expected}, gevonden {actual}"
+        )
+
+    def test_16_verify_monster_referentietabellen(self, mongo_client):
+        """Referentietabellen (DT_Soort_*) zijn aanwezig in clean-collectie."""
+        counts = mongo_soort_counts(DB_ANALYSE, "Single_Store_Clean", mongo_client)
+
+        ref_tabellen = {
+            "DT_Soort_Plant": EXPECTED_MIN_SOORT_COUNTS["DT_Soort_Plant"],
+            "DT_Soort_Schelp": EXPECTED_MIN_SOORT_COUNTS["DT_Soort_Schelp"],
+            "DT_Soort_Deel": EXPECTED_MIN_SOORT_COUNTS["DT_Soort_Deel"],
+            "DT_Soort_Staat": EXPECTED_MIN_SOORT_COUNTS["DT_Soort_Staat"],
+        }
+
+        print(f"\n  Referentietabellen:")
+        for soort, expected in ref_tabellen.items():
+            actual = counts.get(soort, 0)
+            ok = "✓" if actual >= expected else "✗"
+            print(f"    {soort}: {actual} (verwacht >= {expected}) {ok}")
+            assert actual >= expected, (
+                f"{soort}: verwacht >= {expected}, gevonden {actual}"
+            )
+
+    def test_17_verify_monster_keys(self, mongo_client):
+        """Monsters hebben correcte keys (key, key_project, key_spoor)."""
+        coll = mongo_client[DB_ANALYSE]["Single_Store_Clean"]
+        monsters = list(coll.find({"soort": "Monster"}, {
+            "key": 1, "key_project": 1, "key_spoor": 1,
+            "monstercd": 1, "projectcd": 1,
+        }))
+
+        print(f"\n  Monster keys ({len(monsters)} records):")
+        for m in monsters:
+            key = m.get("key", "")
+            key_project = m.get("key_project", "")
+            monstercd = m.get("monstercd", "")
+            print(f"    {monstercd}: key={key}, key_project={key_project}")
+
+            assert key.startswith("M"), (
+                f"Monster key '{key}' begint niet met 'M'"
+            )
+            if key_project:
+                assert key_project.startswith("P"), (
+                    f"Monster key_project '{key_project}' begint niet met 'P'"
+                )
+
+    def test_18_verify_monster_botanie_keys(self, mongo_client):
+        """Monster_Botanie records hebben key_monster referentie."""
+        coll = mongo_client[DB_ANALYSE]["Single_Store_Clean"]
+        botanie = list(coll.find({"soort": "Monster_Botanie"}, {
+            "key": 1, "key_monster": 1,
+        }))
+
+        print(f"\n  Monster_Botanie keys ({len(botanie)} records):")
+        for b in botanie:
+            key = b.get("key", "")
+            key_monster = b.get("key_monster", "")
+            print(f"    key={key}, key_monster={key_monster}")
+
+            assert key_monster.startswith("M"), (
+                f"Monster_Botanie key_monster '{key_monster}' begint niet met 'M'"
+            )

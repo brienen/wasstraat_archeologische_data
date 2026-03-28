@@ -140,6 +140,7 @@ services:
       - ./data/synthetic/data/delfit:/input/delfit:ro
       - ./data/synthetic/data/magazijnlijst:/input/magazijnlijst:ro
       - ./data/synthetic/data/digifotos:/input/digifotos:ro
+      - ./data/synthetic/data/monsterdatabase:/input/monsterdatabase:ro
       - ./data/test/referentietabellen:/input/referentietabellen:ro
 
   flask-test:

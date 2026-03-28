@@ -34,14 +34,14 @@ services:
       # - ./data/input/projecten:/input/projecten
       # - ./data/input/images:/input/images
       # Testing settings
-       - ./data/input/projecten:/input/projecten
-       - ./data/input/images:/input/images
-       - ./data/input/rapporten:/input/rapporten
-       - ./data/input/monsterdatabase:/input/monsterdatabase
-       - ./data/input/Delf-IT:/input/delfits
-       - ./data/input/magazijnlijst:/input/magazijnlijst
-       - ./data/input/digifotos:/input/digifotos
-       - ./data/input/referentietabellen:/input/referentietabellen
+       - ./data/input/basefiles/projectdatabase/digidepot:/input/projecten
+       - ./data/input/basefiles/projectdatabase/digidepot:/input/images
+       - ./data/input/basefiles/projectdatabase/rapporten:/input/rapporten
+       - ./data/input/basefiles/projectdatabase/monsterdatabase:/input/monsterdatabase
+       - ./data/input/basefiles/projectdatabase/Delf-IT:/input/delfits
+       - ./data/input/basefiles/projectdatabase/magazijnlijst:/input/magazijnlijst
+       - ./data/input/basefiles/projectdatabase/digifotos:/input/digifotos
+       - ./data/input/basefiles/projectdatabase/referentietabellen:/input/referentietabellen
        - ./data/output/archeomedia:/output/archeomedia
        - ./airflow_app/dags:/opt/airflow/dags
        - ./airflow_app/scripts:/opt/airflow/scripts
@@ -98,7 +98,6 @@ services:
       - wasstraat_mongo_volume:/data/db
       - wasstraat_mongo_config_volume:/data/configdb
       - ./data/backup/mongo:/backup
-    restart: unless-stopped
 
   jupyter:
     container_name: wasstraat_jupyter
@@ -112,9 +111,9 @@ services:
       - ./data/wasstraat_config:/home/jovyan/wasstraat_config/
       - ./airflow_app/dags:/opt/wasstraat/
       - ./shared:/home/jovyan/shared/
-      - ./data/input:/home/jovyan/basefiles
-      - ./data/input/images:/input/images
-      - ./data/input/referentietabellen:/input/referentietabellen
+      - ./data/input/basefiles:/home/jovyan/basefiles
+      - ./data/input/basefiles/projectdatabase/digidepot:/input/images
+      - ./data/input/basefiles/projectdatabase/referentietabellen:/input/referentietabellen
       - ./data/output/archeomedia:/output/archeomedia
       # - ./data/input:/input/sdschijf
     environment:

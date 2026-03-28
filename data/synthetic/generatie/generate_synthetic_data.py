@@ -615,6 +615,156 @@ KOLOMMEN_MAGAZIJNLIJST = [
     ("UIT", "VARCHAR(100)"),
 ]
 
+# ============================================================
+# Monsterdatabase tabelstructuren (gebaseerd op MONSTERS.accdb)
+# ============================================================
+
+KOLOMMEN_MONSTER_GEGEVENS = [
+    ("PROJECT", "VARCHAR(20)"),
+    ("PUTNO", "INTEGER"),
+    ("VONDSTNO", "INTEGER"),
+    ("MONSTERCODE", "VARCHAR(50)"),
+    ("DET", "VARCHAR(50)"),
+    ("DATUM_DET", "VARCHAR(30)"),
+    ("SPOORNO", "INTEGER"),
+    ("DOOSNO", "INTEGER"),
+    ("VONDSTOMST", "VARCHAR(100)"),
+    ("GRONDSOORT", "VARCHAR(50)"),
+    ("GEZEEFD_VOL", "DOUBLE"),
+    ("ZEEFMAAT", "DOUBLE"),
+    ("REST_VOL", "DOUBLE"),
+    ("DATUM_ZEVEN", "VARCHAR(30)"),
+    ("OPMERKINGEN", "VARCHAR(255)"),
+    ("KARAKTERISERING", "VARCHAR(255)"),
+    ("R analysewaardig ZO", "VARCHAR(10)"),
+    ("R analysewaardig BO", "VARCHAR(10)"),
+    ("R concentratie ZO", "VARCHAR(10)"),
+    ("R concentratie BO", "VARCHAR(10)"),
+    ("R conservering ZO", "VARCHAR(10)"),
+    ("R conservering BO", "VARCHAR(10)"),
+    ("R diversiteit ZO", "VARCHAR(10)"),
+    ("R diversiteit BO", "VARCHAR(10)"),
+]
+
+KOLOMMEN_MONSTER_WAARDERING = [
+    ("MONSTERCODE", "VARCHAR(50)"),
+    ("B stengel onverkoold", "INTEGER"),
+    ("B zaden-cultuur onverkoold", "INTEGER"),
+    ("B zaden-kaf onverkoold", "INTEGER"),
+    ("B zaden-wild onverkoold", "INTEGER"),
+    ("B zaden-cultuur mineraaliseerd", "INTEGER"),
+    ("C aardewerk", "INTEGER"),
+    ("C fabsteen", "INTEGER"),
+    ("C glas", "INTEGER"),
+    ("C leer", "INTEGER"),
+    ("C mortel", "INTEGER"),
+    ("C natsteen", "INTEGER"),
+    ("C steenkool", "INTEGER"),
+    ("C textiel", "INTEGER"),
+    ("C leisteen", "INTEGER"),
+    ("C overig", "INTEGER"),
+    ("D hout", "INTEGER"),
+    ("D houtskool", "INTEGER"),
+    ("Z amfibiebot O", "INTEGER"),
+    ("Z bot-groot O", "INTEGER"),
+    ("Z bot-klein O", "INTEGER"),
+    ("Z eierschaal/vel O", "INTEGER"),
+    ("Z insekten O", "INTEGER"),
+    ("Z visgraat/bot O", "INTEGER"),
+    ("Z viswervel O", "INTEGER"),
+    ("Z visschub O", "INTEGER"),
+    ("Z vliegepop O", "INTEGER"),
+    ("Z watervlo-ei O", "INTEGER"),
+    ("Z wormei O", "INTEGER"),
+    ("Z anders", "VARCHAR(200)"),
+    ("S molzoet/land", "INTEGER"),
+    ("S mollusk zout", "INTEGER"),
+    ("S mossel", "INTEGER"),
+    ("B wortel onverkoold", "INTEGER"),
+    ("B stengel verkoold", "INTEGER"),
+    ("B wortel verkoold", "INTEGER"),
+    ("B zaden-cultuur verkoold", "INTEGER"),
+    ("B zaden-kaf verkoold", "INTEGER"),
+    ("B zaden-wild verkoold", "INTEGER"),
+    ("B stengel mineraaliseerd", "INTEGER"),
+    ("B wortel mineraaliseerd", "INTEGER"),
+    ("B zaden-kaf mineraaliseerd", "INTEGER"),
+    ("B zaden-wild mineraaliseerd", "INTEGER"),
+    ("B stengel recent", "INTEGER"),
+    ("B wortel recent", "INTEGER"),
+    ("B zaden-cultuur recent", "INTEGER"),
+    ("B zaden-kaf recent", "INTEGER"),
+    ("B zaden-wild recent", "INTEGER"),
+    ("C bewerkt hout", "INTEGER"),
+    ("C fosfaat", "INTEGER"),
+    ("C huttenleem", "INTEGER"),
+    ("C metaal", "INTEGER"),
+    ("C ovenslakken", "INTEGER"),
+    ("C turf", "INTEGER"),
+    ("C antraciet", "INTEGER"),
+    ("C kleipijp", "INTEGER"),
+    ("C lakzegel", "INTEGER"),
+    ("D C14", "INTEGER"),
+    ("D tak/knop", "INTEGER"),
+    ("D te determ", "INTEGER"),
+    ("Z amfibiebot V", "INTEGER"),
+    ("Z bot-groot V", "INTEGER"),
+    ("Z bot-klein V", "INTEGER"),
+    ("Z eierschaal/vel V", "INTEGER"),
+    ("Z insekten V", "INTEGER"),
+    ("Z visgraat/bot V", "INTEGER"),
+    ("Z viswervel V", "INTEGER"),
+    ("Z visschub V", "INTEGER"),
+    ("Z vliegepop V", "INTEGER"),
+    ("Z vogelbot O", "INTEGER"),
+    ("Z vogelbot V", "INTEGER"),
+    ("Z watervlo-ei V", "INTEGER"),
+    ("Z wormei V", "INTEGER"),
+    ("S kokkel", "INTEGER"),
+    ("S oester", "INTEGER"),
+]
+
+KOLOMMEN_MONSTER_BOTANIE = [
+    ("MONSTERCODE", "VARCHAR(50)"),
+    ("SOORT", "VARCHAR(20)"),
+    ("DEEL", "VARCHAR(10)"),
+    ("STAAT", "VARCHAR(5)"),
+    ("DET", "VARCHAR(50)"),
+    ("AANTAL", "INTEGER"),
+]
+
+KOLOMMEN_MONSTER_SCHELP = [
+    ("MONSTERCODE", "VARCHAR(50)"),
+    ("SOORT", "VARCHAR(100)"),
+    ("AANTAL", "INTEGER"),
+]
+
+KOLOMMEN_R_PLANT = [
+    ("SPEC", "VARCHAR(20)"),
+    ("OUDE NAAM", "VARCHAR(50)"),
+    ("WETENSCHAPPELIJKE NAAM", "VARCHAR(100)"),
+    ("NEDERLANDSE NAAM", "VARCHAR(100)"),
+]
+
+KOLOMMEN_R_SCHELP = [
+    ("CODENAAM", "VARCHAR(20)"),
+    ("NAAM LATIJN", "VARCHAR(100)"),
+    ("NAAM NEDERLANDS", "VARCHAR(100)"),
+    ("MILIEU", "VARCHAR(200)"),
+]
+
+KOLOMMEN_R_DEEL = [
+    ("DEEL", "VARCHAR(10)"),
+    ("OMSCHRIJVING", "VARCHAR(50)"),
+    ("UITLEG", "VARCHAR(200)"),
+]
+
+KOLOMMEN_R_STAAT = [
+    ("STAAT", "VARCHAR(5)"),
+    ("OMSCHRIJVING", "VARCHAR(50)"),
+    ("STAAT_ID", "INTEGER"),
+]
+
 # Digifotos tabel
 KOLOMMEN_DIGIFOTOS = [
     ("FOTONR", "INTEGER"),
@@ -926,6 +1076,200 @@ def dataDigifotos():
 
 
 # ============================================================
+# Monsterdatabase data
+# ============================================================
+
+def _maakWaarderingRecord(monstercode, waarden_dict):
+    """Bouw een Monster_waardering record met correcte kolomaantallen.
+
+    Args:
+        monstercode: De monstercode (string)
+        waarden_dict: Dict met kolomnaam -> waarde voor niet-lege kolommen
+
+    Returns:
+        Tuple met 75 waarden (MONSTERCODE + 74 telkolommen)
+    """
+    record = [monstercode]
+    for naam, _ in KOLOMMEN_MONSTER_WAARDERING[1:]:  # skip MONSTERCODE
+        record.append(waarden_dict.get(naam, None))
+    # Z anders is een string, default ""
+    idx_anders = [k[0] for k in KOLOMMEN_MONSTER_WAARDERING].index("Z anders")
+    if record[idx_anders] is None:
+        record[idx_anders] = ""
+    return tuple(record)
+
+
+def _maakWaarderingRecords():
+    """Genereer alle 5 Monster_waardering records.
+
+    Returns:
+        Lijst van 5 tuples met correcte kolomaantallen
+    """
+    return [
+        # SY001_p1_v1: veel botanisch, weinig zoologisch
+        _maakWaarderingRecord("SY001_p1_v1", {
+            "B stengel onverkoold": 5, "B zaden-cultuur onverkoold": 25,
+            "B zaden-kaf onverkoold": 5, "B zaden-wild onverkoold": 25,
+            "C aardewerk": 5, "D houtskool": 5,
+            "Z bot-groot O": 5, "Z bot-klein O": 5, "Z visgraat/bot O": 5,
+            "S molzoet/land": 10,
+        }),
+        # SY001_p1_v2: gemengd
+        _maakWaarderingRecord("SY001_p1_v2", {
+            "B zaden-cultuur onverkoold": 5, "B zaden-wild onverkoold": 5,
+            "C aardewerk": 25, "C glas": 5, "D hout": 5, "C metaal": 5,
+        }),
+        # SY001_p2_v3: veel zoologisch
+        _maakWaarderingRecord("SY001_p2_v3", {
+            "Z bot-groot O": 25, "Z bot-klein O": 25,
+            "Z visgraat/bot O": 5, "Z viswervel O": 5,
+            "Z anders": "muis kiezen", "S molzoet/land": 5,
+        }),
+        # SY002_p2_v4: rijk monster, alles aanwezig
+        _maakWaarderingRecord("SY002_p2_v4", {
+            "B stengel onverkoold": 5, "B zaden-cultuur onverkoold": 50,
+            "B zaden-kaf onverkoold": 25, "B zaden-wild onverkoold": 50,
+            "B zaden-cultuur mineraaliseerd": 5, "C aardewerk": 5,
+            "D hout": 5, "D houtskool": 5,
+            "Z bot-groot O": 25, "Z bot-klein O": 5,
+            "Z eierschaal/vel O": 5, "Z visgraat/bot O": 25, "Z viswervel O": 5,
+            "S molzoet/land": 25, "S mollusk zout": 5,
+            "B wortel onverkoold": 5, "B stengel verkoold": 5,
+            "B zaden-cultuur verkoold": 5, "B zaden-wild verkoold": 5,
+            "Z vogelbot O": 5, "S kokkel": 5, "S oester": 5,
+        }),
+        # SY002_p3_v7: gemiddeld
+        _maakWaarderingRecord("SY002_p3_v7", {
+            "B zaden-cultuur onverkoold": 5, "B zaden-wild onverkoold": 25,
+            "Z bot-groot O": 5, "Z bot-klein O": 5, "S molzoet/land": 5,
+        }),
+    ]
+
+
+def dataMonsterDatabase():
+    """Genereer monsterdatabase-data voor synthetische projecten SY001 en SY002.
+
+    Bevat Monster_gegevens, Monster_waardering, Monster_botanie_determinatie,
+    Monster_schelp_determinatie en referentietabellen (R_PLANT, R_SCHELP,
+    R_DEEL, R_STAAT).
+
+    Returns:
+        Dict met tabelnaam -> (kolommen, records) per tabel
+    """
+    tabellen = {}
+
+    # ---- Monster_gegevens: 5 monsters (3x SY001, 2x SY002) ----
+    kol = [k[0] for k in KOLOMMEN_MONSTER_GEGEVENS]
+    tabellen["Monster_gegevens"] = (kol, [
+        # SY001 monsters — verwijzen naar putten en vondsten van SY001
+        ("SY001", 1, 1, "SY001_p1_v1", "S. Syntheticus", "03/15/24 00:00:00",
+         1, 101, "monster uit kuil", "grondmonster", 0.5, 0.5, 0.3,
+         "03/20/24 00:00:00", None, "Wv:onkruid, cultuur",
+         "+", "+/-", "+", "+/-", "+", "+/-", "+/-", "+"),
+        ("SY001", 1, 2, "SY001_p1_v2", "S. Syntheticus", "03/16/24 00:00:00",
+         2, 101, "monster uit muur", "zeef residu", 0.3, 0.5, 0.2,
+         "03/21/24 00:00:00", "zeef residu", "A:",
+         "+/-", "+", "+/-", "+", "+/-", "+", "+/-", "+"),
+        ("SY001", 2, 3, "SY001_p2_v3", "S. Syntheticus", "03/18/24 00:00:00",
+         3, 102, "monster uit greppel", "beenmonster", 0.8, 0.5, 0.6,
+         "03/22/24 00:00:00", None, "B:",
+         "-", "+/-", "-", "+", "-", "+/-", "-", "+/-"),
+        # SY002 monsters — verwijzen naar putten en vondsten van SY002
+        ("SY002", 2, 4, "SY002_p2_v4", "P. Plantkundige", "06/05/24 00:00:00",
+         4, 201, "monster uit beerput", "grondmonster", 1.0, 0.5, 0.8,
+         "06/10/24 00:00:00", "rijk monster", "Wv:cultuur, onkruid, bomen",
+         "+", "+", "+", "+", "+", "+", "+", "+"),
+        ("SY002", 3, 7, "SY002_p3_v7", "P. Plantkundige", "06/10/24 00:00:00",
+         6, 202, "monster uit greppel", "grondmonster", 0.5, 0.5, 0.3,
+         "06/15/24 00:00:00", None, "B:",
+         "+/-", "+/-", "+/-", "+/-", "+/-", "+/-", "+/-", "+/-"),
+    ])
+
+    # ---- Monster_waardering: 5 records (1:1 met Monster_gegevens) ----
+    # Vereenvoudigd: alleen de meest relevante telkolommen gevuld, rest = None
+    kol = [k[0] for k in KOLOMMEN_MONSTER_WAARDERING]
+    nul = None  # afkorting voor leesbaarheid
+    tabellen["Monster_waardering"] = (kol, [
+        # Gebruik een hulpfunctie om records op te bouwen met correcte kolomaantallen
+        # De kolommen zijn (75 totaal):
+        #   MONSTERCODE(1), B-onverk(4)+B-miner(1)=5, C-1e(10), D-1e(2),
+        #   Z-O(11), Z-anders(1), S-1e(3),
+        #   B-onverk2(2)+B-verk(5)+B-miner2(3)=10, B-recent(5), C-2e(9), D-2e(3),
+        #   Z-V(9)+Z-vogel(2)+Z-rest(2)=13, S-2e(2)
+        *_maakWaarderingRecords(),
+    ])
+
+    # ---- Monster_botanie_determinatie: 8 records ----
+    kol = [k[0] for k in KOLOMMEN_MONSTER_BOTANIE]
+    tabellen["Monster_botanie_determinatie"] = (kol, [
+        # SY001_p1_v1: 3 botanische determinaties
+        ("SY001_p1_v1", "CAREX-SP", "SEE", "o", None, 50),
+        ("SY001_p1_v1", "BRASSICA", "SEE", "o", None, 25),
+        ("SY001_p1_v1", "SAMBUC/N", "SEE", "v", None, 10),
+        # SY001_p1_v2: 1 determinatie
+        ("SY001_p1_v2", "CAREX-SP", "SEE", "o", None, 15),
+        # SY002_p2_v4: 3 determinaties (rijk monster)
+        ("SY002_p2_v4", "CEREALI", "SEE", "o", None, 100),
+        ("SY002_p2_v4", "SAMBUC/N", "BAS", "o", None, 5),
+        ("SY002_p2_v4", "QUERCUS", "HOT", "v", None, 3),
+        # SY002_p3_v7: 1 determinatie
+        ("SY002_p3_v7", "BRASSICA", "SEE", "m", None, 20),
+    ])
+
+    # ---- Monster_schelp_determinatie: 4 records ----
+    kol = [k[0] for k in KOLOMMEN_MONSTER_SCHELP]
+    tabellen["Monster_schelp_determinatie"] = (kol, [
+        # SY001_p1_v1: 2 schelpdeterminaties
+        ("SY001_p1_v1", "Planorbis corneus", 10),
+        ("SY001_p1_v1", "Radix ovata", 5),
+        # SY002_p2_v4: 2 schelpdeterminaties
+        ("SY002_p2_v4", "Planorbis corneus", 25),
+        ("SY002_p2_v4", "Ostracoda", 15),
+    ])
+
+    # ---- R_PLANT: 5 plantensoorten ----
+    kol = [k[0] for k in KOLOMMEN_R_PLANT]
+    tabellen["R_PLANT"] = (kol, [
+        ("CAREX-SP", None, "Carex spec.", "Zegge"),
+        ("BRASSICA", None, "Brassica spec.", "Kool"),
+        ("SAMBUC/N", None, "Sambucus nigra", "Gewone vlier"),
+        ("CEREALI", None, "Cerealia indet.", "Graan"),
+        ("QUERCUS", None, "Quercus spec.", "Eik"),
+    ])
+
+    # ---- R_SCHELP: 3 schelpsoorten ----
+    kol = [k[0] for k in KOLOMMEN_R_SCHELP]
+    tabellen["R_SCHELP"] = (kol, [
+        ("PLANORCO", "Planorbis corneus", "Grote posthoren",
+         "stilstaand zoet water met rijke vegetatie."),
+        ("RADIXOVA", "Radix ovata", "Ovale poelslak",
+         "stilstaand tot langzaam stromend zoet water."),
+        ("OSTRACOD", "Ostracoda", "Mosselkreeftje",
+         "diverse aquatische milieus."),
+    ])
+
+    # ---- R_DEEL: 4 deel-typen ----
+    kol = [k[0] for k in KOLOMMEN_R_DEEL]
+    tabellen["R_DEEL"] = (kol, [
+        ("SEE", "zaad", "zaad of vrucht"),
+        ("BAS", "bast", "levend deel van de schors van houtige gewassen"),
+        ("HOT", "hout", "houtfragment"),
+        ("BDS", "knop", "van houtige gewassen"),
+    ])
+
+    # ---- R_STAAT: 4 staat-typen ----
+    kol = [k[0] for k in KOLOMMEN_R_STAAT]
+    tabellen["R_STAAT"] = (kol, [
+        ("o", "onverkoold", 1),
+        ("v", "verkoold", 2),
+        ("m", "gemineraliseerd", 3),
+        ("r", "recent of subrecent", 4),
+    ])
+
+    return tabellen
+
+
+# ============================================================
 # MDB-bestanden aanmaken
 # ============================================================
 
@@ -1053,33 +1397,50 @@ def genereerAlles():
         "DIAOPGRAVING": KOLOMMEN_DIAOPGRAVING,
     }
 
+    # Monsterdatabase tabel definities
+    monster_tabel_defs = {
+        "Monster_gegevens": KOLOMMEN_MONSTER_GEGEVENS,
+        "Monster_waardering": KOLOMMEN_MONSTER_WAARDERING,
+        "Monster_botanie_determinatie": KOLOMMEN_MONSTER_BOTANIE,
+        "Monster_schelp_determinatie": KOLOMMEN_MONSTER_SCHELP,
+        "R_PLANT": KOLOMMEN_R_PLANT,
+        "R_SCHELP": KOLOMMEN_R_SCHELP,
+        "R_DEEL": KOLOMMEN_R_DEEL,
+        "R_STAAT": KOLOMMEN_R_STAAT,
+    }
+
     # SY001 - Klein project
-    print("\n[1/6] SY001 — Klein project (Marktstraat 10, Voorburg)")
+    print("\n[1/7] SY001 — Klein project (Marktstraat 10, Voorburg)")
     pad_sy001 = os.path.join(OUTPUT_DIR, "projecten", "SY001", "C Database", "opgravingSY001.mdb")
     schrijfMdb(pad_sy001, dataKleinProject(), project_tabel_defs)
 
     # SY002 - Groot project
-    print("\n[2/6] SY002 — Groot project (Kerkplein, Leiden)")
+    print("\n[2/7] SY002 — Groot project (Kerkplein, Leiden)")
     pad_sy002 = os.path.join(OUTPUT_DIR, "projecten", "SY002", "C Database", "opgravingSY002.mdb")
     schrijfMdb(pad_sy002, dataGrootProject(), project_tabel_defs)
 
     # DELF-IT projectenlijst
-    print("\n[3/6] DELF-IT — Projectenlijst")
+    print("\n[3/7] DELF-IT — Projectenlijst")
     pad_delfit = os.path.join(OUTPUT_DIR, "delfit", "DELF-IT.mdb")
     schrijfMdb(pad_delfit, dataProjectenlijst(), {"OPGRAVINGEN": KOLOMMEN_OPGRAVINGEN})
 
     # Magazijnlijst
-    print("\n[4/6] Magazijnlijst — Depot")
+    print("\n[4/7] Magazijnlijst — Depot")
     pad_magazijn = os.path.join(OUTPUT_DIR, "magazijnlijst", "MAGAZIJN.mdb")
     schrijfMdb(pad_magazijn, dataMagazijnlijst(), {"magazijnlijst": KOLOMMEN_MAGAZIJNLIJST})
 
     # Digifotos
-    print("\n[5/6] Digifotos — Fotocatalogus")
+    print("\n[5/7] Digifotos — Fotocatalogus")
     pad_fotos = os.path.join(OUTPUT_DIR, "digifotos", "Digifotos.mdb")
     schrijfMdb(pad_fotos, dataDigifotos(), {"Fotos": KOLOMMEN_DIGIFOTOS})
 
+    # Monsterdatabase
+    print("\n[6/7] Monsterdatabase — Monsters, botanie, schelpen")
+    pad_monster = os.path.join(OUTPUT_DIR, "monsterdatabase", "MONSTERS.mdb")
+    schrijfMdb(pad_monster, dataMonsterDatabase(), monster_tabel_defs)
+
     # Foto's
-    print("\n[6/6] Synthetische fotobestanden")
+    print("\n[7/7] Synthetische fotobestanden")
     genereerFotos()
 
     print("\n" + "=" * 60)
@@ -1104,6 +1465,7 @@ def getAlleScenarioData():
         "projectenlijst": dataProjectenlijst(),
         "magazijnlijst": dataMagazijnlijst(),
         "digifotos": dataDigifotos(),
+        "monsterdatabase": dataMonsterDatabase(),
     }
 
 

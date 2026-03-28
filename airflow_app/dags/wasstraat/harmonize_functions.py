@@ -81,6 +81,11 @@ def fixMonsterProjectcds():
             return
 
         df_project = pd.DataFrame(list(analyseCol.find({'soort': 'Project'}, {'projectcd':1, 'project': 1, '_id':0})))
+
+        if df_project.empty or 'projectcd' not in df_project.columns or 'project' not in df_project.columns:
+            logger.warning("Geen Project-records met projectcd en project gevonden — kan Monster-projectcodes niet matchen.")
+            return
+
         df2_project = pd.concat([df_project['projectcd'], df_project['projectcd']], axis=1, ignore_index=True)
         df2_project.columns = ['projectcd', 'project']
 
