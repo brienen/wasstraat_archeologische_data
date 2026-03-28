@@ -11,6 +11,8 @@ De repository bevat **synthetische voorbeelddata** in `data/synthetic/data/` —
 
 SY002 bevat een breed scala aan materiaalsoorten: aardewerk, glas, been, metaal, leer, steen, kleipijp en munten. Beide projecten bevatten ook depot- en fotometadata.
 
+Daarnaast bevat de synthetische data een **monsterdatabase** met 5 grondmonsters (3× SY001, 2× SY002), 8 botanische determinaties, 4 schelpdeterminaties en bijbehorende referentietabellen (plantensoorten, schelpsoorten, deeltypen, conserveringstoestanden).
+
 ## Bestandsstructuur
 
 De synthetische data volgt exact dezelfde directorystructuur als echte opgravingsdata:
@@ -26,7 +28,8 @@ data/synthetic/data/
 │       └── L Fotos/
 ├── delfit/DELF-IT.mdb                       # Projectenlijst
 ├── magazijnlijst/MAGAZIJN.mdb               # Depotdata
-└── digifotos/Digifotos.mdb                  # Fotocatalogus
+├── digifotos/Digifotos.mdb                  # Fotocatalogus
+└── monsterdatabase/MONSTERS.mdb             # Monsterdata (botanie + schelpen)
 ```
 
 ## Gebruik bij testen
@@ -49,6 +52,7 @@ Gemeenten die hun eigen opgravingsdata willen verwerken, kunnen hun bestanden or
 | `delfit/` of `Delf-IT/` | Centrale administratiedatabase met projectoverzicht | `.mdb` + `.xlsx` |
 | `magazijnlijst/` | Depot- en magazijnadministratie | `.mdb` |
 | `digifotos/` | Digitale fotolijst met metadata | `.mdb` |
+| `monsterdatabase/` | Monstergegevens met botanische en zoölogische determinaties | `.mdb` / `.accdb` |
 | `referentietabellen/` | ABR-classificatie en standaardtabellen | `.xlsx` / `.mdb` |
 
 Plaats de bestanden in `data/input/basefiles/projectdatabase/` en configureer de Docker-volumes in je docker-compose override. Zie [Aan de slag](../aan-de-slag.md) voor gedetailleerde instructies.

@@ -9,11 +9,13 @@ Gemeenten die hun eigen data willen verwerken, kunnen deze voorbeeldstructuur al
 ### SY001 — Klein project (Marktstraat 10, Voorburg)
 - 2 putten, 3 sporen, 4 vondsten, 5 artefacten (aardewerk + glas)
 - 2 vullingen, 7 tekeningen, 3 foto's
+- 3 monsters (2 met botanische determinaties, 1 zoölogisch)
 - Datering: 1600-1750
 
 ### SY002 — Groot project (Kerkplein, Leiden)
 - 4 putten, 8 sporen, 12 vondsten, 20 artefacten (8 materiaalsoorten)
 - 4 vullingen, 10 foto's
+- 2 monsters (uit beerput en greppel, met botanische en schelpdeterminaties)
 - Materiaalsoorten: aardewerk, glas, been, metaal, leer, steen, kleipijp, munten
 - Datering: 1200-1800
 
@@ -29,6 +31,7 @@ data/synthetic/
     delfit/DELF-IT.mdb                               # Projectenlijst
     magazijnlijst/MAGAZIJN.mdb                       # Depotdata
     digifotos/Digifotos.mdb                          # Fotocatalogus
+    monsterdatabase/MONSTERS.mdb                     # Monsterdata (botanie + schelpen)
   generatie/                                         # Alles voor (her)generatie
     generate_synthetic_data.py                       # Generator-script
     requirements-synthetic.txt                       # Python dependencies
@@ -51,6 +54,7 @@ volumes:
   - ./data/synthetic/data/delfit:/input/delfit
   - ./data/synthetic/data/magazijnlijst:/input/magazijnlijst
   - ./data/synthetic/data/digifotos:/input/digifotos
+  - ./data/synthetic/data/monsterdatabase:/input/monsterdatabase
 ```
 
 Om de synthetische data met de volledige Wasstraat-applicatie te gebruiken, pas je dezelfde volume-mappings toe in je eigen docker-compose override.

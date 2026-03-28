@@ -36,7 +36,9 @@ tests/
 │   ├── test_fix_7_kolomselectie.py           # Kolomselectie robuustheid
 │   ├── test_fix_8_dropna.py                  # dropna() edge cases
 │   ├── test_importMDB_bash.py                # Bash import-functietests
-│   └── test_synthetic_data.py                # Validatie synthetische voorbeelddata
+│   ├── test_synthetic_data.py                # Validatie synthetische voorbeelddata
+│   ├── test_synthetic_monster_data.py        # Validatie synthetische monsterdata
+│   └── test_fix_monster_projectcds.py        # Projectcode-matching voor monsters
 └── integration/
     ├── test_full_pipeline.py                 # Pipeline met directe MongoDB-seeding
     ├── test_full_pipeline_synthetic_data.py   # Volledige pipeline via Airflow (synthetische data)
@@ -126,13 +128,15 @@ docker compose -f docker-compose.test.yml down -v
 | `encoding.py` | UTF-8 conversie, CP1252-detectie, dubbele CSV-headers |
 | `fixes_*.py` | Robuustheid van transformaties bij ontbrekende/ongeldige data |
 | `synthetic_data.py` | Validatie dat de synthetische MDB-bestanden de juiste tabellen en kolomstructuur bevatten |
+| `synthetic_monster_data.py` | Structuur, kolomaantallen, referentiële integriteit en projectverwijzingen van synthetische monsterdata |
+| `fix_monster_projectcds.py` | Projectcode-matching logica voor de monsterdatabase (mocking van MongoDB) |
 
 ### Integratietests
 
 | Test | Wat wordt getest |
 |------|-----------------|
 | `test_full_pipeline.py` | Volledige harmonisatie-pipeline met directe MongoDB-seeding: harmonisatie, enhance, keys, move & merge, references |
-| `test_full_pipeline_synthetic_data.py` | Volledige ETL via Airflow DAGs met synthetische MDB-data: extract, transform, verwachte aantallen per soort |
+| `test_full_pipeline_synthetic_data.py` | Volledige ETL via Airflow DAGs met synthetische MDB-data: extract, transform, verwachte aantallen per soort (inclusief monsters, botanische/schelpdeterminaties en referentietabellen) |
 | `test_full_pipeline_delft_data.py` | Zelfde pipeline maar met Delftse data en Delft-specifieke verwachte aantallen |
 | `test_harmonize_pipeline.py` | Individuele harmonisatie-pipelines (Vondst, Spoor, alle objecttypen) |
 | `test_importMDB_bash.py` | MDB-import shell-script: encoding-conversie, CSV-generatie, mongoimport |
