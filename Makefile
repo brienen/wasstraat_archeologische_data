@@ -72,10 +72,36 @@ test-quick: install ## Draai unit tests (korte output)
 	$(PYTEST) tests/unit/ -q
 
 .PHONY: integration
-integration: install ## Draai integratietests met synthetische data (SY001 + SY002)
+integration: install ## Draai volledige integratietests: Extract + Transform + Load + Flask
+	@echo "➜ Test-omgeving starten (synthetische data)..."
+	$(COMPOSE_TEST) up -d mongo-test postgres-test redis-test flask-test airflow-test
+	@echo "➜ Stap 1: Extract + Transform + Load pipeline..."
+	$(PYTEST) tests/integration/ \
+		-v -s -m "(integration or load) and not delft" --tb=short; \
+	PIPE_EXIT=$$?; \
+	echo "➜ Stap 2: Flask smoke tests (vereist geladen PostgreSQL)..."; \
+	$(PYTEST) tests/integration/ \
+		-v -s -m flask_smoke --tb=short; \
+	FLASK_EXIT=$$?; \
+	echo "➜ Test-omgeving opruimen..."; \
+	$(COMPOSE_TEST) down -v; \
+	if [ $$PIPE_EXIT -ne 0 ]; then exit $$PIPE_EXIT; fi; \
+	exit $$FLASK_EXIT
+
+.PHONY: integration-keep
+integration-keep: install ## Zelfde als integration maar laat containers draaien
+	@echo "➜ Test-omgeving starten (synthetische data)..."
+	$(COMPOSE_TEST) up -d
+	$(PYTEST) tests/integration/ \
+		-v -s -m "(integration or load) and not delft" --tb=short
+	$(PYTEST) tests/integration/ \
+		-v -s -m flask_smoke --tb=short
+	@echo "➜ Containers draaien nog. Stop met: $(COMPOSE_TEST) down -v"
+
+.PHONY: integration-pipeline
+integration-pipeline: install ## Draai alleen Extract + Transform (zonder Load en Flask)
 	@echo "➜ Test-omgeving starten (synthetische data)..."
 	$(COMPOSE_TEST) up -d mongo-test postgres-test flask-test airflow-test
-	@echo "➜ Wachten tot services klaar zijn (pytest doet de rest)..."
 	$(PYTEST) tests/integration/ \
 		-v -s -m "integration and not delft and not load" --tb=short; \
 	EXIT=$$?; \
@@ -83,19 +109,10 @@ integration: install ## Draai integratietests met synthetische data (SY001 + SY0
 	$(COMPOSE_TEST) down -v; \
 	exit $$EXIT
 
-.PHONY: integration-keep
-integration-keep: install ## Zelfde als integration maar laat containers draaien
-	@echo "➜ Test-omgeving starten (synthetische data)..."
-	$(COMPOSE_TEST) up -d
-	$(PYTEST) tests/integration/ \
-		-v -s -m "integration and not delft" --tb=short
-	@echo "➜ Containers draaien nog. Stop met: $(COMPOSE_TEST) down -v"
-
 .PHONY: integration-load
-integration-load: install ## Draai volledige pipeline inclusief Load naar PostgreSQL
+integration-load: install ## Draai Extract + Transform + Load (zonder Flask)
 	@echo "➜ Test-omgeving starten (inclusief Load)..."
 	$(COMPOSE_TEST) up -d mongo-test postgres-test flask-test airflow-test
-	@echo "➜ Draai Extract + Transform + Load tests..."
 	$(PYTEST) tests/integration/test_full_pipeline_synthetic_data.py \
 		-v -s -m "integration or load" --tb=short; \
 	EXIT=$$?; \
@@ -116,8 +133,9 @@ integration-delft: install ## Draai integratietests met echte Delftse data (DB03
 	exit $$EXIT
 
 .PHONY: test-flask
-test-flask: install ## Draai Flask smoke tests (start Flask + PostGIS + Redis in Docker)
+test-flask: install ## Draai Flask smoke tests (NB: vereist geladen PostgreSQL, gebruik 'make integration')
 	@echo "➜ Flask test-omgeving starten..."
+	@echo "⚠  Let op: Flask tests vereisen geladen data. Gebruik 'make integration' voor de volledige suite."
 	$(COMPOSE_TEST) up -d postgres-test redis-test flask-test
 	@echo "➜ Wachten tot Flask klaar is..."
 	$(PYTEST) tests/integration/ \
@@ -128,7 +146,7 @@ test-flask: install ## Draai Flask smoke tests (start Flask + PostGIS + Redis in
 	exit $$EXIT
 
 .PHONY: test-all
-test-all: test integration test-flask ## Draai unit + integratie + Flask smoke tests
+test-all: test integration ## Draai unit tests + volledige integratie (Extract→Transform→Load→Flask)
 
 # ============================================================
 # Synthetische data

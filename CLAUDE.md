@@ -68,9 +68,12 @@ make app              # Start alle services
 
 # Testen
 make test             # Unit tests (tests/unit/)
-make integration      # Integratietests met synthetische data
+make integration      # Volledige suite: Extract → Transform → Load → Flask smoke tests
+make integration-pipeline # Alleen Extract + Transform (zonder Load en Flask)
+make integration-load # Extract + Transform + Load (zonder Flask)
 make integration-delft # Integratietests met Delftse data (indien aanwezig)
-make test-all         # Unit + integratietests
+make test-flask       # Alleen Flask smoke tests (vereist geladen PostgreSQL)
+make test-all         # Unit tests + volledige integratie (= make test + make integration)
 
 # Synthetische data
 make synthetic        # Genereer synthetische MDB-bestanden opnieuw
@@ -109,6 +112,44 @@ make clean            # Verwijder .venv en caches
 - Werk altijd in de huidige branch. Maak GEEN nieuwe branches aan.
 - Maak geen commits zonder expliciete toestemming.
 - Commit-messages in het Nederlands, beschrijvend (bijv. "Verbeter error handling in transform2").
+
+## Load naar PostgreSQL (loadToDatabase_functions.py)
+
+De Load-stap (`loadToDatabase_functions.py`) is herschreven zonder pandas en zonder SQLAlchemy.
+
+### Probleem
+
+Airflow 2.10 pint SQLAlchemy < 2.0 voor interne compatibiliteit. pandas >= 2.2 vereist SQLAlchemy >= 2.0. Deze combinatie maakte `DataFrame.to_sql()` onbruikbaar — elke variant (Engine, Connection, DBAPI, URI string) faalde op een andere manier. Het pinnen van pandas < 2.2 in `requirements.txt` werd niet altijd correct overgenomen door de Docker-build, waardoor de incompatibiliteit bleef optreden.
+
+### Gekozen oplossing
+
+Volledige herschrijving met alleen **pymongo** + **psycopg2** + **pure Python**:
+
+- `psycopg2.extras.execute_values()` voor batch inserts (vervangt `df.to_sql()`)
+- `information_schema.columns` en `pg_type` queries voor tabelmetadata (vervangt `sqlalchemy.inspect()`)
+- `ST_SetSRID(ST_MakePoint(lon, lat), 4326)` via UPDATE SQL voor geometry (vervangt GeoAlchemy2/Shapely)
+- Pure Python type-conversie: `convertToInt()`, `convertToFloat()`, `convertToDatePure()` (vervangt pandas type coercion)
+- `bool()` wrapper rond `convertToBool()` — psycopg2 vereist Python `True`/`False`, niet `0`/`1`
+
+### Architectuur bewaard
+
+De 3-fase atomic swap is ongewijzigd: (1) laad naar `_new` tabellen, (2a) atomic rename swap met FK drop/restore, (2b) FK herstel met SAVEPOINTs, (3) opruimen `_old` tabellen. De publieke interface `loadAll()` is ongewijzigd — DAGs en tasks hoefden niet aangepast te worden.
+
+### Aandachtspunten bij wijzigingen
+
+- `archutils.convertToBool()` retourneert `0`/`1` (integers) — wrap altijd met `bool()` voor psycopg2
+- Geometry kolom `location` wordt NIET meegegeven in de INSERT maar via een aparte UPDATE bijgewerkt
+- ENUM kolommen worden gedetecteerd via `pg_type.typtype = 'e'` — lege waarden worden `'Onbekend'`
+- De Elasticsearch indexering (onderdeel van `DAG_Load_Only`) is niet beschikbaar in de test-omgeving
+
+## Integratietests en volgorde
+
+`make integration` draait de volledige testsuite in twee stappen binnen één Docker-sessie:
+
+1. **Stap 1:** Extract → Transform → Load pipeline (marker: `integration or load`)
+2. **Stap 2:** Flask smoke tests (marker: `flask_smoke`) — vereist geladen PostgreSQL-data uit stap 1
+
+De Flask smoke tests controleren of projecten zichtbaar zijn op de kaart en hebben daarom gevulde `Def_Project` data nodig. Draai `make integration` voor de volledige suite, of `make integration-pipeline` voor alleen Extract + Transform zonder Load.
 
 ## Belangrijke aandachtspunten
 

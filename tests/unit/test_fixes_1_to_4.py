@@ -554,9 +554,9 @@ class TestCrossFile(unittest.TestCase):
 
     def test_no_unintended_changes_to_other_functions(self):
         """Verifieer dat functies buiten scope niet zijn gewijzigd."""
-        # Check dat transferToDB in loadToDatabase_functions.py ongewijzigd is
+        # Check dat transferToDB in loadToDatabase_functions.py de juiste signature heeft
         source = read_source('../airflow_app/dags/wasstraat/loadToDatabase_functions.py')
-        self.assertIn('def transferToDB(objecttype, soort, table, connection, db_uri=None):', source,
+        self.assertIn('def transferToDB(soort, table, cursor):', source,
             "transferToDB functie-signature is gewijzigd (onbedoeld)")
 
         # Check dat parseFotobestanden nog steeds de juiste structuur heeft
