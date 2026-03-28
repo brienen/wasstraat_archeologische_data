@@ -181,6 +181,7 @@
 </tbody>
 </table>
 <p>SY002 bevat een breed scala aan materiaalsoorten: aardewerk, glas, been, metaal, leer, steen, kleipijp en munten. Beide projecten bevatten ook depot- en fotometadata.</p>
+<p>Daarnaast bevat de synthetische data een <strong>monsterdatabase</strong> met 5 grondmonsters (3× SY001, 2× SY002), 8 botanische determinaties, 4 schelpdeterminaties en bijbehorende referentietabellen (plantensoorten, schelpsoorten, deeltypen, conserveringstoestanden).</p>
 <h2 id="bestandsstructuur">Bestandsstructuur<a class="headerlink" href="#bestandsstructuur" title="Permanent link">&para;</a></h2>
 <p>De synthetische data volgt exact dezelfde directorystructuur als echte opgravingsdata:</p>
 <div class="codehilite"><pre><span></span><code>data/synthetic/data/
@@ -193,7 +194,8 @@
 │       └── L Fotos/
 ├── delfit/DELF-IT.mdb                       # Projectenlijst
 ├── magazijnlijst/MAGAZIJN.mdb               # Depotdata
-└── digifotos/Digifotos.mdb                  # Fotocatalogus
+├── digifotos/Digifotos.mdb                  # Fotocatalogus
+└── monsterdatabase/MONSTERS.mdb             # Monsterdata (botanie + schelpen)
 </code></pre></div>
 
 <h2 id="gebruik-bij-testen">Gebruik bij testen<a class="headerlink" href="#gebruik-bij-testen" title="Permanent link">&para;</a></h2>
@@ -232,6 +234,11 @@
 <td><code>digifotos/</code></td>
 <td>Digitale fotolijst met metadata</td>
 <td><code>.mdb</code></td>
+</tr>
+<tr>
+<td><code>monsterdatabase/</code></td>
+<td>Monstergegevens met botanische en zoölogische determinaties</td>
+<td><code>.mdb</code> / <code>.accdb</code></td>
 </tr>
 <tr>
 <td><code>referentietabellen/</code></td>

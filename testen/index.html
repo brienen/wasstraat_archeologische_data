@@ -199,7 +199,9 @@ make<span class="w"> </span>test-all<span class="w">         </span><span class=
 <span class="err">│</span><span class="w">   </span><span class="err">├──</span><span class="w"> </span><span class="nx">test_fix_7_kolomselectie</span><span class="p">.</span><span class="nx">py</span><span class="w">           </span><span class="err">#</span><span class="w"> </span><span class="nx">Kolomselectie</span><span class="w"> </span><span class="nx">robuustheid</span>
 <span class="err">│</span><span class="w">   </span><span class="err">├──</span><span class="w"> </span><span class="nx">test_fix_8_dropna</span><span class="p">.</span><span class="nx">py</span><span class="w">                  </span><span class="err">#</span><span class="w"> </span><span class="nx">dropna</span><span class="p">()</span><span class="w"> </span><span class="nx">edge</span><span class="w"> </span><span class="nx">cases</span>
 <span class="err">│</span><span class="w">   </span><span class="err">├──</span><span class="w"> </span><span class="nx">test_importMDB_bash</span><span class="p">.</span><span class="nx">py</span><span class="w">                </span><span class="err">#</span><span class="w"> </span><span class="nx">Bash</span><span class="w"> </span><span class="kn">import</span><span class="o">-</span><span class="nx">functietests</span>
-<span class="err">│</span><span class="w">   </span><span class="err">└──</span><span class="w"> </span><span class="nx">test_synthetic_data</span><span class="p">.</span><span class="nx">py</span><span class="w">                </span><span class="err">#</span><span class="w"> </span><span class="nx">Validatie</span><span class="w"> </span><span class="nx">synthetische</span><span class="w"> </span><span class="nx">voorbeelddata</span>
+<span class="err">│</span><span class="w">   </span><span class="err">├──</span><span class="w"> </span><span class="nx">test_synthetic_data</span><span class="p">.</span><span class="nx">py</span><span class="w">                </span><span class="err">#</span><span class="w"> </span><span class="nx">Validatie</span><span class="w"> </span><span class="nx">synthetische</span><span class="w"> </span><span class="nx">voorbeelddata</span>
+<span class="err">│</span><span class="w">   </span><span class="err">├──</span><span class="w"> </span><span class="nx">test_synthetic_monster_data</span><span class="p">.</span><span class="nx">py</span><span class="w">        </span><span class="err">#</span><span class="w"> </span><span class="nx">Validatie</span><span class="w"> </span><span class="nx">synthetische</span><span class="w"> </span><span class="nx">monsterdata</span>
+<span class="err">│</span><span class="w">   </span><span class="err">└──</span><span class="w"> </span><span class="nx">test_fix_monster_projectcds</span><span class="p">.</span><span class="nx">py</span><span class="w">        </span><span class="err">#</span><span class="w"> </span><span class="nx">Projectcode</span><span class="o">-</span><span class="nx">matching</span><span class="w"> </span><span class="nx">voor</span><span class="w"> </span><span class="nx">monsters</span>
 <span class="err">└──</span><span class="w"> </span><span class="nx">integration</span><span class="o">/</span>
 <span class="w">    </span><span class="err">├──</span><span class="w"> </span><span class="nx">test_full_pipeline</span><span class="p">.</span><span class="nx">py</span><span class="w">                 </span><span class="err">#</span><span class="w"> </span><span class="nx">Pipeline</span><span class="w"> </span><span class="nx">met</span><span class="w"> </span><span class="nx">directe</span><span class="w"> </span><span class="nx">MongoDB</span><span class="o">-</span><span class="nx">seeding</span>
 <span class="w">    </span><span class="err">├──</span><span class="w"> </span><span class="nx">test_full_pipeline_synthetic_data</span><span class="p">.</span><span class="nx">py</span><span class="w">   </span><span class="err">#</span><span class="w"> </span><span class="nx">Volledige</span><span class="w"> </span><span class="nx">pipeline</span><span class="w"> </span><span class="nx">via</span><span class="w"> </span><span class="nx">Airflow</span><span class="w"> </span><span class="p">(</span><span class="nx">synthetische</span><span class="w"> </span><span class="nx">data</span><span class="p">)</span>
@@ -295,6 +297,14 @@ docker<span class="w"> </span>compose<span class="w"> </span>-f<span class="w"> 
 <td><code>synthetic_data.py</code></td>
 <td>Validatie dat de synthetische MDB-bestanden de juiste tabellen en kolomstructuur bevatten</td>
 </tr>
+<tr>
+<td><code>synthetic_monster_data.py</code></td>
+<td>Structuur, kolomaantallen, referentiële integriteit en projectverwijzingen van synthetische monsterdata</td>
+</tr>
+<tr>
+<td><code>fix_monster_projectcds.py</code></td>
+<td>Projectcode-matching logica voor de monsterdatabase (mocking van MongoDB)</td>
+</tr>
 </tbody>
 </table>
 <h3 id="integratietests_1">Integratietests<a class="headerlink" href="#integratietests_1" title="Permanent link">&para;</a></h3>
@@ -312,7 +322,7 @@ docker<span class="w"> </span>compose<span class="w"> </span>-f<span class="w"> 
 </tr>
 <tr>
 <td><code>test_full_pipeline_synthetic_data.py</code></td>
-<td>Volledige ETL via Airflow DAGs met synthetische MDB-data: extract, transform, verwachte aantallen per soort</td>
+<td>Volledige ETL via Airflow DAGs met synthetische MDB-data: extract, transform, verwachte aantallen per soort (inclusief monsters, botanische/schelpdeterminaties en referentietabellen)</td>
 </tr>
 <tr>
 <td><code>test_full_pipeline_delft_data.py</code></td>
