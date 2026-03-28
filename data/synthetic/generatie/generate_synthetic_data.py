@@ -796,10 +796,10 @@ def dataKleinProject():
     # Vondstenlijst: 4 vondsten
     kol = [k[0] for k in KOLOMMEN_VONDSTENLIJST]
     tabellen["VONDSTENLIJST"] = (kol, [
-        (code, 1, 1, 1, 1, "", "", "", "", "Aanleg vlak", "Aardewerk", "1600-1700", "15-03-2024", 80120.5, 451230.8),
-        (code, 1, 1, 2, 2, "", "", "", "", "Coupe spoor 2", "Glas, aardewerk", "17e eeuw", "16-03-2024", 80121.0, 451231.2),
-        (code, 2, 1, 3, 3, "", "", "", "", "Aanleg vlak", "Bot", "1650-1750", "18-03-2024", 80125.3, 451228.5),
-        (code, 2, 1, 4, 3, "", "", "", "", "Uitschaven spoor 3", "Aardewerk, metaal", "1600-1700", "18-03-2024", 80125.8, 451228.9),
+        (code, 1, 1, 1, 1, "", "", "", "", "Aanleg vlak", "Aardewerk", "1600-1700", "15-03-2024", 84450.0, 447750.0),
+        (code, 1, 1, 2, 2, "", "", "", "", "Coupe spoor 2", "Glas, aardewerk", "17e eeuw", "16-03-2024", 84450.5, 447750.4),
+        (code, 2, 1, 3, 3, "", "", "", "", "Aanleg vlak", "Bot", "1650-1750", "18-03-2024", 84455.0, 447747.0),
+        (code, 2, 1, 4, 3, "", "", "", "", "Uitschaven spoor 3", "Aardewerk, metaal", "1600-1700", "18-03-2024", 84455.5, 447747.4),
     ])
 
     # Sporen: 3 sporen
@@ -867,18 +867,18 @@ def dataGrootProject():
     # Vondstenlijst: 12 vondsten
     kol = [k[0] for k in KOLOMMEN_VONDSTENLIJST]
     tabellen["VONDSTENLIJST"] = (kol, [
-        (code, 1, 1, 1, 1, "", "", "", "", "Aanleg vlak 1", "Aardewerk", "1200-1400", "01-06-2024", 92050.2, 464120.5),
-        (code, 1, 1, 2, 1, "", "", "", "", "Coupe spoor 1", "Aardewerk, bot", "1300-1400", "02-06-2024", 92050.5, 464120.8),
-        (code, 1, 2, 3, 3, "", "", "", "", "Aanleg vlak 2", "Metaal", "1400-1600", "03-06-2024", 92051.0, 464121.0),
-        (code, 2, 1, 4, 4, "", "", "", "", "Aanleg vlak 1", "Aardewerk, glas", "1500-1700", "05-06-2024", 92055.3, 464118.5),
-        (code, 2, 1, 5, 4, "", "", "", "", "Coupe spoor 4", "Aardewerk", "1600-1700", "06-06-2024", 92055.8, 464118.9),
-        (code, 2, 2, 6, 5, "", "", "", "", "Aanleg vlak 2", "Kleipijp, glas", "1650-1750", "07-06-2024", 92056.0, 464119.2),
-        (code, 3, 1, 7, 6, "", "", "", "", "Aanleg vlak 1", "Bot, aardewerk", "1300-1500", "10-06-2024", 92060.1, 464115.3),
-        (code, 3, 1, 8, 6, "", "", "", "", "Uitschaven spoor 6", "Leer, hout", "1400-1500", "10-06-2024", 92060.5, 464115.7),
-        (code, 3, 2, 9, 7, "", "", "", "", "Aanleg vlak 2", "Aardewerk", "1200-1350", "11-06-2024", 92060.8, 464116.0),
-        (code, 4, 1, 10, 8, "", "", "", "", "Aanleg vlak 1", "Steen, metaal", "1500-1700", "14-06-2024", 92065.2, 464112.8),
-        (code, 4, 1, 11, 8, "", "", "", "", "Coupe spoor 8", "Munt, aardewerk", "1600-1700", "15-06-2024", 92065.5, 464113.1),
-        (code, 4, 3, 12, 8, "", "", "", "", "Aanleg vlak 3", "Aardewerk", "1500-1650", "16-06-2024", 92065.8, 464113.4),
+        (code, 1, 1, 1, 1, "", "", "", "", "Aanleg vlak 1", "Aardewerk", "1200-1400", "01-06-2024", 84850.0, 447250.0),
+        (code, 1, 1, 2, 1, "", "", "", "", "Coupe spoor 1", "Aardewerk, bot", "1300-1400", "02-06-2024", 84850.3, 447250.3),
+        (code, 1, 2, 3, 3, "", "", "", "", "Aanleg vlak 2", "Metaal", "1400-1600", "03-06-2024", 84851.0, 447251.0),
+        (code, 2, 1, 4, 4, "", "", "", "", "Aanleg vlak 1", "Aardewerk, glas", "1500-1700", "05-06-2024", 84855.0, 447248.0),
+        (code, 2, 1, 5, 4, "", "", "", "", "Coupe spoor 4", "Aardewerk", "1600-1700", "06-06-2024", 84855.5, 447248.4),
+        (code, 2, 2, 6, 5, "", "", "", "", "Aanleg vlak 2", "Kleipijp, glas", "1650-1750", "07-06-2024", 84856.0, 447249.0),
+        (code, 3, 1, 7, 6, "", "", "", "", "Aanleg vlak 1", "Bot, aardewerk", "1300-1500", "10-06-2024", 84860.0, 447245.0),
+        (code, 3, 1, 8, 6, "", "", "", "", "Uitschaven spoor 6", "Leer, hout", "1400-1500", "10-06-2024", 84860.5, 447245.5),
+        (code, 3, 2, 9, 7, "", "", "", "", "Aanleg vlak 2", "Aardewerk", "1200-1350", "11-06-2024", 84860.8, 447246.0),
+        (code, 4, 1, 10, 8, "", "", "", "", "Aanleg vlak 1", "Steen, metaal", "1500-1700", "14-06-2024", 84865.0, 447242.0),
+        (code, 4, 1, 11, 8, "", "", "", "", "Coupe spoor 8", "Munt, aardewerk", "1600-1700", "15-06-2024", 84865.3, 447242.3),
+        (code, 4, 3, 12, 8, "", "", "", "", "Aanleg vlak 3", "Aardewerk", "1500-1650", "16-06-2024", 84865.8, 447242.8),
     ])
 
     # Sporen: 8 sporen
@@ -1004,13 +1004,13 @@ def dataProjectenlijst():
     kol = [k[0] for k in KOLOMMEN_OPGRAVINGEN]
     tabellen = {}
     tabellen["OPGRAVINGEN"] = (kol, [
-        ("SY001", "Marktstraat 10", "Opgraving Marktstraat 10, Voorburg", "SY001",
-         "37EN2", 80120.5, 451230.8, "VBG A 1234", 2024, "Voorburg",
+        ("SY001", "Marktstraat 10", "Opgraving Marktstraat 10, Delft", "SY001",
+         "37EN2", 84450.0, 447750.0, "DFT A 1234", 2024, "Delft",
          "Ja", "Ja", "Ja", "Ja", "Ja", "Ja", "Ja", "", "", "", "", "", "", "",
          "Nieuwe Tijd, nederzetting, afvalkuil, muur",
          "Ja", "1600", "1750", "Synthegraven B.V."),
-        ("SY002", "Kerkplein", "Opgraving Kerkplein, Leiden", "SY002",
-         "30GN1", 92050.2, 464120.5, "LDN B 5678", 2024, "Leiden",
+        ("SY002", "Kerkplein", "Opgraving Kerkplein, Delft", "SY002",
+         "37EN2", 84850.0, 447250.0, "DFT B 5678", 2024, "Delft",
          "Ja", "Ja", "Ja", "Ja", "Ja", "Ja", "Ja", "Ja", "Ja", "Ja", "Ja", "Ja", "Ja", "Ja",
          "Middeleeuwen, Nieuwe Tijd, beerput, waterput, muur, greppel",
          "Ja", "1200", "1800", "Synthegraven B.V."),

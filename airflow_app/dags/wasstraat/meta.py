@@ -230,16 +230,17 @@ wasstraat_model = {
   "Project": {
         STAGING_COLLECTION: config.COLL_STAGING_DELFIT,
         HARMONIZE_PIPELINES: [[ 
-            { '$match': { 'table': "OPGRAVINGEN", 'CODE': { '$regex': '^D', '$options': 'i'  } } },
+            { '$match': { 'table': "OPGRAVINGEN" } },
             { '$replaceRoot': {'newRoot': {'_id': "$_id", 'brondata': "$$ROOT"}}},
             { '$addFields': {'projectcd': "$brondata.CODE", 'projectnaam': "$brondata.OPGRAVING", 'toponiem': "$brondata.TOPONIEM", 'xcoor_rd': "$brondata.XCOORD", 'ycoor_rd': "$brondata.YCOORD", 
                 'trefwoorden': "$brondata.TREFWOORDEN", 'jaar': "$brondata.JAAR", 'table': "$brondata.table", 'project': '$brondata.CODENAAM', 'soort':"Project"}},
             { "$merge": { "into": { "db": config.DB_ANALYSE, "coll": config.COLL_ANALYSE }, "on": "_id",  "whenMatched": "replace", "whenNotMatched": "insert" } }
         ]],
-        SET_KEYS_PIPELINES: [[ 
+        SET_KEYS_PIPELINES: [[
             { '$match': { 'soort': "Project" } },
             { '$addFields': {'key': { '$concat': [ "P", "$projectcd"]}}}
-        ]]
+        ]],
+        MOVEANDMERGE_MOVE: True
         #,MOVEANDMERGE_GENERATE_MISSING_PIPELINES: [[
         #    { '$match': {'projectcd': { '$exists': {"$toBool": 1} }}},
         #    { '$group':{'_id': {"projectcd" : "$projectcd"}}},

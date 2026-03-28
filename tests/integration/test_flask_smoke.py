@@ -71,6 +71,37 @@ class TestFlaskStartup:
 
 
 @pytest.mark.flask_smoke
+class TestFlaskKaartProjecten:
+    """Verifieer dat projecten zichtbaar zijn op de kaart."""
+
+    def test_index_page_contains_project_markers(self):
+        """De kaart moet minimaal 2 projectmarkers bevatten (SY001 + SY002)."""
+        resp = requests.get(f"{FLASK_BASE_URL}/", timeout=10, allow_redirects=True)
+        html = resp.text
+
+        # Folium genereert L.circleMarker() calls in de HTML
+        marker_count = html.lower().count("l.circlemarker")
+        assert marker_count >= 2, (
+            f"Verwacht minimaal 2 CircleMarkers op de kaart, gevonden {marker_count}. "
+            f"Controleer of Def_Project gevuld is in PostgreSQL."
+        )
+
+    def test_index_page_contains_project_codes(self):
+        """De projectcodes SY001 en SY002 moeten in de kaart-popups staan."""
+        resp = requests.get(f"{FLASK_BASE_URL}/", timeout=10, allow_redirects=True)
+        html = resp.text
+        assert "SY001" in html, "Projectcode SY001 niet gevonden in kaart-HTML"
+        assert "SY002" in html, "Projectcode SY002 niet gevonden in kaart-HTML"
+
+    def test_index_page_has_layer_control(self):
+        """De kaart moet een LayerControl bevatten met project-lagen."""
+        resp = requests.get(f"{FLASK_BASE_URL}/", timeout=10, allow_redirects=True)
+        html = resp.text
+        assert "Ingelezen Projecten" in html or "ingelezen" in html.lower(), \
+            "Geen LayerControl met 'Ingelezen Projecten' gevonden"
+
+
+@pytest.mark.flask_smoke
 class TestFlaskStaticAssets:
     """Verifieer dat statische bestanden geserveerd worden."""
 

@@ -74,10 +74,10 @@ test-quick: install ## Draai unit tests (korte output)
 .PHONY: integration
 integration: install ## Draai integratietests met synthetische data (SY001 + SY002)
 	@echo "➜ Test-omgeving starten (synthetische data)..."
-	$(COMPOSE_TEST) up -d mongo-test postgres-test airflow-test
+	$(COMPOSE_TEST) up -d mongo-test postgres-test flask-test airflow-test
 	@echo "➜ Wachten tot services klaar zijn (pytest doet de rest)..."
 	$(PYTEST) tests/integration/ \
-		-v -s -m "integration and not delft" --tb=short; \
+		-v -s -m "integration and not delft and not load" --tb=short; \
 	EXIT=$$?; \
 	echo "➜ Test-omgeving opruimen..."; \
 	$(COMPOSE_TEST) down -v; \
@@ -90,6 +90,18 @@ integration-keep: install ## Zelfde als integration maar laat containers draaien
 	$(PYTEST) tests/integration/ \
 		-v -s -m "integration and not delft" --tb=short
 	@echo "➜ Containers draaien nog. Stop met: $(COMPOSE_TEST) down -v"
+
+.PHONY: integration-load
+integration-load: install ## Draai volledige pipeline inclusief Load naar PostgreSQL
+	@echo "➜ Test-omgeving starten (inclusief Load)..."
+	$(COMPOSE_TEST) up -d mongo-test postgres-test flask-test airflow-test
+	@echo "➜ Draai Extract + Transform + Load tests..."
+	$(PYTEST) tests/integration/test_full_pipeline_synthetic_data.py \
+		-v -s -m "integration or load" --tb=short; \
+	EXIT=$$?; \
+	echo "➜ Test-omgeving opruimen..."; \
+	$(COMPOSE_TEST) down -v; \
+	exit $$EXIT
 
 .PHONY: integration-delft
 integration-delft: install ## Draai integratietests met echte Delftse data (DB034)

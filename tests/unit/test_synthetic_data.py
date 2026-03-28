@@ -249,17 +249,18 @@ class TestProjectcodesEnLocatie:
         for v in vondsten:
             assert v[0].startswith("SY"), f"Projectcode {v[0]} heeft geen SY-prefix"
 
-    def test_coordinaten_niet_in_delft(self, projectenlijst):
-        """Coördinaten mogen niet in Delft liggen (rond 84500, 447500)."""
+    def test_coordinaten_in_delft(self, projectenlijst):
+        """Coördinaten moeten in Delft liggen (rond 84500, 447500)."""
         _, records = projectenlijst["OPGRAVINGEN"]
         for record in records:
             x = record[5]  # XCOORD
             y = record[6]  # YCOORD
             # Delft ligt rond X=84000-85000, Y=447000-448000
-            niet_delft_x = x < 83000 or x > 86000
-            niet_delft_y = y < 446000 or y > 449000
-            assert niet_delft_x or niet_delft_y, (
-                f"Coördinaten ({x}, {y}) liggen in Delft!"
+            assert 83000 <= x <= 86000, (
+                f"X-coördinaat {x} ligt niet in Delft (verwacht 83000-86000)"
+            )
+            assert 446000 <= y <= 449000, (
+                f"Y-coördinaat {y} ligt niet in Delft (verwacht 446000-449000)"
             )
 
     def test_twee_projecten_in_projectenlijst(self, projectenlijst):

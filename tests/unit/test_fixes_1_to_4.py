@@ -556,7 +556,7 @@ class TestCrossFile(unittest.TestCase):
         """Verifieer dat functies buiten scope niet zijn gewijzigd."""
         # Check dat transferToDB in loadToDatabase_functions.py ongewijzigd is
         source = read_source('../airflow_app/dags/wasstraat/loadToDatabase_functions.py')
-        self.assertIn('def transferToDB(objecttype, soort, table, connection):', source,
+        self.assertIn('def transferToDB(objecttype, soort, table, connection, db_uri=None):', source,
             "transferToDB functie-signature is gewijzigd (onbedoeld)")
 
         # Check dat parseFotobestanden nog steeds de juiste structuur heeft

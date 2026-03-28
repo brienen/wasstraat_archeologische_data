@@ -38,7 +38,7 @@ services:
        - ./data/input/basefiles/projectdatabase/digidepot:/input/images
        - ./data/input/basefiles/projectdatabase/rapporten:/input/rapporten
        - ./data/input/basefiles/projectdatabase/monsterdatabase:/input/monsterdatabase
-       - ./data/input/basefiles/projectdatabase/Delf-IT:/input/delfits
+       - ./data/input/basefiles/projectdatabase/Delf-IT:/input/delfit
        - ./data/input/basefiles/projectdatabase/magazijnlijst:/input/magazijnlijst
        - ./data/input/basefiles/projectdatabase/digifotos:/input/digifotos
        - ./data/input/basefiles/projectdatabase/referentietabellen:/input/referentietabellen

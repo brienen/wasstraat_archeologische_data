@@ -30,6 +30,7 @@ MONGO_TEST_URI = os.getenv(
     "mongodb://testroot:testpass@localhost:27117/",
 )
 AIRFLOW_CONTAINER = os.getenv("AIRFLOW_CONTAINER", "wasstraat_airflow_test")
+POSTGRES_CONTAINER = os.getenv("POSTGRES_CONTAINER", "wasstraat_postgres_test")
 
 DB_STAGING = "Arch_Staging_Test"
 DB_ANALYSE = "Arch_Analyse_Test"
@@ -50,10 +51,12 @@ EXPECTED_MIN_ARTEFACT_COUNTS = {
 }
 
 # Verwachte MINIMUM-aantallen per soort in Single_Store_Clean.
+# Projecten: 2 (SY001 + SY002)
 # SY001: 3 sporen, 4 vondsten, 2 vullingen
 # SY002: 8 sporen, 12 vondsten, 4 vullingen
 # Monsters: 5 (3x SY001 + 2x SY002), 8 botanie, 4 schelp
 EXPECTED_MIN_SOORT_COUNTS = {
+    "Project": 2,
     "Spoor": 11,
     "Vondst": 16,
     "Vulling": 6,
@@ -72,84 +75,52 @@ EXPECTED_MIN_SOORT_COUNTS = {
 # ============================================================
 
 def run_dag(dag_id: str, timeout: int = 1800, poll_interval: int = 3) -> str:
-    """Trigger een Airflow DAG en wacht op voltooiing via polling.
+    """Draai een Airflow DAG via ``dags test`` en wacht op voltooiing.
 
-    Gebruikt ``airflow dags trigger`` + poll i.p.v. ``dags test`` zodat de
-    LocalExecutor taken parallel kan uitvoeren volgens de DAG-structuur.
-    ``dags test`` draait alles sequentieel, wat onnodig traag is.
+    Gebruikt ``airflow dags test`` omdat ``dags trigger`` op Airflow 2.10
+    een DagNotFound-bug heeft (de trigger-API laadt de DagBag niet correct
+    uit de serialized DAG store). ``dags test`` draait taken sequentieel
+    maar is betrouwbaar en vereist geen actieve scheduler.
 
     Raise AssertionError wanneer de DAG faalt of timeout bereikt.
     """
-    run_id = f"integration_test_{dag_id}_{int(time.time())}"
-
-    # Unpause de DAG (nodig voor trigger; dags test deed dit impliciet)
-    subprocess.run(
-        ["docker", "exec", AIRFLOW_CONTAINER,
-         "airflow", "dags", "unpause", dag_id],
-        capture_output=True, text=True, timeout=30,
-    )
-
-    # Trigger de DAG
-    trigger_cmd = [
+    test_cmd = [
         "docker", "exec", AIRFLOW_CONTAINER,
-        "airflow", "dags", "trigger",
-        "--run-id", run_id,
-        dag_id,
+        "airflow", "dags", "test", dag_id, "2026-01-01",
     ]
-    print(f"\n  ▶ {' '.join(trigger_cmd)}")
+    print(f"\n  ▶ {' '.join(test_cmd)}")
     t_start = time.time()
-    trigger_result = subprocess.run(
-        trigger_cmd, capture_output=True, text=True, timeout=30,
+
+    result = subprocess.run(
+        test_cmd, capture_output=True, text=True, timeout=timeout,
     )
-    if trigger_result.returncode != 0:
-        print(f"  ⚠  Trigger gefaald:\n    {trigger_result.stderr}")
-        assert False, f"DAG {dag_id} kon niet getriggerd worden"
-    print(f"  ✓  DAG {dag_id} getriggerd (run_id={run_id})")
-
-    # Poll tot de DAG klaar is (success/failed)
-    print(f"  ⏳ Wachten op voltooiing van {dag_id} (poll elke {poll_interval}s)...")
-    final_state = None
-    while time.time() - t_start < timeout:
-        time.sleep(poll_interval)
-        state_cmd = [
-            "docker", "exec", AIRFLOW_CONTAINER,
-            "airflow", "dags", "list-runs", "-d", dag_id, "-o", "json",
-        ]
-        state_result = subprocess.run(
-            state_cmd, capture_output=True, text=True, timeout=30,
-        )
-        if state_result.returncode != 0 or not state_result.stdout.strip():
-            continue
-
-        try:
-            runs = json.loads(state_result.stdout)
-        except json.JSONDecodeError:
-            continue
-
-        for run in runs:
-            if run.get("run_id") == run_id:
-                final_state = run.get("state")
-                break
-
-        if final_state in ("success", "failed"):
-            break
 
     t_elapsed = time.time() - t_start
-    print(f"  ⏱  {dag_id} duurde {t_elapsed:.1f}s (state={final_state})")
 
-    # Bij falen: toon gefaalde taken voor debugging
-    if final_state != "success":
-        _print_failed_tasks(dag_id, run_id)
-        if final_state is None:
-            assert False, f"DAG {dag_id} timeout na {timeout}s"
-        assert False, f"DAG {dag_id} gefaald (state={final_state})"
+    if result.returncode != 0:
+        # Toon de laatste regels van stdout en stderr voor debugging
+        all_output = (result.stdout + "\n" + result.stderr).strip().split("\n")
+        # Filter op ERROR, Exception, Traceback en andere relevante regels
+        error_lines = [l for l in all_output if any(kw in l for kw in
+            ['ERROR', 'Exception', 'Traceback', 'Error', 'FAILED', 'failed',
+             'raise', 'Onbekende fout', 'melding', 'Warning', 'warning'])]
+        if not error_lines:
+            error_lines = all_output[-30:]  # fallback: laatste 30 regels
+        print(f"  ⚠  DAG {dag_id} gefaald na {t_elapsed:.1f}s:")
+        for line in error_lines[-30:]:
+            print(f"    {line}")
+        assert False, f"DAG {dag_id} gefaald (exit code {result.returncode})"
 
-    print(f"  ✓  DAG {dag_id} succesvol")
+    # Check op DagRun state in de output
+    if "state=success" in result.stdout or "state=success" in result.stderr:
+        print(f"  ⏱  {dag_id} duurde {t_elapsed:.1f}s (state=success)")
+        print(f"  ✓  DAG {dag_id} succesvol")
+        return "success"
 
-    # Check op ERROR-regels in de taak-logs (optioneel, voor waarschuwingen)
-    _check_dag_errors(dag_id, run_id)
-
-    return final_state
+    # Fallback: als exit code 0 maar geen state=success → waarschuw maar ga door
+    print(f"  ⏱  {dag_id} duurde {t_elapsed:.1f}s (exit code 0)")
+    print(f"  ✓  DAG {dag_id} voltooid")
+    return "success"
 
 
 def _print_failed_tasks(dag_id: str, run_id: str):
@@ -237,26 +208,8 @@ def wait_for_airflow(max_wait: int = 180):
     else:
         return False
 
-    # Stap 2: wacht tot de scheduler draait (nodig voor trigger-aanpak)
-    print("  ⏳ Wachten tot scheduler actief is...")
-    for _ in range(30):
-        try:
-            r = subprocess.run(
-                ["docker", "exec", AIRFLOW_CONTAINER,
-                 "airflow", "jobs", "check", "--job-type", "SchedulerJob",
-                 "--allow-hierarchical-mapping"],
-                capture_output=True, text=True, timeout=10,
-            )
-            if r.returncode == 0:
-                print("  ✓ Scheduler actief")
-                return True
-        except (subprocess.TimeoutExpired, FileNotFoundError):
-            pass
-        time.sleep(1)
-
-    # Fallback: als jobs check niet werkt, wacht kort en ga door
-    print("  ⚠ Scheduler-check niet beschikbaar, wacht 5s extra")
-    time.sleep(5)
+    # Stap 2: dags test vereist geen scheduler, dus geen extra wacht nodig.
+    print("  ✓ Airflow DAGs geparsed, klaar voor dags test")
     return True
 
 
@@ -300,6 +253,27 @@ def print_all_collections(client, db_name, label=""):
         count = db[coll_name].estimated_document_count()
         print(f"    {coll_name}: {count}")
     return {c: db[c].estimated_document_count() for c in collections}
+
+
+def _pg_scalar(sql):
+    """Voer een SQL-query uit op de test-PostgreSQL en retourneer de eerste waarde.
+
+    Gebruikt docker exec om psql aan te roepen op de test-container.
+    """
+    cmd = [
+        "docker", "exec", POSTGRES_CONTAINER,
+        "psql", "-U", "testuser", "-h", "localhost", "-d", "airflow_test",
+        "-t", "-A", "-c", sql,
+    ]
+    result = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
+    if result.returncode != 0:
+        raise RuntimeError(f"psql fout: {result.stderr.strip()}")
+    return int(result.stdout.strip()) if result.stdout.strip() else 0
+
+
+def _pg_table_count(table):
+    """Tel het aantal rijen in een PostgreSQL-tabel."""
+    return _pg_scalar(f'SELECT COUNT(*) FROM "{table}"')
 
 
 # ============================================================
@@ -455,6 +429,55 @@ class TestFullPipelineSynthetic:
         print(f"\n  Vullingen: {actual} (verwacht >= {expected})")
         assert actual >= expected
 
+    def test_10a_verify_project_count(self, mongo_client):
+        """Project-documenten in clean-collectie >= verwacht."""
+        counts = mongo_soort_counts(DB_ANALYSE, "Single_Store_Clean", mongo_client)
+        actual = counts.get("Project", 0)
+        expected = EXPECTED_MIN_SOORT_COUNTS["Project"]
+        print(f"\n  Projecten: {actual} (verwacht >= {expected})")
+        assert actual >= expected, (
+            f"Project: verwacht >= {expected}, gevonden {actual}. "
+            f"Controleer of Project MOVEANDMERGE_MOVE heeft in meta.py."
+        )
+
+    def test_10b_verify_project_has_location(self, mongo_client):
+        """Projecten in clean-collectie moeten latitude/longitude hebben."""
+        coll = mongo_client[DB_ANALYSE]["Single_Store_Clean"]
+        projecten = list(coll.find({"soort": "Project"}, {
+            "projectcd": 1, "latitude": 1, "longitude": 1,
+            "xcoor_rd": 1, "ycoor_rd": 1, "key": 1,
+        }))
+
+        print(f"\n  Projecten met locatie ({len(projecten)} records):")
+        met_locatie = 0
+        for p in projecten:
+            lat = p.get("latitude")
+            lon = p.get("longitude")
+            projectcd = p.get("projectcd", "?")
+            key = p.get("key", "?")
+            heeft_loc = lat is not None and lon is not None
+            if heeft_loc:
+                met_locatie += 1
+            print(f"    {projectcd} (key={key}): lat={lat}, lon={lon}")
+
+        assert met_locatie >= 1, (
+            f"Geen enkel project heeft latitude/longitude. "
+            f"Controleer RD→WGS84 conversie in setAttributes_functions.py."
+        )
+
+    def test_10c_verify_project_keys(self, mongo_client):
+        """Projecten hebben correcte key (begint met 'P')."""
+        coll = mongo_client[DB_ANALYSE]["Single_Store_Clean"]
+        projecten = list(coll.find({"soort": "Project"}, {
+            "key": 1, "projectcd": 1,
+        }))
+
+        for p in projecten:
+            key = p.get("key", "")
+            assert key.startswith("P"), (
+                f"Project key '{key}' begint niet met 'P'"
+            )
+
     # ----------------------------------------------------------
     # Samenvatting
     # ----------------------------------------------------------
@@ -603,3 +626,95 @@ class TestFullPipelineSynthetic:
             assert key_monster.startswith("M"), (
                 f"Monster_Botanie key_monster '{key_monster}' begint niet met 'M'"
             )
+
+    # ----------------------------------------------------------
+    # Stap 5: Load naar PostgreSQL
+    # ----------------------------------------------------------
+    # NB: De Load-stap heeft een pandas 2.x / SQLAlchemy 2.x incompatibiliteit
+    # in loadToDatabase_functions.py (raw string SQL, DBAPI connection).
+    # Deze tests zijn gemarkeerd met @pytest.mark.load zodat ze apart
+    # gedraaid kunnen worden wanneer de Load-stap gefixt is.
+    # Draai met: pytest -m "integration and load"
+    # ----------------------------------------------------------
+    @pytest.mark.load
+    def test_19_run_load(self, airflow_ready):
+        """Trigger DAG_Load_Only DAG (MongoDB → PostgreSQL)."""
+        run_dag("DAG_Load_Only", timeout=1800)
+
+    @pytest.mark.load
+    def test_20_verify_postgres_project_count(self, airflow_ready):
+        """Def_Project in PostgreSQL moet >= 2 rijen bevatten."""
+        count = _pg_table_count("Def_Project")
+        print(f"\n  Def_Project in PostgreSQL: {count} rijen")
+        assert count >= 2, (
+            f"Def_Project bevat {count} rijen, verwacht >= 2. "
+            f"Controleer DELF-IT volume-mount en Project MOVEANDMERGE in meta.py."
+        )
+
+    @pytest.mark.load
+    def test_21_verify_postgres_project_has_location(self, airflow_ready):
+        """Minimaal 1 project in PostgreSQL moet een locatie (geometry) hebben."""
+        count = _pg_scalar(
+            "SELECT COUNT(*) FROM \"Def_Project\" WHERE location IS NOT NULL"
+        )
+        print(f"\n  Projecten met locatie in PostgreSQL: {count}")
+        assert count >= 1, (
+            f"Geen enkel project heeft een locatie in PostgreSQL. "
+            f"Controleer RD→WGS84 conversie en setWKT in loadToDatabase."
+        )
+
+    @pytest.mark.load
+    def test_22_verify_postgres_table_counts(self, mongo_client, airflow_ready):
+        """Elke Def_-tabel in PostgreSQL moet >= het verwachte aantal rijen bevatten."""
+        mongo_counts = mongo_soort_counts(DB_ANALYSE, "Single_Store_Clean", mongo_client)
+
+        print(f"\n  MongoDB vs PostgreSQL vergelijking:")
+        print(f"  {'Soort':<25} {'Mongo':>8} {'Postgres':>10} {'':>3}")
+        print("  " + "-" * 50)
+
+        fouten = []
+        for soort, expected in EXPECTED_MIN_SOORT_COUNTS.items():
+            pg_table = f"Def_{soort}"
+            try:
+                pg_count = _pg_table_count(pg_table)
+            except Exception:
+                pg_count = -1  # tabel bestaat niet
+            mongo_count = mongo_counts.get(soort, 0)
+            ok = "✓" if pg_count >= expected else "✗"
+            print(f"  {soort:<25} {mongo_count:>8} {pg_count:>10}  {ok}")
+            if pg_count < expected:
+                fouten.append(f"{soort}: PostgreSQL {pg_count} < verwacht {expected}")
+
+        assert not fouten, (
+            f"Tabellen met te weinig rijen in PostgreSQL:\n  " +
+            "\n  ".join(fouten)
+        )
+
+    @pytest.mark.load
+    def test_23_verify_postgres_no_empty_def_tables(self, airflow_ready):
+        """Geen enkele Def_-tabel uit lst_tables mag 0 rijen hebben."""
+        lst_tables = [
+            'Def_ABR', 'Def_Project', 'Def_Put', 'Def_Vondst', 'Def_Spoor',
+            'Def_Doos', 'Def_Standplaats', 'Def_Plaatsing', 'Def_Vlak',
+            'Def_Artefact', 'Def_Bestand', 'Def_Vulling',
+            'Def_Monster', 'Def_Monster_Botanie', 'Def_Monster_Schelp',
+            'Def_DT_Soort_Plant', 'Def_DT_Soort_Schelp',
+            'Def_DT_Soort_Deel', 'Def_DT_Soort_Staat',
+        ]
+
+        lege_tabellen = []
+        print(f"\n  PostgreSQL tabelcontrole:")
+        for table in lst_tables:
+            try:
+                count = _pg_table_count(table)
+            except Exception:
+                count = -1
+            status = "✓" if count > 0 else "LEEG" if count == 0 else "FOUT"
+            print(f"    {table}: {count} ({status})")
+            if count == 0:
+                lege_tabellen.append(table)
+
+        assert not lege_tabellen, (
+            f"Lege tabellen in PostgreSQL: {lege_tabellen}. "
+            f"Data is niet correct geladen vanuit MongoDB."
+        )
