@@ -13,6 +13,7 @@ import wasstraat.mongoUtils as mongoUtil
 # Absolute imports for Hydrogen (Jupyter Kernel) compatibility
 import shared.config as config
 import shared.const as const
+from wasstraat.profielen import get_profiel
 import logging
 logger = logging.getLogger("airflow.task")
 
@@ -92,13 +93,28 @@ def enhanceAllAttributes():
             success = False
 
             try:
-                # Set all projectcd to capital letters and remove zeros in number
-                if 'projectcd' in doc and doc['projectcd']:
-                    matchObj = re.match( r'([a-zA-Z]+)-?([0-9]*)', doc['projectcd'], re.M|re.I)
-                    if matchObj:
-                        deel1 = matchObj.group(1).upper()
-                        deel2 = "" if (matchObj.group(2) == '' or matchObj.group(2) is None) else str(pd.to_numeric(matchObj.group(2))).zfill(3)
-                        doc['projectcd'] = deel1 + deel2
+                # Identificeer: normaliseer en valideer identificerende velden
+                # via gemeenteprofiel (projectcd, tekeningcd, rapportnr, integers, artefactsoort)
+                profiel = get_profiel()
+                soort = doc.get('soort', '')
+
+                # Tekst-cleaning vóór identificatie (nodig voor tekeningcd, typevoorwerp)
+                if 'typevoorwerp' in doc:
+                    doc['typevoorwerp'] = ut.sanitize_text(doc['typevoorwerp'], 'typevoorwerp', doc.get('_id')).title()
+                if 'tekeningcd' in doc:
+                    doc['tekeningcd'] = ut.sanitize_text(doc['tekeningcd'], 'tekeningcd', doc.get('_id')).replace('!', '').replace('-', '')
+
+                if 'brondata' in doc and 'table' in doc['brondata']:
+                    if 'spijker' in str(doc['brondata']['table']).lower():
+                        doc['typevoorwerp'] = 'Spijker'
+
+                # Per-entiteit identificatie: dispatch naar juiste methode
+                if soort == 'Tekening':
+                    doc = profiel.identificeer_tekening_db(doc)
+                elif soort == 'Rapport':
+                    doc = profiel.identificeer_rapport_db(doc)
+                else:
+                    doc = profiel.identificeer(soort, doc)
 
                 #@set projectname
                 if 'projectnaam' in doc:
@@ -118,26 +134,6 @@ def enhanceAllAttributes():
                 if 'functievoorwerp' in doc:
                     doc['functievoorwerp'] = ut.sanitize_text(doc['functievoorwerp'], 'functievoorwerp', doc.get('_id')).title()
 
-                #clean Type Voorwerp
-                if 'typevoorwerp' in doc:
-                    doc['typevoorwerp'] = ut.sanitize_text(doc['typevoorwerp'], 'typevoorwerp', doc.get('_id')).title()
-
-                if 'brondata' in doc and 'table' in doc['brondata']:
-                    if 'spijker' in str(doc['brondata']['table']).lower():
-                        doc['typevoorwerp'] = 'Spijker'
-
-                #clean Type Voorwerp
-                if 'soort' in doc and doc['soort'] == 'Artefact' and not 'artefactsoort' in doc and 'typevoorwerp' in doc:
-                    if doc['typevoorwerp'] == 'Kleipijp':
-                        doc['artefactsoort'] = 'Kleipijp'
-                    matchObj = re.match( r'^[a-z]{1,2}(_|-)', doc['typevoorwerp'], re.M|re.I)
-                    if matchObj:
-                        doc['artefactsoort'] = 'Aardewerk'
-                    matchObj = re.match( r'^gl(_|-)', doc['typevoorwerp'], re.M|re.I)
-                    if matchObj:
-                        doc['artefactsoort'] = 'Glas'
-
-
                 #clean namen en soorten
                 if 'nederlandse_naam' in doc:
                     doc['nederlandse_naam'] = ut.sanitize_text(doc['nederlandse_naam'], 'nederlandse_naam', doc.get('_id')).title()
@@ -146,38 +142,7 @@ def enhanceAllAttributes():
                 if 'soort_schelp' in doc:
                     doc['soort_schelp'] = ut.sanitize_text(doc['soort_schelp'], 'soort_schelp', doc.get('_id')).title()
 
-                #clean tekeningcode
-                if 'tekeningcd' in doc:
-                    doc['tekeningcd'] = ut.sanitize_text(doc['tekeningcd'], 'tekeningcd', doc.get('_id')).replace('!', '').replace('-', '')
-                    matchObj = re.match( r'^([A-Z])([0-9]+)$', doc['tekeningcd'], re.M|re.I)
-                    if matchObj:
-                        doc['tekeningcd'] = matchObj.group(1) + str(int(matchObj.group(2))).zfill(3)
-
-                #clean Type Voorwerp
-                if 'rapportnr' in doc:
-                    doc['rapportnr'] = str(doc['rapportnr']).replace(' ', '')
-                    if str(doc['rapportnr']).isdigit(): # Some DAR-numbers do not contain DAR in front of code
-                        if 'DARnr' in doc['brondata'].keys():
-                            doc['rapportnr'] = 'DAR' + str(int(doc['rapportnr'])).zfill(3)
-                        elif 'DANnr' in doc['brondata'].keys():
-                            doc['rapportnr'] = 'DAN' + str(int(doc['rapportnr'])).zfill(3)
-                        else:
-                            doc['rapportnr'] = ''
-                    else:
-                        matchObj = re.match( r'^(DAN|DAR)\s*([0-9]+)$', doc['rapportnr'], re.M|re.I)
-                        if matchObj:
-                            doc['rapportnr'] =  matchObj.group(1) + str(int(matchObj.group(2))).zfill(3)
-
-
-
-                ut.convertToInt(doc, 'putnr', True)
-                ut.convertToInt(doc, 'vondstnr', True)
-                ut.convertToInt(doc, 'spoornr', True)
-                ut.convertToInt(doc, 'vlaknr', False)
-                ut.convertToInt(doc, 'artefactnr', True)
-                ut.convertToInt(doc, 'subnr', True)
-                ut.convertToInt(doc, 'doosnr', True)
-                ut.convertToInt(doc, 'fotonr', False)
+                # Niet-identificerende integer-conversies (identificerende worden door profiel.identificeer() gedaan)
                 ut.convertToInt(doc, 'fotosubnr', False)
                 ut.convertToInt(doc, 'volgnr', False)
                 ut.convertToInt(doc, 'lengte', True)

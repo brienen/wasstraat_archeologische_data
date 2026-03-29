@@ -1,1 +1,17 @@
-# Testdata — geen correcties nodig
+# Correcties voor Delftse testdata (DB034)
+#
+# Minimale configuratie: alleen rapportcode-prefixen nodig voor
+# herkenning van DAR/DAN-bestanden in data/test/data/rapporten/.
+
+# Geen projectcode-correcties nodig — DB034 is consistent.
+# projectcode_correcties: []
+
+# Geen brondata-correcties nodig.
+# brondata_correcties: []
+
+# Rapportcode-prefixen voor bestandsclassificatie
+rapportcode_prefixen:
+  - prefix: "DAR"
+    type: "archeologische_rapportage"
+  - prefix: "DAN"
+    type: "archeologische_notitie"

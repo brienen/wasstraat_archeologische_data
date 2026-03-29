@@ -424,20 +424,21 @@ class TestFix4_HoutBug(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.source = read_source('../airflow_app/dags/wasstraat/harmonize_functions.py')
+        # Na profielen-refactoring staat de artefactsoort-detectie in conventie.py
+        cls.source = read_source('../airflow_app/dags/wasstraat/profielen/conventie.py')
 
     def test_syntax_valid(self):
         """Verifieer dat het bestand geldige Python-syntax heeft."""
-        path = os.path.join(BASE_DIR, '../airflow_app/dags/wasstraat/harmonize_functions.py')
+        path = os.path.join(BASE_DIR, '../airflow_app/dags/wasstraat/profielen/conventie.py')
         try:
             py_compile.compile(path, doraise=True)
         except py_compile.PyCompileError as e:
-            self.fail(f"Syntax-fout in harmonize_functions.py: {e}")
+            self.fail(f"Syntax-fout in conventie.py: {e}")
 
     def test_correct_elif_condition(self):
         """Verifieer dat de elif nu 'hout/' in strFN checkt."""
         self.assertIn("elif 'hout/' in strFN:", self.source,
-            "Correcte conditie 'elif 'hout/' in strFN:' ontbreekt")
+            "Correcte conditie 'elif 'hout/' in strFN:' ontbreekt in conventie.py")
 
     def test_old_bug_not_present(self):
         """Verifieer dat de altijd-true bug niet meer aanwezig is."""

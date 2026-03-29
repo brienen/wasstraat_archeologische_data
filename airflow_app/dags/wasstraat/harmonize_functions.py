@@ -14,6 +14,7 @@ import wasstraat.harmonizer as harmonizer
 import shared.config as config
 import shared.const as const
 import wasstraat.mongoUtils as mongoUtil
+from wasstraat.profielen import get_profiel
 
 import logging
 logger = logging.getLogger("airflow.task")
@@ -218,14 +219,9 @@ def parseFotobestanden():
         #extract projectinfo from filename
         for doc in stagingCol.find():
 
-            # Get projectcd from fullfilename
-            matchObj = re.match( r'^([a-z0-9]+).*', doc['fileName'], re.M|re.I)
-            if matchObj:
-                projectcd = matchObj.group(1)
-                if not re.match( r'^(DB|DC).*', projectcd, re.M|re.I): # if it does not start with DB or DC then use start of directory
-                    matchObjDir = re.match( r'^/((?:DB|DC)\d+).*', doc['directory'], re.M|re.I)
-                    if matchObjDir:
-                        projectcd = matchObjDir.group(1)
+            # Get projectcd from fullfilename (via gemeenteprofiel)
+            profiel = get_profiel()
+            projectcd = profiel.extract_projectcode_uit_bestandsnaam(doc['fileName'], doc.get('directory', ''))
 
 
 
@@ -245,104 +241,16 @@ def parseFotobestanden():
                     continue
 
 
-                # Objectfoto's extraheren (Bevatten altijd een _H en beginnen met projectcode)
-                matchObj = re.match( r'^([a-zA-Z0-9]+)(_B?P([0-9Xx]+))?_H([a-zA-Z0-9]+)(_([a-zA-Z0-9]+))?_([0-9Xx]+)\.[a-z]{3}$', doc['fileName'], re.M|re.I)
-                if matchObj:
-                    doc['projectcd'] = projectcd
-                    if matchObj.group(3) is not None: doc['putnr'] = matchObj.group(3).lstrip("0")
-                    doc['vondstnr'] = matchObj.group(4).lstrip("0")
-                    if matchObj.group(6) is not None: doc['subnr'] = matchObj.group(6).lstrip("0")
-                    if matchObj.group(7) is not None: doc['fotonr'] = matchObj.group(7).lstrip("0")
-                    doc['fototype'] = 'H'
-                    doc['soort'] = 'Foto' 
-                    doc['bestandsoort'] = const.FOTO_OBJECTFOTO
-
-                    strFN = str(doc['fullFileName']).lower()
-                    if 'aardewerk' in strFN or 'pijpaard' in strFN:
-                        doc['artefactsoort'] = const.ARTF_AARDEWERK
-                    elif 'bot' in strFN and 'menselijk' in strFN:
-                        doc['artefactsoort'] = const.ARTF_MENSELIJK_BOT
-                    elif 'bot' in strFN and 'dierlijk' in strFN:
-                        doc['artefactsoort'] = const.ARTF_DIELRIJK_BOT
-                    elif 'glas' in strFN:
-                        doc['artefactsoort'] = const.ARTF_GLAS
-                    elif 'leer' in strFN:
-                        doc['artefactsoort'] = const.ARTF_LEER
-                    elif 'steen' in strFN:
-                        doc['artefactsoort'] = const.ARTF_STEEN
-                    elif 'kleipijp' in strFN:
-                        doc['artefactsoort'] = const.ARTF_KLEIPIJP
-                    elif 'hout/' in strFN:
-                        doc['artefactsoort'] = const.ARTF_HOUT
-                    elif 'bouwaardewerk' in strFN:
-                        doc['artefactsoort'] = const.ARTF_BOUWAARDEWERK
-                    elif 'metaal' in strFN:
-                        doc['artefactsoort'] = const.ARTF_METAAL
-                    elif 'munt' in strFN:
-                        doc['artefactsoort'] = const.ARTF_MUNT
-                    elif 'schelp' in strFN:
-                        doc['artefactsoort'] = const.ARTF_SCHELP
-                    elif 'textiel' in strFN:
-                        doc['artefactsoort'] = const.ARTF_TEXTIEL
-                    else:
-                        doc['artefactsoort'] = const.ARTF_ONBEKEND
-
-                    analyseCol.replace_one({"_id": doc['_id']}, doc, upsert=True)
+                # Per-entiteit identificatie via gemeenteprofiel
+                # Probeer achtereenvolgens: foto, tekening
+                parsed = profiel.identificeer_foto(doc, projectcd)
+                if parsed is not None:
+                    analyseCol.replace_one({"_id": doc['_id']}, parsed, upsert=True)
                     continue
 
-
-                # Match Tekeningen
-                matchObj = re.match( r'^([a-zA-Z0-9]+)_([ABCDEPT])([a-zA-Z0-9]+)(_LZW)?\.[a-z]{3}$', doc['fileName'], re.M|re.I) 
-                if matchObj:
-                    doc['projectcd'] = projectcd
-                    try:
-                        doc['tekeningcd'] = matchObj.group(2) + str(int(matchObj.group(3))).zfill(3)
-                    except:
-                        doc['tekeningcd'] = matchObj.group(2) + matchObj.group(3)
-
-                    doc['soort'] = 'Tekening' 
-                    
-                    tektype = matchObj.group(2)
-                    doc['fototype'] = tektype
-                    if tektype == 'A':
-                        doc['bestandsoort'] = const.TEK_BOUWTEKENING
-                    elif tektype == 'B':
-                        doc['bestandsoort'] = const.TEK_VELDTEKENING
-                    elif tektype == 'C':
-                        doc['bestandsoort'] = const.TEK_OVERZICHTSTEKENING
-                    elif tektype == 'D':
-                        doc['bestandsoort'] = const.TEK_OBJECTTEKENING
-                    elif tektype == 'E':
-                        doc['bestandsoort'] = const.TEK_UITWERKINGSTEKENING
-                    elif tektype == 'P':
-                        doc['bestandsoort'] = const.TEK_VELDTEKENING_PUBL
-                    elif tektype == 'T':
-                        doc['bestandsoort'] = const.TEK_OBJECTTEKENING_PUBL
-                    else:
-                        doc['bestandsoort'] = const.TEK_OVERIGE
-
-                    analyseCol.replace_one({"_id": doc['_id']}, doc, upsert=True)
-                    continue
-
-
-
-                # Match projectFoto's
-                matchObj = re.match( r'^([a-zA-Z0-9]+)_([FG])([a-zA-Z0-9]+).*\.[a-z]{3}$', doc['fileName'], re.M|re.I)
-                if matchObj:
-                    doc['projectcd'] = projectcd       
-                    doc['fotonr'] = matchObj.group(3).lstrip("0")
-                    doc['soort'] = 'Foto' 
-                    
-                    fototype = matchObj.group(2)
-                    doc['fototype'] = fototype
-                    if fototype == 'F':
-                        doc['bestandsoort'] = const.FOTO_SFEERFOTO
-                    elif fototype == 'G':
-                        doc['bestandsoort'] = const.FOTO_OPGRAVINGSFOTO
-                    else:
-                        doc['bestandsoort'] = const.FOTO_OVERIGE
-
-                    analyseCol.replace_one({"_id": doc['_id']}, doc, upsert=True)
+                parsed = profiel.identificeer_tekening(doc, projectcd)
+                if parsed is not None:
+                    analyseCol.replace_one({"_id": doc['_id']}, parsed, upsert=True)
                     continue
 
 

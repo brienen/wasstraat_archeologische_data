@@ -1,0 +1,240 @@
+{
+  "beschrijving": "Golden snapshot Delft testdata (DB034) - gegenereerd voor profielen-refactoring",
+  "testdata": "data/test/ (project DB034 Koningsveld IV)",
+  "soort_counts_clean": {
+    "Fotokoppel": 31469,
+    "Monster_Botanie": 21381,
+    "Standplaats": 8675,
+    "Artefact": 6190,
+    "Plaatsing": 5902,
+    "ABR": 4838,
+    "Doos": 4442,
+    "Monster": 1613,
+    "Vondst": 1478,
+    "Monster_Schelp": 1191,
+    "Project": 1049,
+    "DT_Soort_Plant": 1016,
+    "Fotobeschrijving": 747,
+    "Bestand": 531,
+    "Spoor": 456,
+    "Vulling": 425,
+    "DT_Soort_Schelp": 124,
+    "DT_Soort_Deel": 75,
+    "Vindplaats": 37,
+    "Stelling": 22,
+    "DT_Soort_Staat": 4
+  },
+  "soort_counts_store": {
+    "Fotokoppel": 31469,
+    "Monster_Botanie": 21381,
+    "Standplaats": 8675,
+    "Artefact": 6190,
+    "Plaatsing": 5902,
+    "ABR": 4838,
+    "Doos": 4442,
+    "Monster": 3270,
+    "Vondst": 1478,
+    "Monster_Schelp": 1191,
+    "Project": 1049,
+    "DT_Soort_Plant": 1016,
+    "Rapport": 842,
+    "Fotobeschrijving": 747,
+    "Spoor": 456,
+    "Vulling": 425,
+    "DT_Soort_Schelp": 124,
+    "Foto": 96,
+    "DT_Soort_Deel": 75,
+    "Tekening": 65,
+    "Vindplaats": 37,
+    "Stelling": 22,
+    "DT_Soort_Staat": 4
+  },
+  "artefact_subtypes": {
+    "Aardewerk": 4821,
+    "Metaal": 629,
+    "Hout": 294,
+    "Menselijk_Bot": 273,
+    "Steen": 146,
+    "Glas": 20,
+    "Leer": 7
+  },
+  "key_samples": {
+    "Project": [
+      {
+        "key": "PDB001",
+        "projectcd": "DB001"
+      },
+      {
+        "key": "PDB002",
+        "projectcd": "DB002"
+      },
+      {
+        "key": "PDB003",
+        "projectcd": "DB003"
+      },
+      {
+        "key": "PDB004",
+        "projectcd": "DB004"
+      },
+      {
+        "key": "PDB005",
+        "projectcd": "DB005"
+      }
+    ],
+    "Put": [],
+    "Vlak": [],
+    "Spoor": [
+      {
+        "key": "PDB034P10S1",
+        "projectcd": "DB034"
+      },
+      {
+        "key": "PDB034P10S10",
+        "projectcd": "DB034"
+      },
+      {
+        "key": "PDB034P10S100",
+        "projectcd": "DB034"
+      },
+      {
+        "key": "PDB034P10S101",
+        "projectcd": "DB034"
+      },
+      {
+        "key": "PDB034P10S102",
+        "projectcd": "DB034"
+      }
+    ],
+    "Vondst": [
+      {
+        "key": "PDB034P10V1",
+        "projectcd": "DB034"
+      },
+      {
+        "key": "PDB034P10V10",
+        "projectcd": "DB034"
+      },
+      {
+        "key": "PDB034P10V100",
+        "projectcd": "DB034"
+      },
+      {
+        "key": "PDB034P10V1000",
+        "projectcd": "DB034"
+      },
+      {
+        "key": "PDB034P10V1001",
+        "projectcd": "DB034"
+      }
+    ],
+    "Monster": [
+      {
+        "key": "MALT_p62_v26",
+        "projectcd": "DB004"
+      },
+      {
+        "key": "MALT_p62_v30",
+        "projectcd": "DB004"
+      },
+      {
+        "key": "MALT_p65_v100",
+        "projectcd": "DB004"
+      },
+      {
+        "key": "MALT_p65_v101",
+        "projectcd": "DB004"
+      },
+      {
+        "key": "MALT_p65_v2",
+        "projectcd": "DB004"
+      }
+    ],
+    "Doos": [
+      {
+        "key": "PDB001D1",
+        "projectcd": "DB001"
+      },
+      {
+        "key": "PDB001D10",
+        "projectcd": "DB001"
+      },
+      {
+        "key": "PDB001D11",
+        "projectcd": "DB001"
+      },
+      {
+        "key": "PDB001D12",
+        "projectcd": "DB001"
+      },
+      {
+        "key": "PDB001D13",
+        "projectcd": "DB001"
+      }
+    ],
+    "Standplaats": [
+      {
+        "key": "SA",
+        "projectcd": "DB004"
+      },
+      {
+        "key": "SA",
+        "projectcd": "DB004"
+      },
+      {
+        "key": "SA",
+        "projectcd": "DB004"
+      },
+      {
+        "key": "SA",
+        "projectcd": "DB004"
+      },
+      {
+        "key": "SA",
+        "projectcd": "DB004"
+      }
+    ],
+    "Bestand": [
+      {
+        "key": "PDAR143Tdefinitief",
+        "projectcd": "DAR143"
+      },
+      {
+        "key": "PDB034P10V1025S2",
+        "projectcd": "DB034"
+      },
+      {
+        "key": "PDB034P10V127S1",
+        "projectcd": "DB034"
+      },
+      {
+        "key": "PDB034P10V230S1",
+        "projectcd": "DB034"
+      },
+      {
+        "key": "PDB034P10V230S1",
+        "projectcd": "DB034"
+      }
+    ]
+  },
+  "collecties_staging": {
+    "Kolominformatie": 122,
+    "Plaatjes": 540,
+    "Staging_Projecten_Fotolijst": 31469,
+    "Staging_Projecten_Magazijnlijst": 13010,
+    "Staging_Projecten_Monster": 27123,
+    "Staging_Projecten_Oud": 15604,
+    "Staging_Projecten_Projectenlijst": 80927,
+    "Staging_Rapporten": 415,
+    "Staging_Referentietabellen": 4838
+  },
+  "collecties_analyse": {
+    "Single_Store": 93794,
+    "Single_Store_Clean": 91665
+  },
+  "collecties_files": {
+    "Filenames": 541
+  },
+  "plaatjes_count": 540,
+  "filenames_count": 541,
+  "filenames_processed": 540
+}

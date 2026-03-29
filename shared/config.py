@@ -97,9 +97,14 @@ try:
    FILE_EXTRA_PROJECTS = os.getenv("FILE_EXTRA_PROJECTS") if os.getenv("FILE_EXTRA_PROJECTS") else '/input/projectenlijst/Extra_projecten_tabel_OPGRAVINGEN.xlsx'
    FILE_IMPORT_FILES_EXCEL = os.getenv("FILE_IMPORT_FILES_EXCEL") if os.getenv("FILE_IMPORT_FILES_EXCEL") else '/input/referentietabellen/Alle Bestanden Archeologisch Depot.xlsx'
    ES_HOST = os.getenv("ES_HOST") if os.getenv("ES_HOST") else 'http://elasticsearch:9200'
-except KeyError: 
+except KeyError:
    logger.error("Cannot read environment variables (ie. POSTGRES_DB, POSTGRES_USER, POSTGRES_PASSWORD) needed to connect to the database. Add them to your .env files")
 
+# Gemeenteprofiel: bepaalt hoe bestandsnamen worden geparsed,
+# projectcodes genormaliseerd, en rapportnummers afgeleid.
+# Default: 'delft' voor backwards compatibility.
+# Buiten try/except zodat het altijd beschikbaar is, ook in testomgeving.
+WASSTRAAT_GEMEENTE = os.getenv("WASSTRAAT_GEMEENTE") if os.getenv("WASSTRAAT_GEMEENTE") else "delft"
 
 
 CSRF_ENABLED = True

@@ -36,6 +36,7 @@ PYTEST := $(BIN)/python -m pytest
 DC := docker compose 
 COMPOSE_TEST := $(DC) -p wasstraat-test -f docker-compose.test.yml
 COMPOSE_DELFT := $(DC) -f docker-compose.delft.yml
+COMPOSE_DELFT_TEST := $(DC) -p wasstraat-delft-test -f docker-compose.delft-test.yml
 DT := $(shell date +"%Y-%m-%d_%H-%M-%S")
 
 # --- Init-config: genereer .env uit .env.example als ze nog niet bestaan ---
@@ -121,15 +122,31 @@ integration-load: install ## Draai Extract + Transform + Load (zonder Flask)
 	exit $$EXIT
 
 .PHONY: integration-delft
-integration-delft: install ## Draai integratietests met echte Delftse data
-	@echo "➜ Delft test-omgeving starten..."
-	$(COMPOSE_DELFT) up -d
-	@echo "➜ Wachten tot services klaar zijn..."
+integration-delft: install ## Draai volledige Delft-integratietests: Extract + Transform + Load + Flask
+	@echo "➜ Delft test-omgeving starten (data/test, project DB034)..."
+	$(COMPOSE_DELFT_TEST) up -d mongo-test postgres-test redis-test airflow-test flask-test
+	@echo "➜ Stap 1: Extract + Transform + Load pipeline..."
 	$(PYTEST) tests/integration/ \
-		-v -s -m delft --tb=short; \
+		-v -s -m "(delft or delft_load) and not delft_flask" --tb=short; \
+	PIPE_EXIT=$$?; \
+	echo "➜ Stap 2: Flask smoke tests (vereist geladen PostgreSQL)..."; \
+	$(PYTEST) tests/integration/ \
+		-v -s -m delft_flask --tb=short; \
+	FLASK_EXIT=$$?; \
+	echo "➜ Delft test-omgeving opruimen..."; \
+	$(COMPOSE_DELFT_TEST) down -v; \
+	if [ $$PIPE_EXIT -ne 0 ]; then exit $$PIPE_EXIT; fi; \
+	exit $$FLASK_EXIT
+
+.PHONY: integration-delft-pipeline
+integration-delft-pipeline: install ## Draai alleen Delft Extract + Transform (zonder Load en Flask)
+	@echo "➜ Delft test-omgeving starten (data/test, project DB034)..."
+	$(COMPOSE_DELFT_TEST) up -d mongo-test postgres-test airflow-test
+	$(PYTEST) tests/integration/ \
+		-v -s -m "delft and not delft_load and not delft_flask" --tb=short; \
 	EXIT=$$?; \
 	echo "➜ Delft test-omgeving opruimen..."; \
-	$(COMPOSE_DELFT) down -v; \
+	$(COMPOSE_DELFT_TEST) down -v; \
 	exit $$EXIT
 
 .PHONY: test-flask
