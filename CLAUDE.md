@@ -9,6 +9,7 @@ De Wasstraat is een open-source ETL-platform dat archeologische gegevens verzame
 ```
 airflow_app/dags/          # Airflow DAG-definities en transformatielogica
 airflow_app/dags/wasstraat/ # Kernmodules: harmonizer, archutils, merge_functions
+airflow_app/dags/wasstraat/profielen/ # Gemeenteprofielen: conventie, delft, voorbeeld
 airflow_app/scripts/       # Shell-scripts voor data-import
 app/app/                   # Flask webapp: models.py, views, API, templates
 app/fab_addon_geoalchemy/  # Custom GeoAlchemy-extensie voor geodata
@@ -50,6 +51,31 @@ De verwerkingsvolgorde is strikt:
 8. Load to Database & Index — Kopieer naar PostgreSQL + bouw Elasticsearch-index
 
 DAG-bestanden volgen het patroon `DAG_[Naam].py`, taken `tasks_[actie]_[onderwerp].py`.
+
+## Gemeenteprofielen
+
+Het profielensysteem centraliseert alle gemeente-specifieke logica in één plek. Het actieve profiel wordt geselecteerd via de omgevingsvariabele `WASSTRAAT_GEMEENTE` (default: `delft`).
+
+```
+airflow_app/dags/wasstraat/profielen/
+├── __init__.py       # get_profiel() + reset_profiel() — gecachede factory
+├── conventie.py      # ConventieProfiel: basisprofiel, directe velden
+├── delft.py          # DelftProfiel: Delft-specifieke normalisatie + bestandsparsing
+└── voorbeeld.py      # VoorbeeldProfiel: PoC, erft ConventieProfiel ongewijzigd
+```
+
+**Twee typen methoden:**
+
+- **Type A — database-entiteiten** (`identificeer(soort, doc)` dispatcher → `identificeer_put/vlak/spoor/vondst/artefact/...`): normaliseer projectcd, converteer identificerende integers.
+- **Type B — bestands-entiteiten** (`identificeer_foto(doc, projectcd)`, `identificeer_tekening(doc, projectcd)`): parse bestandsnaam naar velden. Standaard retourneert `None`; DelftProfiel implementeert regex-parsing.
+
+**Aanroep in de pipeline:**
+- `parseFotobestanden()` — `identificeer_foto()` / `identificeer_tekening()` voor bestandsnaam-parsing
+- `enhanceAllAttributes()` — `identificeer(soort, doc)` voor database-entiteiten; `identificeer_tekening_db()` / `identificeer_rapport_db()` voor Tekening/Rapport
+
+**Tests:** `tests/unit/test_profielen.py` — profielselectie, caching, ConventieProfiel, DelftProfiel, VoorbeeldProfiel.
+
+Zie [docs/componenten/gemeenteprofielen.md](docs/componenten/gemeenteprofielen.md) voor volledige documentatie.
 
 ## Gemeente-specifieke correcties (correcties.yml)
 

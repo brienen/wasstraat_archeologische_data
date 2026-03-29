@@ -29,6 +29,8 @@ tests/
 │   ├── test_rijksdriehoek.py                 # RD ↔ WGS84 coördinaatconversie
 │   ├── test_harmonizer.py                    # Pipeline-opbouw uit Excel config
 │   ├── test_foto_parsing.py                  # Regex-patronen voor bestandsclassificatie
+│   ├── test_profielen.py                     # Gemeenteprofielen: selectie, ConventieProfiel, DelftProfiel, VoorbeeldProfiel
+│   ├── test_correcties_yml.py                # Correctiebestand laden en toepassen
 │   ├── test_encoding.py                      # UTF-8 encoding en conversie
 │   ├── test_fixes_1_to_4.py                  # Bugfixes validatie
 │   ├── test_fix_5_nonetype_foto.py           # NoneType fotobestanden

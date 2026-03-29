@@ -36,11 +36,11 @@ class ConventieProfiel:
         'Vulling':     {'verplicht': ['projectcd', 'vullingnr'],    'optioneel': ['putnr', 'vlaknr', 'spoornr'], 'integer': ['putnr', 'vlaknr', 'spoornr', 'vullingnr']},
         'Vondst':      {'verplicht': ['projectcd', 'vondstnr'],     'optioneel': ['putnr'], 'integer': ['putnr', 'vondstnr']},
         'Artefact':    {'verplicht': ['projectcd', 'artefactnr'], 'optioneel': ['putnr', 'vondstnr', 'splitid'], 'integer': ['putnr', 'vondstnr', 'artefactnr', 'subnr']},
-        'Monster':     {'verplicht': ['projectcd','monstercd'],                                         'integer': []},
-        'Doos':        {'verplicht': ['doosnr'],                               'integer': ['doosnr']},
+        'Monster':     {'verplicht': ['projectcd', 'monstercd'],                                         'integer': []},
+        'Doos':        {'verplicht': ['doosnr'],                    'optioneel': ['projectcd'],           'integer': ['doosnr']},
         'Foto':        {'verplicht': ['projectcd'],                 'optioneel': ['putnr', 'vondstnr', 'subnr', 'fotonr'], 'integer': ['putnr', 'vondstnr', 'subnr', 'fotonr']},
         'Tekening':    {'verplicht': ['projectcd', 'tekeningcd'],                           'integer': []},
-        'Rapport':     {'verplicht': ['rapportnr'],                                         'integer': []},
+        'Rapport':     {'verplicht': ['rapportnr'],                 'optioneel': ['projectcd'],                     'integer': []},
         'Standplaats': {'verplicht': ['stelling'],                  'optioneel': ['vaknr', 'volgletter'], 'integer': []},
     }
 
@@ -119,11 +119,11 @@ class ConventieProfiel:
         return self._identificeer_standaard(doc)
 
     def identificeer_monster(self, doc):
-        """Identificeer een Monster-record: monstercd."""
-        return doc
+        """Identificeer een Monster-record: projectcd + monstercd."""
+        return self._identificeer_standaard(doc)
 
     def identificeer_doos(self, doc):
-        """Identificeer een Doos-record: projectcd + doosnr."""
+        """Identificeer een Doos-record: doosnr + projectcd?."""
         return self._identificeer_standaard(doc)
 
     def identificeer_standplaats(self, doc):

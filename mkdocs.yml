@@ -25,6 +25,7 @@ nav:
     - Extractielaag: componenten/extractie.md
     - SingleStore & Clusterlaag: componenten/singlestore.md
     - Transformatielaag: componenten/transformatie.md
+    - Gemeenteprofielen: componenten/gemeenteprofielen.md
     - Crossviews: componenten/crossviews.md
     - Validatielaag: componenten/validatie.md
     - Configuratiemodule: componenten/configuratie.md
