@@ -19,7 +19,7 @@ def extractExtraProjects():
     try: 
         myclient = pymongo.MongoClient(config.MONGO_URI)
         filesdb = myclient[config.DB_STAGING]
-        col = filesdb[config.COLL_STAGING_DELFIT]
+        col = filesdb[config.COLL_STAGING_PROJECTENLIJST]
 
         # Insert collection
         data_dict = df.to_dict("records")

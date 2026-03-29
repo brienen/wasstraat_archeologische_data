@@ -38,9 +38,9 @@ try:
    COLL_STAGING_OUD = os.getenv("COLL_STAGING_OUD")
    COLL_STAGING_NIEUW = os.getenv("COLL_STAGING_NIEUW")
    COLL_STAGING_MAGAZIJNLIJST = os.getenv("COLL_STAGING_MAGAZIJNLIJST")
-   COLL_STAGING_DELFIT = os.getenv("COLL_STAGING_DELFIT")
+   COLL_STAGING_PROJECTENLIJST = os.getenv("COLL_STAGING_PROJECTENLIJST")
    COLL_STAGING_MONSTER = os.getenv("COLL_STAGING_MONSTER")
-   COLL_STAGING_DIGIFOTOS = os.getenv("COLL_STAGING_DIGIFOTOS")
+   COLL_STAGING_FOTOLIJST = os.getenv("COLL_STAGING_FOTOLIJST")
    COLL_STAGING_REFERENTIETABELLEN = os.getenv("COLL_STAGING_REFERENTIETABELLEN") if os.getenv("COLL_STAGING_REFERENTIETABELLEN") else 'Staging_Referentietabellen'
    COLL_STAGING_RAPPORTEN = os.getenv("COLL_STAGING_RAPPORTEN") if os.getenv("COLL_STAGING_RAPPORTEN") else 'Staging_Rapporten'
    COLL_ANALYSE_FOTO = os.getenv("COLL_ANALYSE_FOTO")
@@ -82,18 +82,19 @@ try:
 
    AIRFLOW_INPUT_PROJECTEN = os.getenv("AIRFLOW_INPUT_PROJECTEN") if os.getenv("AIRFLOW_INPUT_PROJECTEN") else "/input/projecten" 
    AIRFLOW_INPUT_IMAGES = os.getenv("AIRFLOW_INPUT_IMAGES") if os.getenv("AIRFLOW_INPUT_IMAGES") else "/input/images"
-   AIRFLOW_INPUT_DELFIT = os.getenv("AIRFLOW_INPUT_DELFIT") if os.getenv("AIRFLOW_INPUT_DELFIT") else "/input/delfit"
+   AIRFLOW_INPUT_PROJECTENLIJST = os.getenv("AIRFLOW_INPUT_PROJECTENLIJST") if os.getenv("AIRFLOW_INPUT_PROJECTENLIJST") else "/input/projectenlijst"
    AIRFLOW_INPUT_MAGAZIJNLIJST = os.getenv("AIRFLOW_INPUT_MAGAZIJNLIJST") if os.getenv("AIRFLOW_INPUT_MAGAZIJNLIJST") else "/input/magazijnlijst"
-   AIRFLOW_INPUT_DIGIFOTOS = os.getenv("AIRFLOW_INPUT_DIGIFOTOS") if os.getenv("AIRFLOW_INPUT_DIGIFOTOS") else "/input/digifotos"
+   AIRFLOW_INPUT_FOTOLIJST = os.getenv("AIRFLOW_INPUT_FOTOLIJST") if os.getenv("AIRFLOW_INPUT_FOTOLIJST") else "/input/fotolijst"
    AIRFLOW_INPUT_MONSTER = os.getenv("AIRFLOW_INPUT_MONSTER") if os.getenv("AIRFLOW_INPUT_MONSTER") else "/input/monsterdatabase"
    AIRFLOW_INPUT_RAPPORTEN = os.getenv("AIRFLOW_INPUT_RAPPORTEN") if os.getenv("AIRFLOW_INPUT_RAPPORTEN") else "/input/rapporten"
+   AIRFLOW_CORRECTIES_CONFIG = os.getenv("AIRFLOW_CORRECTIES_CONFIG") if os.getenv("AIRFLOW_CORRECTIES_CONFIG") else "/opt/airflow/config/correcties.yml"
 
 
    AIRFLOW_OUTPUT_MEDIA = os.getenv("AIRFLOW_OUTPUT_MEDIA") if os.getenv("AIRFLOW_OUTPUT_MEDIA") else "/output/archeomedia"
 
-   FILE_WORD_ICON = os.getenv("FILE_WORD_ICON") if os.getenv("FILE_WORD_ICON") else '/input/digifotos/microsoft-word-logo.jpg'
+   FILE_WORD_ICON = os.getenv("FILE_WORD_ICON") if os.getenv("FILE_WORD_ICON") else '/input/fotolijst/microsoft-word-logo.jpg'
    FILE_ABREXCEL = os.getenv("FILE_ABREXCEL") if os.getenv("FILE_ABREXCEL") else '/input/referentietabellen/abr_versie_01122018.xlsx'
-   FILE_EXTRA_PROJECTS = os.getenv("FILE_EXTRA_PROJECTS") if os.getenv("FILE_EXTRA_PROJECTS") else '/input/delfit/Extra_projecten_tabel_OPGRAVINGEN.xlsx'
+   FILE_EXTRA_PROJECTS = os.getenv("FILE_EXTRA_PROJECTS") if os.getenv("FILE_EXTRA_PROJECTS") else '/input/projectenlijst/Extra_projecten_tabel_OPGRAVINGEN.xlsx'
    FILE_IMPORT_FILES_EXCEL = os.getenv("FILE_IMPORT_FILES_EXCEL") if os.getenv("FILE_IMPORT_FILES_EXCEL") else '/input/referentietabellen/Alle Bestanden Archeologisch Depot.xlsx'
    ES_HOST = os.getenv("ES_HOST") if os.getenv("ES_HOST") else 'http://elasticsearch:9200'
 except KeyError: 

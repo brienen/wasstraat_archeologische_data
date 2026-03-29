@@ -26,9 +26,9 @@ data/synthetic/data/
 │   └── SY002/
 │       ├── C Database/opgravingSY002.mdb
 │       └── L Fotos/
-├── delfit/DELF-IT.mdb                       # Projectenlijst
+├── projectenlijst/projectenlijst.mdb         # Projectenlijst
 ├── magazijnlijst/MAGAZIJN.mdb               # Depotdata
-├── digifotos/Digifotos.mdb                  # Fotocatalogus
+├── fotolijst/Digifotos.mdb                  # Fotocatalogus
 └── monsterdatabase/MONSTERS.mdb             # Monsterdata (botanie + schelpen)
 ```
 
@@ -44,18 +44,21 @@ De `docker-compose.test.yml` mount de synthetische data als input-volumes voor d
 
 ## Eigen data klaarzetten
 
-Gemeenten die hun eigen opgravingsdata willen verwerken, kunnen hun bestanden organiseren conform dezelfde structuur als de voorbeelddata. De Wasstraat verwacht:
+Gemeenten die hun eigen opgravingsdata willen verwerken, kunnen hun bestanden organiseren conform dezelfde structuur als de voorbeelddata:
 
-| Directory | Inhoud | Formaat |
-|-----------|--------|---------|
-| `projecten/` of `digidepot/` | Per opgraving een subdirectory met de projectdatabase | `.mdb` / `.accdb` |
-| `delfit/` of `Delf-IT/` | Centrale administratiedatabase met projectoverzicht | `.mdb` + `.xlsx` |
-| `magazijnlijst/` | Depot- en magazijnadministratie | `.mdb` |
-| `digifotos/` | Digitale fotolijst met metadata | `.mdb` |
-| `monsterdatabase/` | Monstergegevens met botanische en zoölogische determinaties | `.mdb` / `.accdb` |
-| `referentietabellen/` | ABR-classificatie en standaardtabellen | `.xlsx` / `.mdb` |
+| Directory | Inhoud | Verwachte tabellen/bestanden | Verplicht? |
+|-----------|--------|------------------------------|-----------|
+| `projecten/` | Per opgraving een subdirectory met projectdatabase en foto's | `.mdb` met VONDSTENLIJST, SPOREN, VULLINGEN, artefacttabellen | Ja |
+| `projectenlijst/` | Projectoverzicht | `.mdb` met tabel `OPGRAVINGEN` (CODE, XCOORD, YCOORD, JAAR) | Ja |
+| `magazijnlijst/` | Depotadministratie | `.mdb` met tabel `magazijnlijst` (CODE, STELLING, DOOSNO) | Aanbevolen |
+| `fotolijst/` | Fotocatalogus | `.mdb` met tabel `Fotos` (FOTONR, PROJECTCD, BESTANDSNAAM) | Aanbevolen |
+| `monsterdatabase/` | Monsters en determinaties | `.mdb` met Monster_gegevens, Monster_waardering, etc. | Optioneel |
+| `referentietabellen/` | ABR-codes en standaardtabellen | `abr_versie_*.xlsx` | Ja |
+| `rapporten/` | Rapportbestanden | `.mdb` / `.pdf` | Optioneel |
 
-Plaats de bestanden in `data/delft/data/` en configureer de Docker-volumes in je docker-compose override. Zie [Aan de slag](../aan-de-slag.md) voor gedetailleerde instructies.
+De Wasstraat doorzoekt elke directory **recursief** op `.mdb` en `.accdb` bestanden. In `projecten/` moet je per opgraving een subdirectory aanmaken — de directorynaam bepaalt de projectcode.
+
+Plaats de bestanden in `data/<omgeving>/data/` en configureer optioneel een `correcties.yml` in `data/<omgeving>/wasstraat_config/` voor projectcode-correcties. Zie [Aan de slag](../aan-de-slag.md) voor gedetailleerde instructies.
 
 ## Data opnieuw genereren
 

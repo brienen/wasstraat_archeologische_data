@@ -4,6 +4,7 @@ import pymongo
 import json
 import re
 import os
+import yaml
 import pandas as pd
 import numpy as np
 import wasstraat.harmonizer as harmonizer
@@ -18,34 +19,93 @@ import logging
 logger = logging.getLogger("airflow.task")
 
 
+_correcties_cache = None
+
+def laadCorrecties():
+    """Laad het correctiebestand (YAML) en cache het resultaat.
+
+    Returns:
+        dict met correctieregels, of leeg dict als het bestand niet bestaat.
+    """
+    global _correcties_cache
+    if _correcties_cache is not None:
+        return _correcties_cache
+
+    pad = getattr(config, 'AIRFLOW_CORRECTIES_CONFIG', None)
+    if not pad or not os.path.isfile(pad):
+        logger.info(f"Geen correctiebestand gevonden op {pad} — geen gemeente-specifieke correcties.")
+        _correcties_cache = {}
+        return _correcties_cache
+
+    try:
+        with open(pad, 'r') as f:
+            result = yaml.safe_load(f)
+    except yaml.YAMLError as e:
+        logger.error(f"Ongeldig YAML in {pad}: {e} — geen correcties toegepast.")
+        _correcties_cache = {}
+        return _correcties_cache
+
+    if not isinstance(result, dict):
+        logger.error(f"Correctiebestand {pad} bevat geen YAML-dictionary (type={type(result).__name__}) — geen correcties toegepast.")
+        _correcties_cache = {}
+        return _correcties_cache
+
+    _correcties_cache = result
+    logger.info(f"Correctiebestand geladen: {pad}")
+    return _correcties_cache
+
+
 def fixProjectNames():
-    try: 
+    """Pas brondata-correcties toe uit het correctiebestand (correcties.yml).
+
+    Leest correctieregels uit de sectie 'brondata_correcties'. Elke regel
+    specificeert een staging-collectie, veld, regex-patroon en waarde.
+    Dit fixt raw veldwaarden in staging vóór harmonisatie — nodig als
+    brondata afwijkende codes bevat die niet matchen met de projectenlijst.
+
+    Daarnaast worden projectcodes die geen string zijn altijd naar string
+    geconverteerd (generieke correctie, niet gemeente-specifiek).
+    """
+    try:
         logger.info("Calling update statements to fix project codes...")
         myclient = pymongo.MongoClient(str(config.MONGO_URI))
         stagingdb = myclient[str(config.DB_STAGING)]
-        stagingcollection = stagingdb[config.COLL_STAGING_OUD]
-        plaatjescollection = stagingdb[config.COLL_PLAATJES]
-        monstercollection = stagingdb[config.COLL_STAGING_MONSTER]
 
-        stagingcollection.update_many({"mdbfile" : {"$regex" : "DC027_Voorstraat"}}, { "$set": { "project": "DC027" } })
-        stagingcollection.update_many({"mdbfile" : {"$regex" : "DC018_Nieuw"}}, { "$set": { "project": "DC018" } })
-        stagingcollection.update_many({"mdbfile" : {"$regex" : "DC024_Stadskantoor"}}, { "$set": { "project": "DC024" } })
-        stagingcollection.update_many({"mdbfile" : {"$regex" : "DC032_Hoogheem"}}, { "$set": { "project": "DC032" } })
-        stagingcollection.update_many({"mdbfile" : {"$regex" : "DC039_Schutter"}}, { "$set": { "project": "DC039" } })
+        correcties = laadCorrecties()
 
-        stagingcollection.update_many({'projectcd': {'$not': {"$type": 2}}}, [{ "$set": { "projectcd": { "$toString": "$projectcd" } } }])
-        plaatjescollection.update_many({'projectcd': {'$not': {"$type": 2}}}, [{ "$set": { "projectcd": { "$toString": "$projectcd" } } }])
+        # Brondata-correcties: fix raw velden in staging-collecties
+        for i, fix in enumerate(correcties.get('brondata_correcties', [])):
+            try:
+                coll_name = getattr(config, fix['collectie'], None)
+                if not coll_name:
+                    logger.warning(f"  Onbekende collectie-constante: {fix['collectie']} — overslaan")
+                    continue
+                coll = stagingdb[coll_name]
+                zoek_veld = fix.get('zoek_veld', fix.get('veld', 'projectcd'))
+                doel_veld = fix.get('doel_veld', zoek_veld)
+                result = coll.update_many(
+                    {zoek_veld: {"$regex": str(fix['patroon'])}},
+                    {"$set": {doel_veld: str(fix['waarde'])}}
+                )
+                if result.modified_count > 0:
+                    logger.info(f"  Brondata fix: {fix['collectie']}.{zoek_veld}~/{fix['patroon']}/ → {doel_veld}={fix['waarde']} ({result.modified_count} docs)")
+            except (KeyError, TypeError) as e:
+                logger.error(f"  Ongeldige brondata_correctie #{i}: {fix} — {e}. Overslaan.")
+                continue
 
-        monstercollection.update_many({"PROJECT": {"$regex" : "DC 16"}}, { "$set": { "PROJECT": "DC016" } })
-        monstercollection.update_many({"PROJECT": {"$regex" : "SCHE"}}, { "$set": { "PROJECT": "DC039" } })
-        monstercollection.update_many({"PROJECT": {"$regex" : "PPG"}}, { "$set": { "PROJECT": "DC067" } })
-        monstercollection.update_many({"PROJECT": {"$regex" : "BM"}}, { "$set": { "PROJECT": "DC046" } })
-        monstercollection.update_many({"PROJECT": {"$regex" : "MB2000"}}, { "$set": { "PROJECT": "MD032" } })
-
+        # Generieke correctie: projectcd naar string converteren (niet gemeente-specifiek)
+        stagingdb[config.COLL_STAGING_OUD].update_many(
+            {'projectcd': {'$not': {"$type": 2}}},
+            [{"$set": {"projectcd": {"$toString": "$projectcd"}}}]
+        )
+        stagingdb[config.COLL_PLAATJES].update_many(
+            {'projectcd': {'$not': {"$type": 2}}},
+            [{"$set": {"projectcd": {"$toString": "$projectcd"}}}]
+        )
 
     except Exception as err:
         msg = "Onbekende fout bij het fixen van projectcodes met melding: " + str(err)
-        logger.error(msg)    
+        logger.error(msg)
         raise Exception(msg) from err
     finally:
         myclient.close()
@@ -286,16 +346,28 @@ def parseFotobestanden():
                     continue
 
 
-                # Rapporten hebben allemaal filenaam die begint met DAR of DAN
-                matchObj = re.match( r'^(DAN|DAR)\s*([0-9]{2,3}).*', doc['fileName'], re.M|re.I)
-                if matchObj:
-                    doc['rapportnr'] = matchObj.group(1) + str(int(matchObj.group(2))).zfill(3)
-                    doc['key'] = 'R' + doc['rapportnr']     
-                    doc['soort'] = 'Rapport' 
-                    doc['fototype'] = 'R' 
-                    doc['bestandsoort'] = const.RAPP_ARCHEOLOGISCHE_RAPPORTAGE if 'DAR' in str(doc['rapportnr']) else const.RAPP_ARCHEOLOGISCHE_NOTITIE
-                    analyseCol.replace_one({"_id": doc['_id']}, doc, upsert=True)
-                    continue
+                # Rapporten: bestanden waarvan de naam begint met een rapportcode-prefix
+                rapport_prefixen_raw = laadCorrecties().get('rapportcode_prefixen', [])
+                # Filter ongeldige entries (ontbrekende prefix/type)
+                rapport_prefixen = [p for p in rapport_prefixen_raw if isinstance(p, dict) and 'prefix' in p and 'type' in p]
+                if rapport_prefixen:
+                    prefix_patroon = '|'.join(str(p['prefix']) for p in rapport_prefixen)
+                    prefix_type_map = {str(p['prefix']).upper(): p['type'] for p in rapport_prefixen}
+                    matchObj = re.match(r'^(' + prefix_patroon + r')\s*([0-9]{2,3}).*', doc['fileName'], re.M|re.I)
+                    if matchObj:
+                        doc['rapportnr'] = matchObj.group(1) + str(int(matchObj.group(2))).zfill(3)
+                        doc['key'] = 'R' + doc['rapportnr']
+                        doc['soort'] = 'Rapport'
+                        doc['fototype'] = 'R'
+                        # Bepaal bestandsoort op basis van het prefix-type uit de configuratie
+                        matched_prefix = matchObj.group(1).upper()
+                        rapport_type = prefix_type_map.get(matched_prefix, 'archeologische_rapportage')
+                        if rapport_type == 'archeologische_rapportage':
+                            doc['bestandsoort'] = const.RAPP_ARCHEOLOGISCHE_RAPPORTAGE
+                        else:
+                            doc['bestandsoort'] = const.RAPP_ARCHEOLOGISCHE_NOTITIE
+                        analyseCol.replace_one({"_id": doc['_id']}, doc, upsert=True)
+                        continue
 
 
 

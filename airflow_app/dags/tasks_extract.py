@@ -29,9 +29,9 @@ def getExtractTaskGroup():
             bash_command="${AIRFLOW_HOME}/scripts/importMDB.sh %s %s " % (config.AIRFLOW_INPUT_PROJECTEN, config.COLL_STAGING_OUD)
         )
         # [START howto_operator_bash]
-        Extract_Data_From_DelfIT = BashOperator(
-            task_id='Extract_Data_From_DelfIT',
-            bash_command="${AIRFLOW_HOME}/scripts/importMDB.sh %s %s " % (config.AIRFLOW_INPUT_DELFIT, config.COLL_STAGING_DELFIT)
+        Extract_Data_From_Projectenlijst = BashOperator(
+            task_id='Extract_Data_From_Projectenlijst',
+            bash_command="${AIRFLOW_HOME}/scripts/importMDB.sh %s %s " % (config.AIRFLOW_INPUT_PROJECTENLIJST, config.COLL_STAGING_PROJECTENLIJST)
         )
         # [START howto_operator_bash]
         Extract_Data_From_Magazijnlijst = BashOperator(
@@ -39,9 +39,9 @@ def getExtractTaskGroup():
             bash_command="${AIRFLOW_HOME}/scripts/importMDB.sh %s %s " % (config.AIRFLOW_INPUT_MAGAZIJNLIJST, config.COLL_STAGING_MAGAZIJNLIJST)
         )
         # [START howto_operator_bash]
-        Extract_Data_From_DigiFotolijst = BashOperator(
-            task_id='Extract_Data_From_DigiFotolijst',
-            bash_command="${AIRFLOW_HOME}/scripts/importMDB.sh %s %s " % (config.AIRFLOW_INPUT_DIGIFOTOS, config.COLL_STAGING_DIGIFOTOS)
+        Extract_Data_From_Fotolijst = BashOperator(
+            task_id='Extract_Data_From_Fotolijst',
+            bash_command="${AIRFLOW_HOME}/scripts/importMDB.sh %s %s " % (config.AIRFLOW_INPUT_FOTOLIJST, config.COLL_STAGING_FOTOLIJST)
         )
         Extract_Data_From_MonsterDB = BashOperator(
             task_id='Extract_Data_From_MonsterDB',
@@ -78,6 +78,6 @@ def getExtractTaskGroup():
             i += 1
         
         
-        first >> [Extract_Data_From_Projecten, Extract_Data_From_DelfIT, Extract_Data_From_Magazijnlijst, Extract_Data_From_DigiFotolijst, Extract_Data_From_MonsterDB, Extract_Data_From_RapportaneDBs, Extract_Referentietabellen] >> Extract_ExtraProjecten >> last
+        first >> [Extract_Data_From_Projecten, Extract_Data_From_Projectenlijst, Extract_Data_From_Magazijnlijst, Extract_Data_From_Fotolijst, Extract_Data_From_MonsterDB, Extract_Data_From_RapportaneDBs, Extract_Referentietabellen] >> Extract_ExtraProjecten >> last
         
     return tg1

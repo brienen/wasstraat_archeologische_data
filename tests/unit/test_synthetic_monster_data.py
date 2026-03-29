@@ -64,9 +64,9 @@ class TestMonsterGegevensStructuur:
         )
 
     def test_monster_gegevens_aantal(self, monster_data):
-        """Monster_gegevens moet 5 records bevatten (3x SY001, 2x SY002)."""
+        """Monster_gegevens moet 6 records bevatten (3x SY001, 2x SY002, 1x SYNTFOUT testgeval)."""
         _, records = monster_data["Monster_gegevens"]
-        assert len(records) == 5
+        assert len(records) == 6
 
     def test_monster_waardering_aantal(self, monster_data):
         """Monster_waardering moet 5 records bevatten (1:1 met gegevens)."""

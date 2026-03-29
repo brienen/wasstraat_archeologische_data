@@ -35,10 +35,10 @@ De Airflow-container verwacht invoerdata op specifieke paden. Deze worden via Do
 
 ```
 data/delft/data/
-├── digidepot/          # Projectdatabases (MDB-bestanden)
-├── Delf-IT/            # DelfIT administratie
+├── projecten/          # Projectdatabases (MDB-bestanden)
+├── projectenlijst/     # Projectenlijst administratie
 ├── magazijnlijst/      # Depot-registratie
-├── digifotos/          # Foto-metadata database
+├── fotolijst/          # Foto-metadata database
 ├── monsterdatabase/    # Monster-registratie
 ├── rapporten/          # Rapportendatabases
 └── referentietabellen/ # ABR-codes en standaardtabellen
@@ -48,12 +48,12 @@ data/delft/data/
 
 Voor een eerste proef is het voldoende om een beperkte set bestanden te plaatsen:
 
-1. **Projectdatabase**: Kopieer een of meerdere `.mdb` bestanden naar `data/delft/data/digidepot/`
+1. **Projectdatabase**: Kopieer een of meerdere `.mdb` bestanden naar `data/delft/data/projecten/`
 2. **Referentietabellen**: Zorg dat de standaard referentietabellen aanwezig zijn in `data/delft/data/referentietabellen/`
 3. **Foto's** (optioneel): Plaats testfoto's in de bijbehorende directory
 
 !!! tip "Minimale proefset"
-    Voor een snelle test volstaat het om één `.mdb` projectdatabase in de `digidepot/` directory te plaatsen. De extractie zal dan alleen dat project verwerken.
+    Voor een snelle test volstaat het om één `.mdb` projectdatabase in de `projecten/` directory te plaatsen. De extractie zal dan alleen dat project verwerken.
 
 ## Stap 2: Airflow UI openen
 

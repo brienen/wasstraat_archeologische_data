@@ -1,4 +1,5 @@
 # Import the os module, for the os.walk function
+import os
 import pymongo
 from pymongo import UpdateOne, WriteConcern, InsertOne
 import re
@@ -16,8 +17,29 @@ import shared.const as const
 import logging
 logger = logging.getLogger("airflow.task")
 
-## The Artefacts of these projects will not be merged (too many wrong merges)
-ARTEFACT_NOT_MERGE_PROJECTS = ['DC112']
+## De artefacten van deze projecten worden niet gemerged (te veel foutieve merges).
+## Wordt geladen uit correcties.yml bij eerste gebruik.
+def _laadArtefactNietMergenProjecten():
+    import yaml
+    pad = getattr(config, 'AIRFLOW_CORRECTIES_CONFIG', None)
+    if not pad or not os.path.isfile(pad):
+        return []
+    try:
+        with open(pad, 'r') as f:
+            correcties = yaml.safe_load(f) or {}
+        if not isinstance(correcties, dict):
+            logger.warning(f"Correctiebestand {pad} bevat geen dictionary — artefact_niet_mergen overgeslagen.")
+            return []
+        result = correcties.get('artefact_niet_mergen', {}).get('projectcodes', [])
+        if not isinstance(result, list):
+            logger.warning(f"artefact_niet_mergen.projectcodes is geen lijst (type={type(result).__name__}) — overgeslagen.")
+            return []
+        return result
+    except Exception as e:
+        logger.error(f"Fout bij laden artefact_niet_mergen uit {pad}: {e}")
+        return []
+
+ARTEFACT_NOT_MERGE_PROJECTS = _laadArtefactNietMergenProjecten()
 
 ## The Artefacts of these tables will not be merged (too many wrong merges)
 ARTEFACT_NOT_MERGE_TABLES = ['ROMEINS AARDEWERK']

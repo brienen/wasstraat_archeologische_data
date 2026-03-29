@@ -1158,7 +1158,7 @@ def dataMonsterDatabase():
     """
     tabellen = {}
 
-    # ---- Monster_gegevens: 5 monsters (3x SY001, 2x SY002) ----
+    # ---- Monster_gegevens: 6 monsters (3x SY001, 2x SY002, 1x met foute code) ----
     kol = [k[0] for k in KOLOMMEN_MONSTER_GEGEVENS]
     tabellen["Monster_gegevens"] = (kol, [
         # SY001 monsters — verwijzen naar putten en vondsten van SY001
@@ -1183,6 +1183,11 @@ def dataMonsterDatabase():
          6, 202, "monster uit greppel", "grondmonster", 0.5, 0.5, 0.3,
          "06/15/24 00:00:00", None, "B:",
          "+/-", "+/-", "+/-", "+/-", "+/-", "+/-", "+/-", "+/-"),
+        # Testgeval: monster met foute projectcode (SYNTFOUT) die gecorrigeerd moet worden naar SY001
+        ("SYNTFOUT", 1, 1, "SYNTFOUT_p1_v1", "T. Testgeval", "01/01/24 00:00:00",
+         1, 103, "testmonster", "grondmonster", 0.5, 0.5, 0.3,
+         "01/05/24 00:00:00", None, "test",
+         "+", "+", "+", "+", "+", "+", "+", "+"),
     ])
 
     # ---- Monster_waardering: 5 records (1:1 met Monster_gegevens) ----
@@ -1419,9 +1424,9 @@ def genereerAlles():
     pad_sy002 = os.path.join(OUTPUT_DIR, "projecten", "SY002", "C Database", "opgravingSY002.mdb")
     schrijfMdb(pad_sy002, dataGrootProject(), project_tabel_defs)
 
-    # DELF-IT projectenlijst
-    print("\n[3/7] DELF-IT — Projectenlijst")
-    pad_delfit = os.path.join(OUTPUT_DIR, "delfit", "DELF-IT.mdb")
+    # Projectenlijst
+    print("\n[3/7] Projectenlijst")
+    pad_delfit = os.path.join(OUTPUT_DIR, "projectenlijst", "projectenlijst.mdb")
     schrijfMdb(pad_delfit, dataProjectenlijst(), {"OPGRAVINGEN": KOLOMMEN_OPGRAVINGEN})
 
     # Magazijnlijst
@@ -1429,9 +1434,9 @@ def genereerAlles():
     pad_magazijn = os.path.join(OUTPUT_DIR, "magazijnlijst", "MAGAZIJN.mdb")
     schrijfMdb(pad_magazijn, dataMagazijnlijst(), {"magazijnlijst": KOLOMMEN_MAGAZIJNLIJST})
 
-    # Digifotos
-    print("\n[5/7] Digifotos — Fotocatalogus")
-    pad_fotos = os.path.join(OUTPUT_DIR, "digifotos", "Digifotos.mdb")
+    # Fotolijst
+    print("\n[5/7] Fotolijst — Fotocatalogus")
+    pad_fotos = os.path.join(OUTPUT_DIR, "fotolijst", "Digifotos.mdb")
     schrijfMdb(pad_fotos, dataDigifotos(), {"Fotos": KOLOMMEN_DIGIFOTOS})
 
     # Monsterdatabase

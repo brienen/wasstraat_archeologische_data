@@ -52,7 +52,7 @@ function createROPointMap(map_id, latitude, longitude){
     marker.addTo(map);
     map.setView([latitude, longitude], 15);
   } else {
-    map.setView([52.00667, 4.35556], 11);
+    map.setView([52.15, 5.39], 8);
   }
 }
 

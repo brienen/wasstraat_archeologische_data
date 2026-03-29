@@ -2,9 +2,9 @@
 
 # Delft data gaat niet naar Github
 data/delft/data/*
-!data/delft/data/Delf-IT/.gitkeep
-!data/delft/data/digidepot/.gitkeep
-!data/delft/data/digifotos/.gitkeep
+!data/delft/data/projectenlijst/.gitkeep
+!data/delft/data/projecten/.gitkeep
+!data/delft/data/fotolijst/.gitkeep
 !data/delft/data/referentietabellen/.gitkeep
 !data/delft/data/magazijnlijst/.gitkeep
 !data/delft/data/monsterdatabase/.gitkeep
@@ -15,13 +15,10 @@ data/delft/backup/*
 !data/delft/backup/.gitkeep
 
 # Test data gaat niet naar Github
-data/test/*
-data/test/projecten/*
-data/test/projectenlijst/*
-data/test/referentietabellen/*
+data/test/data/*
+!data/test/data/.gitkeep
 !data/test/.gitkeep
-!data/test/output/.gitkeep
-!data/test/backup/.gitkeep
+!data/test/wasstraat_config/
 
 # Synthetische output data gaat niet naar Github
 data/synthetic/output/*

@@ -127,14 +127,12 @@ De Wasstraat leest brondata uit de directory `data/delft/data/`. Elke subdirecto
 
 ```
 data/delft/data/
-├── digidepot/           ← Projectdatabases (.mdb/.accdb)
-├── Delf-IT/             ← DelfIT administratie (.mdb + .xlsx)
+├── projecten/           ← Projectdatabases (.mdb/.accdb) + foto's
+├── projectenlijst/      ← Projectenlijst administratie (.mdb)
 ├── magazijnlijst/       ← Depotregistratie (.mdb)
-├── digifotos/           ← Foto-metadata (.mdb)
+├── fotolijst/           ← Foto-metadata (.mdb)
 ├── monsterdatabase/     ← Monsterregistratie (.mdb/.accdb)
-├── rapporten/           ← Rapportendatabases (.mdb)
-│   ├── DAN/             ← Delfts Archeologische Notities
-│   └── DAR/             ← Delfts Archeologische Rapporten
+├── rapporten/           ← Rapportbestanden (.mdb, .pdf)
 └── referentietabellen/  ← ABR-codes en standaardtabellen (.xlsx/.mdb)
 ```
 
@@ -142,36 +140,97 @@ data/delft/data/
 
 | Directory | Wat erin hoort | Bestandstype | Verplicht? |
 |-----------|---------------|-------------|-----------|
-| `digidepot/` | Per opgraving een subdirectory met de projectdatabase | `.mdb` / `.accdb` | Ja — dit is de hoofdbron |
-| `Delf-IT/` | De centrale administratiedatabase en projecttabel | `.mdb` + `.xlsx` | Ja — bevat projectoverzicht |
-| `magazijnlijst/` | Depot- en magazijnadministratie | `.mdb` | Aanbevolen |
-| `digifotos/` | Digitale fotolijst met metadata | `.mdb` | Aanbevolen (voor foto-koppeling) |
-| `monsterdatabase/` | Monster- en residuregistratie | `.mdb` / `.accdb` | Optioneel |
-| `rapporten/DAN/` en `DAR/` | Rapportenlijstdatabases | `.mdb` | Optioneel |
-| `referentietabellen/` | ABR-classificatie, bestandslijsten | `.xlsx` / `.mdb` | Ja — nodig voor harmonisatie |
+| `projecten/` | Per opgraving een subdirectory met de projectdatabase en foto's | `.mdb` / `.accdb` + afbeeldingen | Ja — dit is de hoofdbron |
+| `projectenlijst/` | Centrale administratiedatabase met projectoverzicht (tabel `OPGRAVINGEN`) | `.mdb` | Ja — bevat projectoverzicht |
+| `magazijnlijst/` | Depot- en magazijnadministratie (tabel `magazijnlijst`) | `.mdb` | Aanbevolen |
+| `fotolijst/` | Digitale fotocatalogus met metadata (tabel `Fotos`) | `.mdb` | Aanbevolen (voor foto-koppeling) |
+| `monsterdatabase/` | Monsterdata met botanische en zoölogische determinaties | `.mdb` / `.accdb` | Optioneel |
+| `rapporten/` | Rapportbestanden en rapportendatabases | `.mdb` / `.pdf` | Optioneel |
+| `referentietabellen/` | ABR-classificatie (`abr_versie_*.xlsx`) en bestandslijsten | `.xlsx` / `.mdb` | Ja — nodig voor harmonisatie |
 
-### Hoe worden bestanden gevonden?
+### Structuur per directory
 
-De Wasstraat doorzoekt elke directory **recursief** op `.mdb` en `.accdb` bestanden. Je kunt dus subdirectories gebruiken om bestanden te organiseren. In `digidepot/` is het gebruikelijk om per project een subdirectory aan te maken:
+#### projecten/ — Opgravingsdatabases
+
+Per opgraving een subdirectory. De directorynaam bepaalt de projectcode (het eerste alfanumerieke deel). De Wasstraat doorzoekt recursief op `.mdb` en `.accdb` bestanden.
 
 ```
-digidepot/
+projecten/
 ├── DB008_Leeuwenstein/
-│   └── DB008.mdb
-├── DC001_Oude_Delft_96/
-│   └── DC001.mdb
-└── DC002_Oude_Delft_188/
-    └── DC002.mdb
+│   ├── C Database/
+│   │   └── DB008.mdb              ← Projectdatabase
+│   └── L Fotos/
+│       ├── G (Opgravingsfoto's)/  ← Overzichtsfoto's
+│       └── H (Objectfoto's)/      ← Vondstfoto's per materiaal
+│           ├── Aardewerk/
+│           ├── Glas/
+│           └── Metaal/
+└── DC001_Oude_Delft_96/
+    └── C Database/
+        └── DC001.mdb
 ```
+
+Elke projectdatabase bevat tabellen zoals `VONDSTENLIJST`, `SPOREN`, `VULLINGEN`, `AARDEWERK 1`, `GLAS`, `METAAL`, `BEEN`, `TEKENINGEN`, `DIAOPGRAVING` etc. De exacte tabellen en kolomnamen worden geconfigureerd via `Wasstraat_Config_HarmonizeV3.xlsx`.
+
+#### projectenlijst/ — Projectoverzicht
+
+Eén `.mdb`-bestand met een tabel `OPGRAVINGEN` die alle projecten beschrijft:
+
+| Kolom | Beschrijving |
+|-------|-------------|
+| `CODE` | Projectcode (bijv. DB008, DC001) |
+| `TOPONIEM` | Locatienaam |
+| `OPGRAVING` | Beschrijving van de opgraving |
+| `XCOORD`, `YCOORD` | Rijksdriehoek-coördinaten |
+| `JAAR` | Opgravingsjaar |
+
+#### magazijnlijst/ — Depotadministratie
+
+Eén `.mdb`-bestand met een tabel `magazijnlijst` met kolommen: `CODE`, `PROJECT`, `STELLING`, `VAKNO`, `VOLGLETTER`, `INHOUD`, `DOOSNO`.
+
+#### fotolijst/ — Fotocatalogus
+
+Eén `.mdb`-bestand met een tabel `Fotos` die digitale foto's koppelt aan projecten, putten en vondsten:
+
+| Kolom | Beschrijving |
+|-------|-------------|
+| `FOTONR` | Uniek fotonummer |
+| `PROJECTCD` | Projectcode |
+| `PUTNO`, `VLAKNR`, `SPOORNR`, `VONDSTNR` | Verwijzingen naar archeologische context |
+| `BESTANDSNAAM` | Bestandsnaam van de foto |
+| `FOTOSOORT` | Type foto (Opgravingsfoto, Voorwerpfoto) |
+
+#### monsterdatabase/ — Monsters en determinaties
+
+Eén `.mdb`-bestand met meerdere tabellen:
+
+| Tabel | Inhoud |
+|-------|--------|
+| `Monster_gegevens` | Grondmonsters met locatie, grondsoort, zeefresultaten |
+| `Monster_waardering` | Waardering per monstercode (botanisch, zoölogisch materiaal) |
+| `Monster_botanie_determinatie` | Botanische determinaties (plantsoorten, delen, conservering) |
+| `Monster_schelp_determinatie` | Schelpdeterminaties (soorten, delen) |
+| `R_PLANT`, `R_SCHELP`, `R_DEEL`, `R_STAAT` | Referentietabellen |
+
+#### referentietabellen/ — Standaardtabellen
+
+| Bestand | Inhoud |
+|---------|--------|
+| `abr_versie_*.xlsx` | ABR-thesaurus: archeologische perioden, monumenttypen, materialen |
+| `Alle Bestanden Archeologisch Depot.xlsx` | Inventarisatie van bestanden in het depot |
+| Overige `.mdb`-bestanden | Specifieke referentietabellen (bakselcodes, pijpmakersmerken, etc.) |
 
 ### Foto's en media
 
-Foto's en andere mediabestanden worden verwacht in een aparte directory die via een Docker-volume gemount wordt als `/input/images`. De standaard locatie hiervoor is `data/delft/data/digidepot/`. De Wasstraat zoekt daar naar bestanden in mappen die `velddocument`, `fotos`, `tekening`, `DAN` of `DAR` in het pad bevatten.
+Foto's worden op twee manieren gevonden:
 
-Ondersteunde bestandstypen voor media: `.jpg`, `.jpeg`, `.png`, `.gif`, `.tif`, `.psd`, `.pdf`, `.jp2`, `.doc`, `.docx`.
+1. **In de projectdirectory** (`projecten/<project>/L Fotos/`): de Wasstraat zoekt in paden die `velddocument`, `fotos` of `tekening` bevatten
+2. **Via de fotocatalogus** (`fotolijst/`): koppelt bestandsnamen aan projecten en vondsten
+
+Ondersteunde bestandstypen: `.jpg`, `.jpeg`, `.png`, `.gif`, `.tif`, `.psd`, `.pdf`, `.jp2`, `.doc`, `.docx`.
 
 !!! tip "Minimale proefset"
-    Voor een eerste test volstaat het om één `.mdb` projectdatabase in `digidepot/` te plaatsen, samen met de referentietabellen. De extractie verwerkt dan alleen dat ene project.
+    Voor een eerste test volstaat het om één `.mdb` projectdatabase in `projecten/` te plaatsen, samen met de referentietabellen en een projectenlijst. De extractie verwerkt dan alleen dat ene project.
 
 ## 5. Wasstraat_Config_HarmonizeV3 configureren
 
@@ -272,6 +331,62 @@ Het configuratiebestand bevat de volgende objecttypen:
 **Referentiedata**: ABR, DT_Soort_Plant, DT_Soort_Schelp, DT_Soort_Deel, DT_Soort_Staat
 
 **Speciaal**: Monster_Botanie, Monster_Schelp, Fotobeschrijving, Fotokoppel
+
+
+## 5b. Correcties configureren (optioneel)
+
+Naast de harmonisatie-Excel kan je een `correcties.yml` aanmaken in dezelfde `wasstraat_config/`-directory. Dit bestand bevat gemeente-specifieke datacorrecties die de pipeline automatisch toepast.
+
+```
+data/<omgeving>/wasstraat_config/correcties.yml
+```
+
+### Projectcode-correcties
+
+Als na verwerking bepaalde projectcodes fout zijn (bijv. afkortingen of oude codes), kun je ze automatisch laten corrigeren:
+
+```yaml
+projectcode_correcties:
+  - patroon: "SCHE"
+    projectcode: "DC039"
+  - patroon: "PPG"
+    projectcode: "DC067"
+```
+
+Elke regel matcht het regex-patroon op het `projectcd`-veld in alle verwerkte documenten en vervangt het door de opgegeven projectcode. Dit gebeurt na harmonisatie (Transform2).
+
+### Brondata-correcties
+
+Als bronbestanden afwijkende waarden bevatten die niet matchen met de projectenlijst, kun je die vóór harmonisatie laten corrigeren:
+
+```yaml
+brondata_correcties:
+  - collectie: COLL_STAGING_MONSTER
+    zoek_veld: PROJECT
+    patroon: "SCHE"
+    waarde: "DC039"
+```
+
+### Overige opties
+
+```yaml
+# Projecten waarvan artefacten niet gemerged worden
+artefact_niet_mergen:
+  projectcodes: ["DC112"]
+
+# Rapportcode-prefixen voor bestandsclassificatie
+rapportcode_prefixen:
+  - prefix: "DAR"
+    type: "archeologische_rapportage"
+  - prefix: "DAN"
+    type: "archeologische_notitie"
+```
+
+!!! tip "Leeg bestand is prima"
+    Als je geen correcties nodig hebt, laat het bestand leeg of maak het niet aan. De pipeline draait gewoon door zonder correcties.
+
+!!! info "Foutbestendig"
+    Als het YAML-bestand fouten bevat (ongeldige syntax, ontbrekende velden), slaat de pipeline de ongeldige regels over en gaat door. Fouten worden gelogd in Airflow.
 
 
 ## 6. Voor de eerste keer draaien

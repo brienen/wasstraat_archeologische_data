@@ -1,0 +1,28 @@
+# Correcties voor synthetische testdata
+#
+# Bevat testgevallen om te valideren dat het correctiemechanisme werkt.
+
+# Projectcode-correcties: pas toe op het projectcd veld in Single_Store na harmonisatie.
+# Elke regel: als projectcd matcht op het regex-patroon, vervang door projectcode.
+projectcode_correcties:
+  - patroon: "SYNTFOUT"
+    projectcode: "SY001"
+
+# Brondata-correcties: pas toe op raw velden in staging-collecties vóór harmonisatie.
+# Nodig als brondata afwijkende projectcodes bevat die niet matchen met de projectenlijst.
+brondata_correcties:
+  - collectie: COLL_STAGING_MONSTER
+    veld: PROJECT
+    patroon: "SYNTFOUT"
+    waarde: "SY001"
+
+# Projecten waarvan artefacten niet gemerged mogen worden
+#artefact_niet_mergen:
+#  projectcodes: ["DC112"]
+
+# Rapportcode-prefixen voor bestandsclassificatie
+#rapportcode_prefixen:
+#  - prefix: "DAR"
+#    type: "archeologische_rapportage"
+#  - prefix: "DAN"
+#    type: "archeologische_notitie"

@@ -353,7 +353,7 @@ def get_staging_plaatjes_docs():
 def seed_staging_data(test_databases):
     """Vul de staging-databases met testdata (simuleert de Extract-fase)."""
     staging_db = test_databases["staging"]
-    staging_db[config.COLL_STAGING_DELFIT].insert_many(get_staging_delfit_docs())
+    staging_db[config.COLL_STAGING_PROJECTENLIJST].insert_many(get_staging_delfit_docs())
     staging_db[config.COLL_STAGING_OUD].insert_many(get_staging_oud_docs())
     staging_db[config.COLL_PLAATJES].insert_many(get_staging_plaatjes_docs())
 
@@ -384,7 +384,7 @@ class TestFullPipeline:
         seed_staging_data(test_databases)
         staging = test_databases["staging"]
 
-        assert staging[config.COLL_STAGING_DELFIT].count_documents({}) >= 1
+        assert staging[config.COLL_STAGING_PROJECTENLIJST].count_documents({}) >= 1
         assert staging[config.COLL_STAGING_OUD].count_documents({}) >= 9
         assert staging[config.COLL_PLAATJES].count_documents({}) >= 4
 
@@ -400,7 +400,7 @@ class TestFullPipeline:
         pipeline = meta.getHarmonizePipelines("Project")
         aggr = patch_merge_target(pipeline[0])
 
-        coll = staging_db[config.COLL_STAGING_DELFIT]
+        coll = staging_db[config.COLL_STAGING_PROJECTENLIJST]
         list(coll.aggregate(aggr))
 
         result_coll = analyse_db[config.COLL_ANALYSE]
@@ -700,7 +700,7 @@ class TestProjectenXlsxExtract:
     """Test dat de projecten.xlsx correct ingelezen wordt via extractExtraProjects."""
 
     def test_extract_extra_projects(self, test_databases, projecten_xlsx):
-        """extractExtraProjects leest de xlsx in en schrijft naar COLL_STAGING_DELFIT."""
+        """extractExtraProjects leest de xlsx in en schrijft naar COLL_STAGING_PROJECTENLIJST."""
         from wasstraat.extract_extra_projects import extractExtraProjects
         staging_db = test_databases["staging"]
 
@@ -710,7 +710,7 @@ class TestProjectenXlsxExtract:
         try:
             extractExtraProjects()
 
-            coll = staging_db[config.COLL_STAGING_DELFIT]
+            coll = staging_db[config.COLL_STAGING_PROJECTENLIJST]
             doc = coll.find_one({"CODE": TEST_PROJECT_CODE, "OPGRAVING": TEST_PROJECT_NAAM})
             assert doc is not None, \
                 f"Project {TEST_PROJECT_CODE} niet gevonden na extractExtraProjects"

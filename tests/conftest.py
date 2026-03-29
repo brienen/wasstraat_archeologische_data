@@ -87,8 +87,8 @@ mock_config.COLL_STAGING_METAINFO = "Kolominformatie"
 mock_config.COLL_STAGING_OUD = "Staging_Projecten_Oud"
 mock_config.COLL_STAGING_NIEUW = "Staging_Projecten_Nieuw"
 mock_config.COLL_STAGING_MAGAZIJNLIJST = "Staging_Projecten_Magazijnlijst"
-mock_config.COLL_STAGING_DELFIT = "Staging_Projecten_DelfIT"
-mock_config.COLL_STAGING_DIGIFOTOS = "Staging_Projecten_Digifotos"
+mock_config.COLL_STAGING_PROJECTENLIJST = "Staging_Projecten_Projectenlijst"
+mock_config.COLL_STAGING_FOTOLIJST = "Staging_Projecten_Fotolijst"
 mock_config.COLL_STAGING_MONSTER = "Staging_Projecten_Monster"
 mock_config.COLL_STAGING_REFERENTIETABELLEN = "Staging_Referentietabellen"
 mock_config.COLL_STAGING_RAPPORTEN = "Staging_Rapporten"
@@ -125,21 +125,25 @@ mock_config.AIRFLOW_TEMPDIR = os.getenv("AIRFLOW_TEMPDIR", "/tmp/wasstraat_test"
 mock_config.AIRFLOW_LOGDIR = os.getenv("AIRFLOW_LOGDIR", "/tmp/wasstraat_test/logs")
 mock_config.AIRFLOW_INPUT_PROJECTEN = os.getenv("AIRFLOW_INPUT_PROJECTEN", "/input/projecten")
 mock_config.AIRFLOW_INPUT_IMAGES = os.getenv("AIRFLOW_INPUT_IMAGES", "/input/images")
-mock_config.AIRFLOW_INPUT_DELFIT = os.getenv("AIRFLOW_INPUT_DELFIT", "/input/delfit")
+mock_config.AIRFLOW_INPUT_PROJECTENLIJST = os.getenv("AIRFLOW_INPUT_PROJECTENLIJST", "/input/projectenlijst")
 mock_config.AIRFLOW_INPUT_MAGAZIJNLIJST = "/input/magazijnlijst"
-mock_config.AIRFLOW_INPUT_DIGIFOTOS = "/input/digifotos"
+mock_config.AIRFLOW_INPUT_FOTOLIJST = "/input/fotolijst"
 mock_config.AIRFLOW_INPUT_MONSTER = "/input/monsterdatabase"
 mock_config.AIRFLOW_INPUT_RAPPORTEN = "/input/rapporten"
 mock_config.AIRFLOW_OUTPUT_MEDIA = "/output/archeomedia"
+mock_config.AIRFLOW_CORRECTIES_CONFIG = os.getenv(
+    "AIRFLOW_CORRECTIES_CONFIG",
+    os.path.join(_project_root, "data", "test", "wasstraat_config", "correcties.yml")
+)
 
 # Elasticsearch
 mock_config.ES_HOST = "http://localhost:9200"
 
 # Overige
 mock_config.IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".gif", ".png", ".tif", ".psd", ".pdf", ".jp2", ".doc", ".docx"]
-mock_config.FILE_WORD_ICON = "/input/digifotos/microsoft-word-logo.jpg"
+mock_config.FILE_WORD_ICON = "/input/fotolijst/microsoft-word-logo.jpg"
 mock_config.FILE_ABREXCEL = "/input/referentietabellen/abr_versie_01122018.xlsx"
-mock_config.FILE_EXTRA_PROJECTS = "/input/delfit/Extra_projecten_tabel_OPGRAVINGEN.xlsx"
+mock_config.FILE_EXTRA_PROJECTS = "/input/projectenlijst/Extra_projecten_tabel_OPGRAVINGEN.xlsx"
 mock_config.FILE_IMPORT_FILES_EXCEL = "/input/referentietabellen/Alle Bestanden Archeologisch Depot.xlsx"
 
 # Registreer mock voordat echte imports plaatsvinden

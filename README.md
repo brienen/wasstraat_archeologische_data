@@ -111,7 +111,18 @@ make ps           # Toon status van alle services
 
 De repo bevat **synthetische voorbeelddata** in `data/synthetic/data/` — twee fictieve opgravingsprojecten (SY001 en SY002) waarmee je de volledige pipeline kunt testen zonder eigen brondata. Dit is het startpunt om het platform te leren kennen.
 
-**Eigen data gebruiken?** Gemeenten kunnen hun eigen opgravingsdata klaarzetten conform dezelfde directorystructuur als de Delftse pijplijn. Plaats bronbestanden (`.mdb`) in `data/delft/data/digidepot/` en de overige bestanden in de bijbehorende subdirectories. Zie `data/synthetic/data/` als werkend voorbeeld voor de verwachte structuur. De echte Delftse data is niet opgenomen in de repository.
+**Eigen data gebruiken?** Organiseer je bronbestanden in `data/<omgeving>/data/` conform deze structuur:
+
+| Directory | Inhoud | Formaat |
+|-----------|--------|---------|
+| `projecten/` | Per opgraving een subdirectory met projectdatabase + foto's | `.mdb` / `.accdb` |
+| `projectenlijst/` | Projectoverzicht (tabel `OPGRAVINGEN`: code, locatie, jaar) | `.mdb` |
+| `magazijnlijst/` | Depotadministratie (tabel `magazijnlijst`: stellingen, dozen) | `.mdb` |
+| `fotolijst/` | Fotocatalogus (tabel `Fotos`: koppeling foto ↔ vondst) | `.mdb` |
+| `monsterdatabase/` | Grondmonsters met botanische/zoölogische determinaties | `.mdb` |
+| `referentietabellen/` | ABR-thesaurus (`abr_versie_*.xlsx`) | `.xlsx` |
+
+De Wasstraat doorzoekt elke directory recursief op `.mdb`/`.accdb` bestanden. In `projecten/` bepaalt de directorynaam de projectcode. Zie `data/synthetic/data/` als werkend voorbeeld en de [documentatie](https://brienen.github.io/wasstraat_archeologische_data/aan-de-slag/) voor details.
 
 1. Open Airflow UI op [http://localhost:8080](http://localhost:8080)
 2. Start de DAG **`Extract_Transform_Load_Full_Cycle`**

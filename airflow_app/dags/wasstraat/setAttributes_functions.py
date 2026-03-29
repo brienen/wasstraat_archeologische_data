@@ -72,9 +72,22 @@ def enhanceAllAttributes():
         count_success = 0
         count_error = 0
 
+        # Projectcode-correcties uit correcties.yml: fix projectcd na harmonisatie
+        from wasstraat.harmonize_functions import laadCorrecties
+        correcties = laadCorrecties()
+        for i, fix in enumerate(correcties.get('projectcode_correcties', [])):
+            try:
+                result = analyseCol.update_many(
+                    {'projectcd': {'$regex': str(fix['patroon'])}},
+                    {'$set': {'projectcd': str(fix['projectcode'])}}
+                )
+                if result.modified_count > 0:
+                    logger.info(f"  Projectcode fix: projectcd~/{fix['patroon']}/ → {fix['projectcode']} ({result.modified_count} docs)")
+            except (KeyError, TypeError) as e:
+                logger.error(f"  Ongeldige projectcode_correctie #{i}: {fix} — {e}. Overslaan.")
+                continue
+
         #loop over all docs in Collection
-        #for doc in analyseCol.find({"soort": "Monster"}):
-        #for doc in analyseCol.find({"datering": {"$exists": True}}):
         for doc in analyseCol.find():
             success = False
 

@@ -30,13 +30,13 @@ services:
       - mongo
       - elasticsearch
     volumes:
-       - ./data/delft/data/digidepot:/input/projecten
-       - ./data/delft/data/digidepot:/input/images
+       - ./data/delft/data/projecten:/input/projecten
+       - ./data/delft/data/projecten:/input/images
        - ./data/delft/data/rapporten:/input/rapporten
        - ./data/delft/data/monsterdatabase:/input/monsterdatabase
-       - ./data/delft/data/Delf-IT:/input/delfit
+       - ./data/delft/data/projectenlijst:/input/projectenlijst
        - ./data/delft/data/magazijnlijst:/input/magazijnlijst
-       - ./data/delft/data/digifotos:/input/digifotos
+       - ./data/delft/data/fotolijst:/input/fotolijst
        - ./data/delft/data/referentietabellen:/input/referentietabellen
        - ./data/delft/output/archeomedia:/output/archeomedia
        - ./data/delft/wasstraat_config:/opt/airflow/config
@@ -108,7 +108,7 @@ services:
       - ./airflow_app/dags:/opt/wasstraat/
       - ./shared:/home/jovyan/shared/
       - ./data/delft/data:/home/jovyan/basefiles
-      - ./data/delft/data/digidepot:/input/images
+      - ./data/delft/data/projecten:/input/images
       - ./data/delft/data/referentietabellen:/input/referentietabellen
       - ./data/delft/output/archeomedia:/output/archeomedia
     environment:

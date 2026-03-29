@@ -15,11 +15,51 @@ import logging
 logger = logging.getLogger("airflow.task")
 
 
+def _laadImageFilterPatronen():
+    """Laad rapportcode-prefixen uit correcties.yml en combineer met generieke patronen."""
+    generieke_patronen = ["velddocument", "fotos", "tekening"]
+    try:
+        import yaml
+        pad = getattr(config, 'AIRFLOW_CORRECTIES_CONFIG', None)
+        if pad and os.path.isfile(pad):
+            with open(pad, 'r') as f:
+                correcties = yaml.safe_load(f) or {}
+            if isinstance(correcties, dict):
+                for entry in correcties.get('rapportcode_prefixen', []):
+                    if isinstance(entry, dict) and 'prefix' in entry:
+                        generieke_patronen.append(str(entry['prefix']))
+                    else:
+                        logger.warning(f"Ongeldige rapportcode_prefix entry: {entry} — overslaan.")
+    except Exception as e:
+        logger.error(f"Fout bij laden image-filterpatronen uit correcties.yml: {e}")
+    return generieke_patronen
+
+_image_filter_patronen = None
+
 def getImageNamesFromDir(dir):
-    lst = [os.path.join(dp, f) for dp, dn, filenames in os.walk(dir) for f in filenames if os.path.splitext(f)[1].lower() in config.IMAGE_EXTENSIONS] 
-    lst = [file for file in lst if ("velddocument" in file.lower() or "fotos" in file.lower() or "tekening" in file.lower() or "DAN" in file or "DAR" in file)]
+    global _image_filter_patronen
+    if _image_filter_patronen is None:
+        _image_filter_patronen = _laadImageFilterPatronen()
+
+    lst = [os.path.join(dp, f) for dp, dn, filenames in os.walk(dir) for f in filenames if os.path.splitext(f)[1].lower() in config.IMAGE_EXTENSIONS]
+    patronen = _image_filter_patronen
+    # Generieke patronen worden case-insensitive gematcht, rapportcode-prefixen case-sensitive
+    file_lower = None
+    def matchesFilter(file):
+        fl = file.lower()
+        for p in patronen:
+            if p[0].isupper():
+                # Rapportcode-prefixen: case-sensitive match
+                if p in file:
+                    return True
+            else:
+                # Generieke patronen: case-insensitive match
+                if p in fl:
+                    return True
+        return False
+    lst = [file for file in lst if matchesFilter(file)]
     lst = list(set(lst))
-    return lst 
+    return lst
 
 
 def getImageNamesFromExcelAndDir(dir):

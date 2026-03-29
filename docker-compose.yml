@@ -33,9 +33,9 @@ services:
        - ./data/synthetic/data/projecten:/input/projecten
        - ./data/synthetic/data/projecten:/input/images
        - ./data/synthetic/data/monsterdatabase:/input/monsterdatabase
-       - ./data/synthetic/data/delfit:/input/delfit
+       - ./data/synthetic/data/projectenlijst:/input/projectenlijst
        - ./data/synthetic/data/magazijnlijst:/input/magazijnlijst
-       - ./data/synthetic/data/digifotos:/input/digifotos
+       - ./data/synthetic/data/fotolijst:/input/fotolijst
        - ./data/synthetic/data/referentietabellen:/input/referentietabellen
        - ./data/synthetic/output/archeomedia:/output/archeomedia
        - ./data/synthetic/wasstraat_config:/opt/airflow/config

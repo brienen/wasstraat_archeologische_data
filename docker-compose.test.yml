@@ -105,8 +105,8 @@ services:
       COLL_STAGING_OUD: Staging_Projecten_Oud
       COLL_STAGING_NIEUW: Staging_Projecten_Nieuw
       COLL_STAGING_MAGAZIJNLIJST: Staging_Projecten_Magazijnlijst
-      COLL_STAGING_DELFIT: Staging_Projecten_DelfIT
-      COLL_STAGING_DIGIFOTOS: Staging_Projecten_Digifotos
+      COLL_STAGING_PROJECTENLIJST: Staging_Projecten_Projectenlijst
+      COLL_STAGING_FOTOLIJST: Staging_Projecten_Fotolijst
       COLL_STAGING_MONSTER: Staging_Projecten_Monster
       COLL_ANALYSE_FOTO: Def_Fotos
       COLL_ANALYSE_ARTEFACT: Def_Artefact
@@ -127,9 +127,9 @@ services:
       AIRFLOW_WASSTRAAT_CONFIG: /opt/airflow/config/Wasstraat_Config_HarmonizeV3.xlsx
       AIRFLOW_INPUT_PROJECTEN: /input/projecten
       AIRFLOW_INPUT_IMAGES: /input/projecten
-      AIRFLOW_INPUT_DELFIT: /input/delfit
+      AIRFLOW_INPUT_PROJECTENLIJST: /input/projectenlijst
       AIRFLOW_INPUT_MAGAZIJNLIJST: /input/magazijnlijst
-      AIRFLOW_INPUT_DIGIFOTOS: /input/digifotos
+      AIRFLOW_INPUT_FOTOLIJST: /input/fotolijst
       AIRFLOW_INPUT_MONSTER: /input/monsterdatabase
       AIRFLOW_INPUT_RAPPORTEN: /input/rapporten
       AIRFLOW_OUTPUT_MEDIA: /tmp/archeomedia_test
@@ -140,9 +140,9 @@ services:
       - ./shared:/opt/airflow/dags/shared
       - ./data/synthetic/wasstraat_config:/opt/airflow/config
       - ./data/synthetic/data/projecten:/input/projecten:ro
-      - ./data/synthetic/data/delfit:/input/delfit:ro
+      - ./data/synthetic/data/projectenlijst:/input/projectenlijst:ro
       - ./data/synthetic/data/magazijnlijst:/input/magazijnlijst:ro
-      - ./data/synthetic/data/digifotos:/input/digifotos:ro
+      - ./data/synthetic/data/fotolijst:/input/fotolijst:ro
       - ./data/synthetic/data/monsterdatabase:/input/monsterdatabase:ro
       - ./data/synthetic/data/referentietabellen:/input/referentietabellen:ro
 
@@ -185,8 +185,8 @@ services:
       COLL_STAGING_OUD: Staging_Projecten_Oud
       COLL_STAGING_NIEUW: Staging_Projecten_Nieuw
       COLL_STAGING_MAGAZIJNLIJST: Staging_Projecten_Magazijnlijst
-      COLL_STAGING_DELFIT: Staging_Projecten_DelfIT
-      COLL_STAGING_DIGIFOTOS: Staging_Projecten_Digifotos
+      COLL_STAGING_PROJECTENLIJST: Staging_Projecten_Projectenlijst
+      COLL_STAGING_FOTOLIJST: Staging_Projecten_Fotolijst
       COLL_STAGING_MONSTER: Staging_Projecten_Monster
       COLL_ANALYSE_FOTO: Def_Fotos
       COLL_ANALYSE_ARTEFACT: Def_Artefact

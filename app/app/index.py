@@ -39,36 +39,40 @@ class MyIndexView(IndexView):
     def render_template(self, template, **kwargs):
         current_app.logger.info('Rendering template for index page: setting projectinfo...')
 
-        start_coords = (52.00667, 4.35556) # Delft
-        foliummap = folium.Map(location=start_coords, zoom_start=12)
-        #folium.TileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', attr='Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community', name='Esri Terrain').add_to(foliummap)
-        #folium.TileLayer('https://mapwarper.net/maps/tile/35760/{z}/{x}/{y}.png', attr='Mapwarp', name='Delft 1652').add_to(foliummap)
-        #folium.TileLayer('Stamen Terrain').add_to(foliummap)
-        #folium.TileLayer('CartoDB positron').add_to(foliummap)
-
+        # Standaard: centrum van Nederland; wordt overschreven als er projecten met locatie zijn
+        default_coords = (52.15, 5.39)
+        foliummap = folium.Map(location=default_coords, zoom_start=8)
 
         feature_group_niet = folium.FeatureGroup(name='Niet Ingelezen Projecten')
         feature_group_ingl = folium.FeatureGroup(name='Ingelezen Projecten')
         dest_db_con = create_engine(config.SQLALCHEMY_DATABASE_URI, isolation_level='AUTOCOMMIT')
-        try: 
+        try:
             Session = sessionmaker(bind=dest_db_con)
             session = Session()
 
             stmt = (
-                # Works directly on resultset
                 session.query(Project.primary_key, Project.projectcd, Project.projectnaam, func.st_y(Project.location), func.st_x(Project.location),func.count(Artefact.primary_key))
                     .select_from(Artefact)
                     .join(Artefact.project, full=True)
                     .group_by(Project.primary_key, Project.projectcd, Project.projectnaam, Project.location)
                     .filter(Project.location != None).statement
                 )
-            # Works directly on resultset
             rs = dest_db_con.execute(stmt)
-            [MyIndexView.addMarker(row[0],row[1],row[2],row[3],row[4],row[5], feature_group_niet,feature_group_ingl) for row in rs]
+
+            lats = []
+            lons = []
+            for row in rs:
+                MyIndexView.addMarker(row[0],row[1],row[2],row[3],row[4],row[5], feature_group_niet,feature_group_ingl)
+                lats.append(row[3])
+                lons.append(row[4])
 
             feature_group_niet.add_to(foliummap)
             feature_group_ingl.add_to(foliummap)
             folium.LayerControl().add_to(foliummap)
+
+            # Zoom de kaart automatisch naar de bounding box van alle projecten
+            if lats and lons:
+                foliummap.fit_bounds([[min(lats), min(lons)], [max(lats), max(lons)]])
 
             self.foliummap_str = foliummap._repr_html_()
             self.extra_args = {'foliummap':self.foliummap_str}     

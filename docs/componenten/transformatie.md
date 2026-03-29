@@ -184,33 +184,37 @@ Invoer records:
 
 ## Configuratie
 
-Transformatiestappen kunnen per bron worden geconfigureerd:
+De transformatielaag wordt aangestuurd door twee configuratiebestanden in de `wasstraat_config/`-directory:
 
-```json
-{
-  "bron": "Amsterdam Gemeente",
-  "transformatie_regels": {
-    "periode": {
-      "invoerkolom": "PERIODE_CODE",
-      "transformatie": "abr_alignment",
-      "mapping": {
-        "PA": "Paleolithicum",
-        "BA": "Bronstijd"
-      }
-    },
-    "datum": {
-      "invoerkolom": "VONDSTDATUM",
-      "format": "DD-MM-YYYY",
-      "transformatie": "iso8601_normalisatie"
-    },
-    "coördinaten": {
-      "invoerkolonX": "X_RD",
-      "invoerkolonY": "Y_RD",
-      "invoer_crs": "EPSG:28992",
-      "uitvoer_crs": "EPSG:4326"
-    }
-  }
-}
+### Harmonisatie-mapping (Excel)
+
+Het bestand `Wasstraat_Config_HarmonizeV3.xlsx` definieert de veldmapping per objecttype: welke kolom in de brondata correspondeert met welk veld in het geharmoniseerde datamodel. Zie [Aan de slag](../aan-de-slag.md#5-wasstraat_config_harmonizev3-configureren) voor details.
+
+### Datacorrecties (YAML)
+
+Het bestand `correcties.yml` bevat gemeente-specifieke datacorrecties die automatisch door de pipeline worden toegepast:
+
+**Projectcode-correcties** — worden na harmonisatie (Transform2) toegepast op het `projectcd`-veld:
+
+```yaml
+projectcode_correcties:
+  - patroon: "SCHE"        # regex-match op projectcd
+    projectcode: "DC039"   # vervangende waarde
+```
+
+**Brondata-correcties** — worden vóór harmonisatie (Transform1) toegepast op raw velden in staging:
+
+```yaml
+brondata_correcties:
+  - collectie: COLL_STAGING_MONSTER  # config-constante van de collectie
+    zoek_veld: PROJECT               # veld waarop gematcht wordt
+    patroon: "SCHE"                  # regex-patroon
+    waarde: "DC039"                  # vervangende waarde
+```
+
+**Overige opties**: `artefact_niet_mergen` (projecten uitsluiten van merge) en `rapportcode_prefixen` (bestandsclassificatie).
+
+Het correctiebestand is optioneel en foutbestendig: bij ongeldige YAML of ontbrekende velden worden de betreffende regels overgeslagen en gelogd
 ```
 
 ## Foutafhandeling
