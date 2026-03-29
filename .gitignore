@@ -39,7 +39,7 @@ app/uwsgi-2.0.20/
 Analyse/*
 !Analyse/.gitkeep
 
-
+*-workspace
 
 # Geen .env bestanden in Github, zitten vaak wachtwoorden in 
 *.env
