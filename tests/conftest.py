@@ -138,7 +138,7 @@ mock_config.ES_HOST = "http://localhost:9200"
 # Overige
 mock_config.IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".gif", ".png", ".tif", ".psd", ".pdf", ".jp2", ".doc", ".docx"]
 mock_config.FILE_WORD_ICON = "/input/digifotos/microsoft-word-logo.jpg"
-mock_config.FILE_ABREXCEL = "/input/referentietabellen/abr_versie_01122018_input.xlsx"
+mock_config.FILE_ABREXCEL = "/input/referentietabellen/abr_versie_01122018.xlsx"
 mock_config.FILE_EXTRA_PROJECTS = "/input/delfit/Extra_projecten_tabel_OPGRAVINGEN.xlsx"
 mock_config.FILE_IMPORT_FILES_EXCEL = "/input/referentietabellen/Alle Bestanden Archeologisch Depot.xlsx"
 

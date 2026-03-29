@@ -173,7 +173,7 @@ Ondersteunde bestandstypen voor media: `.jpg`, `.jpeg`, `.png`, `.gif`, `.tif`, 
 !!! tip "Minimale proefset"
     Voor een eerste test volstaat het om één `.mdb` projectdatabase in `digidepot/` te plaatsen, samen met de referentietabellen. De extractie verwerkt dan alleen dat ene project.
 
-## 5. Wasstraat_Config_Harmonize configureren
+## 5. Wasstraat_Config_HarmonizeV3 configureren
 
 Het bestand `Wasstraat_Config_HarmonizeV3.xlsx` is het hart van de dataverwerkingsconfiguratie. Het vertelt de Wasstraat hoe brondata uit diverse Access-databases moet worden omgezet naar een geüniformeerd datamodel.
 
