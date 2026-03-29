@@ -74,7 +74,7 @@ test-quick: install ## Draai unit tests (korte output)
 .PHONY: integration
 integration: install ## Draai volledige integratietests: Extract + Transform + Load + Flask
 	@echo "➜ Test-omgeving starten (synthetische data)..."
-	$(COMPOSE_TEST) up -d mongo-test postgres-test redis-test flask-test airflow-test
+	$(COMPOSE_TEST) up -d mongo-test postgres-test redis-test airflow-test flask-test
 	@echo "➜ Stap 1: Extract + Transform + Load pipeline..."
 	$(PYTEST) tests/integration/ \
 		-v -s -m "(integration or load) and not delft" --tb=short; \
@@ -101,7 +101,7 @@ integration-keep: install ## Zelfde als integration maar laat containers draaien
 .PHONY: integration-pipeline
 integration-pipeline: install ## Draai alleen Extract + Transform (zonder Load en Flask)
 	@echo "➜ Test-omgeving starten (synthetische data)..."
-	$(COMPOSE_TEST) up -d mongo-test postgres-test flask-test airflow-test
+	$(COMPOSE_TEST) up -d mongo-test postgres-test airflow-test flask-test
 	$(PYTEST) tests/integration/ \
 		-v -s -m "integration and not delft and not load" --tb=short; \
 	EXIT=$$?; \
@@ -112,7 +112,7 @@ integration-pipeline: install ## Draai alleen Extract + Transform (zonder Load e
 .PHONY: integration-load
 integration-load: install ## Draai Extract + Transform + Load (zonder Flask)
 	@echo "➜ Test-omgeving starten (inclusief Load)..."
-	$(COMPOSE_TEST) up -d mongo-test postgres-test flask-test airflow-test
+	$(COMPOSE_TEST) up -d mongo-test postgres-test airflow-test flask-test
 	$(PYTEST) tests/integration/test_full_pipeline_synthetic_data.py \
 		-v -s -m "integration or load" --tb=short; \
 	EXIT=$$?; \

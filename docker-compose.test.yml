@@ -1,5 +1,5 @@
 # docker-compose.test.yml
-# Testomgeving: MongoDB + PostgreSQL/PostGIS + Airflow + Flask + Redis.
+# Standalone testomgeving: MongoDB + PostgreSQL/PostGIS + Airflow + Flask + Redis.
 # Alle services delen dezelfde PostgreSQL database (airflow_test).
 #
 # Standaard: synthetische data (SY001 + SY002).
@@ -25,9 +25,18 @@ services:
     tmpfs:
       - /data/db
 
+  redis-test:
+    image: redis:7.2-alpine
+    container_name: "wasstraat_redis_test"
+    networks:
+      testnet:
+        aliases:
+          - redis
+
   postgres-test:
-    image: postgis/postgis:16-3.4
-    platform: linux/amd64
+    build:
+      context: .
+      dockerfile: services/postgres/Dockerfile
     container_name: "wasstraat_postgres_test"
     environment:
       POSTGRES_DB: airflow_test
@@ -36,20 +45,14 @@ services:
       FLASK_PGUSER: testuser
       FLASK_PGPASSWORD: testpass
       FLASK_PGDATABASE: airflow_test
+      PGDATA: /data/postgres
+      PASSWORD_AUTHENTICATION: md5
     networks:
       testnet:
         aliases:
           - postgres
     tmpfs:
-      - /var/lib/postgresql/data
-
-  redis-test:
-    image: redis:7.2-alpine
-    container_name: "wasstraat_redis_test"
-    networks:
-      testnet:
-        aliases:
-          - redis
+      - /data/postgres
 
   airflow-test:
     build:
