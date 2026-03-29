@@ -119,7 +119,7 @@ mock_config.SQLALCHEMY_DATABASE_URI = "postgresql://test:test@localhost/test_db"
 _project_root = os.path.dirname(os.path.dirname(__file__))
 mock_config.AIRFLOW_WASSTRAAT_CONFIG = os.getenv(
     "AIRFLOW_WASSTRAAT_CONFIG",
-    os.path.join(_project_root, "data", "wasstraat_config", "Wasstraat_Config_HarmonizeV3.xlsx")
+    os.path.join(_project_root, "data", "test", "wasstraat_config", "Wasstraat_Config_HarmonizeV3.xlsx")
 )
 mock_config.AIRFLOW_TEMPDIR = os.getenv("AIRFLOW_TEMPDIR", "/tmp/wasstraat_test")
 mock_config.AIRFLOW_LOGDIR = os.getenv("AIRFLOW_LOGDIR", "/tmp/wasstraat_test/logs")
@@ -138,7 +138,7 @@ mock_config.ES_HOST = "http://localhost:9200"
 # Overige
 mock_config.IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".gif", ".png", ".tif", ".psd", ".pdf", ".jp2", ".doc", ".docx"]
 mock_config.FILE_WORD_ICON = "/input/digifotos/microsoft-word-logo.jpg"
-mock_config.FILE_ABREXCEL = "/input/referentietabellen/abr_versie_01122018_input.xlsx"
+mock_config.FILE_ABREXCEL = "/input/referentietabellen/abr_versie_01122018.xlsx"
 mock_config.FILE_EXTRA_PROJECTS = "/input/delfit/Extra_projecten_tabel_OPGRAVINGEN.xlsx"
 mock_config.FILE_IMPORT_FILES_EXCEL = "/input/referentietabellen/Alle Bestanden Archeologisch Depot.xlsx"
 

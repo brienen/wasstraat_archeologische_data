@@ -35,7 +35,7 @@ PYTEST := $(BIN)/python -m pytest
 # --- Docker Compose ---
 DC := docker compose 
 COMPOSE_TEST := $(DC) -p wasstraat-test -f docker-compose.test.yml
-COMPOSE_TEST_DELFT := $(DC) -p wasstraat-test -f docker-compose.test.yml -f docker-compose.test-delft.yml
+COMPOSE_DELFT := $(DC) -f docker-compose.delft.yml
 DT := $(shell date +"%Y-%m-%d_%H-%M-%S")
 
 # --- Init-config: genereer .env uit .env.example als ze nog niet bestaan ---
@@ -121,15 +121,15 @@ integration-load: install ## Draai Extract + Transform + Load (zonder Flask)
 	exit $$EXIT
 
 .PHONY: integration-delft
-integration-delft: install ## Draai integratietests met echte Delftse data (DB034)
-	@echo "➜ Test-omgeving starten (Delftse data)..."
-	$(COMPOSE_TEST_DELFT) up -d
+integration-delft: install ## Draai integratietests met echte Delftse data
+	@echo "➜ Delft test-omgeving starten..."
+	$(COMPOSE_DELFT) up -d
 	@echo "➜ Wachten tot services klaar zijn..."
 	$(PYTEST) tests/integration/ \
 		-v -s -m delft --tb=short; \
 	EXIT=$$?; \
-	echo "➜ Test-omgeving opruimen..."; \
-	$(COMPOSE_TEST_DELFT) down -v; \
+	echo "➜ Delft test-omgeving opruimen..."; \
+	$(COMPOSE_DELFT) down -v; \
 	exit $$EXIT
 
 .PHONY: test-flask
@@ -188,9 +188,14 @@ build-force: ## Bouw alle Docker images opnieuw van de grond af aan (geen cache)
 	$(DC) build --no-cache --pull postgres airflow flask jupyter apache
 
 .PHONY: app
-app: ## Start de wasstraat (alle services)
+app: ## Start de wasstraat (alle services, synthetische data)
 	$(init-config)
 	$(DC) up -d
+
+.PHONY: delft
+delft: ## Start de wasstraat met Delftse data
+	$(init-config)
+	$(COMPOSE_DELFT) up -d
 
 .PHONY: dev
 dev: ## Start in development mode (met hot-reload volumes)

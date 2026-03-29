@@ -79,7 +79,7 @@ def _load_harmonizer_df():
     """Laad het harmonizer-dataframe uit het echte configuratiebestand."""
     config_path = os.path.join(
         os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
-        "data", "wasstraat_config", "Wasstraat_Config_HarmonizeV3.xlsx"
+        "data", "test", "wasstraat_config", "Wasstraat_Config_HarmonizeV3.xlsx"
     )
     if not os.path.exists(config_path):
         return None

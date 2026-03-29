@@ -55,6 +55,7 @@ volumes:
   - ./data/synthetic/data/magazijnlijst:/input/magazijnlijst
   - ./data/synthetic/data/digifotos:/input/digifotos
   - ./data/synthetic/data/monsterdatabase:/input/monsterdatabase
+  - ./data/synthetic/data/referentietabellen:/input/referentietabellen
 ```
 
 Om de synthetische data met de volledige Wasstraat-applicatie te gebruiken, pas je dezelfde volume-mappings toe in je eigen docker-compose override.
@@ -75,7 +76,7 @@ make synthetic
 Wil je als gemeente je eigen data verwerken? Organiseer je bestanden conform dezelfde structuur:
 
 ```
-data/input/basefiles/projectdatabase/
+data/delft/data/
 ├── digidepot/           # Per project een subdirectory met .mdb
 │   ├── PROJECT001/
 │   │   └── C Database/PROJECT001.mdb

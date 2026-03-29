@@ -88,25 +88,30 @@ def getColumnMetadata(cursor, table_name):
 
 
 def getEnumColumns(cursor, table_name):
-    """Bepaal welke kolommen een PostgreSQL ENUM type hebben.
+    """Bepaal welke kolommen een PostgreSQL ENUM type hebben, inclusief geldige waarden.
 
     Args:
         cursor: psycopg2 cursor
         table_name: Tabelnaam (zonder _new suffix)
 
     Returns:
-        Set van kolomnamen met ENUM type
+        Dict van kolomnaam -> lijst van geldige ENUM waarden
     """
     cursor.execute("""
-        SELECT c.column_name
+        SELECT c.column_name, e.enumlabel
         FROM information_schema.columns c
         JOIN pg_type t ON t.typname = c.udt_name
+        JOIN pg_enum e ON e.enumtypid = t.oid
         WHERE c.table_name = %s
           AND c.table_schema = 'public'
           AND c.data_type = 'USER-DEFINED'
           AND t.typtype = 'e'
+        ORDER BY c.column_name, e.enumsortorder
     """, (table_name,))
-    return set(row[0] for row in cursor.fetchall())
+    result = {}
+    for col_name, enum_value in cursor.fetchall():
+        result.setdefault(col_name, []).append(enum_value)
+    return result
 
 
 # ============================================================
@@ -216,7 +221,7 @@ def transformRow(doc, columns, col_lookup, enum_columns):
         doc: MongoDB document (dict)
         columns: Lijst van te laden kolomnamen
         col_lookup: Dict van kolomnaam -> metadata dict
-        enum_columns: Set van kolomnamen met ENUM type
+        enum_columns: Dict van kolomnaam -> lijst geldige ENUM waarden
 
     Returns:
         Dict met getransformeerde waarden per kolom
@@ -241,7 +246,8 @@ def transformRow(doc, columns, col_lookup, enum_columns):
         # Normaliseer nan/None/empty
         if isNanOrEmpty(value):
             if col_name in enum_columns:
-                result[col_name] = const.ARTF_ONBEKEND
+                valid = enum_columns[col_name]
+                result[col_name] = const.ARTF_ONBEKEND if const.ARTF_ONBEKEND in valid else valid[0]
             else:
                 result[col_name] = None
             continue
@@ -269,7 +275,11 @@ def transformRow(doc, columns, col_lookup, enum_columns):
             result[col_name] = convertToDatePure(value)
         elif col_name in enum_columns:
             s = str(value).strip()
-            result[col_name] = const.ARTF_ONBEKEND if s == '' else value
+            if s == '':
+                valid = enum_columns[col_name]
+                result[col_name] = const.ARTF_ONBEKEND if const.ARTF_ONBEKEND in valid else valid[0]
+            else:
+                result[col_name] = value
         else:
             result[col_name] = value
 
@@ -325,7 +335,7 @@ def transferToDB(soort, table, cursor):
         col_lookup = {c['name']: c for c in db_columns}
         enum_columns = getEnumColumns(cursor, base_table)
         if enum_columns:
-            logger.info(f"ENUM kolommen gevonden voor {base_table}: {enum_columns}")
+            logger.info(f"ENUM kolommen gevonden voor {base_table}: {set(enum_columns.keys())}")
 
         # 2. Haal MongoDB documenten op
         col = getAnalyseCleanCollection()

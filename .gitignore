@@ -1,23 +1,45 @@
 .ipynb_checkpoints
 
-# inhoud van data directory gaat niet naat Github, behalve de directories zelf
-data/input/*
-!data/input/.gitkeep 
-data/output/*
-!data/output/.gitkeep 
+# Delft data gaat niet naar Github
+data/delft/data/*
+!data/delft/data/Delf-IT/.gitkeep
+!data/delft/data/digidepot/.gitkeep
+!data/delft/data/digifotos/.gitkeep
+!data/delft/data/referentietabellen/.gitkeep
+!data/delft/data/magazijnlijst/.gitkeep
+!data/delft/data/monsterdatabase/.gitkeep
+!data/delft/data/rapporten/.gitkeep
+data/delft/output/*
+!data/delft/output/.gitkeep
+data/delft/backup/*
+!data/delft/backup/.gitkeep
+
+# Test data gaat niet naar Github
+data/test/*
+data/test/projecten/*
+data/test/projectenlijst/*
+data/test/referentietabellen/*
+!data/test/.gitkeep
+!data/test/output/.gitkeep
+!data/test/backup/.gitkeep
+
+# Synthetische output data gaat niet naar Github
+data/synthetic/output/*
+!data/synthetic/output/.gitkeep
+
+
+# Backups
 backup/*
-!backup/.gitkeep 
-data/images/*
-!data/images/.gitkeep 
-data/postgres/*
-!data/postgres/.gitkeep 
+!backup/.gitkeep
+
+# App uploads en legacy
 app/app/static/uploads/*
-!app/app/static/uploads/.gitkeep 
+!app/app/static/uploads/.gitkeep
 app/uwsgi-2.0.20/
 Analyse/*
-!Analyse/.gitkeep 
+!Analyse/.gitkeep
 
-
+*-workspace
 
 # Geen .env bestanden in Github, zitten vaak wachtwoorden in 
 *.env

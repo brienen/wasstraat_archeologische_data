@@ -111,7 +111,7 @@ make ps           # Toon status van alle services
 
 De repo bevat **synthetische voorbeelddata** in `data/synthetic/data/` — twee fictieve opgravingsprojecten (SY001 en SY002) waarmee je de volledige pipeline kunt testen zonder eigen brondata. Dit is het startpunt om het platform te leren kennen.
 
-**Eigen data gebruiken?** Gemeenten kunnen hun eigen opgravingsdata klaarzetten conform dezelfde directorystructuur als de Delftse pijplijn. Plaats bronbestanden (`.mdb`) in `data/input/basefiles/projectdatabase/digidepot/` en de overige bestanden in de bijbehorende subdirectories. Zie `data/synthetic/data/` als werkend voorbeeld voor de verwachte structuur. De echte Delftse data is niet opgenomen in de repository.
+**Eigen data gebruiken?** Gemeenten kunnen hun eigen opgravingsdata klaarzetten conform dezelfde directorystructuur als de Delftse pijplijn. Plaats bronbestanden (`.mdb`) in `data/delft/data/digidepot/` en de overige bestanden in de bijbehorende subdirectories. Zie `data/synthetic/data/` als werkend voorbeeld voor de verwachte structuur. De echte Delftse data is niet opgenomen in de repository.
 
 1. Open Airflow UI op [http://localhost:8080](http://localhost:8080)
 2. Start de DAG **`Extract_Transform_Load_Full_Cycle`**

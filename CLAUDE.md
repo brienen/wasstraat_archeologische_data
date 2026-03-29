@@ -18,9 +18,13 @@ tests/integration/         # Integratietests (Docker-based)
 docs/                      # MkDocs documentatie (Nederlands)
 config/                    # Environment-bestanden (.env, gegenereerd door init-config.sh)
 services/                  # Dockerfiles per service
-data/input/basefiles/      # Bronbestanden (.mdb Access-databases, niet in repo)
+data/delft/data/           # Delftse bronbestanden (.mdb Access-databases, niet in repo)
+data/delft/output/         # Verwerkte Delftse data (niet in repo)
+data/delft/wasstraat_config/ # Harmonisatie-configuratie voor Delft
+data/delft/backup/         # Backups Postgres + MongoDB (niet in repo)
 data/synthetic/data/       # Synthetische voorbeelddata (MDB-bestanden, in repo)
 data/synthetic/generatie/  # Generator-script voor synthetische data
+data/test/                 # Testdata voor Delft-subtests
 notebooks/                 # Jupyter notebooks voor analyse
 ```
 

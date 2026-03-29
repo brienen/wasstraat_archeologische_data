@@ -9,7 +9,7 @@ services:
       - "5432:5432"
     volumes:
       - wasstraat_postgres_volume:/var/lib/postgresql/data
-      - ./data/synthetic/backup/postgres:/backup
+      - ./data/delft/backup/postgres:/backup
     build:
       dockerfile: ./services/postgres/Dockerfile
       context: .
@@ -30,15 +30,16 @@ services:
       - mongo
       - elasticsearch
     volumes:
-       - ./data/synthetic/data/projecten:/input/projecten
-       - ./data/synthetic/data/projecten:/input/images
-       - ./data/synthetic/data/monsterdatabase:/input/monsterdatabase
-       - ./data/synthetic/data/delfit:/input/delfit
-       - ./data/synthetic/data/magazijnlijst:/input/magazijnlijst
-       - ./data/synthetic/data/digifotos:/input/digifotos
-       - ./data/synthetic/data/referentietabellen:/input/referentietabellen
-       - ./data/synthetic/output/archeomedia:/output/archeomedia
-       - ./data/synthetic/wasstraat_config:/opt/airflow/config
+       - ./data/delft/data/digidepot:/input/projecten
+       - ./data/delft/data/digidepot:/input/images
+       - ./data/delft/data/rapporten:/input/rapporten
+       - ./data/delft/data/monsterdatabase:/input/monsterdatabase
+       - ./data/delft/data/Delf-IT:/input/delfit
+       - ./data/delft/data/magazijnlijst:/input/magazijnlijst
+       - ./data/delft/data/digifotos:/input/digifotos
+       - ./data/delft/data/referentietabellen:/input/referentietabellen
+       - ./data/delft/output/archeomedia:/output/archeomedia
+       - ./data/delft/wasstraat_config:/opt/airflow/config
        - ./airflow_app/dags:/opt/airflow/dags # Deze niet aanpassen
        - ./airflow_app/scripts:/opt/airflow/scripts # Deze niet aanpassen
        - ./airflow_app/.vscode:/opt/airflow/.vscode
@@ -79,7 +80,7 @@ services:
       - elasticsearch
       - apache
     volumes:
-      - ./data/synthetic/output/archeomedia:/output/archeomedia
+      - ./data/delft/output/archeomedia:/output/archeomedia
 
 
   mongo:
@@ -92,7 +93,7 @@ services:
     volumes:
       - wasstraat_mongo_volume:/data/db
       - wasstraat_mongo_config_volume:/data/configdb
-      - ./data/synthetic/backup/mongo:/backup
+      - ./data/delft/backup/mongo:/backup
 
   jupyter:
     container_name: wasstraat_jupyter
@@ -103,13 +104,13 @@ services:
       - "8888:8888"
     volumes:
       - ./notebooks:/home/jovyan/
-      - ./data/synthetic/wasstraat_config:/home/jovyan/wasstraat_config/
+      - ./data/delft/wasstraat_config:/home/jovyan/wasstraat_config/
       - ./airflow_app/dags:/opt/wasstraat/
       - ./shared:/home/jovyan/shared/
-      - ./data/synthetic/data:/home/jovyan/basefiles
-      - ./data/synthetic/data/projecten:/input/images
-      - ./data/synthetic/data/referentietabellen:/input/referentietabellen
-      - ./data/synthetic/output/archeomedia:/output/archeomedia
+      - ./data/delft/data:/home/jovyan/basefiles
+      - ./data/delft/data/digidepot:/input/images
+      - ./data/delft/data/referentietabellen:/input/referentietabellen
+      - ./data/delft/output/archeomedia:/output/archeomedia
     environment:
       JUPYTER_ENABLE_LAB: "yes"
     command: "start-notebook.sh --NotebookApp.token='' --NotebookApp.password=''"
@@ -125,7 +126,7 @@ services:
       dockerfile: ./services/apache/Dockerfile
       context: .
     volumes:
-      - ./data/synthetic/output:/usr/local/apache2/htdocs
+      - ./data/delft/output:/usr/local/apache2/htdocs
     ports:
       - '5052:5052'
 
