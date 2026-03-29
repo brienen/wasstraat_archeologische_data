@@ -48,15 +48,6 @@ class TestFlaskStartup:
         assert "leaflet" in html or "l.map" in html or "folium" in html, \
             "Geen Leaflet/Folium kaart gevonden in de indexpagina"
 
-    def test_index_page_contains_delft_coordinates(self):
-        """De kaart moet gecentreerd zijn op Delft (52.00667, 4.35556)."""
-        resp = requests.get(f"{FLASK_BASE_URL}/", timeout=10, allow_redirects=True)
-        html = resp.text
-        assert "52.00667" in html or "52.006" in html, \
-            "Delft latitude (52.00667) niet gevonden in kaart"
-        assert "4.35556" in html or "4.355" in html, \
-            "Delft longitude (4.35556) niet gevonden in kaart"
-
     def test_login_page_accessible(self):
         """De login-pagina moet bereikbaar zijn (FAB security werkt)."""
         resp = requests.get(f"{FLASK_BASE_URL}/login/", timeout=10)
@@ -92,6 +83,13 @@ class TestFlaskKaartProjecten:
         html = resp.text
         assert "SY001" in html, "Projectcode SY001 niet gevonden in kaart-HTML"
         assert "SY002" in html, "Projectcode SY002 niet gevonden in kaart-HTML"
+
+    def test_index_page_contains_map_bounds(self):
+        """De kaart moet automatisch ingezoomd zijn op de projectlocaties (fitBounds)."""
+        resp = requests.get(f"{FLASK_BASE_URL}/", timeout=10, allow_redirects=True)
+        html = resp.text
+        assert "fitBounds" in html, \
+            "Geen fitBounds gevonden — kaart zou automatisch moeten inzoomen op projectlocaties"
 
     def test_index_page_has_layer_control(self):
         """De kaart moet een LayerControl bevatten met project-lagen."""

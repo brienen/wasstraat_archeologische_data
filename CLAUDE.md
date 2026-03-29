@@ -20,7 +20,7 @@ config/                    # Environment-bestanden (.env, gegenereerd door init-
 services/                  # Dockerfiles per service
 data/delft/data/           # Delftse bronbestanden (.mdb Access-databases, niet in repo)
 data/delft/output/         # Verwerkte Delftse data (niet in repo)
-data/delft/wasstraat_config/ # Harmonisatie-configuratie voor Delft
+data/delft/wasstraat_config/ # Harmonisatie-configuratie + correcties.yml voor Delft
 data/delft/backup/         # Backups Postgres + MongoDB (niet in repo)
 data/synthetic/data/       # Synthetische voorbeelddata (MDB-bestanden, in repo)
 data/synthetic/generatie/  # Generator-script voor synthetische data
@@ -42,14 +42,29 @@ notebooks/                 # Jupyter notebooks voor analyse
 De verwerkingsvolgorde is strikt:
 1. Drop All Databases (schone start)
 2. Extract — Lees brondata in (Access-databases, bestanden)
-3. Transform1 Harmonize — Harmoniseer veldnamen over alle bronnen
-4. Transform2 Enhance Attributes — Normaliseer inhoud (datums, codes, metadata)
+3. Transform1 Harmonize — Harmoniseer veldnamen over alle bronnen + brondata-correcties uit correcties.yml
+4. Transform2 Enhance Attributes — Normaliseer inhoud (datums, codes, metadata) + projectcode-correcties uit correcties.yml
 5. Transform3 Set Keys — Genereer unieke sleutels per entiteit
 6. Transform4 Move and Merge — Voeg dubbele entiteiten samen (polymorfisme)
 7. Transform5 Set References — Ken integer-sleutels toe voor PostgreSQL
 8. Load to Database & Index — Kopieer naar PostgreSQL + bouw Elasticsearch-index
 
 DAG-bestanden volgen het patroon `DAG_[Naam].py`, taken `tasks_[actie]_[onderwerp].py`.
+
+## Gemeente-specifieke correcties (correcties.yml)
+
+Per omgeving (delft, synthetic, test) kan een `correcties.yml` in `wasstraat_config/` staan. Dit bestand bevat datacorrecties die de pipeline toepast zonder dat de code aangepast hoeft te worden.
+
+**Twee secties:**
+
+- **`projectcode_correcties`** — eenvoudige regex→projectcode vervangingen, toegepast op het `projectcd` veld in Single_Store na harmonisatie (Transform2). Geen collectie of veldnaam nodig.
+- **`brondata_correcties`** — correcties op raw velden in staging-collecties vóór harmonisatie (Transform1). Nodig als brondata afwijkende codes bevat die niet matchen met de projectenlijst. Vereist `collectie`, `zoek_veld`, `patroon` en `waarde`.
+
+Overige secties: `artefact_niet_mergen`, `rapportcode_prefixen`.
+
+**Pad:** `shared/config.py` → `AIRFLOW_CORRECTIES_CONFIG` (default `/opt/airflow/config/correcties.yml`).
+**Laden:** `wasstraat/harmonize_functions.py` → `laadCorrecties()` (cached, robuust bij foute YAML).
+**Tests:** `tests/unit/test_correcties_yml.py` — 27 tests inclusief foutscenario's.
 
 ## Codeerstijl en conventies
 

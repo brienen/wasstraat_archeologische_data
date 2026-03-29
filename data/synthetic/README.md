@@ -10,6 +10,7 @@ Gemeenten die hun eigen data willen verwerken, kunnen deze voorbeeldstructuur al
 - 2 putten, 3 sporen, 4 vondsten, 5 artefacten (aardewerk + glas)
 - 2 vullingen, 7 tekeningen, 3 foto's
 - 3 monsters (2 met botanische determinaties, 1 zoölogisch)
+- 1 monster met opzettelijk foute projectcode (SYNTFOUT) — test voor correctiemechanisme
 - Datering: 1600-1750
 
 ### SY002 — Groot project (Kerkplein, Leiden)
@@ -23,20 +24,48 @@ Gemeenten die hun eigen data willen verwerken, kunnen deze voorbeeldstructuur al
 
 ```
 data/synthetic/
-  data/                                             # Gegenereerde MDB-bestanden
-    projecten/SY001/C Database/opgravingSY001.mdb    # Klein project
-    projecten/SY001/L Fotos/                         # Foto's bij SY001
-    projecten/SY002/C Database/opgravingSY002.mdb    # Groot project
-    projecten/SY002/L Fotos/                         # Foto's bij SY002
-    projectenlijst/projectenlijst.mdb                  # Projectenlijst
-    magazijnlijst/MAGAZIJN.mdb                       # Depotdata
-    fotolijst/Digifotos.mdb                          # Fotocatalogus
-    monsterdatabase/MONSTERS.mdb                     # Monsterdata (botanie + schelpen)
-  generatie/                                         # Alles voor (her)generatie
-    generate_synthetic_data.py                       # Generator-script
-    requirements-synthetic.txt                       # Python dependencies
-    jars/                                            # Jackcess JARs (voor MDB-generatie)
+├── data/                                              # Gegenereerde bronbestanden
+│   ├── projecten/                                     # Opgravingsdatabases + foto's
+│   │   ├── SY001/
+│   │   │   ├── C Database/opgravingSY001.mdb          #   Projectdatabase (putten, sporen, vondsten, artefacten)
+│   │   │   └── L Fotos/                               #   Foto's (sfeer-, opgravinqs- en objectfoto's)
+│   │   └── SY002/
+│   │       ├── C Database/opgravingSY002.mdb
+│   │       └── L Fotos/
+│   ├── projectenlijst/                                # Projectoverzicht
+│   │   └── projectenlijst.mdb                         #   Tabel OPGRAVINGEN: projectcode, locatie, jaar
+│   ├── magazijnlijst/                                 # Depotadministratie
+│   │   └── MAGAZIJN.mdb                               #   Tabel magazijnlijst: stellingen, dozen, inhoud
+│   ├── fotolijst/                                     # Fotocatalogus
+│   │   └── Digifotos.mdb                              #   Tabel Fotos: fotonr, projectcode, bestandsnaam
+│   ├── monsterdatabase/                               # Monsters en determinaties
+│   │   └── MONSTERS.mdb                               #   Monster_gegevens, Monster_waardering, botanie, schelp
+│   ├── referentietabellen/                            # Standaardtabellen
+│   │   ├── abr_versie_01122018.xlsx                   #   ABR-thesaurus (perioden, materialen)
+│   │   └── Alle Bestanden Archeologisch Depot.xlsx    #   Depotinventarisatie
+│   └── rapporten/                                     # Rapporten (leeg in synthetische data)
+├── wasstraat_config/                                  # Pipeline-configuratie
+│   ├── Wasstraat_Config_HarmonizeV3.xlsx              #   Harmonisatie-mapping (veldnamen per objecttype)
+│   └── correcties.yml                                 #   Datacorrecties (projectcodes, rapportprefixen)
+├── generatie/                                         # Alles voor (her)generatie
+│   ├── generate_synthetic_data.py                     #   Generator-script
+│   ├── requirements-synthetic.txt                     #   Python dependencies
+│   └── jars/                                          #   Jackcess JARs (voor MDB-generatie)
+├── output/                                            # Verwerkte output (gegenereerd door pipeline)
+│   └── archeomedia/                                   #   Verwerkte mediabestanden
+└── backup/                                            # Backups (gegenereerd door make backup)
 ```
+
+### Wat zit in elk MDB-bestand?
+
+| Directory | MDB-bestand | Tabellen | Beschrijving |
+|-----------|-------------|----------|-------------|
+| `projecten/` | `opgravingSY0xx.mdb` | VONDSTENLIJST, SPOREN, VULLINGEN, AARDEWERK 1, GLAS, METAAL, BEEN, LEER, HOUT, STEEN, KLEIPIJPEN, TEKENINGEN, DIAOPGRAVING | Eén database per opgraving, met alle vondsten, sporen en artefacten |
+| `projectenlijst/` | `projectenlijst.mdb` | OPGRAVINGEN | Overzicht van alle projecten: code, locatie (RD), jaar, trefwoorden |
+| `magazijnlijst/` | `MAGAZIJN.mdb` | magazijnlijst | Depotadministratie: stellingen, vakken, dozen, inhoud |
+| `fotolijst/` | `Digifotos.mdb` | Fotos | Fotocatalogus: koppeling fotonummer ↔ project, put, vondst |
+| `monsterdatabase/` | `MONSTERS.mdb` | Monster_gegevens, Monster_waardering, Monster_botanie_determinatie, Monster_schelp_determinatie, R_PLANT, R_SCHELP, R_DEEL, R_STAAT | Grondmonsters met botanische en zoölogische determinaties |
+| `referentietabellen/` | *(xlsx)* | — | ABR-thesaurus en depotinventarisatie (geen MDB maar Excel) |
 
 ## Gebruik met de Wasstraat
 
@@ -70,6 +99,17 @@ Vereisten:
 ```bash
 make synthetic
 ```
+
+## Correcties (correcties.yml)
+
+Het bestand `wasstraat_config/correcties.yml` bevat gemeente-specifieke datacorrecties. De synthetische data bevat een testgeval: een monster met projectcode `SYNTFOUT` dat via de correcties naar `SY001` vertaald wordt.
+
+Twee soorten correcties:
+
+- **`projectcode_correcties`** — fix `projectcd` na harmonisatie (eenvoudig: patroon → projectcode)
+- **`brondata_correcties`** — fix raw velden in staging vóór harmonisatie (nodig als brondata niet matcht met de projectenlijst)
+
+Zie `data/delft/wasstraat_config/correcties.yml` voor een volledig Delft-voorbeeld.
 
 ## Eigen data klaarzetten
 

@@ -131,6 +131,10 @@ mock_config.AIRFLOW_INPUT_FOTOLIJST = "/input/fotolijst"
 mock_config.AIRFLOW_INPUT_MONSTER = "/input/monsterdatabase"
 mock_config.AIRFLOW_INPUT_RAPPORTEN = "/input/rapporten"
 mock_config.AIRFLOW_OUTPUT_MEDIA = "/output/archeomedia"
+mock_config.AIRFLOW_CORRECTIES_CONFIG = os.getenv(
+    "AIRFLOW_CORRECTIES_CONFIG",
+    os.path.join(_project_root, "data", "test", "wasstraat_config", "correcties.yml")
+)
 
 # Elasticsearch
 mock_config.ES_HOST = "http://localhost:9200"

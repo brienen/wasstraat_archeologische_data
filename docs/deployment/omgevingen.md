@@ -123,6 +123,13 @@ Alle services lezen configuratie uit bestanden in `config/`:
 | `elasticsearch.env` | Elasticsearch-host |
 | `version.env` | Huidige versie van de applicatie |
 
+Daarnaast leest de Airflow-container configuratie uit `wasstraat_config/` (gemount als `/opt/airflow/config/`):
+
+| Bestand | Inhoud |
+|---------|--------|
+| `Wasstraat_Config_HarmonizeV3.xlsx` | Harmonisatie-mapping (veldnamen per objecttype) |
+| `correcties.yml` | Gemeente-specifieke datacorrecties (projectcodes, rapportprefixen) |
+
 !!! warning "Gevoelige gegevens"
     De `.env`-bestanden bevatten wachtwoorden en credentials. Neem deze **nooit** op in versiebeheer. Gebruik het `config/`-directory als template en vul per omgeving de juiste waarden in.
 

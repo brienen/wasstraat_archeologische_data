@@ -1158,7 +1158,7 @@ def dataMonsterDatabase():
     """
     tabellen = {}
 
-    # ---- Monster_gegevens: 5 monsters (3x SY001, 2x SY002) ----
+    # ---- Monster_gegevens: 6 monsters (3x SY001, 2x SY002, 1x met foute code) ----
     kol = [k[0] for k in KOLOMMEN_MONSTER_GEGEVENS]
     tabellen["Monster_gegevens"] = (kol, [
         # SY001 monsters — verwijzen naar putten en vondsten van SY001
@@ -1183,6 +1183,11 @@ def dataMonsterDatabase():
          6, 202, "monster uit greppel", "grondmonster", 0.5, 0.5, 0.3,
          "06/15/24 00:00:00", None, "B:",
          "+/-", "+/-", "+/-", "+/-", "+/-", "+/-", "+/-", "+/-"),
+        # Testgeval: monster met foute projectcode (SYNTFOUT) die gecorrigeerd moet worden naar SY001
+        ("SYNTFOUT", 1, 1, "SYNTFOUT_p1_v1", "T. Testgeval", "01/01/24 00:00:00",
+         1, 103, "testmonster", "grondmonster", 0.5, 0.5, 0.3,
+         "01/05/24 00:00:00", None, "test",
+         "+", "+", "+", "+", "+", "+", "+", "+"),
     ])
 
     # ---- Monster_waardering: 5 records (1:1 met Monster_gegevens) ----

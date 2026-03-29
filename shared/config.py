@@ -87,6 +87,7 @@ try:
    AIRFLOW_INPUT_FOTOLIJST = os.getenv("AIRFLOW_INPUT_FOTOLIJST") if os.getenv("AIRFLOW_INPUT_FOTOLIJST") else "/input/fotolijst"
    AIRFLOW_INPUT_MONSTER = os.getenv("AIRFLOW_INPUT_MONSTER") if os.getenv("AIRFLOW_INPUT_MONSTER") else "/input/monsterdatabase"
    AIRFLOW_INPUT_RAPPORTEN = os.getenv("AIRFLOW_INPUT_RAPPORTEN") if os.getenv("AIRFLOW_INPUT_RAPPORTEN") else "/input/rapporten"
+   AIRFLOW_CORRECTIES_CONFIG = os.getenv("AIRFLOW_CORRECTIES_CONFIG") if os.getenv("AIRFLOW_CORRECTIES_CONFIG") else "/opt/airflow/config/correcties.yml"
 
 
    AIRFLOW_OUTPUT_MEDIA = os.getenv("AIRFLOW_OUTPUT_MEDIA") if os.getenv("AIRFLOW_OUTPUT_MEDIA") else "/output/archeomedia"

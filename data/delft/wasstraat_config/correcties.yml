@@ -1,0 +1,80 @@
+# Correcties voor Delftse brondata
+
+# Projectcode-correcties: pas toe op het projectcd veld in Single_Store na harmonisatie.
+# Elke regel: als projectcd matcht op het regex-patroon, vervang door projectcode.
+projectcode_correcties:
+  - patroon: "DC 16"
+    projectcode: "DC016"
+  - patroon: "SCHE"
+    projectcode: "DC039"
+  - patroon: "PPG"
+    projectcode: "DC067"
+  - patroon: "BM"
+    projectcode: "DC046"
+  - patroon: "MB2000"
+    projectcode: "MD032"
+  - patroon: "MONSTERS"
+    projectcode: "Onbekend"
+
+# Brondata-correcties: pas toe op raw velden in staging-collecties vóór harmonisatie.
+# Nodig als brondata afwijkende projectcodes bevat die niet matchen met de projectenlijst.
+brondata_correcties:
+  # Staging: sommige MDB-bestanden bevatten niet de juiste projectcode.
+  # zoek_veld: waar het patroon gematcht wordt, doel_veld: wat gezet wordt (optioneel, default = zoek_veld)
+  - collectie: COLL_STAGING_OUD
+    zoek_veld: mdbfile
+    doel_veld: project
+    patroon: "DC027_Voorstraat"
+    waarde: "DC027"
+  - collectie: COLL_STAGING_OUD
+    zoek_veld: mdbfile
+    doel_veld: project
+    patroon: "DC018_Nieuw"
+    waarde: "DC018"
+  - collectie: COLL_STAGING_OUD
+    zoek_veld: mdbfile
+    doel_veld: project
+    patroon: "DC024_Stadskantoor"
+    waarde: "DC024"
+  - collectie: COLL_STAGING_OUD
+    zoek_veld: mdbfile
+    doel_veld: project
+    patroon: "DC032_Hoogheem"
+    waarde: "DC032"
+  - collectie: COLL_STAGING_OUD
+    zoek_veld: mdbfile
+    doel_veld: project
+    patroon: "DC039_Schutter"
+    waarde: "DC039"
+  # Monster: de monsterdatabase gebruikt afwijkende projectcodes
+  - collectie: COLL_STAGING_MONSTER
+    zoek_veld: PROJECT
+    patroon: "DC 16"
+    waarde: "DC016"
+  - collectie: COLL_STAGING_MONSTER
+    zoek_veld: PROJECT
+    patroon: "SCHE"
+    waarde: "DC039"
+  - collectie: COLL_STAGING_MONSTER
+    zoek_veld: PROJECT
+    patroon: "PPG"
+    waarde: "DC067"
+  - collectie: COLL_STAGING_MONSTER
+    zoek_veld: PROJECT
+    patroon: "BM"
+    waarde: "DC046"
+  - collectie: COLL_STAGING_MONSTER
+    zoek_veld: PROJECT
+    patroon: "MB2000"
+    waarde: "MD032"
+
+# Projecten waarvan artefacten niet gemerged mogen worden
+artefact_niet_mergen:
+  projectcodes: ["DC112"]
+
+# Rapportcode-prefixen voor bestandsclassificatie
+rapportcode_prefixen:
+  - prefix: "DAR"
+    type: "archeologische_rapportage"
+  - prefix: "DAN"
+    type: "archeologische_notitie"

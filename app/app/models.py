@@ -172,7 +172,7 @@ class Project(Model): # Inherit from Model for cannot use Abstract class Wasstra
     jaar = Column(Integer)
     toponiem = Column(String(1024))
     trefwoorden = Column(String(1024))
-    location = Column(Geometry('POINT', srid=4326), default=(52.00667, 4.35556)) # 52.00667, 4.35556.
+    location = Column(Geometry('POINT', srid=4326))
     xcoor_rd = Column(Float)
     ycoor_rd = Column(Float)
     longitude = Column(Float)
