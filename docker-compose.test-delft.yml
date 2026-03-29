@@ -1,5 +1,5 @@
 # docker-compose.test-delft.yml
-# Override voor integratietests met echte Delftse data (DB034).
+# Override voor integratietests met echte Delftse data.
 # Vervangt de synthetische data volumes uit docker-compose.test.yml.
 #
 # Gebruik: make integration-delft
@@ -10,8 +10,8 @@ services:
       - ./airflow_app/dags:/opt/airflow/dags
       - ./airflow_app/scripts:/opt/airflow/scripts
       - ./shared:/opt/airflow/dags/shared
-      - ./data/wasstraat_config:/opt/airflow/config
-      - ./data/test/projecten:/input/projecten:ro
-      - ./data/test/projecten:/input/images:ro
-      - ./data/test/projectenlijst:/input/delfit:ro
-      - ./data/test/referentietabellen:/input/referentietabellen:ro
+      - ./data/delft/wasstraat_config:/opt/airflow/config
+      - ./data/delft/data/digidepot:/input/projecten:ro
+      - ./data/delft/data/digidepot:/input/images:ro
+      - ./data/delft/data/Delf-IT:/input/delfit:ro
+      - ./data/delft/data/referentietabellen:/input/referentietabellen:ro

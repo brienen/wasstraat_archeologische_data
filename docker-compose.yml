@@ -9,7 +9,7 @@ services:
       - "5432:5432"
     volumes:
       - wasstraat_postgres_volume:/var/lib/postgresql/data
-      - ./data/backup/postgres:/backup
+      - ./data/delft/backup/postgres:/backup
     build:
       dockerfile: ./services/postgres/Dockerfile
       context: .
@@ -30,23 +30,19 @@ services:
       - mongo
       - elasticsearch
     volumes:
-      # Production settings
-      # - ./data/input/projecten:/input/projecten
-      # - ./data/input/images:/input/images
-      # Testing settings
-       - ./data/input/basefiles/projectdatabase/digidepot:/input/projecten
-       - ./data/input/basefiles/projectdatabase/digidepot:/input/images
-       - ./data/input/basefiles/projectdatabase/rapporten:/input/rapporten
-       - ./data/input/basefiles/projectdatabase/monsterdatabase:/input/monsterdatabase
-       - ./data/input/basefiles/projectdatabase/Delf-IT:/input/delfit
-       - ./data/input/basefiles/projectdatabase/magazijnlijst:/input/magazijnlijst
-       - ./data/input/basefiles/projectdatabase/digifotos:/input/digifotos
-       - ./data/input/basefiles/projectdatabase/referentietabellen:/input/referentietabellen
-       - ./data/output/archeomedia:/output/archeomedia
+       - ./data/delft/data/digidepot:/input/projecten
+       - ./data/delft/data/digidepot:/input/images
+       - ./data/delft/data/rapporten:/input/rapporten
+       - ./data/delft/data/monsterdatabase:/input/monsterdatabase
+       - ./data/delft/data/Delf-IT:/input/delfit
+       - ./data/delft/data/magazijnlijst:/input/magazijnlijst
+       - ./data/delft/data/digifotos:/input/digifotos
+       - ./data/delft/data/referentietabellen:/input/referentietabellen
+       - ./data/delft/output/archeomedia:/output/archeomedia
        - ./airflow_app/dags:/opt/airflow/dags
        - ./airflow_app/scripts:/opt/airflow/scripts
        - ./airflow_app/.vscode:/opt/airflow/.vscode
-       - ./data/wasstraat_config:/opt/airflow/config
+       - ./data/delft/wasstraat_config:/opt/airflow/config
        - ./shared:/opt/airflow/dags/shared/
     build:
       dockerfile: ./services/airflow/Dockerfile
@@ -84,7 +80,7 @@ services:
       - elasticsearch
       - apache
     volumes:
-      - ./data/output/archeomedia:/output/archeomedia
+      - ./data/delft/output/archeomedia:/output/archeomedia
 
 
   mongo:
@@ -97,7 +93,7 @@ services:
     volumes:
       - wasstraat_mongo_volume:/data/db
       - wasstraat_mongo_config_volume:/data/configdb
-      - ./data/backup/mongo:/backup
+      - ./data/delft/backup/mongo:/backup
 
   jupyter:
     container_name: wasstraat_jupyter
@@ -108,14 +104,13 @@ services:
       - "8888:8888"
     volumes:
       - ./notebooks:/home/jovyan/
-      - ./data/wasstraat_config:/home/jovyan/wasstraat_config/
+      - ./data/delft/wasstraat_config:/home/jovyan/wasstraat_config/
       - ./airflow_app/dags:/opt/wasstraat/
       - ./shared:/home/jovyan/shared/
-      - ./data/input/basefiles:/home/jovyan/basefiles
-      - ./data/input/basefiles/projectdatabase/digidepot:/input/images
-      - ./data/input/basefiles/projectdatabase/referentietabellen:/input/referentietabellen
-      - ./data/output/archeomedia:/output/archeomedia
-      # - ./data/input:/input/sdschijf
+      - ./data/delft/data:/home/jovyan/basefiles
+      - ./data/delft/data/digidepot:/input/images
+      - ./data/delft/data/referentietabellen:/input/referentietabellen
+      - ./data/delft/output/archeomedia:/output/archeomedia
     environment:
       JUPYTER_ENABLE_LAB: "yes"
     command: "start-notebook.sh --NotebookApp.token='' --NotebookApp.password=''"
@@ -131,7 +126,7 @@ services:
       dockerfile: ./services/apache/Dockerfile
       context: .
     volumes:
-      - ./data/output:/usr/local/apache2/htdocs
+      - ./data/delft/output:/usr/local/apache2/htdocs
     ports:
       - '5052:5052'
 

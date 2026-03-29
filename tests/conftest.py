@@ -119,7 +119,7 @@ mock_config.SQLALCHEMY_DATABASE_URI = "postgresql://test:test@localhost/test_db"
 _project_root = os.path.dirname(os.path.dirname(__file__))
 mock_config.AIRFLOW_WASSTRAAT_CONFIG = os.getenv(
     "AIRFLOW_WASSTRAAT_CONFIG",
-    os.path.join(_project_root, "data", "wasstraat_config", "Wasstraat_Config_HarmonizeV3.xlsx")
+    os.path.join(_project_root, "data", "test", "wasstraat_config", "Wasstraat_Config_HarmonizeV3.xlsx")
 )
 mock_config.AIRFLOW_TEMPDIR = os.getenv("AIRFLOW_TEMPDIR", "/tmp/wasstraat_test")
 mock_config.AIRFLOW_LOGDIR = os.getenv("AIRFLOW_LOGDIR", "/tmp/wasstraat_test/logs")

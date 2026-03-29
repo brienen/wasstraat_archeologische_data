@@ -261,7 +261,7 @@ def _pg_scalar(sql):
     Gebruikt docker exec om psql aan te roepen op de test-container.
     """
     cmd = [
-        "docker", "exec", POSTGRES_CONTAINER,
+        "docker", "exec", "-e", "PGPASSWORD=testpass", POSTGRES_CONTAINER,
         "psql", "-U", "testuser", "-h", "localhost", "-d", "airflow_test",
         "-t", "-A", "-c", sql,
     ]

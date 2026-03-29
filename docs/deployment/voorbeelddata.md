@@ -55,7 +55,7 @@ Gemeenten die hun eigen opgravingsdata willen verwerken, kunnen hun bestanden or
 | `monsterdatabase/` | Monstergegevens met botanische en zoölogische determinaties | `.mdb` / `.accdb` |
 | `referentietabellen/` | ABR-classificatie en standaardtabellen | `.xlsx` / `.mdb` |
 
-Plaats de bestanden in `data/input/basefiles/projectdatabase/` en configureer de Docker-volumes in je docker-compose override. Zie [Aan de slag](../aan-de-slag.md) voor gedetailleerde instructies.
+Plaats de bestanden in `data/delft/data/` en configureer de Docker-volumes in je docker-compose override. Zie [Aan de slag](../aan-de-slag.md) voor gedetailleerde instructies.
 
 ## Data opnieuw genereren
 

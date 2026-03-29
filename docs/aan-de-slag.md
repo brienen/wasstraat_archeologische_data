@@ -123,10 +123,10 @@ De repository bevat **synthetische voorbeelddata** in `data/synthetic/data/` —
 
 Gemeenten kunnen hun eigen opgravingsdata klaarzetten conform dezelfde directorystructuur als de Delftse pijplijn. De echte Delftse data is niet opgenomen in de repository, maar de synthetische voorbeelddata in `data/synthetic/data/` toont exact welke bestanden en structuren het platform verwacht.
 
-De Wasstraat leest brondata uit de directory `data/input/basefiles/projectdatabase/`. Elke subdirectory heeft een specifiek doel:
+De Wasstraat leest brondata uit de directory `data/delft/data/`. Elke subdirectory heeft een specifiek doel:
 
 ```
-data/input/basefiles/projectdatabase/
+data/delft/data/
 ├── digidepot/           ← Projectdatabases (.mdb/.accdb)
 ├── Delf-IT/             ← DelfIT administratie (.mdb + .xlsx)
 ├── magazijnlijst/       ← Depotregistratie (.mdb)
@@ -166,7 +166,7 @@ digidepot/
 
 ### Foto's en media
 
-Foto's en andere mediabestanden worden verwacht in een aparte directory die via een Docker-volume gemount wordt als `/input/images`. De standaard locatie hiervoor is `data/input/basefiles/` (de bovenliggende map). De Wasstraat zoekt daar naar bestanden in mappen die `velddocument`, `fotos`, `tekening`, `DAN` of `DAR` in het pad bevatten.
+Foto's en andere mediabestanden worden verwacht in een aparte directory die via een Docker-volume gemount wordt als `/input/images`. De standaard locatie hiervoor is `data/delft/data/digidepot/`. De Wasstraat zoekt daar naar bestanden in mappen die `velddocument`, `fotos`, `tekening`, `DAN` of `DAR` in het pad bevatten.
 
 Ondersteunde bestandstypen voor media: `.jpg`, `.jpeg`, `.png`, `.gif`, `.tif`, `.psd`, `.pdf`, `.jp2`, `.doc`, `.docx`.
 
@@ -180,7 +180,7 @@ Het bestand `Wasstraat_Config_HarmonizeV3.xlsx` is het hart van de dataverwerkin
 Het bestand bevindt zich in:
 
 ```
-data/wasstraat_config/Wasstraat_Config_HarmonizeV3.xlsx
+data/delft/wasstraat_config/Wasstraat_Config_HarmonizeV3.xlsx
 ```
 
 De locatie wordt geconfigureerd via de environment-variabele `AIRFLOW_WASSTRAAT_CONFIG` in `config/airflow.env`.

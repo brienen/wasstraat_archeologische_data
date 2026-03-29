@@ -31,10 +31,10 @@ Je zou minimaal de volgende containers moeten zien:
 
 ### Locatie van invoerdata
 
-De Airflow-container verwacht invoerdata op specifieke paden. Deze worden via Docker-volumes gemount vanuit de `data/input/basefiles/` directory:
+De Airflow-container verwacht invoerdata op specifieke paden. Deze worden via Docker-volumes gemount vanuit de `data/delft/data/` directory:
 
 ```
-data/input/basefiles/projectdatabase/
+data/delft/data/
 ├── digidepot/          # Projectdatabases (MDB-bestanden)
 ├── Delf-IT/            # DelfIT administratie
 ├── magazijnlijst/      # Depot-registratie
@@ -48,8 +48,8 @@ data/input/basefiles/projectdatabase/
 
 Voor een eerste proef is het voldoende om een beperkte set bestanden te plaatsen:
 
-1. **Projectdatabase**: Kopieer een of meerdere `.mdb` bestanden naar `data/input/basefiles/projectdatabase/digidepot/`
-2. **Referentietabellen**: Zorg dat de standaard referentietabellen aanwezig zijn in `data/input/basefiles/projectdatabase/referentietabellen/`
+1. **Projectdatabase**: Kopieer een of meerdere `.mdb` bestanden naar `data/delft/data/digidepot/`
+2. **Referentietabellen**: Zorg dat de standaard referentietabellen aanwezig zijn in `data/delft/data/referentietabellen/`
 3. **Foto's** (optioneel): Plaats testfoto's in de bijbehorende directory
 
 !!! tip "Minimale proefset"
