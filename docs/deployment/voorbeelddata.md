@@ -26,9 +26,9 @@ data/synthetic/data/
 │   └── SY002/
 │       ├── C Database/opgravingSY002.mdb
 │       └── L Fotos/
-├── delfit/DELF-IT.mdb                       # Projectenlijst
+├── projectenlijst/projectenlijst.mdb         # Projectenlijst
 ├── magazijnlijst/MAGAZIJN.mdb               # Depotdata
-├── digifotos/Digifotos.mdb                  # Fotocatalogus
+├── fotolijst/Digifotos.mdb                  # Fotocatalogus
 └── monsterdatabase/MONSTERS.mdb             # Monsterdata (botanie + schelpen)
 ```
 
@@ -48,10 +48,10 @@ Gemeenten die hun eigen opgravingsdata willen verwerken, kunnen hun bestanden or
 
 | Directory | Inhoud | Formaat |
 |-----------|--------|---------|
-| `projecten/` of `digidepot/` | Per opgraving een subdirectory met de projectdatabase | `.mdb` / `.accdb` |
-| `delfit/` of `Delf-IT/` | Centrale administratiedatabase met projectoverzicht | `.mdb` + `.xlsx` |
+| `projecten/` | Per opgraving een subdirectory met de projectdatabase | `.mdb` / `.accdb` |
+| `projectenlijst/` | Centrale administratiedatabase met projectoverzicht | `.mdb` + `.xlsx` |
 | `magazijnlijst/` | Depot- en magazijnadministratie | `.mdb` |
-| `digifotos/` | Digitale fotolijst met metadata | `.mdb` |
+| `fotolijst/` | Digitale fotolijst met metadata | `.mdb` |
 | `monsterdatabase/` | Monstergegevens met botanische en zoölogische determinaties | `.mdb` / `.accdb` |
 | `referentietabellen/` | ABR-classificatie en standaardtabellen | `.xlsx` / `.mdb` |
 

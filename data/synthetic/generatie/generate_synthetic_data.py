@@ -1419,9 +1419,9 @@ def genereerAlles():
     pad_sy002 = os.path.join(OUTPUT_DIR, "projecten", "SY002", "C Database", "opgravingSY002.mdb")
     schrijfMdb(pad_sy002, dataGrootProject(), project_tabel_defs)
 
-    # DELF-IT projectenlijst
-    print("\n[3/7] DELF-IT — Projectenlijst")
-    pad_delfit = os.path.join(OUTPUT_DIR, "delfit", "DELF-IT.mdb")
+    # Projectenlijst
+    print("\n[3/7] Projectenlijst")
+    pad_delfit = os.path.join(OUTPUT_DIR, "projectenlijst", "projectenlijst.mdb")
     schrijfMdb(pad_delfit, dataProjectenlijst(), {"OPGRAVINGEN": KOLOMMEN_OPGRAVINGEN})
 
     # Magazijnlijst
@@ -1429,9 +1429,9 @@ def genereerAlles():
     pad_magazijn = os.path.join(OUTPUT_DIR, "magazijnlijst", "MAGAZIJN.mdb")
     schrijfMdb(pad_magazijn, dataMagazijnlijst(), {"magazijnlijst": KOLOMMEN_MAGAZIJNLIJST})
 
-    # Digifotos
-    print("\n[5/7] Digifotos — Fotocatalogus")
-    pad_fotos = os.path.join(OUTPUT_DIR, "digifotos", "Digifotos.mdb")
+    # Fotolijst
+    print("\n[5/7] Fotolijst — Fotocatalogus")
+    pad_fotos = os.path.join(OUTPUT_DIR, "fotolijst", "Digifotos.mdb")
     schrijfMdb(pad_fotos, dataDigifotos(), {"Fotos": KOLOMMEN_DIGIFOTOS})
 
     # Monsterdatabase

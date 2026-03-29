@@ -28,9 +28,9 @@ data/synthetic/
     projecten/SY001/L Fotos/                         # Foto's bij SY001
     projecten/SY002/C Database/opgravingSY002.mdb    # Groot project
     projecten/SY002/L Fotos/                         # Foto's bij SY002
-    delfit/DELF-IT.mdb                               # Projectenlijst
+    projectenlijst/projectenlijst.mdb                  # Projectenlijst
     magazijnlijst/MAGAZIJN.mdb                       # Depotdata
-    digifotos/Digifotos.mdb                          # Fotocatalogus
+    fotolijst/Digifotos.mdb                          # Fotocatalogus
     monsterdatabase/MONSTERS.mdb                     # Monsterdata (botanie + schelpen)
   generatie/                                         # Alles voor (her)generatie
     generate_synthetic_data.py                       # Generator-script
@@ -51,9 +51,9 @@ De `docker-compose.test.yml` mount de synthetische data als input-volumes:
 ```yaml
 volumes:
   - ./data/synthetic/data/projecten:/input/projecten
-  - ./data/synthetic/data/delfit:/input/delfit
+  - ./data/synthetic/data/projectenlijst:/input/projectenlijst
   - ./data/synthetic/data/magazijnlijst:/input/magazijnlijst
-  - ./data/synthetic/data/digifotos:/input/digifotos
+  - ./data/synthetic/data/fotolijst:/input/fotolijst
   - ./data/synthetic/data/monsterdatabase:/input/monsterdatabase
   - ./data/synthetic/data/referentietabellen:/input/referentietabellen
 ```
@@ -77,14 +77,14 @@ Wil je als gemeente je eigen data verwerken? Organiseer je bestanden conform dez
 
 ```
 data/delft/data/
-├── digidepot/           # Per project een subdirectory met .mdb
+├── projecten/           # Per project een subdirectory met .mdb
 │   ├── PROJECT001/
 │   │   └── C Database/PROJECT001.mdb
 │   └── PROJECT002/
 │       └── C Database/PROJECT002.mdb
-├── Delf-IT/             # Centrale administratiedatabase
+├── projectenlijst/      # Centrale administratiedatabase
 ├── magazijnlijst/       # Depot- en magazijnadministratie
-├── digifotos/           # Digitale fotolijst
+├── fotolijst/           # Digitale fotolijst
 └── referentietabellen/  # ABR-codes en standaardtabellen
 ```
 

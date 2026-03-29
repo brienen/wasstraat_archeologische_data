@@ -127,10 +127,10 @@ De Wasstraat leest brondata uit de directory `data/delft/data/`. Elke subdirecto
 
 ```
 data/delft/data/
-├── digidepot/           ← Projectdatabases (.mdb/.accdb)
-├── Delf-IT/             ← DelfIT administratie (.mdb + .xlsx)
+├── projecten/           ← Projectdatabases (.mdb/.accdb)
+├── projectenlijst/      ← Projectenlijst administratie (.mdb + .xlsx)
 ├── magazijnlijst/       ← Depotregistratie (.mdb)
-├── digifotos/           ← Foto-metadata (.mdb)
+├── fotolijst/           ← Foto-metadata (.mdb)
 ├── monsterdatabase/     ← Monsterregistratie (.mdb/.accdb)
 ├── rapporten/           ← Rapportendatabases (.mdb)
 │   ├── DAN/             ← Delfts Archeologische Notities
@@ -142,20 +142,20 @@ data/delft/data/
 
 | Directory | Wat erin hoort | Bestandstype | Verplicht? |
 |-----------|---------------|-------------|-----------|
-| `digidepot/` | Per opgraving een subdirectory met de projectdatabase | `.mdb` / `.accdb` | Ja — dit is de hoofdbron |
-| `Delf-IT/` | De centrale administratiedatabase en projecttabel | `.mdb` + `.xlsx` | Ja — bevat projectoverzicht |
+| `projecten/` | Per opgraving een subdirectory met de projectdatabase | `.mdb` / `.accdb` | Ja — dit is de hoofdbron |
+| `projectenlijst/` | De centrale administratiedatabase en projecttabel | `.mdb` + `.xlsx` | Ja — bevat projectoverzicht |
 | `magazijnlijst/` | Depot- en magazijnadministratie | `.mdb` | Aanbevolen |
-| `digifotos/` | Digitale fotolijst met metadata | `.mdb` | Aanbevolen (voor foto-koppeling) |
+| `fotolijst/` | Digitale fotolijst met metadata | `.mdb` | Aanbevolen (voor foto-koppeling) |
 | `monsterdatabase/` | Monster- en residuregistratie | `.mdb` / `.accdb` | Optioneel |
 | `rapporten/DAN/` en `DAR/` | Rapportenlijstdatabases | `.mdb` | Optioneel |
 | `referentietabellen/` | ABR-classificatie, bestandslijsten | `.xlsx` / `.mdb` | Ja — nodig voor harmonisatie |
 
 ### Hoe worden bestanden gevonden?
 
-De Wasstraat doorzoekt elke directory **recursief** op `.mdb` en `.accdb` bestanden. Je kunt dus subdirectories gebruiken om bestanden te organiseren. In `digidepot/` is het gebruikelijk om per project een subdirectory aan te maken:
+De Wasstraat doorzoekt elke directory **recursief** op `.mdb` en `.accdb` bestanden. Je kunt dus subdirectories gebruiken om bestanden te organiseren. In `projecten/` is het gebruikelijk om per project een subdirectory aan te maken:
 
 ```
-digidepot/
+projecten/
 ├── DB008_Leeuwenstein/
 │   └── DB008.mdb
 ├── DC001_Oude_Delft_96/
@@ -166,12 +166,12 @@ digidepot/
 
 ### Foto's en media
 
-Foto's en andere mediabestanden worden verwacht in een aparte directory die via een Docker-volume gemount wordt als `/input/images`. De standaard locatie hiervoor is `data/delft/data/digidepot/`. De Wasstraat zoekt daar naar bestanden in mappen die `velddocument`, `fotos`, `tekening`, `DAN` of `DAR` in het pad bevatten.
+Foto's en andere mediabestanden worden verwacht in een aparte directory die via een Docker-volume gemount wordt als `/input/images`. De standaard locatie hiervoor is `data/delft/data/projecten/`. De Wasstraat zoekt daar naar bestanden in mappen die `velddocument`, `fotos`, `tekening`, `DAN` of `DAR` in het pad bevatten.
 
 Ondersteunde bestandstypen voor media: `.jpg`, `.jpeg`, `.png`, `.gif`, `.tif`, `.psd`, `.pdf`, `.jp2`, `.doc`, `.docx`.
 
 !!! tip "Minimale proefset"
-    Voor een eerste test volstaat het om één `.mdb` projectdatabase in `digidepot/` te plaatsen, samen met de referentietabellen. De extractie verwerkt dan alleen dat ene project.
+    Voor een eerste test volstaat het om één `.mdb` projectdatabase in `projecten/` te plaatsen, samen met de referentietabellen. De extractie verwerkt dan alleen dat ene project.
 
 ## 5. Wasstraat_Config_HarmonizeV3 configureren
 

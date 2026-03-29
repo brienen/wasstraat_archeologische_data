@@ -133,10 +133,10 @@ Alle services lezen configuratie uit bestanden in `config/`:
 De Airflow-container koppelt de invoerdata via volumes:
 
 ```
-./data/delft/data/digidepot        → /input/projecten
-./data/delft/data/Delf-IT          → /input/delfit
+./data/delft/data/projecten        → /input/projecten
+./data/delft/data/projectenlijst   → /input/projectenlijst
 ./data/delft/data/magazijnlijst    → /input/magazijnlijst
-./data/delft/data/digifotos        → /input/digifotos
+./data/delft/data/fotolijst        → /input/fotolijst
 ./data/delft/data/monsterdatabase  → /input/monsterdatabase
 ./data/delft/data/rapporten        → /input/rapporten
 ./data/delft/data/referentietabellen → /input/referentietabellen

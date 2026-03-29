@@ -228,7 +228,7 @@ wasstraat_model = {
     ]]
   },
   "Project": {
-        STAGING_COLLECTION: config.COLL_STAGING_DELFIT,
+        STAGING_COLLECTION: config.COLL_STAGING_PROJECTENLIJST,
         HARMONIZE_PIPELINES: [[ 
             { '$match': { 'table': "OPGRAVINGEN" } },
             { '$replaceRoot': {'newRoot': {'_id': "$_id", 'brondata': "$$ROOT"}}},
@@ -251,7 +251,7 @@ wasstraat_model = {
 
   },
   "Vindplaats": {
-        STAGING_COLLECTION: config.COLL_STAGING_DELFIT,
+        STAGING_COLLECTION: config.COLL_STAGING_PROJECTENLIJST,
         HARMONIZE_PIPELINES: [[ 
             { '$match': { 'table': "VINDPLAATSEN" } },
             { '$replaceRoot': {'newRoot': {'_id': "$_id", 'brondata': "$$ROOT"}}},
@@ -380,7 +380,7 @@ wasstraat_model = {
         ]]
   },
   "Fotokoppel": {
-        STAGING_COLLECTION: config.COLL_STAGING_DIGIFOTOS,
+        STAGING_COLLECTION: config.COLL_STAGING_FOTOLIJST,
         HARMONIZE_PIPELINES: 'Fotokoppel',
         SET_KEYS_PIPELINES: [[]] 
   },
@@ -426,7 +426,7 @@ wasstraat_model = {
         ]]
   },
   "Bestand": {
-        STAGING_COLLECTION: config.COLL_STAGING_DIGIFOTOS,
+        STAGING_COLLECTION: config.COLL_STAGING_FOTOLIJST,
         HARMONIZE_PIPELINES: [[]],
         MOVEANDMERGE_MOVE: True,
         SET_KEYS_PIPELINES: [[ 

@@ -60,8 +60,8 @@ De extractie-stap leest data uit zes Access-databases (`.mdb`) plus foto- en ref
 
 | Bron | Inhoud | Volume |
 |------|--------|--------|
-| Projectendatabase (digidepot) | Opgravingsprojecten, putten, sporen, vondsten | ~1000 databases |
-| DelfIT | Administratieve gegevens | 1 database |
+| Projectendatabase (projecten) | Opgravingsprojecten, putten, sporen, vondsten | ~1000 databases |
+| Projectenlijst | Administratieve gegevens | 1 database |
 | Magazijnlijst | Depot-informatie (stellingen, dozen) | 1 database |
 | DigiFotolijst | Foto-metadata | 1 database |
 | MonsterDB | Monster-gegevens (botanie, schelpen) | 1 database |
