@@ -246,39 +246,49 @@ class TestTransformRow:
 
     def test_enum_default_bij_leeg(self):
         doc = {'artefactsoort': ''}
-        result = transformRow(doc, ['artefactsoort'], self._col_lookup(), {'artefactsoort'})
+        enum_cols = {'artefactsoort': ['Onbekend', 'Aardewerk', 'Glas']}
+        result = transformRow(doc, ['artefactsoort'], self._col_lookup(), enum_cols)
         assert result['artefactsoort'] == 'Onbekend'
 
     def test_enum_default_bij_none(self):
         doc = {'artefactsoort': None}
-        result = transformRow(doc, ['artefactsoort'], self._col_lookup(), {'artefactsoort'})
+        enum_cols = {'artefactsoort': ['Onbekend', 'Aardewerk', 'Glas']}
+        result = transformRow(doc, ['artefactsoort'], self._col_lookup(), enum_cols)
         assert result['artefactsoort'] == 'Onbekend'
+
+    def test_enum_fallback_zonder_onbekend(self):
+        """Als 'Onbekend' geen geldige ENUM-waarde is, gebruik de eerste waarde."""
+        doc = {'bestandsoort': ''}
+        enum_cols = {'bestandsoort': ['Bestand', 'Foto', 'Tekening']}
+        result = transformRow(doc, ['bestandsoort'], self._col_lookup(), enum_cols)
+        assert result['bestandsoort'] == 'Bestand'
 
     def test_enum_behoudt_waarde(self):
         doc = {'artefactsoort': 'Aardewerk'}
-        result = transformRow(doc, ['artefactsoort'], self._col_lookup(), {'artefactsoort'})
+        enum_cols = {'artefactsoort': ['Onbekend', 'Aardewerk', 'Glas']}
+        result = transformRow(doc, ['artefactsoort'], self._col_lookup(), enum_cols)
         assert result['artefactsoort'] == 'Aardewerk'
 
     def test_id_rename(self):
         doc = {'ID': 5, 'naam': 'test'}
-        result = transformRow(doc, ['primary_key', 'naam'], self._col_lookup(), set())
+        result = transformRow(doc, ['primary_key', 'naam'], self._col_lookup(), {})
         assert result['primary_key'] == 5
 
     def test_id_string_conversie(self):
         from bson import ObjectId
         oid = ObjectId()
         doc = {'_id': oid}
-        result = transformRow(doc, ['_id'], self._col_lookup(), set())
+        result = transformRow(doc, ['_id'], self._col_lookup(), {})
         assert isinstance(result['_id'], str)
 
     def test_none_waarde(self):
         doc = {'score': None}
-        result = transformRow(doc, ['score'], self._col_lookup(), set())
+        result = transformRow(doc, ['score'], self._col_lookup(), {})
         assert result['score'] is None
 
     def test_nan_waarde(self):
         doc = {'score': 'nan'}
-        result = transformRow(doc, ['score'], self._col_lookup(), set())
+        result = transformRow(doc, ['score'], self._col_lookup(), {})
         assert result['score'] is None
 
 
@@ -320,13 +330,17 @@ class TestGetEnumColumns:
     def test_enum_detectie(self):
         cursor = MagicMock()
         cursor.fetchall.return_value = [
-            ('artefactsoort',),
-            ('bestandsoort',),
+            ('artefactsoort', 'Onbekend'),
+            ('artefactsoort', 'Aardewerk'),
+            ('bestandsoort', 'Bestand'),
+            ('bestandsoort', 'Foto'),
         ]
 
         result = getEnumColumns(cursor, 'Def_Artefact')
 
-        assert result == {'artefactsoort', 'bestandsoort'}
+        assert set(result.keys()) == {'artefactsoort', 'bestandsoort'}
+        assert result['artefactsoort'] == ['Onbekend', 'Aardewerk']
+        assert result['bestandsoort'] == ['Bestand', 'Foto']
 
 
 # ============================================================

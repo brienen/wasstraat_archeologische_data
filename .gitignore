@@ -23,6 +23,10 @@ data/test/referentietabellen/*
 !data/test/output/.gitkeep
 !data/test/backup/.gitkeep
 
+# Synthetische output data gaat niet naar Github
+data/synthetic/output/*
+!data/synthetic/output/.gitkeep
+
 
 # Backups
 backup/*
