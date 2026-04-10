@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="author" content="E-Space / Arjen Brienen" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="author" content="E-Space / Arjen Brienen" /><link rel="canonical" href="https://wasstraat.e-space.nl/componenten/transformatie/" />
       <link rel="shortcut icon" href="../../img/favicon.ico" />
     <title>Transformatielaag - Wasstraat Archeologische Data</title>
     <link rel="stylesheet" href="../../css/theme.css" />
@@ -15,14 +15,128 @@
         // Current page data
         var mkdocs_page_name = "Transformatielaag";
         var mkdocs_page_input_path = "componenten/transformatie.md";
-        var mkdocs_page_url = null;
+        var mkdocs_page_url = "/componenten/transformatie/";
       </script>
     
     <!--[if lt IE 9]>
       <script src="../../js/html5shiv.min.js"></script>
     <![endif]-->
       <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
-      <script>hljs.highlightAll();</script> 
+      <script>hljs.highlightAll();</script>
+  
+  <meta name="author" content="Arjen Brienen">
+  <meta name="publisher" content="E-Space">
+  <meta name="description" content="Technische documentatie voor de Wasstraat Archeologische Data - een open source verwerkingsplatform voor archeologische datasets">
+  <meta name="keywords" content="archeologie, wasstraat, ETL, open data, erfgoed, ABR, CIDOC CRM, Delft, Airflow, open source">
+  <meta name="generator" content="MkDocs">
+  <meta name="robots" content="index, follow">
+  <meta http-equiv="Content-Language" content="nl">
+
+  
+  <meta name="DC.title" content="Transformatielaag">
+  <meta name="DC.creator" content="Arjen Brienen">
+  <meta name="DC.publisher" content="E-Space">
+  <meta name="DC.language" content="nl">
+  <meta name="DC.rights" content="EUPL v1.2">
+  <meta name="DC.type" content="Text">
+  <meta name="DC.format" content="text/html">
+
+  
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Wasstraat Archeologische Data">
+  <meta property="og:title" content="Transformatielaag">
+  <meta property="og:description" content="Technische documentatie voor de Wasstraat Archeologische Data - een open source verwerkingsplatform voor archeologische datasets">
+  <meta property="og:locale" content="nl_NL">
+  <meta property="og:url" content="https://wasstraat.e-space.nl/componenten/transformatie/">
+
+  
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Transformatielaag">
+  <meta name="twitter:description" content="Technische documentatie voor de Wasstraat Archeologische Data - een open source verwerkingsplatform voor archeologische datasets">
+
+  
+  <link rel="canonical" href="https://wasstraat.e-space.nl/componenten/transformatie/">
+
+  
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://wasstraat.e-space.nl/#org-espace",
+        "name": "E-Space",
+        "description": "Ontwikkelaar van de Wasstraat Archeologische Data.",
+        "inLanguage": "nl"
+      },
+      {
+        "@type": "Person",
+        "@id": "https://wasstraat.e-space.nl/#person-arjen",
+        "name": "Arjen Brienen",
+        "jobTitle": "Architect en ontwikkelaar",
+        "affiliation": { "@id": "https://wasstraat.e-space.nl/#org-espace" },
+        "sameAs": [
+          "https://www.linkedin.com/in/arjenbrienen/",
+          "https://github.com/brienen"
+        ]
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://wasstraat.e-space.nl/#website",
+        "url": "https://wasstraat.e-space.nl/",
+        "name": "Wasstraat Archeologische Data",
+        "description": "Technische documentatie voor de Wasstraat Archeologische Data - een open source verwerkingsplatform voor archeologische datasets",
+        "inLanguage": "nl",
+        "publisher": { "@id": "https://wasstraat.e-space.nl/#org-espace" },
+        "author": { "@id": "https://wasstraat.e-space.nl/#person-arjen" },
+        "creator": { "@id": "https://wasstraat.e-space.nl/#person-arjen" },
+        "copyrightHolder": { "@id": "https://wasstraat.e-space.nl/#org-espace" },
+        "license": "https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12"
+      },
+      {
+        "@type": "SoftwareSourceCode",
+        "@id": "https://wasstraat.e-space.nl/#software",
+        "name": "Wasstraat Archeologische Data",
+        "alternateName": "Wasstraat",
+        "description": "Open-source ETL-platform dat archeologische gegevens verzamelt, verwerkt en toegankelijk maakt. Ontwikkeld voor de gemeente Delft en uitgebreid tot een generiek platform voor Nederlandse gemeenten.",
+        "programmingLanguage": ["Python", "SQL", "YAML"],
+        "runtimePlatform": "Docker Compose",
+        "codeRepository": "https://github.com/brienen/wasstraat_archeologische_data",
+        "license": "https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12",
+        "author": { "@id": "https://wasstraat.e-space.nl/#person-arjen" },
+        "creator": { "@id": "https://wasstraat.e-space.nl/#person-arjen" },
+        "publisher": { "@id": "https://wasstraat.e-space.nl/#org-espace" },
+        "maintainer": { "@id": "https://wasstraat.e-space.nl/#person-arjen" },
+        "copyrightHolder": { "@id": "https://wasstraat.e-space.nl/#org-espace" },
+        "inLanguage": "nl",
+        "keywords": "archeologie, ETL, Airflow, PostgreSQL, MongoDB, Elasticsearch, ABR, CIDOC CRM, GGM, erfgoed, open data",
+        "about": [
+          { "@type": "Thing", "name": "Archeologisch Basisregister (ABR)" },
+          { "@type": "Thing", "name": "CIDOC CRM" },
+          { "@type": "Thing", "name": "Gemeentelijk Gegevensmodel (GGM)" },
+          { "@type": "Thing", "name": "DANS e-Depot" },
+          { "@type": "Thing", "name": "Archis" }
+        ]
+      }
+      
+      ,{
+        "@type": "TechArticle",
+        "@id": "https://wasstraat.e-space.nl/componenten/transformatie/#article",
+        "url": "https://wasstraat.e-space.nl/componenten/transformatie/",
+        "name": "Transformatielaag",
+        "headline": "Transformatielaag",
+        "description": "Technische documentatie voor de Wasstraat Archeologische Data - een open source verwerkingsplatform voor archeologische datasets",
+        "inLanguage": "nl",
+        "isPartOf": { "@id": "https://wasstraat.e-space.nl/#website" },
+        "author": { "@id": "https://wasstraat.e-space.nl/#person-arjen" },
+        "publisher": { "@id": "https://wasstraat.e-space.nl/#org-espace" },
+        "license": "https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12"
+      }
+      
+    ]
+  }
+  </script>
+
 </head>
 
 <body class="wy-body-for-nav" role="document">
@@ -34,12 +148,12 @@
           <a href="../.." class="icon icon-home"> Wasstraat Archeologische Data
         </a><div role="search">
   <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
-      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+      <input type="text" name="q" placeholder="Doorzoek documentatie" aria-label="Doorzoek documentatie" title="Typ hier uw zoekterm" />
   </form>
 </div>
       </div>
 
-      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigatiemenu">
               <ul>
                 <li class="toctree-l1"><a class="reference internal" href="../..">Home</a>
                 </li>
@@ -110,12 +224,20 @@
     <li class="toctree-l2"><a class="reference internal" href="#architectuur">Architectuur</a>
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#configuratie">Configuratie</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#harmonisatie-mapping-excel">Harmonisatie-mapping (Excel)</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#datacorrecties-yaml">Datacorrecties (YAML)</a>
+    </li>
+        </ul>
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#foutafhandeling">Foutafhandeling</a>
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#best-practices">Best Practices</a>
     </li>
     </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../gemeenteprofielen/">Gemeenteprofielen</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../crossviews/">Crossviews</a>
                   </li>
@@ -151,7 +273,7 @@
     </nav>
 
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
-      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobiel navigatiemenu">
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
           <a href="../..">Wasstraat Archeologische Data</a>
         
@@ -159,7 +281,7 @@
       <div class="wy-nav-content">
         <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
   <ul class="wy-breadcrumbs">
-    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
+    <li><a href="../.." class="icon icon-home" aria-label="Documentatie"></a></li>
           <li class="breadcrumb-item">Componenten</li>
       <li class="breadcrumb-item active">Transformatielaag</li>
     <li class="wy-breadcrumbs-aside">
@@ -190,7 +312,7 @@
 </div>
 <h3 id="2-spellingsnotering">2. Spellingsnotering<a class="headerlink" href="#2-spellingsnotering" title="Permanent link">&para;</a></h3>
 <p>Systematische correctie van spellingsfouten en inconsistenties:</p>
-<div class="codehilite"><pre><span></span><code><span class="kn">from</span> <span class="nn">transformatie</span> <span class="kn">import</span> <span class="n">SpellingNormalizer</span>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">transformatie</span><span class="w"> </span><span class="kn">import</span> <span class="n">SpellingNormalizer</span>
 
 <span class="n">normalizer</span> <span class="o">=</span> <span class="n">SpellingNormalizer</span><span class="p">()</span>
 
@@ -239,7 +361,7 @@
 <h3 id="5-locatienotering">5. Locatienotering<a class="headerlink" href="#5-locatienotering" title="Permanent link">&para;</a></h3>
 <p>Normalisatie van coördinatensystemen en localiteitsaanduidingen:</p>
 <h4 id="coordinatensystemen">Coördinatensystemen<a class="headerlink" href="#coordinatensystemen" title="Permanent link">&para;</a></h4>
-<div class="codehilite"><pre><span></span><code><span class="kn">from</span> <span class="nn">transformatie</span> <span class="kn">import</span> <span class="n">CoordinateNormalizer</span>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">transformatie</span><span class="w"> </span><span class="kn">import</span> <span class="n">CoordinateNormalizer</span>
 
 <span class="n">normalizer</span> <span class="o">=</span> <span class="n">CoordinateNormalizer</span><span class="p">()</span>
 
@@ -327,33 +449,28 @@
 </code></pre></div>
 
 <h2 id="configuratie">Configuratie<a class="headerlink" href="#configuratie" title="Permanent link">&para;</a></h2>
-<p>Transformatiestappen kunnen per bron worden geconfigureerd:</p>
-<div class="codehilite"><pre><span></span><code><span class="p">{</span>
-<span class="w">  </span><span class="nt">&quot;bron&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Amsterdam Gemeente&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;transformatie_regels&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="nt">&quot;periode&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<span class="w">      </span><span class="nt">&quot;invoerkolom&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;PERIODE_CODE&quot;</span><span class="p">,</span>
-<span class="w">      </span><span class="nt">&quot;transformatie&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;abr_alignment&quot;</span><span class="p">,</span>
-<span class="w">      </span><span class="nt">&quot;mapping&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<span class="w">        </span><span class="nt">&quot;PA&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Paleolithicum&quot;</span><span class="p">,</span>
-<span class="w">        </span><span class="nt">&quot;BA&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Bronstijd&quot;</span>
-<span class="w">      </span><span class="p">}</span>
-<span class="w">    </span><span class="p">},</span>
-<span class="w">    </span><span class="nt">&quot;datum&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<span class="w">      </span><span class="nt">&quot;invoerkolom&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;VONDSTDATUM&quot;</span><span class="p">,</span>
-<span class="w">      </span><span class="nt">&quot;format&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;DD-MM-YYYY&quot;</span><span class="p">,</span>
-<span class="w">      </span><span class="nt">&quot;transformatie&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;iso8601_normalisatie&quot;</span>
-<span class="w">    </span><span class="p">},</span>
-<span class="w">    </span><span class="nt">&quot;coördinaten&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<span class="w">      </span><span class="nt">&quot;invoerkolonX&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;X_RD&quot;</span><span class="p">,</span>
-<span class="w">      </span><span class="nt">&quot;invoerkolonY&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Y_RD&quot;</span><span class="p">,</span>
-<span class="w">      </span><span class="nt">&quot;invoer_crs&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;EPSG:28992&quot;</span><span class="p">,</span>
-<span class="w">      </span><span class="nt">&quot;uitvoer_crs&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;EPSG:4326&quot;</span>
-<span class="w">    </span><span class="p">}</span>
-<span class="w">  </span><span class="p">}</span>
-<span class="p">}</span>
+<p>De transformatielaag wordt aangestuurd door twee configuratiebestanden in de <code>wasstraat_config/</code>-directory:</p>
+<h3 id="harmonisatie-mapping-excel">Harmonisatie-mapping (Excel)<a class="headerlink" href="#harmonisatie-mapping-excel" title="Permanent link">&para;</a></h3>
+<p>Het bestand <code>Wasstraat_Config_HarmonizeV3.xlsx</code> definieert de veldmapping per objecttype: welke kolom in de brondata correspondeert met welk veld in het geharmoniseerde datamodel. Zie <a href="../../aan-de-slag/#5-wasstraat_config_harmonizev3-configureren">Aan de slag</a> voor details.</p>
+<h3 id="datacorrecties-yaml">Datacorrecties (YAML)<a class="headerlink" href="#datacorrecties-yaml" title="Permanent link">&para;</a></h3>
+<p>Het bestand <code>correcties.yml</code> bevat gemeente-specifieke datacorrecties die automatisch door de pipeline worden toegepast:</p>
+<p><strong>Projectcode-correcties</strong> — worden na harmonisatie (Transform2) toegepast op het <code>projectcd</code>-veld:</p>
+<div class="codehilite"><pre><span></span><code><span class="nt">projectcode_correcties</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">patroon</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;SCHE&quot;</span><span class="w">        </span><span class="c1"># regex-match op projectcd</span>
+<span class="w">    </span><span class="nt">projectcode</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;DC039&quot;</span><span class="w">   </span><span class="c1"># vervangende waarde</span>
 </code></pre></div>
 
+<p><strong>Brondata-correcties</strong> — worden vóór harmonisatie (Transform1) toegepast op raw velden in staging:</p>
+<div class="codehilite"><pre><span></span><code><span class="nt">brondata_correcties</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">collectie</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">COLL_STAGING_MONSTER</span><span class="w">  </span><span class="c1"># config-constante van de collectie</span>
+<span class="w">    </span><span class="nt">zoek_veld</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">PROJECT</span><span class="w">               </span><span class="c1"># veld waarop gematcht wordt</span>
+<span class="w">    </span><span class="nt">patroon</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;SCHE&quot;</span><span class="w">                  </span><span class="c1"># regex-patroon</span>
+<span class="w">    </span><span class="nt">waarde</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;DC039&quot;</span><span class="w">                  </span><span class="c1"># vervangende waarde</span>
+</code></pre></div>
+
+<p><strong>Overige opties</strong>: <code>artefact_niet_mergen</code> (projecten uitsluiten van merge) en <code>rapportcode_prefixen</code> (bestandsclassificatie).</p>
+<p>Het correctiebestand is optioneel en foutbestendig: bij ongeldige YAML of ontbrekende velden worden de betreffende regels overgeslagen en gelogd
+```</p>
 <h2 id="foutafhandeling">Foutafhandeling<a class="headerlink" href="#foutafhandeling" title="Permanent link">&para;</a></h2>
 <p>De transformatielaag registreert alle transformaties en mogelijke fouten:</p>
 <div class="admonition error">
@@ -390,21 +507,51 @@
 </ul>
               
             </div>
-          </div><footer>
-    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
-        <a href="../singlestore/" class="btn btn-neutral float-left" title="SingleStore & Clusterlaag"><span class="icon icon-circle-arrow-left"></span> Previous</a>
-        <a href="../crossviews/" class="btn btn-neutral float-right" title="Crossviews">Next <span class="icon icon-circle-arrow-right"></span></a>
+          </div>
+<footer role="contentinfo" class="wasstraat-footer"
+        itemscope itemtype="https://schema.org/WPFooter">
+  <hr>
+  <p class="wasstraat-credits">
+    Gebouwd door
+    <span itemprop="publisher" itemscope itemtype="https://schema.org/Organization">
+      <strong itemprop="name">E-Space</strong>
+    </span>
+    —
+    <span itemprop="author" itemscope itemtype="https://schema.org/Person">
+      <strong itemprop="name">Arjen Brienen</strong><meta itemprop="affiliation" content="E-Space">
+      <link itemprop="sameAs" href="https://www.linkedin.com/in/arjenbrienen/">
+      <link itemprop="sameAs" href="https://github.com/brienen">
+    </span>
+  </p>
+  <p class="wasstraat-license">
+    Uitgegeven onder de
+    <a href="https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12"
+       rel="license">EUPL v1.2</a>.
+    Broncode:
+    <a href="https://github.com/brienen/wasstraat_archeologische_data"
+       rel="external">github.com/brienen/wasstraat_archeologische_data</a>.
+  </p>
+  
+    <p class="wasstraat-copyright"><small>© E-Space — Arjen Brienen. Uitgegeven onder de EUPL v1.2 licentie.</small></p>
+  
+</footer>
+<footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footernavigatie">
+        <a href="../singlestore/" class="btn btn-neutral float-left" title="SingleStore & Clusterlaag"><span class="icon icon-circle-arrow-left"></span> Vorige</a>
+        <a href="../gemeenteprofielen/" class="btn btn-neutral float-right" title="Gemeenteprofielen">Volgende <span class="icon icon-circle-arrow-right"></span></a>
     </div>
 
   <hr/>
 
   <div role="contentinfo">
     <!-- Copyright etc -->
+      <p>© E-Space — Arjen Brienen. Uitgegeven onder de EUPL v1.2 licentie.</p>
   </div>
 
-  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+  Gemaakt met <a href="https://www.mkdocs.org/">MkDocs</a> met behulp van een <a href="https://github.com/readthedocs/sphinx_rtd_theme">Thema</a> geleverd door <a href="https://readthedocs.org">Read the Docs</a>.
 </footer>
           
+
         </div>
       </div>
 
@@ -412,14 +559,14 @@
 
   </div>
 
-  <div class="rst-versions" role="note" aria-label="Versions">
+  <div class="rst-versions" role="note" aria-label="Versies">
   <span class="rst-current-version" data-toggle="rst-current-version">
     
     
-      <span><a href="../singlestore/" style="color: #fcfcfc">&laquo; Previous</a></span>
+      <span><a href="../singlestore/" style="color: #fcfcfc">&laquo; Vorige</a></span>
     
     
-      <span><a href="../crossviews/" style="color: #fcfcfc">Next &raquo;</a></span>
+      <span><a href="../gemeenteprofielen/" style="color: #fcfcfc">Volgende &raquo;</a></span>
     
   </span>
 </div>

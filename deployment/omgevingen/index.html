@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="author" content="E-Space / Arjen Brienen" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="author" content="E-Space / Arjen Brienen" /><link rel="canonical" href="https://wasstraat.e-space.nl/deployment/omgevingen/" />
       <link rel="shortcut icon" href="../../img/favicon.ico" />
     <title>Omgevingen & Docker Compose - Wasstraat Archeologische Data</title>
     <link rel="stylesheet" href="../../css/theme.css" />
@@ -15,14 +15,128 @@
         // Current page data
         var mkdocs_page_name = "Omgevingen \u0026 Docker Compose";
         var mkdocs_page_input_path = "deployment/omgevingen.md";
-        var mkdocs_page_url = null;
+        var mkdocs_page_url = "/deployment/omgevingen/";
       </script>
     
     <!--[if lt IE 9]>
       <script src="../../js/html5shiv.min.js"></script>
     <![endif]-->
       <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
-      <script>hljs.highlightAll();</script> 
+      <script>hljs.highlightAll();</script>
+  
+  <meta name="author" content="Arjen Brienen">
+  <meta name="publisher" content="E-Space">
+  <meta name="description" content="Technische documentatie voor de Wasstraat Archeologische Data - een open source verwerkingsplatform voor archeologische datasets">
+  <meta name="keywords" content="archeologie, wasstraat, ETL, open data, erfgoed, ABR, CIDOC CRM, Delft, Airflow, open source">
+  <meta name="generator" content="MkDocs">
+  <meta name="robots" content="index, follow">
+  <meta http-equiv="Content-Language" content="nl">
+
+  
+  <meta name="DC.title" content="Omgevingen & Docker Compose">
+  <meta name="DC.creator" content="Arjen Brienen">
+  <meta name="DC.publisher" content="E-Space">
+  <meta name="DC.language" content="nl">
+  <meta name="DC.rights" content="EUPL v1.2">
+  <meta name="DC.type" content="Text">
+  <meta name="DC.format" content="text/html">
+
+  
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Wasstraat Archeologische Data">
+  <meta property="og:title" content="Omgevingen & Docker Compose">
+  <meta property="og:description" content="Technische documentatie voor de Wasstraat Archeologische Data - een open source verwerkingsplatform voor archeologische datasets">
+  <meta property="og:locale" content="nl_NL">
+  <meta property="og:url" content="https://wasstraat.e-space.nl/deployment/omgevingen/">
+
+  
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Omgevingen & Docker Compose">
+  <meta name="twitter:description" content="Technische documentatie voor de Wasstraat Archeologische Data - een open source verwerkingsplatform voor archeologische datasets">
+
+  
+  <link rel="canonical" href="https://wasstraat.e-space.nl/deployment/omgevingen/">
+
+  
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://wasstraat.e-space.nl/#org-espace",
+        "name": "E-Space",
+        "description": "Ontwikkelaar van de Wasstraat Archeologische Data.",
+        "inLanguage": "nl"
+      },
+      {
+        "@type": "Person",
+        "@id": "https://wasstraat.e-space.nl/#person-arjen",
+        "name": "Arjen Brienen",
+        "jobTitle": "Architect en ontwikkelaar",
+        "affiliation": { "@id": "https://wasstraat.e-space.nl/#org-espace" },
+        "sameAs": [
+          "https://www.linkedin.com/in/arjenbrienen/",
+          "https://github.com/brienen"
+        ]
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://wasstraat.e-space.nl/#website",
+        "url": "https://wasstraat.e-space.nl/",
+        "name": "Wasstraat Archeologische Data",
+        "description": "Technische documentatie voor de Wasstraat Archeologische Data - een open source verwerkingsplatform voor archeologische datasets",
+        "inLanguage": "nl",
+        "publisher": { "@id": "https://wasstraat.e-space.nl/#org-espace" },
+        "author": { "@id": "https://wasstraat.e-space.nl/#person-arjen" },
+        "creator": { "@id": "https://wasstraat.e-space.nl/#person-arjen" },
+        "copyrightHolder": { "@id": "https://wasstraat.e-space.nl/#org-espace" },
+        "license": "https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12"
+      },
+      {
+        "@type": "SoftwareSourceCode",
+        "@id": "https://wasstraat.e-space.nl/#software",
+        "name": "Wasstraat Archeologische Data",
+        "alternateName": "Wasstraat",
+        "description": "Open-source ETL-platform dat archeologische gegevens verzamelt, verwerkt en toegankelijk maakt. Ontwikkeld voor de gemeente Delft en uitgebreid tot een generiek platform voor Nederlandse gemeenten.",
+        "programmingLanguage": ["Python", "SQL", "YAML"],
+        "runtimePlatform": "Docker Compose",
+        "codeRepository": "https://github.com/brienen/wasstraat_archeologische_data",
+        "license": "https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12",
+        "author": { "@id": "https://wasstraat.e-space.nl/#person-arjen" },
+        "creator": { "@id": "https://wasstraat.e-space.nl/#person-arjen" },
+        "publisher": { "@id": "https://wasstraat.e-space.nl/#org-espace" },
+        "maintainer": { "@id": "https://wasstraat.e-space.nl/#person-arjen" },
+        "copyrightHolder": { "@id": "https://wasstraat.e-space.nl/#org-espace" },
+        "inLanguage": "nl",
+        "keywords": "archeologie, ETL, Airflow, PostgreSQL, MongoDB, Elasticsearch, ABR, CIDOC CRM, GGM, erfgoed, open data",
+        "about": [
+          { "@type": "Thing", "name": "Archeologisch Basisregister (ABR)" },
+          { "@type": "Thing", "name": "CIDOC CRM" },
+          { "@type": "Thing", "name": "Gemeentelijk Gegevensmodel (GGM)" },
+          { "@type": "Thing", "name": "DANS e-Depot" },
+          { "@type": "Thing", "name": "Archis" }
+        ]
+      }
+      
+      ,{
+        "@type": "TechArticle",
+        "@id": "https://wasstraat.e-space.nl/deployment/omgevingen/#article",
+        "url": "https://wasstraat.e-space.nl/deployment/omgevingen/",
+        "name": "Omgevingen & Docker Compose",
+        "headline": "Omgevingen & Docker Compose",
+        "description": "Technische documentatie voor de Wasstraat Archeologische Data - een open source verwerkingsplatform voor archeologische datasets",
+        "inLanguage": "nl",
+        "isPartOf": { "@id": "https://wasstraat.e-space.nl/#website" },
+        "author": { "@id": "https://wasstraat.e-space.nl/#person-arjen" },
+        "publisher": { "@id": "https://wasstraat.e-space.nl/#org-espace" },
+        "license": "https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12"
+      }
+      
+    ]
+  }
+  </script>
+
 </head>
 
 <body class="wy-body-for-nav" role="document">
@@ -34,12 +148,12 @@
           <a href="../.." class="icon icon-home"> Wasstraat Archeologische Data
         </a><div role="search">
   <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
-      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+      <input type="text" name="q" placeholder="Doorzoek documentatie" aria-label="Doorzoek documentatie" title="Typ hier uw zoekterm" />
   </form>
 </div>
       </div>
 
-      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigatiemenu">
               <ul>
                 <li class="toctree-l1"><a class="reference internal" href="../..">Home</a>
                 </li>
@@ -78,6 +192,8 @@
                   <li class="toctree-l1"><a class="reference internal" href="../../componenten/singlestore/">SingleStore & Clusterlaag</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../componenten/transformatie/">Transformatielaag</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../componenten/gemeenteprofielen/">Gemeenteprofielen</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../componenten/crossviews/">Crossviews</a>
                   </li>
@@ -151,7 +267,7 @@
     </nav>
 
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
-      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobiel navigatiemenu">
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
           <a href="../..">Wasstraat Archeologische Data</a>
         
@@ -159,7 +275,7 @@
       <div class="wy-nav-content">
         <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
   <ul class="wy-breadcrumbs">
-    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
+    <li><a href="../.." class="icon icon-home" aria-label="Documentatie"></a></li>
           <li class="breadcrumb-item">Deployment</li>
       <li class="breadcrumb-item active">Omgevingen & Docker Compose</li>
     <li class="wy-breadcrumbs-aside">
@@ -355,6 +471,25 @@ Typ <code>make help</code> voor een overzicht van alle beschikbare commando's.</
 </tr>
 </tbody>
 </table>
+<p>Daarnaast leest de Airflow-container configuratie uit <code>wasstraat_config/</code> (gemount als <code>/opt/airflow/config/</code>):</p>
+<table>
+<thead>
+<tr>
+<th>Bestand</th>
+<th>Inhoud</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Wasstraat_Config_HarmonizeV3.xlsx</code></td>
+<td>Harmonisatie-mapping (veldnamen per objecttype)</td>
+</tr>
+<tr>
+<td><code>correcties.yml</code></td>
+<td>Gemeente-specifieke datacorrecties (projectcodes, rapportprefixen)</td>
+</tr>
+</tbody>
+</table>
 <div class="admonition warning">
 <p class="admonition-title">Gevoelige gegevens</p>
 <p>De <code>.env</code>-bestanden bevatten wachtwoorden en credentials. Neem deze <strong>nooit</strong> op in versiebeheer. Gebruik het <code>config/</code>-directory als template en vul per omgeving de juiste waarden in.</p>
@@ -362,13 +497,13 @@ Typ <code>make help</code> voor een overzicht van alle beschikbare commando's.</
 <h2 id="volume-mounts">Volume-Mounts<a class="headerlink" href="#volume-mounts" title="Permanent link">&para;</a></h2>
 <h3 id="data-volumes">Data-volumes<a class="headerlink" href="#data-volumes" title="Permanent link">&para;</a></h3>
 <p>De Airflow-container koppelt de invoerdata via volumes:</p>
-<div class="codehilite"><pre><span></span><code>./data/input/basefiles/projectdatabase/digidepot → /input/projecten
-./data/input/basefiles/projectdatabase/Delf-IT   → /input/delfit
-./data/input/basefiles/projectdatabase/magazijnlijst → /input/magazijnlijst
-./data/input/basefiles/projectdatabase/digifotos → /input/digifotos
-./data/input/basefiles/projectdatabase/monsterdatabase → /input/monsterdatabase
-./data/input/basefiles/projectdatabase/rapporten → /input/rapporten
-./data/input/basefiles/projectdatabase/referentietabellen → /input/referentietabellen
+<div class="codehilite"><pre><span></span><code>./data/delft/data/projecten        → /input/projecten
+./data/delft/data/projectenlijst   → /input/projectenlijst
+./data/delft/data/magazijnlijst    → /input/magazijnlijst
+./data/delft/data/fotolijst        → /input/fotolijst
+./data/delft/data/monsterdatabase  → /input/monsterdatabase
+./data/delft/data/rapporten        → /input/rapporten
+./data/delft/data/referentietabellen → /input/referentietabellen
 </code></pre></div>
 
 <h3 id="persistente-volumes">Persistente volumes<a class="headerlink" href="#persistente-volumes" title="Permanent link">&para;</a></h3>
@@ -417,21 +552,51 @@ make<span class="w"> </span>restore<span class="w"> </span><span class="nv">TS</
 </ol>
               
             </div>
-          </div><footer>
-    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
-        <a href="../../componenten/zoeken/" class="btn btn-neutral float-left" title="Zoek- en Indexeringslaag"><span class="icon icon-circle-arrow-left"></span> Previous</a>
-        <a href="../airflow-vs-app/" class="btn btn-neutral float-right" title="Airflow Transformatie vs. Web Applicatie">Next <span class="icon icon-circle-arrow-right"></span></a>
+          </div>
+<footer role="contentinfo" class="wasstraat-footer"
+        itemscope itemtype="https://schema.org/WPFooter">
+  <hr>
+  <p class="wasstraat-credits">
+    Gebouwd door
+    <span itemprop="publisher" itemscope itemtype="https://schema.org/Organization">
+      <strong itemprop="name">E-Space</strong>
+    </span>
+    —
+    <span itemprop="author" itemscope itemtype="https://schema.org/Person">
+      <strong itemprop="name">Arjen Brienen</strong><meta itemprop="affiliation" content="E-Space">
+      <link itemprop="sameAs" href="https://www.linkedin.com/in/arjenbrienen/">
+      <link itemprop="sameAs" href="https://github.com/brienen">
+    </span>
+  </p>
+  <p class="wasstraat-license">
+    Uitgegeven onder de
+    <a href="https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12"
+       rel="license">EUPL v1.2</a>.
+    Broncode:
+    <a href="https://github.com/brienen/wasstraat_archeologische_data"
+       rel="external">github.com/brienen/wasstraat_archeologische_data</a>.
+  </p>
+  
+    <p class="wasstraat-copyright"><small>© E-Space — Arjen Brienen. Uitgegeven onder de EUPL v1.2 licentie.</small></p>
+  
+</footer>
+<footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footernavigatie">
+        <a href="../../componenten/zoeken/" class="btn btn-neutral float-left" title="Zoek- en Indexeringslaag"><span class="icon icon-circle-arrow-left"></span> Vorige</a>
+        <a href="../airflow-vs-app/" class="btn btn-neutral float-right" title="Airflow Transformatie vs. Web Applicatie">Volgende <span class="icon icon-circle-arrow-right"></span></a>
     </div>
 
   <hr/>
 
   <div role="contentinfo">
     <!-- Copyright etc -->
+      <p>© E-Space — Arjen Brienen. Uitgegeven onder de EUPL v1.2 licentie.</p>
   </div>
 
-  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+  Gemaakt met <a href="https://www.mkdocs.org/">MkDocs</a> met behulp van een <a href="https://github.com/readthedocs/sphinx_rtd_theme">Thema</a> geleverd door <a href="https://readthedocs.org">Read the Docs</a>.
 </footer>
           
+
         </div>
       </div>
 
@@ -439,14 +604,14 @@ make<span class="w"> </span>restore<span class="w"> </span><span class="nv">TS</
 
   </div>
 
-  <div class="rst-versions" role="note" aria-label="Versions">
+  <div class="rst-versions" role="note" aria-label="Versies">
   <span class="rst-current-version" data-toggle="rst-current-version">
     
     
-      <span><a href="../../componenten/zoeken/" style="color: #fcfcfc">&laquo; Previous</a></span>
+      <span><a href="../../componenten/zoeken/" style="color: #fcfcfc">&laquo; Vorige</a></span>
     
     
-      <span><a href="../airflow-vs-app/" style="color: #fcfcfc">Next &raquo;</a></span>
+      <span><a href="../airflow-vs-app/" style="color: #fcfcfc">Volgende &raquo;</a></span>
     
   </span>
 </div>

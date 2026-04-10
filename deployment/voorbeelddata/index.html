@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="author" content="E-Space / Arjen Brienen" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="author" content="E-Space / Arjen Brienen" /><link rel="canonical" href="https://wasstraat.e-space.nl/deployment/voorbeelddata/" />
       <link rel="shortcut icon" href="../../img/favicon.ico" />
     <title>Voorbeelddata - Wasstraat Archeologische Data</title>
     <link rel="stylesheet" href="../../css/theme.css" />
@@ -15,14 +15,128 @@
         // Current page data
         var mkdocs_page_name = "Voorbeelddata";
         var mkdocs_page_input_path = "deployment/voorbeelddata.md";
-        var mkdocs_page_url = null;
+        var mkdocs_page_url = "/deployment/voorbeelddata/";
       </script>
     
     <!--[if lt IE 9]>
       <script src="../../js/html5shiv.min.js"></script>
     <![endif]-->
       <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
-      <script>hljs.highlightAll();</script> 
+      <script>hljs.highlightAll();</script>
+  
+  <meta name="author" content="Arjen Brienen">
+  <meta name="publisher" content="E-Space">
+  <meta name="description" content="Technische documentatie voor de Wasstraat Archeologische Data - een open source verwerkingsplatform voor archeologische datasets">
+  <meta name="keywords" content="archeologie, wasstraat, ETL, open data, erfgoed, ABR, CIDOC CRM, Delft, Airflow, open source">
+  <meta name="generator" content="MkDocs">
+  <meta name="robots" content="index, follow">
+  <meta http-equiv="Content-Language" content="nl">
+
+  
+  <meta name="DC.title" content="Voorbeelddata">
+  <meta name="DC.creator" content="Arjen Brienen">
+  <meta name="DC.publisher" content="E-Space">
+  <meta name="DC.language" content="nl">
+  <meta name="DC.rights" content="EUPL v1.2">
+  <meta name="DC.type" content="Text">
+  <meta name="DC.format" content="text/html">
+
+  
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Wasstraat Archeologische Data">
+  <meta property="og:title" content="Voorbeelddata">
+  <meta property="og:description" content="Technische documentatie voor de Wasstraat Archeologische Data - een open source verwerkingsplatform voor archeologische datasets">
+  <meta property="og:locale" content="nl_NL">
+  <meta property="og:url" content="https://wasstraat.e-space.nl/deployment/voorbeelddata/">
+
+  
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Voorbeelddata">
+  <meta name="twitter:description" content="Technische documentatie voor de Wasstraat Archeologische Data - een open source verwerkingsplatform voor archeologische datasets">
+
+  
+  <link rel="canonical" href="https://wasstraat.e-space.nl/deployment/voorbeelddata/">
+
+  
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://wasstraat.e-space.nl/#org-espace",
+        "name": "E-Space",
+        "description": "Ontwikkelaar van de Wasstraat Archeologische Data.",
+        "inLanguage": "nl"
+      },
+      {
+        "@type": "Person",
+        "@id": "https://wasstraat.e-space.nl/#person-arjen",
+        "name": "Arjen Brienen",
+        "jobTitle": "Architect en ontwikkelaar",
+        "affiliation": { "@id": "https://wasstraat.e-space.nl/#org-espace" },
+        "sameAs": [
+          "https://www.linkedin.com/in/arjenbrienen/",
+          "https://github.com/brienen"
+        ]
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://wasstraat.e-space.nl/#website",
+        "url": "https://wasstraat.e-space.nl/",
+        "name": "Wasstraat Archeologische Data",
+        "description": "Technische documentatie voor de Wasstraat Archeologische Data - een open source verwerkingsplatform voor archeologische datasets",
+        "inLanguage": "nl",
+        "publisher": { "@id": "https://wasstraat.e-space.nl/#org-espace" },
+        "author": { "@id": "https://wasstraat.e-space.nl/#person-arjen" },
+        "creator": { "@id": "https://wasstraat.e-space.nl/#person-arjen" },
+        "copyrightHolder": { "@id": "https://wasstraat.e-space.nl/#org-espace" },
+        "license": "https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12"
+      },
+      {
+        "@type": "SoftwareSourceCode",
+        "@id": "https://wasstraat.e-space.nl/#software",
+        "name": "Wasstraat Archeologische Data",
+        "alternateName": "Wasstraat",
+        "description": "Open-source ETL-platform dat archeologische gegevens verzamelt, verwerkt en toegankelijk maakt. Ontwikkeld voor de gemeente Delft en uitgebreid tot een generiek platform voor Nederlandse gemeenten.",
+        "programmingLanguage": ["Python", "SQL", "YAML"],
+        "runtimePlatform": "Docker Compose",
+        "codeRepository": "https://github.com/brienen/wasstraat_archeologische_data",
+        "license": "https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12",
+        "author": { "@id": "https://wasstraat.e-space.nl/#person-arjen" },
+        "creator": { "@id": "https://wasstraat.e-space.nl/#person-arjen" },
+        "publisher": { "@id": "https://wasstraat.e-space.nl/#org-espace" },
+        "maintainer": { "@id": "https://wasstraat.e-space.nl/#person-arjen" },
+        "copyrightHolder": { "@id": "https://wasstraat.e-space.nl/#org-espace" },
+        "inLanguage": "nl",
+        "keywords": "archeologie, ETL, Airflow, PostgreSQL, MongoDB, Elasticsearch, ABR, CIDOC CRM, GGM, erfgoed, open data",
+        "about": [
+          { "@type": "Thing", "name": "Archeologisch Basisregister (ABR)" },
+          { "@type": "Thing", "name": "CIDOC CRM" },
+          { "@type": "Thing", "name": "Gemeentelijk Gegevensmodel (GGM)" },
+          { "@type": "Thing", "name": "DANS e-Depot" },
+          { "@type": "Thing", "name": "Archis" }
+        ]
+      }
+      
+      ,{
+        "@type": "TechArticle",
+        "@id": "https://wasstraat.e-space.nl/deployment/voorbeelddata/#article",
+        "url": "https://wasstraat.e-space.nl/deployment/voorbeelddata/",
+        "name": "Voorbeelddata",
+        "headline": "Voorbeelddata",
+        "description": "Technische documentatie voor de Wasstraat Archeologische Data - een open source verwerkingsplatform voor archeologische datasets",
+        "inLanguage": "nl",
+        "isPartOf": { "@id": "https://wasstraat.e-space.nl/#website" },
+        "author": { "@id": "https://wasstraat.e-space.nl/#person-arjen" },
+        "publisher": { "@id": "https://wasstraat.e-space.nl/#org-espace" },
+        "license": "https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12"
+      }
+      
+    ]
+  }
+  </script>
+
 </head>
 
 <body class="wy-body-for-nav" role="document">
@@ -34,12 +148,12 @@
           <a href="../.." class="icon icon-home"> Wasstraat Archeologische Data
         </a><div role="search">
   <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
-      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+      <input type="text" name="q" placeholder="Doorzoek documentatie" aria-label="Doorzoek documentatie" title="Typ hier uw zoekterm" />
   </form>
 </div>
       </div>
 
-      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigatiemenu">
               <ul>
                 <li class="toctree-l1"><a class="reference internal" href="../..">Home</a>
                 </li>
@@ -78,6 +192,8 @@
                   <li class="toctree-l1"><a class="reference internal" href="../../componenten/singlestore/">SingleStore & Clusterlaag</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../componenten/transformatie/">Transformatielaag</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../componenten/gemeenteprofielen/">Gemeenteprofielen</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../componenten/crossviews/">Crossviews</a>
                   </li>
@@ -125,7 +241,7 @@
     </nav>
 
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
-      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobiel navigatiemenu">
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
           <a href="../..">Wasstraat Archeologische Data</a>
         
@@ -133,7 +249,7 @@
       <div class="wy-nav-content">
         <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
   <ul class="wy-breadcrumbs">
-    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
+    <li><a href="../.." class="icon icon-home" aria-label="Documentatie"></a></li>
           <li class="breadcrumb-item">Deployment</li>
       <li class="breadcrumb-item active">Voorbeelddata</li>
     <li class="wy-breadcrumbs-aside">
@@ -192,9 +308,9 @@
 │   └── SY002/
 │       ├── C Database/opgravingSY002.mdb
 │       └── L Fotos/
-├── delfit/DELF-IT.mdb                       # Projectenlijst
+├── projectenlijst/projectenlijst.mdb         # Projectenlijst
 ├── magazijnlijst/MAGAZIJN.mdb               # Depotdata
-├── digifotos/Digifotos.mdb                  # Fotocatalogus
+├── fotolijst/Digifotos.mdb                  # Fotocatalogus
 └── monsterdatabase/MONSTERS.mdb             # Monsterdata (botanie + schelpen)
 </code></pre></div>
 
@@ -205,49 +321,63 @@
 
 <p>De <code>docker-compose.test.yml</code> mount de synthetische data als input-volumes voor de Airflow-container.</p>
 <h2 id="eigen-data-klaarzetten">Eigen data klaarzetten<a class="headerlink" href="#eigen-data-klaarzetten" title="Permanent link">&para;</a></h2>
-<p>Gemeenten die hun eigen opgravingsdata willen verwerken, kunnen hun bestanden organiseren conform dezelfde structuur als de voorbeelddata. De Wasstraat verwacht:</p>
+<p>Gemeenten die hun eigen opgravingsdata willen verwerken, kunnen hun bestanden organiseren conform dezelfde structuur als de voorbeelddata:</p>
 <table>
 <thead>
 <tr>
 <th>Directory</th>
 <th>Inhoud</th>
-<th>Formaat</th>
+<th>Verwachte tabellen/bestanden</th>
+<th>Verplicht?</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>projecten/</code> of <code>digidepot/</code></td>
-<td>Per opgraving een subdirectory met de projectdatabase</td>
-<td><code>.mdb</code> / <code>.accdb</code></td>
+<td><code>projecten/</code></td>
+<td>Per opgraving een subdirectory met projectdatabase en foto's</td>
+<td><code>.mdb</code> met VONDSTENLIJST, SPOREN, VULLINGEN, artefacttabellen</td>
+<td>Ja</td>
 </tr>
 <tr>
-<td><code>delfit/</code> of <code>Delf-IT/</code></td>
-<td>Centrale administratiedatabase met projectoverzicht</td>
-<td><code>.mdb</code> + <code>.xlsx</code></td>
+<td><code>projectenlijst/</code></td>
+<td>Projectoverzicht</td>
+<td><code>.mdb</code> met tabel <code>OPGRAVINGEN</code> (CODE, XCOORD, YCOORD, JAAR)</td>
+<td>Ja</td>
 </tr>
 <tr>
 <td><code>magazijnlijst/</code></td>
-<td>Depot- en magazijnadministratie</td>
-<td><code>.mdb</code></td>
+<td>Depotadministratie</td>
+<td><code>.mdb</code> met tabel <code>magazijnlijst</code> (CODE, STELLING, DOOSNO)</td>
+<td>Aanbevolen</td>
 </tr>
 <tr>
-<td><code>digifotos/</code></td>
-<td>Digitale fotolijst met metadata</td>
-<td><code>.mdb</code></td>
+<td><code>fotolijst/</code></td>
+<td>Fotocatalogus</td>
+<td><code>.mdb</code> met tabel <code>Fotos</code> (FOTONR, PROJECTCD, BESTANDSNAAM)</td>
+<td>Aanbevolen</td>
 </tr>
 <tr>
 <td><code>monsterdatabase/</code></td>
-<td>Monstergegevens met botanische en zoölogische determinaties</td>
-<td><code>.mdb</code> / <code>.accdb</code></td>
+<td>Monsters en determinaties</td>
+<td><code>.mdb</code> met Monster_gegevens, Monster_waardering, etc.</td>
+<td>Optioneel</td>
 </tr>
 <tr>
 <td><code>referentietabellen/</code></td>
-<td>ABR-classificatie en standaardtabellen</td>
-<td><code>.xlsx</code> / <code>.mdb</code></td>
+<td>ABR-codes en standaardtabellen</td>
+<td><code>abr_versie_*.xlsx</code></td>
+<td>Ja</td>
+</tr>
+<tr>
+<td><code>rapporten/</code></td>
+<td>Rapportbestanden</td>
+<td><code>.mdb</code> / <code>.pdf</code></td>
+<td>Optioneel</td>
 </tr>
 </tbody>
 </table>
-<p>Plaats de bestanden in <code>data/input/basefiles/projectdatabase/</code> en configureer de Docker-volumes in je docker-compose override. Zie <a href="../../aan-de-slag/">Aan de slag</a> voor gedetailleerde instructies.</p>
+<p>De Wasstraat doorzoekt elke directory <strong>recursief</strong> op <code>.mdb</code> en <code>.accdb</code> bestanden. In <code>projecten/</code> moet je per opgraving een subdirectory aanmaken — de directorynaam bepaalt de projectcode.</p>
+<p>Plaats de bestanden in <code>data/&lt;omgeving&gt;/data/</code> en configureer optioneel een <code>correcties.yml</code> in <code>data/&lt;omgeving&gt;/wasstraat_config/</code> voor projectcode-correcties. Zie <a href="../../aan-de-slag/">Aan de slag</a> voor gedetailleerde instructies.</p>
 <h2 id="data-opnieuw-genereren">Data opnieuw genereren<a class="headerlink" href="#data-opnieuw-genereren" title="Permanent link">&para;</a></h2>
 <p>De synthetische data kan opnieuw gegenereerd worden met het generatorscript in <code>data/synthetic/generatie/</code>:</p>
 <div class="codehilite"><pre><span></span><code>make<span class="w"> </span>synthetic
@@ -261,21 +391,51 @@
 </ul>
               
             </div>
-          </div><footer>
-    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
-        <a href="../airflow-vs-app/" class="btn btn-neutral float-left" title="Airflow Transformatie vs. Web Applicatie"><span class="icon icon-circle-arrow-left"></span> Previous</a>
-        <a href="../proefdata/" class="btn btn-neutral float-right" title="Proefdata Inlezen">Next <span class="icon icon-circle-arrow-right"></span></a>
+          </div>
+<footer role="contentinfo" class="wasstraat-footer"
+        itemscope itemtype="https://schema.org/WPFooter">
+  <hr>
+  <p class="wasstraat-credits">
+    Gebouwd door
+    <span itemprop="publisher" itemscope itemtype="https://schema.org/Organization">
+      <strong itemprop="name">E-Space</strong>
+    </span>
+    —
+    <span itemprop="author" itemscope itemtype="https://schema.org/Person">
+      <strong itemprop="name">Arjen Brienen</strong><meta itemprop="affiliation" content="E-Space">
+      <link itemprop="sameAs" href="https://www.linkedin.com/in/arjenbrienen/">
+      <link itemprop="sameAs" href="https://github.com/brienen">
+    </span>
+  </p>
+  <p class="wasstraat-license">
+    Uitgegeven onder de
+    <a href="https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12"
+       rel="license">EUPL v1.2</a>.
+    Broncode:
+    <a href="https://github.com/brienen/wasstraat_archeologische_data"
+       rel="external">github.com/brienen/wasstraat_archeologische_data</a>.
+  </p>
+  
+    <p class="wasstraat-copyright"><small>© E-Space — Arjen Brienen. Uitgegeven onder de EUPL v1.2 licentie.</small></p>
+  
+</footer>
+<footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footernavigatie">
+        <a href="../airflow-vs-app/" class="btn btn-neutral float-left" title="Airflow Transformatie vs. Web Applicatie"><span class="icon icon-circle-arrow-left"></span> Vorige</a>
+        <a href="../proefdata/" class="btn btn-neutral float-right" title="Proefdata Inlezen">Volgende <span class="icon icon-circle-arrow-right"></span></a>
     </div>
 
   <hr/>
 
   <div role="contentinfo">
     <!-- Copyright etc -->
+      <p>© E-Space — Arjen Brienen. Uitgegeven onder de EUPL v1.2 licentie.</p>
   </div>
 
-  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+  Gemaakt met <a href="https://www.mkdocs.org/">MkDocs</a> met behulp van een <a href="https://github.com/readthedocs/sphinx_rtd_theme">Thema</a> geleverd door <a href="https://readthedocs.org">Read the Docs</a>.
 </footer>
           
+
         </div>
       </div>
 
@@ -283,14 +443,14 @@
 
   </div>
 
-  <div class="rst-versions" role="note" aria-label="Versions">
+  <div class="rst-versions" role="note" aria-label="Versies">
   <span class="rst-current-version" data-toggle="rst-current-version">
     
     
-      <span><a href="../airflow-vs-app/" style="color: #fcfcfc">&laquo; Previous</a></span>
+      <span><a href="../airflow-vs-app/" style="color: #fcfcfc">&laquo; Vorige</a></span>
     
     
-      <span><a href="../proefdata/" style="color: #fcfcfc">Next &raquo;</a></span>
+      <span><a href="../proefdata/" style="color: #fcfcfc">Volgende &raquo;</a></span>
     
   </span>
 </div>

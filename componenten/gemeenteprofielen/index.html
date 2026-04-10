@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="nl" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="author" content="E-Space / Arjen Brienen" /><link rel="canonical" href="https://wasstraat.e-space.nl/componenten/gemeenteprofielen/" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>Gemeenteprofielen - Wasstraat Archeologische Data</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+        <link href="../../assets/extra.css" rel="stylesheet" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Gemeenteprofielen";
+        var mkdocs_page_input_path = "componenten/gemeenteprofielen.md";
+        var mkdocs_page_url = "/componenten/gemeenteprofielen/";
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script>
+  
+  <meta name="author" content="Arjen Brienen">
+  <meta name="publisher" content="E-Space">
+  <meta name="description" content="Technische documentatie voor de Wasstraat Archeologische Data - een open source verwerkingsplatform voor archeologische datasets">
+  <meta name="keywords" content="archeologie, wasstraat, ETL, open data, erfgoed, ABR, CIDOC CRM, Delft, Airflow, open source">
+  <meta name="generator" content="MkDocs">
+  <meta name="robots" content="index, follow">
+  <meta http-equiv="Content-Language" content="nl">
+
+  
+  <meta name="DC.title" content="Gemeenteprofielen">
+  <meta name="DC.creator" content="Arjen Brienen">
+  <meta name="DC.publisher" content="E-Space">
+  <meta name="DC.language" content="nl">
+  <meta name="DC.rights" content="EUPL v1.2">
+  <meta name="DC.type" content="Text">
+  <meta name="DC.format" content="text/html">
+
+  
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Wasstraat Archeologische Data">
+  <meta property="og:title" content="Gemeenteprofielen">
+  <meta property="og:description" content="Technische documentatie voor de Wasstraat Archeologische Data - een open source verwerkingsplatform voor archeologische datasets">
+  <meta property="og:locale" content="nl_NL">
+  <meta property="og:url" content="https://wasstraat.e-space.nl/componenten/gemeenteprofielen/">
+
+  
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Gemeenteprofielen">
+  <meta name="twitter:description" content="Technische documentatie voor de Wasstraat Archeologische Data - een open source verwerkingsplatform voor archeologische datasets">
+
+  
+  <link rel="canonical" href="https://wasstraat.e-space.nl/componenten/gemeenteprofielen/">
+
+  
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://wasstraat.e-space.nl/#org-espace",
+        "name": "E-Space",
+        "description": "Ontwikkelaar van de Wasstraat Archeologische Data.",
+        "inLanguage": "nl"
+      },
+      {
+        "@type": "Person",
+        "@id": "https://wasstraat.e-space.nl/#person-arjen",
+        "name": "Arjen Brienen",
+        "jobTitle": "Architect en ontwikkelaar",
+        "affiliation": { "@id": "https://wasstraat.e-space.nl/#org-espace" },
+        "sameAs": [
+          "https://www.linkedin.com/in/arjenbrienen/",
+          "https://github.com/brienen"
+        ]
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://wasstraat.e-space.nl/#website",
+        "url": "https://wasstraat.e-space.nl/",
+        "name": "Wasstraat Archeologische Data",
+        "description": "Technische documentatie voor de Wasstraat Archeologische Data - een open source verwerkingsplatform voor archeologische datasets",
+        "inLanguage": "nl",
+        "publisher": { "@id": "https://wasstraat.e-space.nl/#org-espace" },
+        "author": { "@id": "https://wasstraat.e-space.nl/#person-arjen" },
+        "creator": { "@id": "https://wasstraat.e-space.nl/#person-arjen" },
+        "copyrightHolder": { "@id": "https://wasstraat.e-space.nl/#org-espace" },
+        "license": "https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12"
+      },
+      {
+        "@type": "SoftwareSourceCode",
+        "@id": "https://wasstraat.e-space.nl/#software",
+        "name": "Wasstraat Archeologische Data",
+        "alternateName": "Wasstraat",
+        "description": "Open-source ETL-platform dat archeologische gegevens verzamelt, verwerkt en toegankelijk maakt. Ontwikkeld voor de gemeente Delft en uitgebreid tot een generiek platform voor Nederlandse gemeenten.",
+        "programmingLanguage": ["Python", "SQL", "YAML"],
+        "runtimePlatform": "Docker Compose",
+        "codeRepository": "https://github.com/brienen/wasstraat_archeologische_data",
+        "license": "https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12",
+        "author": { "@id": "https://wasstraat.e-space.nl/#person-arjen" },
+        "creator": { "@id": "https://wasstraat.e-space.nl/#person-arjen" },
+        "publisher": { "@id": "https://wasstraat.e-space.nl/#org-espace" },
+        "maintainer": { "@id": "https://wasstraat.e-space.nl/#person-arjen" },
+        "copyrightHolder": { "@id": "https://wasstraat.e-space.nl/#org-espace" },
+        "inLanguage": "nl",
+        "keywords": "archeologie, ETL, Airflow, PostgreSQL, MongoDB, Elasticsearch, ABR, CIDOC CRM, GGM, erfgoed, open data",
+        "about": [
+          { "@type": "Thing", "name": "Archeologisch Basisregister (ABR)" },
+          { "@type": "Thing", "name": "CIDOC CRM" },
+          { "@type": "Thing", "name": "Gemeentelijk Gegevensmodel (GGM)" },
+          { "@type": "Thing", "name": "DANS e-Depot" },
+          { "@type": "Thing", "name": "Archis" }
+        ]
+      }
+      
+      ,{
+        "@type": "TechArticle",
+        "@id": "https://wasstraat.e-space.nl/componenten/gemeenteprofielen/#article",
+        "url": "https://wasstraat.e-space.nl/componenten/gemeenteprofielen/",
+        "name": "Gemeenteprofielen",
+        "headline": "Gemeenteprofielen",
+        "description": "Technische documentatie voor de Wasstraat Archeologische Data - een open source verwerkingsplatform voor archeologische datasets",
+        "inLanguage": "nl",
+        "isPartOf": { "@id": "https://wasstraat.e-space.nl/#website" },
+        "author": { "@id": "https://wasstraat.e-space.nl/#person-arjen" },
+        "publisher": { "@id": "https://wasstraat.e-space.nl/#org-espace" },
+        "license": "https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12"
+      }
+      
+    ]
+  }
+  </script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> Wasstraat Archeologische Data
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Doorzoek documentatie" aria-label="Doorzoek documentatie" title="Typ hier uw zoekterm" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigatiemenu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Home</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Projectoverzicht</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../overzicht/inleiding/">Inleiding</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../overzicht/probleemstelling/">Probleemstelling</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../overzicht/doelstellingen/">Doelstellingen</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Aan de slag</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../aan-de-slag/">Handleiding</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Architectuur</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../architectuur/systeem/">Systeemarchitectuur</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../architectuur/dataflow/">Dataflow Pipeline</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../architectuur/componenten/">Componentenmodel</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../architectuur/gegevensmodel/">Gegevensmodel & Semantiek</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../architectuur/stack/">Technische Stack</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Componenten</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../extractie/">Extractielaag</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../singlestore/">SingleStore & Clusterlaag</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../transformatie/">Transformatielaag</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Gemeenteprofielen</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#overzicht">Overzicht</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#structuur">Structuur</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#profielselectie">Profielselectie</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#conventieprofiel-basisprofiel">ConventieProfiel (basisprofiel)</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#identificerende_velden">IDENTIFICERENDE_VELDEN</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#dispatcher-identificeer">Dispatcher: identificeer()</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#per-entiteit-methoden">Per-entiteit methoden</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#normalisatie-helpers">Normalisatie-helpers</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#delftprofiel">DelftProfiel</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#projectcode-normalisatie">Projectcode-normalisatie</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#tekeningcode-normalisatie">Tekeningcode-normalisatie</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#rapportnummer-normalisatie">Rapportnummer-normalisatie</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#bestandsnaam-parsing-fotos">Bestandsnaam-parsing: foto's</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#bestandsnaam-parsing-tekeningen">Bestandsnaam-parsing: tekeningen</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#artefactsoort-uit-typevoorwerp">Artefactsoort uit typevoorwerp</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#rapportnummer-normalisatie-vanuit-database">Rapportnummer-normalisatie vanuit database</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#projectcode-uit-bestandsnaam">Projectcode uit bestandsnaam</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#voorbeeldprofiel">VoorbeeldProfiel</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#nieuw-profiel-toevoegen">Nieuw profiel toevoegen</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#gebruik-in-de-pipeline">Gebruik in de pipeline</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#parsefotobestanden-bestandsnaam-parsing">parseFotobestanden() — bestandsnaam-parsing</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#enhanceallattributes-entiteit-identificatie">enhanceAllAttributes() — entiteit-identificatie</a>
+    </li>
+        </ul>
+    </li>
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../crossviews/">Crossviews</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../validatie/">Validatielaag</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../configuratie/">Configuratiemodule</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../zoeken/">Zoek- en Indexeringslaag</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Deployment</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../deployment/omgevingen/">Omgevingen & Docker Compose</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../deployment/airflow-vs-app/">Airflow Transformatie vs. Web Applicatie</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../deployment/voorbeelddata/">Voorbeelddata</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../deployment/proefdata/">Proefdata Inlezen</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Testen</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../testen/">Unit & Integratietests</a>
+                  </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../diagrammen/">Diagrammen</a>
+                </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobiel navigatiemenu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">Wasstraat Archeologische Data</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" aria-label="Documentatie"></a></li>
+          <li class="breadcrumb-item">Componenten</li>
+      <li class="breadcrumb-item active">Gemeenteprofielen</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="gemeenteprofielen">Gemeenteprofielen<a class="headerlink" href="#gemeenteprofielen" title="Permanent link">&para;</a></h1>
+<h2 id="overzicht">Overzicht<a class="headerlink" href="#overzicht" title="Permanent link">&para;</a></h2>
+<p>Het profielensysteem maakt het mogelijk om de Wasstraat in te zetten voor verschillende gemeenten zonder de kerncode aan te passen. Elke gemeente kan een eigen profiel definiëren dat de gemeente-specifieke logica voor herkenning, normalisatie en identificatie van entiteiten bevat.</p>
+<p>Het profiel regelt twee typen logica:</p>
+<ul>
+<li><strong>Bestands-entiteiten</strong> (Foto, Tekening, Rapport) — parsing van bestandsnamen naar velden</li>
+<li><strong>Database-entiteiten</strong> (Project, Put, Vlak, Spoor, Vondst, Artefact, Monster, Doos, …) — normalisatie en identificatie van velden die uit de harmonisatie komen</li>
+</ul>
+<h2 id="structuur">Structuur<a class="headerlink" href="#structuur" title="Permanent link">&para;</a></h2>
+<div class="codehilite"><pre><span></span><code>airflow_app/dags/wasstraat/profielen/
+├── __init__.py        # get_profiel() + reset_profiel()
+├── conventie.py       # Basisprofiel: directe velden, geen transformatie
+├── delft.py           # Delft-specifiek profiel
+└── voorbeeld.py       # PoC profiel: erft ConventieProfiel ongewijzigd
+</code></pre></div>
+
+<h2 id="profielselectie">Profielselectie<a class="headerlink" href="#profielselectie" title="Permanent link">&para;</a></h2>
+<p>Het actieve profiel wordt bepaald door de omgevingsvariabele <code>WASSTRAAT_GEMEENTE</code>:</p>
+<div class="codehilite"><pre><span></span><code><span class="nv">WASSTRAAT_GEMEENTE</span><span class="o">=</span>delft<span class="w">    </span><span class="c1"># standaard als niet ingesteld</span>
+<span class="nv">WASSTRAAT_GEMEENTE</span><span class="o">=</span>voorbeeld
+</code></pre></div>
+
+<p>De <code>get_profiel()</code> functie laadt het profiel éénmalig en cachet het resultaat:</p>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">wasstraat.profielen</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_profiel</span>
+
+<span class="n">profiel</span> <span class="o">=</span> <span class="n">get_profiel</span><span class="p">()</span>   <span class="c1"># geeft altijd hetzelfde object terug</span>
+</code></pre></div>
+
+<p>Als <code>WASSTRAAT_GEMEENTE</code> niet is ingesteld of leeg is, wordt <code>delft</code> gebruikt.</p>
+<h2 id="conventieprofiel-basisprofiel">ConventieProfiel (basisprofiel)<a class="headerlink" href="#conventieprofiel-basisprofiel" title="Permanent link">&para;</a></h2>
+<p><code>ConventieProfiel</code> is de basisklasse waarvan alle profielen erven. Het implementeert een standaard-aanpak: velden uit de brondata worden direct overgenomen zonder transformatie.</p>
+<h3 id="identificerende_velden">IDENTIFICERENDE_VELDEN<a class="headerlink" href="#identificerende_velden" title="Permanent link">&para;</a></h3>
+<p>De klasse documenteert expliciet welke velden elke entiteit identificeren:</p>
+<div class="codehilite"><pre><span></span><code><span class="n">IDENTIFICERENDE_VELDEN</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;Project&#39;</span><span class="p">:</span>     <span class="p">{</span><span class="s1">&#39;verplicht&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;projectcd&#39;</span><span class="p">],</span>                                         <span class="s1">&#39;integer&#39;</span><span class="p">:</span> <span class="p">[]},</span>
+    <span class="s1">&#39;Put&#39;</span><span class="p">:</span>         <span class="p">{</span><span class="s1">&#39;verplicht&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;projectcd&#39;</span><span class="p">,</span> <span class="s1">&#39;putnr&#39;</span><span class="p">],</span>                                <span class="s1">&#39;integer&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;putnr&#39;</span><span class="p">]},</span>
+    <span class="s1">&#39;Vlak&#39;</span><span class="p">:</span>        <span class="p">{</span><span class="s1">&#39;verplicht&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;projectcd&#39;</span><span class="p">,</span> <span class="s1">&#39;vlaknr&#39;</span><span class="p">],</span>       <span class="s1">&#39;optioneel&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;putnr&#39;</span><span class="p">],</span> <span class="s1">&#39;integer&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;putnr&#39;</span><span class="p">,</span> <span class="s1">&#39;vlaknr&#39;</span><span class="p">]},</span>
+    <span class="s1">&#39;Spoor&#39;</span><span class="p">:</span>       <span class="p">{</span><span class="s1">&#39;verplicht&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;projectcd&#39;</span><span class="p">,</span> <span class="s1">&#39;spoornr&#39;</span><span class="p">],</span>      <span class="s1">&#39;optioneel&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;putnr&#39;</span><span class="p">,</span> <span class="s1">&#39;vlaknr&#39;</span><span class="p">],</span> <span class="s1">&#39;integer&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;putnr&#39;</span><span class="p">,</span> <span class="s1">&#39;vlaknr&#39;</span><span class="p">,</span> <span class="s1">&#39;spoornr&#39;</span><span class="p">]},</span>
+    <span class="s1">&#39;Vondst&#39;</span><span class="p">:</span>      <span class="p">{</span><span class="s1">&#39;verplicht&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;projectcd&#39;</span><span class="p">,</span> <span class="s1">&#39;vondstnr&#39;</span><span class="p">],</span>     <span class="s1">&#39;optioneel&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;putnr&#39;</span><span class="p">],</span> <span class="s1">&#39;integer&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;putnr&#39;</span><span class="p">,</span> <span class="s1">&#39;vondstnr&#39;</span><span class="p">]},</span>
+    <span class="s1">&#39;Artefact&#39;</span><span class="p">:</span>    <span class="p">{</span><span class="s1">&#39;verplicht&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;projectcd&#39;</span><span class="p">,</span> <span class="s1">&#39;artefactnr&#39;</span><span class="p">],</span>   <span class="s1">&#39;optioneel&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;putnr&#39;</span><span class="p">,</span> <span class="s1">&#39;vondstnr&#39;</span><span class="p">,</span> <span class="s1">&#39;splitid&#39;</span><span class="p">],</span> <span class="s1">&#39;integer&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;putnr&#39;</span><span class="p">,</span> <span class="s1">&#39;vondstnr&#39;</span><span class="p">,</span> <span class="s1">&#39;artefactnr&#39;</span><span class="p">,</span> <span class="s1">&#39;subnr&#39;</span><span class="p">]},</span>
+    <span class="s1">&#39;Monster&#39;</span><span class="p">:</span>     <span class="p">{</span><span class="s1">&#39;verplicht&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;projectcd&#39;</span><span class="p">,</span> <span class="s1">&#39;monstercd&#39;</span><span class="p">],</span>                            <span class="s1">&#39;integer&#39;</span><span class="p">:</span> <span class="p">[]},</span>
+    <span class="s1">&#39;Doos&#39;</span><span class="p">:</span>        <span class="p">{</span><span class="s1">&#39;verplicht&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;doosnr&#39;</span><span class="p">],</span>                    <span class="s1">&#39;optioneel&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;projectcd&#39;</span><span class="p">],</span>           <span class="s1">&#39;integer&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;doosnr&#39;</span><span class="p">]},</span>
+    <span class="s1">&#39;Foto&#39;</span><span class="p">:</span>        <span class="p">{</span><span class="s1">&#39;verplicht&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;projectcd&#39;</span><span class="p">],</span>                 <span class="s1">&#39;optioneel&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;putnr&#39;</span><span class="p">,</span> <span class="s1">&#39;vondstnr&#39;</span><span class="p">,</span> <span class="s1">&#39;subnr&#39;</span><span class="p">,</span> <span class="s1">&#39;fotonr&#39;</span><span class="p">],</span> <span class="s1">&#39;integer&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;putnr&#39;</span><span class="p">,</span> <span class="s1">&#39;vondstnr&#39;</span><span class="p">,</span> <span class="s1">&#39;subnr&#39;</span><span class="p">,</span> <span class="s1">&#39;fotonr&#39;</span><span class="p">]},</span>
+    <span class="s1">&#39;Tekening&#39;</span><span class="p">:</span>    <span class="p">{</span><span class="s1">&#39;verplicht&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;projectcd&#39;</span><span class="p">,</span> <span class="s1">&#39;tekeningcd&#39;</span><span class="p">],</span>                           <span class="s1">&#39;integer&#39;</span><span class="p">:</span> <span class="p">[]},</span>
+    <span class="s1">&#39;Rapport&#39;</span><span class="p">:</span>     <span class="p">{</span><span class="s1">&#39;verplicht&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;rapportnr&#39;</span><span class="p">],</span>                 <span class="s1">&#39;optioneel&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;projectcd&#39;</span><span class="p">],</span>           <span class="s1">&#39;integer&#39;</span><span class="p">:</span> <span class="p">[]},</span>
+    <span class="s1">&#39;Standplaats&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;verplicht&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;stelling&#39;</span><span class="p">],</span>                  <span class="s1">&#39;optioneel&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;vaknr&#39;</span><span class="p">,</span> <span class="s1">&#39;volgletter&#39;</span><span class="p">],</span> <span class="s1">&#39;integer&#39;</span><span class="p">:</span> <span class="p">[]},</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<h3 id="dispatcher-identificeer">Dispatcher: identificeer()<a class="headerlink" href="#dispatcher-identificeer" title="Permanent link">&para;</a></h3>
+<p>De centrale methode <code>identificeer(soort, doc)</code> delegeert naar de juiste per-entiteit methode:</p>
+<div class="codehilite"><pre><span></span><code><span class="n">profiel</span><span class="o">.</span><span class="n">identificeer</span><span class="p">(</span><span class="s1">&#39;Put&#39;</span><span class="p">,</span> <span class="n">doc</span><span class="p">)</span>       <span class="c1"># → identificeer_put(doc)</span>
+<span class="n">profiel</span><span class="o">.</span><span class="n">identificeer</span><span class="p">(</span><span class="s1">&#39;Artefact&#39;</span><span class="p">,</span> <span class="n">doc</span><span class="p">)</span>  <span class="c1"># → identificeer_artefact(doc)</span>
+<span class="n">profiel</span><span class="o">.</span><span class="n">identificeer</span><span class="p">(</span><span class="s1">&#39;Vondst&#39;</span><span class="p">,</span> <span class="n">doc</span><span class="p">)</span>    <span class="c1"># → identificeer_vondst(doc)</span>
+</code></pre></div>
+
+<p>Bij een onbekend soort wordt de standaard-methode gebruikt: normaliseer <code>projectcd</code> + converteer integer-velden.</p>
+<h3 id="per-entiteit-methoden">Per-entiteit methoden<a class="headerlink" href="#per-entiteit-methoden" title="Permanent link">&para;</a></h3>
+<p>Elke entiteit heeft een eigen methode die de identificerende velden normaliseert:</p>
+<table>
+<thead>
+<tr>
+<th>Methode</th>
+<th>Werking (standaard)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>identificeer_project(doc)</code></td>
+<td>Normaliseer <code>projectcd</code></td>
+</tr>
+<tr>
+<td><code>identificeer_put(doc)</code></td>
+<td>Normaliseer <code>projectcd</code> + <code>putnr</code> → int</td>
+</tr>
+<tr>
+<td><code>identificeer_vlak(doc)</code></td>
+<td>Normaliseer <code>projectcd</code> + <code>putnr</code>, <code>vlaknr</code> → int</td>
+</tr>
+<tr>
+<td><code>identificeer_spoor(doc)</code></td>
+<td>Normaliseer <code>projectcd</code> + integers</td>
+</tr>
+<tr>
+<td><code>identificeer_vondst(doc)</code></td>
+<td>Normaliseer <code>projectcd</code> + <code>putnr</code>, <code>vondstnr</code> → int</td>
+</tr>
+<tr>
+<td><code>identificeer_artefact(doc)</code></td>
+<td>Normaliseer <code>projectcd</code> + integers (<code>vondstnr</code> optioneel)</td>
+</tr>
+<tr>
+<td><code>identificeer_monster(doc)</code></td>
+<td>Normaliseer <code>projectcd</code></td>
+</tr>
+<tr>
+<td><code>identificeer_doos(doc)</code></td>
+<td>Normaliseer <code>projectcd</code> (optioneel) + <code>doosnr</code> → int</td>
+</tr>
+<tr>
+<td><code>identificeer_foto(doc, projectcd)</code></td>
+<td>Standaard: <code>None</code> (niet herkend)</td>
+</tr>
+<tr>
+<td><code>identificeer_tekening(doc, projectcd)</code></td>
+<td>Standaard: <code>None</code> (niet herkend)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="normalisatie-helpers">Normalisatie-helpers<a class="headerlink" href="#normalisatie-helpers" title="Permanent link">&para;</a></h3>
+<div class="codehilite"><pre><span></span><code><span class="n">profiel</span><span class="o">.</span><span class="n">normaliseer_projectcode</span><span class="p">(</span><span class="s2">&quot;dc016&quot;</span><span class="p">)</span>    <span class="c1"># standaard: passthrough → &quot;dc016&quot;</span>
+<span class="n">profiel</span><span class="o">.</span><span class="n">normaliseer_tekeningcode</span><span class="p">(</span><span class="s2">&quot;B2&quot;</span><span class="p">)</span>      <span class="c1"># standaard: passthrough → &quot;B2&quot;</span>
+<span class="n">profiel</span><span class="o">.</span><span class="n">normaliseer_rapportnr</span><span class="p">(</span><span class="s2">&quot;DAR123&quot;</span><span class="p">,</span> <span class="p">{})</span> <span class="c1"># standaard: passthrough → &quot;DAR123&quot;</span>
+<span class="n">profiel</span><span class="o">.</span><span class="n">detecteer_artefactsoort</span><span class="p">(</span><span class="s2">&quot;/fotos/aardewerk/test.jpg&quot;</span><span class="p">)</span>  <span class="c1"># → const.ARTF_AARDEWERK</span>
+</code></pre></div>
+
+<p><code>detecteer_artefactsoort()</code> is gemeenteonafhankelijk en matcht op keywords in het bestandspad (<code>aardewerk</code>, <code>glas</code>, <code>metaal</code>, <code>bot</code>, etc.).</p>
+<h2 id="delftprofiel">DelftProfiel<a class="headerlink" href="#delftprofiel" title="Permanent link">&para;</a></h2>
+<p><code>DelftProfiel</code> erft van <code>ConventieProfiel</code> en overschrijft de Delft-specifieke methoden.</p>
+<h3 id="projectcode-normalisatie">Projectcode-normalisatie<a class="headerlink" href="#projectcode-normalisatie" title="Permanent link">&para;</a></h3>
+<p>Delftse projectcodes volgen het patroon <code>[2 letters][3 cijfers]</code>, bijv. <code>DC016</code>, <code>DB034</code>:</p>
+<div class="codehilite"><pre><span></span><code><span class="n">profiel</span><span class="o">.</span><span class="n">normaliseer_projectcode</span><span class="p">(</span><span class="s2">&quot;dc-16&quot;</span><span class="p">)</span>  <span class="c1"># → &quot;DC016&quot;</span>
+<span class="n">profiel</span><span class="o">.</span><span class="n">normaliseer_projectcode</span><span class="p">(</span><span class="s2">&quot;DC016&quot;</span><span class="p">)</span>  <span class="c1"># → &quot;DC016&quot;</span>
+<span class="n">profiel</span><span class="o">.</span><span class="n">normaliseer_projectcode</span><span class="p">(</span><span class="s2">&quot;dc16&quot;</span><span class="p">)</span>   <span class="c1"># → &quot;DC016&quot;</span>
+<span class="n">profiel</span><span class="o">.</span><span class="n">normaliseer_projectcode</span><span class="p">(</span><span class="s2">&quot;DB&quot;</span><span class="p">)</span>     <span class="c1"># → &quot;DB&quot;  (geen cijfers → geen padding)</span>
+</code></pre></div>
+
+<h3 id="tekeningcode-normalisatie">Tekeningcode-normalisatie<a class="headerlink" href="#tekeningcode-normalisatie" title="Permanent link">&para;</a></h3>
+<p>Tekeningcodes volgen het patroon <code>[letter][3 cijfers]</code>:</p>
+<div class="codehilite"><pre><span></span><code><span class="n">profiel</span><span class="o">.</span><span class="n">normaliseer_tekeningcode</span><span class="p">(</span><span class="s2">&quot;B2&quot;</span><span class="p">)</span>    <span class="c1"># → &quot;B002&quot;</span>
+<span class="n">profiel</span><span class="o">.</span><span class="n">normaliseer_tekeningcode</span><span class="p">(</span><span class="s2">&quot;A15&quot;</span><span class="p">)</span>   <span class="c1"># → &quot;A015&quot;</span>
+<span class="n">profiel</span><span class="o">.</span><span class="n">normaliseer_tekeningcode</span><span class="p">(</span><span class="s2">&quot;B002&quot;</span><span class="p">)</span>  <span class="c1"># → &quot;B002&quot;</span>
+<span class="n">profiel</span><span class="o">.</span><span class="n">normaliseer_tekeningcode</span><span class="p">(</span><span class="s2">&quot;tekst&quot;</span><span class="p">)</span> <span class="c1"># → &quot;tekst&quot;  (geen match → passthrough)</span>
+</code></pre></div>
+
+<h3 id="rapportnummer-normalisatie">Rapportnummer-normalisatie<a class="headerlink" href="#rapportnummer-normalisatie" title="Permanent link">&para;</a></h3>
+<p>Delftse rapportnummers gebruiken de prefixen <code>DAR</code> (Delft Archeologisch Rapport) of <code>DAN</code> (Delft Archeologische Notitie):</p>
+<div class="codehilite"><pre><span></span><code><span class="n">profiel</span><span class="o">.</span><span class="n">normaliseer_rapportnr</span><span class="p">(</span><span class="s2">&quot;DAR 123&quot;</span><span class="p">,</span> <span class="p">{})</span>           <span class="c1"># → &quot;DAR123&quot;</span>
+<span class="n">profiel</span><span class="o">.</span><span class="n">normaliseer_rapportnr</span><span class="p">(</span><span class="s2">&quot;45&quot;</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;DARnr&quot;</span><span class="p">:</span> <span class="mi">45</span><span class="p">})</span>     <span class="c1"># → &quot;DAR045&quot;</span>
+<span class="n">profiel</span><span class="o">.</span><span class="n">normaliseer_rapportnr</span><span class="p">(</span><span class="s2">&quot;7&quot;</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;DANnr&quot;</span><span class="p">:</span> <span class="mi">7</span><span class="p">})</span>       <span class="c1"># → &quot;DAN007&quot;</span>
+<span class="n">profiel</span><span class="o">.</span><span class="n">normaliseer_rapportnr</span><span class="p">(</span><span class="s2">&quot;123&quot;</span><span class="p">,</span> <span class="p">{})</span>               <span class="c1"># → &quot;&quot;  (prefix onbekend)</span>
+</code></pre></div>
+
+<h3 id="bestandsnaam-parsing-fotos">Bestandsnaam-parsing: foto's<a class="headerlink" href="#bestandsnaam-parsing-fotos" title="Permanent link">&para;</a></h3>
+<p>Het DelftProfiel herkent twee patronen:</p>
+<p><strong>Objectfoto's</strong> (<code>_H</code> patroon):</p>
+<div class="codehilite"><pre><span></span><code>DC001_P3_H456_789_002.jpg
+  │    │   │   │   └── fotonr: 2
+  │    │   │   └────── subnr: 789
+  │    │   └────────── vondstnr: 456
+  │    └────────────── putnr: 3
+  └─────────────────── projectcd: DC001
+</code></pre></div>
+
+<p><strong>Projectfoto's</strong> (<code>F</code>/<code>G</code> patroon):</p>
+<div class="codehilite"><pre><span></span><code>DC001_F001.jpg   → bestandsoort: FOTO_SFEERFOTO
+DC001_G002.jpg   → bestandsoort: FOTO_OPGRAVINGSFOTO
+</code></pre></div>
+
+<h3 id="bestandsnaam-parsing-tekeningen">Bestandsnaam-parsing: tekeningen<a class="headerlink" href="#bestandsnaam-parsing-tekeningen" title="Permanent link">&para;</a></h3>
+<p>Tekeningtypes worden bepaald door de letter in de bestandsnaam:</p>
+<table>
+<thead>
+<tr>
+<th>Letter</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>A</code></td>
+<td>Bouwtekening</td>
+</tr>
+<tr>
+<td><code>B</code></td>
+<td>Veldtekening</td>
+</tr>
+<tr>
+<td><code>C</code></td>
+<td>Overzichtstekening</td>
+</tr>
+<tr>
+<td><code>D</code></td>
+<td>Objecttekening</td>
+</tr>
+<tr>
+<td><code>E</code></td>
+<td>Uitwerkingstekening</td>
+</tr>
+<tr>
+<td><code>P</code></td>
+<td>Veldtekening (publicatie)</td>
+</tr>
+<tr>
+<td><code>T</code></td>
+<td>Objecttekening (publicatie)</td>
+</tr>
+</tbody>
+</table>
+<p>Voorbeeld: <code>DC001_B002.tif</code> → tekeningcd: <code>B002</code>, bestandsoort: <code>TEK_VELDTEKENING</code>.</p>
+<h3 id="artefactsoort-uit-typevoorwerp">Artefactsoort uit typevoorwerp<a class="headerlink" href="#artefactsoort-uit-typevoorwerp" title="Permanent link">&para;</a></h3>
+<p>Als <code>artefactsoort</code> nog niet is ingesteld, leidt het DelftProfiel deze af uit het <code>typevoorwerp</code>-veld:</p>
+<ul>
+<li><code>Kleipijp</code> → <code>'Kleipijp'</code></li>
+<li>Patroon <code>^[a-z]{1,2}(_|-)</code> → <code>'Aardewerk'</code></li>
+<li>Patroon <code>^gl(_|-)</code> → <code>'Glas'</code></li>
+</ul>
+<h3 id="rapportnummer-normalisatie-vanuit-database">Rapportnummer-normalisatie vanuit database<a class="headerlink" href="#rapportnummer-normalisatie-vanuit-database" title="Permanent link">&para;</a></h3>
+<p>Voor Tekening- en Rapport-records die via de database binnenkomen (niet via bestandsnaam):</p>
+<div class="codehilite"><pre><span></span><code><span class="n">doc</span> <span class="o">=</span> <span class="n">profiel</span><span class="o">.</span><span class="n">identificeer_tekening_db</span><span class="p">(</span><span class="n">doc</span><span class="p">)</span>  <span class="c1"># tekeningcd normaliseren</span>
+<span class="n">doc</span> <span class="o">=</span> <span class="n">profiel</span><span class="o">.</span><span class="n">identificeer_rapport_db</span><span class="p">(</span><span class="n">doc</span><span class="p">)</span>   <span class="c1"># rapportnr normaliseren</span>
+</code></pre></div>
+
+<h3 id="projectcode-uit-bestandsnaam">Projectcode uit bestandsnaam<a class="headerlink" href="#projectcode-uit-bestandsnaam" title="Permanent link">&para;</a></h3>
+<div class="codehilite"><pre><span></span><code><span class="n">profiel</span><span class="o">.</span><span class="n">extract_projectcode_uit_bestandsnaam</span><span class="p">(</span><span class="s2">&quot;DC001_F001.jpg&quot;</span><span class="p">,</span> <span class="s2">&quot;/map&quot;</span><span class="p">)</span>     <span class="c1"># → &quot;DC001&quot;</span>
+<span class="n">profiel</span><span class="o">.</span><span class="n">extract_projectcode_uit_bestandsnaam</span><span class="p">(</span><span class="s2">&quot;test.jpg&quot;</span><span class="p">,</span> <span class="s2">&quot;/DC045/fotos&quot;</span><span class="p">)</span>  <span class="c1"># → &quot;DC045&quot;  (via directory)</span>
+</code></pre></div>
+
+<p>Als noch de bestandsnaam noch de directory een <code>DB</code>/<code>DC</code>-prefix bevat, wordt de eerste alfanumerieke reeks uit de bestandsnaam teruggegeven.</p>
+<h2 id="voorbeeldprofiel">VoorbeeldProfiel<a class="headerlink" href="#voorbeeldprofiel" title="Permanent link">&para;</a></h2>
+<p><code>VoorbeeldProfiel</code> is een minimaal PoC-profiel dat volledig erft van <code>ConventieProfiel</code> zonder aanpassingen. Het dient als startpunt voor een nieuwe gemeente die de standaardconventie wil volgen:</p>
+<div class="codehilite"><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">VoorbeeldProfiel</span><span class="p">(</span><span class="n">ConventieProfiel</span><span class="p">):</span>
+    <span class="n">naam</span> <span class="o">=</span> <span class="s2">&quot;voorbeeld&quot;</span>
+</code></pre></div>
+
+<h2 id="nieuw-profiel-toevoegen">Nieuw profiel toevoegen<a class="headerlink" href="#nieuw-profiel-toevoegen" title="Permanent link">&para;</a></h2>
+<p>Om een profiel voor een nieuwe gemeente toe te voegen:</p>
+<ol>
+<li><strong>Maak een nieuw bestand</strong> <code>airflow_app/dags/wasstraat/profielen/[gemeente].py</code>:</li>
+</ol>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">wasstraat.profielen.conventie</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConventieProfiel</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">MijnGemeenteProfiel</span><span class="p">(</span><span class="n">ConventieProfiel</span><span class="p">):</span>
+    <span class="n">naam</span> <span class="o">=</span> <span class="s2">&quot;mijn_gemeente&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">normaliseer_projectcode</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">projectcd</span><span class="p">):</span>
+        <span class="c1"># Gemeente-specifieke normalisatie</span>
+        <span class="k">return</span> <span class="n">projectcd</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
+</code></pre></div>
+
+<ol>
+<li><strong>Registreer het profiel</strong> in <code>airflow_app/dags/wasstraat/profielen/__init__.py</code>:</li>
+</ol>
+<div class="codehilite"><pre><span></span><code><span class="k">elif</span> <span class="n">gemeente</span> <span class="o">==</span> <span class="s1">&#39;mijn_gemeente&#39;</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">wasstraat.profielen.mijn_gemeente</span><span class="w"> </span><span class="kn">import</span> <span class="n">MijnGemeenteProfiel</span>
+    <span class="n">_profiel_cache</span> <span class="o">=</span> <span class="n">MijnGemeenteProfiel</span><span class="p">()</span>
+</code></pre></div>
+
+<ol>
+<li><strong>Stel de omgevingsvariabele in</strong> in het <code>.env</code> bestand:</li>
+</ol>
+<div class="codehilite"><pre><span></span><code><span class="nv">WASSTRAAT_GEMEENTE</span><span class="o">=</span>mijn_gemeente
+</code></pre></div>
+
+<ol>
+<li><strong>Schrijf unit tests</strong> in <code>tests/unit/test_profielen.py</code> voor de nieuwe klasse.</li>
+</ol>
+<h2 id="gebruik-in-de-pipeline">Gebruik in de pipeline<a class="headerlink" href="#gebruik-in-de-pipeline" title="Permanent link">&para;</a></h2>
+<p>Het profiel wordt op twee plaatsen aangeroepen:</p>
+<h3 id="parsefotobestanden-bestandsnaam-parsing">parseFotobestanden() — bestandsnaam-parsing<a class="headerlink" href="#parsefotobestanden-bestandsnaam-parsing" title="Permanent link">&para;</a></h3>
+<div class="codehilite"><pre><span></span><code><span class="n">profiel</span> <span class="o">=</span> <span class="n">get_profiel</span><span class="p">()</span>
+<span class="n">projectcd</span> <span class="o">=</span> <span class="n">profiel</span><span class="o">.</span><span class="n">extract_projectcode_uit_bestandsnaam</span><span class="p">(</span><span class="n">doc</span><span class="p">[</span><span class="s1">&#39;fileName&#39;</span><span class="p">],</span> <span class="n">doc</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;directory&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">))</span>
+
+<span class="n">parsed</span> <span class="o">=</span> <span class="n">profiel</span><span class="o">.</span><span class="n">identificeer_foto</span><span class="p">(</span><span class="n">doc</span><span class="p">,</span> <span class="n">projectcd</span><span class="p">)</span>
+<span class="k">if</span> <span class="n">parsed</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="c1"># Foto-record opslaan</span>
+    <span class="k">continue</span>
+
+<span class="n">parsed</span> <span class="o">=</span> <span class="n">profiel</span><span class="o">.</span><span class="n">identificeer_tekening</span><span class="p">(</span><span class="n">doc</span><span class="p">,</span> <span class="n">projectcd</span><span class="p">)</span>
+<span class="k">if</span> <span class="n">parsed</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="c1"># Tekening-record opslaan</span>
+    <span class="k">continue</span>
+</code></pre></div>
+
+<h3 id="enhanceallattributes-entiteit-identificatie">enhanceAllAttributes() — entiteit-identificatie<a class="headerlink" href="#enhanceallattributes-entiteit-identificatie" title="Permanent link">&para;</a></h3>
+<div class="codehilite"><pre><span></span><code><span class="n">profiel</span> <span class="o">=</span> <span class="n">get_profiel</span><span class="p">()</span>
+<span class="n">soort</span> <span class="o">=</span> <span class="n">doc</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;soort&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+
+<span class="k">if</span> <span class="n">soort</span> <span class="o">==</span> <span class="s1">&#39;Tekening&#39;</span><span class="p">:</span>
+    <span class="n">doc</span> <span class="o">=</span> <span class="n">profiel</span><span class="o">.</span><span class="n">identificeer_tekening_db</span><span class="p">(</span><span class="n">doc</span><span class="p">)</span>
+<span class="k">elif</span> <span class="n">soort</span> <span class="o">==</span> <span class="s1">&#39;Rapport&#39;</span><span class="p">:</span>
+    <span class="n">doc</span> <span class="o">=</span> <span class="n">profiel</span><span class="o">.</span><span class="n">identificeer_rapport_db</span><span class="p">(</span><span class="n">doc</span><span class="p">)</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="n">doc</span> <span class="o">=</span> <span class="n">profiel</span><span class="o">.</span><span class="n">identificeer</span><span class="p">(</span><span class="n">soort</span><span class="p">,</span> <span class="n">doc</span><span class="p">)</span>
+</code></pre></div>
+              
+            </div>
+          </div>
+<footer role="contentinfo" class="wasstraat-footer"
+        itemscope itemtype="https://schema.org/WPFooter">
+  <hr>
+  <p class="wasstraat-credits">
+    Gebouwd door
+    <span itemprop="publisher" itemscope itemtype="https://schema.org/Organization">
+      <strong itemprop="name">E-Space</strong>
+    </span>
+    —
+    <span itemprop="author" itemscope itemtype="https://schema.org/Person">
+      <strong itemprop="name">Arjen Brienen</strong><meta itemprop="affiliation" content="E-Space">
+      <link itemprop="sameAs" href="https://www.linkedin.com/in/arjenbrienen/">
+      <link itemprop="sameAs" href="https://github.com/brienen">
+    </span>
+  </p>
+  <p class="wasstraat-license">
+    Uitgegeven onder de
+    <a href="https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12"
+       rel="license">EUPL v1.2</a>.
+    Broncode:
+    <a href="https://github.com/brienen/wasstraat_archeologische_data"
+       rel="external">github.com/brienen/wasstraat_archeologische_data</a>.
+  </p>
+  
+    <p class="wasstraat-copyright"><small>© E-Space — Arjen Brienen. Uitgegeven onder de EUPL v1.2 licentie.</small></p>
+  
+</footer>
+<footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footernavigatie">
+        <a href="../transformatie/" class="btn btn-neutral float-left" title="Transformatielaag"><span class="icon icon-circle-arrow-left"></span> Vorige</a>
+        <a href="../crossviews/" class="btn btn-neutral float-right" title="Crossviews">Volgende <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+      <p>© E-Space — Arjen Brienen. Uitgegeven onder de EUPL v1.2 licentie.</p>
+  </div>
+
+  Gemaakt met <a href="https://www.mkdocs.org/">MkDocs</a> met behulp van een <a href="https://github.com/readthedocs/sphinx_rtd_theme">Thema</a> geleverd door <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versies">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../transformatie/" style="color: #fcfcfc">&laquo; Vorige</a></span>
+    
+    
+      <span><a href="../crossviews/" style="color: #fcfcfc">Volgende &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../..";</script>
+    <script src="../../js/theme_extra.js"></script>
+    <script src="../../js/theme.js"></script>
+      <script src="../../assets/lightbox.js"></script>
+      <script src="../../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

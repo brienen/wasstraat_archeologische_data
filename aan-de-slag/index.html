@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="author" content="E-Space / Arjen Brienen" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="author" content="E-Space / Arjen Brienen" /><link rel="canonical" href="https://wasstraat.e-space.nl/aan-de-slag/" />
       <link rel="shortcut icon" href="../img/favicon.ico" />
     <title>Handleiding - Wasstraat Archeologische Data</title>
     <link rel="stylesheet" href="../css/theme.css" />
@@ -15,14 +15,128 @@
         // Current page data
         var mkdocs_page_name = "Handleiding";
         var mkdocs_page_input_path = "aan-de-slag.md";
-        var mkdocs_page_url = null;
+        var mkdocs_page_url = "/aan-de-slag/";
       </script>
     
     <!--[if lt IE 9]>
       <script src="../js/html5shiv.min.js"></script>
     <![endif]-->
       <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
-      <script>hljs.highlightAll();</script> 
+      <script>hljs.highlightAll();</script>
+  
+  <meta name="author" content="Arjen Brienen">
+  <meta name="publisher" content="E-Space">
+  <meta name="description" content="Technische documentatie voor de Wasstraat Archeologische Data - een open source verwerkingsplatform voor archeologische datasets">
+  <meta name="keywords" content="archeologie, wasstraat, ETL, open data, erfgoed, ABR, CIDOC CRM, Delft, Airflow, open source">
+  <meta name="generator" content="MkDocs">
+  <meta name="robots" content="index, follow">
+  <meta http-equiv="Content-Language" content="nl">
+
+  
+  <meta name="DC.title" content="Handleiding">
+  <meta name="DC.creator" content="Arjen Brienen">
+  <meta name="DC.publisher" content="E-Space">
+  <meta name="DC.language" content="nl">
+  <meta name="DC.rights" content="EUPL v1.2">
+  <meta name="DC.type" content="Text">
+  <meta name="DC.format" content="text/html">
+
+  
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Wasstraat Archeologische Data">
+  <meta property="og:title" content="Handleiding">
+  <meta property="og:description" content="Technische documentatie voor de Wasstraat Archeologische Data - een open source verwerkingsplatform voor archeologische datasets">
+  <meta property="og:locale" content="nl_NL">
+  <meta property="og:url" content="https://wasstraat.e-space.nl/aan-de-slag/">
+
+  
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Handleiding">
+  <meta name="twitter:description" content="Technische documentatie voor de Wasstraat Archeologische Data - een open source verwerkingsplatform voor archeologische datasets">
+
+  
+  <link rel="canonical" href="https://wasstraat.e-space.nl/aan-de-slag/">
+
+  
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://wasstraat.e-space.nl/#org-espace",
+        "name": "E-Space",
+        "description": "Ontwikkelaar van de Wasstraat Archeologische Data.",
+        "inLanguage": "nl"
+      },
+      {
+        "@type": "Person",
+        "@id": "https://wasstraat.e-space.nl/#person-arjen",
+        "name": "Arjen Brienen",
+        "jobTitle": "Architect en ontwikkelaar",
+        "affiliation": { "@id": "https://wasstraat.e-space.nl/#org-espace" },
+        "sameAs": [
+          "https://www.linkedin.com/in/arjenbrienen/",
+          "https://github.com/brienen"
+        ]
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://wasstraat.e-space.nl/#website",
+        "url": "https://wasstraat.e-space.nl/",
+        "name": "Wasstraat Archeologische Data",
+        "description": "Technische documentatie voor de Wasstraat Archeologische Data - een open source verwerkingsplatform voor archeologische datasets",
+        "inLanguage": "nl",
+        "publisher": { "@id": "https://wasstraat.e-space.nl/#org-espace" },
+        "author": { "@id": "https://wasstraat.e-space.nl/#person-arjen" },
+        "creator": { "@id": "https://wasstraat.e-space.nl/#person-arjen" },
+        "copyrightHolder": { "@id": "https://wasstraat.e-space.nl/#org-espace" },
+        "license": "https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12"
+      },
+      {
+        "@type": "SoftwareSourceCode",
+        "@id": "https://wasstraat.e-space.nl/#software",
+        "name": "Wasstraat Archeologische Data",
+        "alternateName": "Wasstraat",
+        "description": "Open-source ETL-platform dat archeologische gegevens verzamelt, verwerkt en toegankelijk maakt. Ontwikkeld voor de gemeente Delft en uitgebreid tot een generiek platform voor Nederlandse gemeenten.",
+        "programmingLanguage": ["Python", "SQL", "YAML"],
+        "runtimePlatform": "Docker Compose",
+        "codeRepository": "https://github.com/brienen/wasstraat_archeologische_data",
+        "license": "https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12",
+        "author": { "@id": "https://wasstraat.e-space.nl/#person-arjen" },
+        "creator": { "@id": "https://wasstraat.e-space.nl/#person-arjen" },
+        "publisher": { "@id": "https://wasstraat.e-space.nl/#org-espace" },
+        "maintainer": { "@id": "https://wasstraat.e-space.nl/#person-arjen" },
+        "copyrightHolder": { "@id": "https://wasstraat.e-space.nl/#org-espace" },
+        "inLanguage": "nl",
+        "keywords": "archeologie, ETL, Airflow, PostgreSQL, MongoDB, Elasticsearch, ABR, CIDOC CRM, GGM, erfgoed, open data",
+        "about": [
+          { "@type": "Thing", "name": "Archeologisch Basisregister (ABR)" },
+          { "@type": "Thing", "name": "CIDOC CRM" },
+          { "@type": "Thing", "name": "Gemeentelijk Gegevensmodel (GGM)" },
+          { "@type": "Thing", "name": "DANS e-Depot" },
+          { "@type": "Thing", "name": "Archis" }
+        ]
+      }
+      
+      ,{
+        "@type": "TechArticle",
+        "@id": "https://wasstraat.e-space.nl/aan-de-slag/#article",
+        "url": "https://wasstraat.e-space.nl/aan-de-slag/",
+        "name": "Handleiding",
+        "headline": "Handleiding",
+        "description": "Technische documentatie voor de Wasstraat Archeologische Data - een open source verwerkingsplatform voor archeologische datasets",
+        "inLanguage": "nl",
+        "isPartOf": { "@id": "https://wasstraat.e-space.nl/#website" },
+        "author": { "@id": "https://wasstraat.e-space.nl/#person-arjen" },
+        "publisher": { "@id": "https://wasstraat.e-space.nl/#org-espace" },
+        "license": "https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12"
+      }
+      
+    ]
+  }
+  </script>
+
 </head>
 
 <body class="wy-body-for-nav" role="document">
@@ -34,12 +148,12 @@
           <a href=".." class="icon icon-home"> Wasstraat Archeologische Data
         </a><div role="search">
   <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
-      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+      <input type="text" name="q" placeholder="Doorzoek documentatie" aria-label="Doorzoek documentatie" title="Typ hier uw zoekterm" />
   </form>
 </div>
       </div>
 
-      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigatiemenu">
               <ul>
                 <li class="toctree-l1"><a class="reference internal" href="..">Home</a>
                 </li>
@@ -93,6 +207,8 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../componenten/transformatie/">Transformatielaag</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../componenten/gemeenteprofielen/">Gemeenteprofielen</a>
+                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../componenten/crossviews/">Crossviews</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../componenten/validatie/">Validatielaag</a>
@@ -127,7 +243,7 @@
     </nav>
 
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
-      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobiel navigatiemenu">
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
           <a href="..">Wasstraat Archeologische Data</a>
         
@@ -135,7 +251,7 @@
       <div class="wy-nav-content">
         <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
   <ul class="wy-breadcrumbs">
-    <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
+    <li><a href=".." class="icon icon-home" aria-label="Documentatie"></a></li>
           <li class="breadcrumb-item">Aan de slag</li>
       <li class="breadcrumb-item active">Handleiding</li>
     <li class="wy-breadcrumbs-aside">
@@ -281,16 +397,14 @@ De meest voorkomende oorzaak is onvoldoende geheugen in Docker Desktop.</p>
 </div>
 <h3 id="eigen-data-klaarzetten">Eigen data klaarzetten<a class="headerlink" href="#eigen-data-klaarzetten" title="Permanent link">&para;</a></h3>
 <p>Gemeenten kunnen hun eigen opgravingsdata klaarzetten conform dezelfde directorystructuur als de Delftse pijplijn. De echte Delftse data is niet opgenomen in de repository, maar de synthetische voorbeelddata in <code>data/synthetic/data/</code> toont exact welke bestanden en structuren het platform verwacht.</p>
-<p>De Wasstraat leest brondata uit de directory <code>data/input/basefiles/projectdatabase/</code>. Elke subdirectory heeft een specifiek doel:</p>
-<div class="codehilite"><pre><span></span><code><span class="n">data</span><span class="o">/</span><span class="k">input</span><span class="o">/</span><span class="n">basefiles</span><span class="o">/</span><span class="n">projectdatabase</span><span class="o">/</span>
-<span class="err">├──</span><span class="w"> </span><span class="n">digidepot</span><span class="o">/</span><span class="w">           </span><span class="err">←</span><span class="w"> </span><span class="n">Projectdatabases</span><span class="w"> </span><span class="p">(.</span><span class="n">mdb</span><span class="o">/</span><span class="p">.</span><span class="n">accdb</span><span class="p">)</span>
-<span class="err">├──</span><span class="w"> </span><span class="n">Delf</span><span class="o">-</span><span class="n">IT</span><span class="o">/</span><span class="w">             </span><span class="err">←</span><span class="w"> </span><span class="n">DelfIT</span><span class="w"> </span><span class="n">administratie</span><span class="w"> </span><span class="p">(.</span><span class="n">mdb</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="p">.</span><span class="n">xlsx</span><span class="p">)</span>
+<p>De Wasstraat leest brondata uit de directory <code>data/delft/data/</code>. Elke subdirectory heeft een specifiek doel:</p>
+<div class="codehilite"><pre><span></span><code><span class="n">data</span><span class="o">/</span><span class="n">delft</span><span class="o">/</span><span class="n">data</span><span class="o">/</span>
+<span class="err">├──</span><span class="w"> </span><span class="n">projecten</span><span class="o">/</span><span class="w">           </span><span class="err">←</span><span class="w"> </span><span class="n">Projectdatabases</span><span class="w"> </span><span class="p">(.</span><span class="n">mdb</span><span class="o">/</span><span class="p">.</span><span class="n">accdb</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">foto</span><span class="p">&#39;</span><span class="n">s</span>
+<span class="err">├──</span><span class="w"> </span><span class="n">projectenlijst</span><span class="o">/</span><span class="w">      </span><span class="err">←</span><span class="w"> </span><span class="n">Projectenlijst</span><span class="w"> </span><span class="n">administratie</span><span class="w"> </span><span class="p">(.</span><span class="n">mdb</span><span class="p">)</span>
 <span class="err">├──</span><span class="w"> </span><span class="n">magazijnlijst</span><span class="o">/</span><span class="w">       </span><span class="err">←</span><span class="w"> </span><span class="n">Depotregistratie</span><span class="w"> </span><span class="p">(.</span><span class="n">mdb</span><span class="p">)</span>
-<span class="err">├──</span><span class="w"> </span><span class="n">digifotos</span><span class="o">/</span><span class="w">           </span><span class="err">←</span><span class="w"> </span><span class="n">Foto</span><span class="o">-</span><span class="n">metadata</span><span class="w"> </span><span class="p">(.</span><span class="n">mdb</span><span class="p">)</span>
+<span class="err">├──</span><span class="w"> </span><span class="n">fotolijst</span><span class="o">/</span><span class="w">           </span><span class="err">←</span><span class="w"> </span><span class="n">Foto</span><span class="o">-</span><span class="n">metadata</span><span class="w"> </span><span class="p">(.</span><span class="n">mdb</span><span class="p">)</span>
 <span class="err">├──</span><span class="w"> </span><span class="n">monsterdatabase</span><span class="o">/</span><span class="w">     </span><span class="err">←</span><span class="w"> </span><span class="n">Monsterregistratie</span><span class="w"> </span><span class="p">(.</span><span class="n">mdb</span><span class="o">/</span><span class="p">.</span><span class="n">accdb</span><span class="p">)</span>
-<span class="err">├──</span><span class="w"> </span><span class="n">rapporten</span><span class="o">/</span><span class="w">           </span><span class="err">←</span><span class="w"> </span><span class="n">Rapportendatabases</span><span class="w"> </span><span class="p">(.</span><span class="n">mdb</span><span class="p">)</span>
-<span class="err">│</span><span class="w">   </span><span class="err">├──</span><span class="w"> </span><span class="n">DAN</span><span class="o">/</span><span class="w">             </span><span class="err">←</span><span class="w"> </span><span class="n">Delfts</span><span class="w"> </span><span class="n">Archeologische</span><span class="w"> </span><span class="n">Notities</span>
-<span class="err">│</span><span class="w">   </span><span class="err">└──</span><span class="w"> </span><span class="n">DAR</span><span class="o">/</span><span class="w">             </span><span class="err">←</span><span class="w"> </span><span class="n">Delfts</span><span class="w"> </span><span class="n">Archeologische</span><span class="w"> </span><span class="n">Rapporten</span>
+<span class="err">├──</span><span class="w"> </span><span class="n">rapporten</span><span class="o">/</span><span class="w">           </span><span class="err">←</span><span class="w"> </span><span class="n">Rapportbestanden</span><span class="w"> </span><span class="p">(.</span><span class="n">mdb</span><span class="p">,</span><span class="w"> </span><span class="p">.</span><span class="n">pdf</span><span class="p">)</span>
 <span class="err">└──</span><span class="w"> </span><span class="n">referentietabellen</span><span class="o">/</span><span class="w">  </span><span class="err">←</span><span class="w"> </span><span class="n">ABR</span><span class="o">-</span><span class="n">codes</span><span class="w"> </span><span class="n">en</span><span class="w"> </span><span class="n">standaardtabellen</span><span class="w"> </span><span class="p">(.</span><span class="n">xlsx</span><span class="o">/</span><span class="p">.</span><span class="n">mdb</span><span class="p">)</span>
 </code></pre></div>
 
@@ -306,71 +420,204 @@ De meest voorkomende oorzaak is onvoldoende geheugen in Docker Desktop.</p>
 </thead>
 <tbody>
 <tr>
-<td><code>digidepot/</code></td>
-<td>Per opgraving een subdirectory met de projectdatabase</td>
-<td><code>.mdb</code> / <code>.accdb</code></td>
+<td><code>projecten/</code></td>
+<td>Per opgraving een subdirectory met de projectdatabase en foto's</td>
+<td><code>.mdb</code> / <code>.accdb</code> + afbeeldingen</td>
 <td>Ja — dit is de hoofdbron</td>
 </tr>
 <tr>
-<td><code>Delf-IT/</code></td>
-<td>De centrale administratiedatabase en projecttabel</td>
-<td><code>.mdb</code> + <code>.xlsx</code></td>
+<td><code>projectenlijst/</code></td>
+<td>Centrale administratiedatabase met projectoverzicht (tabel <code>OPGRAVINGEN</code>)</td>
+<td><code>.mdb</code></td>
 <td>Ja — bevat projectoverzicht</td>
 </tr>
 <tr>
 <td><code>magazijnlijst/</code></td>
-<td>Depot- en magazijnadministratie</td>
+<td>Depot- en magazijnadministratie (tabel <code>magazijnlijst</code>)</td>
 <td><code>.mdb</code></td>
 <td>Aanbevolen</td>
 </tr>
 <tr>
-<td><code>digifotos/</code></td>
-<td>Digitale fotolijst met metadata</td>
+<td><code>fotolijst/</code></td>
+<td>Digitale fotocatalogus met metadata (tabel <code>Fotos</code>)</td>
 <td><code>.mdb</code></td>
 <td>Aanbevolen (voor foto-koppeling)</td>
 </tr>
 <tr>
 <td><code>monsterdatabase/</code></td>
-<td>Monster- en residuregistratie</td>
+<td>Monsterdata met botanische en zoölogische determinaties</td>
 <td><code>.mdb</code> / <code>.accdb</code></td>
 <td>Optioneel</td>
 </tr>
 <tr>
-<td><code>rapporten/DAN/</code> en <code>DAR/</code></td>
-<td>Rapportenlijstdatabases</td>
-<td><code>.mdb</code></td>
+<td><code>rapporten/</code></td>
+<td>Rapportbestanden en rapportendatabases</td>
+<td><code>.mdb</code> / <code>.pdf</code></td>
 <td>Optioneel</td>
 </tr>
 <tr>
 <td><code>referentietabellen/</code></td>
-<td>ABR-classificatie, bestandslijsten</td>
+<td>ABR-classificatie (<code>abr_versie_*.xlsx</code>) en bestandslijsten</td>
 <td><code>.xlsx</code> / <code>.mdb</code></td>
 <td>Ja — nodig voor harmonisatie</td>
 </tr>
 </tbody>
 </table>
-<h3 id="hoe-worden-bestanden-gevonden">Hoe worden bestanden gevonden?<a class="headerlink" href="#hoe-worden-bestanden-gevonden" title="Permanent link">&para;</a></h3>
-<p>De Wasstraat doorzoekt elke directory <strong>recursief</strong> op <code>.mdb</code> en <code>.accdb</code> bestanden. Je kunt dus subdirectories gebruiken om bestanden te organiseren. In <code>digidepot/</code> is het gebruikelijk om per project een subdirectory aan te maken:</p>
-<div class="codehilite"><pre><span></span><code>digidepot/
+<h3 id="structuur-per-directory">Structuur per directory<a class="headerlink" href="#structuur-per-directory" title="Permanent link">&para;</a></h3>
+<h4 id="projecten-opgravingsdatabases">projecten/ — Opgravingsdatabases<a class="headerlink" href="#projecten-opgravingsdatabases" title="Permanent link">&para;</a></h4>
+<p>Per opgraving een subdirectory. De directorynaam bepaalt de projectcode (het eerste alfanumerieke deel). De Wasstraat doorzoekt recursief op <code>.mdb</code> en <code>.accdb</code> bestanden.</p>
+<div class="codehilite"><pre><span></span><code>projecten/
 ├── DB008_Leeuwenstein/
-│   └── DB008.mdb
-├── DC001_Oude_Delft_96/
-│   └── DC001.mdb
-└── DC002_Oude_Delft_188/
-    └── DC002.mdb
+│   ├── C Database/
+│   │   └── DB008.mdb              ← Projectdatabase
+│   └── L Fotos/
+│       ├── G (Opgravingsfoto&#39;s)/  ← Overzichtsfoto&#39;s
+│       └── H (Objectfoto&#39;s)/      ← Vondstfoto&#39;s per materiaal
+│           ├── Aardewerk/
+│           ├── Glas/
+│           └── Metaal/
+└── DC001_Oude_Delft_96/
+    └── C Database/
+        └── DC001.mdb
 </code></pre></div>
 
+<p>Elke projectdatabase bevat tabellen zoals <code>VONDSTENLIJST</code>, <code>SPOREN</code>, <code>VULLINGEN</code>, <code>AARDEWERK 1</code>, <code>GLAS</code>, <code>METAAL</code>, <code>BEEN</code>, <code>TEKENINGEN</code>, <code>DIAOPGRAVING</code> etc. De exacte tabellen en kolomnamen worden geconfigureerd via <code>Wasstraat_Config_HarmonizeV3.xlsx</code>.</p>
+<h4 id="projectenlijst-projectoverzicht">projectenlijst/ — Projectoverzicht<a class="headerlink" href="#projectenlijst-projectoverzicht" title="Permanent link">&para;</a></h4>
+<p>Eén <code>.mdb</code>-bestand met een tabel <code>OPGRAVINGEN</code> die alle projecten beschrijft:</p>
+<table>
+<thead>
+<tr>
+<th>Kolom</th>
+<th>Beschrijving</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>CODE</code></td>
+<td>Projectcode (bijv. DB008, DC001)</td>
+</tr>
+<tr>
+<td><code>TOPONIEM</code></td>
+<td>Locatienaam</td>
+</tr>
+<tr>
+<td><code>OPGRAVING</code></td>
+<td>Beschrijving van de opgraving</td>
+</tr>
+<tr>
+<td><code>XCOORD</code>, <code>YCOORD</code></td>
+<td>Rijksdriehoek-coördinaten</td>
+</tr>
+<tr>
+<td><code>JAAR</code></td>
+<td>Opgravingsjaar</td>
+</tr>
+</tbody>
+</table>
+<h4 id="magazijnlijst-depotadministratie">magazijnlijst/ — Depotadministratie<a class="headerlink" href="#magazijnlijst-depotadministratie" title="Permanent link">&para;</a></h4>
+<p>Eén <code>.mdb</code>-bestand met een tabel <code>magazijnlijst</code> met kolommen: <code>CODE</code>, <code>PROJECT</code>, <code>STELLING</code>, <code>VAKNO</code>, <code>VOLGLETTER</code>, <code>INHOUD</code>, <code>DOOSNO</code>.</p>
+<h4 id="fotolijst-fotocatalogus">fotolijst/ — Fotocatalogus<a class="headerlink" href="#fotolijst-fotocatalogus" title="Permanent link">&para;</a></h4>
+<p>Eén <code>.mdb</code>-bestand met een tabel <code>Fotos</code> die digitale foto's koppelt aan projecten, putten en vondsten:</p>
+<table>
+<thead>
+<tr>
+<th>Kolom</th>
+<th>Beschrijving</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>FOTONR</code></td>
+<td>Uniek fotonummer</td>
+</tr>
+<tr>
+<td><code>PROJECTCD</code></td>
+<td>Projectcode</td>
+</tr>
+<tr>
+<td><code>PUTNO</code>, <code>VLAKNR</code>, <code>SPOORNR</code>, <code>VONDSTNR</code></td>
+<td>Verwijzingen naar archeologische context</td>
+</tr>
+<tr>
+<td><code>BESTANDSNAAM</code></td>
+<td>Bestandsnaam van de foto</td>
+</tr>
+<tr>
+<td><code>FOTOSOORT</code></td>
+<td>Type foto (Opgravingsfoto, Voorwerpfoto)</td>
+</tr>
+</tbody>
+</table>
+<h4 id="monsterdatabase-monsters-en-determinaties">monsterdatabase/ — Monsters en determinaties<a class="headerlink" href="#monsterdatabase-monsters-en-determinaties" title="Permanent link">&para;</a></h4>
+<p>Eén <code>.mdb</code>-bestand met meerdere tabellen:</p>
+<table>
+<thead>
+<tr>
+<th>Tabel</th>
+<th>Inhoud</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Monster_gegevens</code></td>
+<td>Grondmonsters met locatie, grondsoort, zeefresultaten</td>
+</tr>
+<tr>
+<td><code>Monster_waardering</code></td>
+<td>Waardering per monstercode (botanisch, zoölogisch materiaal)</td>
+</tr>
+<tr>
+<td><code>Monster_botanie_determinatie</code></td>
+<td>Botanische determinaties (plantsoorten, delen, conservering)</td>
+</tr>
+<tr>
+<td><code>Monster_schelp_determinatie</code></td>
+<td>Schelpdeterminaties (soorten, delen)</td>
+</tr>
+<tr>
+<td><code>R_PLANT</code>, <code>R_SCHELP</code>, <code>R_DEEL</code>, <code>R_STAAT</code></td>
+<td>Referentietabellen</td>
+</tr>
+</tbody>
+</table>
+<h4 id="referentietabellen-standaardtabellen">referentietabellen/ — Standaardtabellen<a class="headerlink" href="#referentietabellen-standaardtabellen" title="Permanent link">&para;</a></h4>
+<table>
+<thead>
+<tr>
+<th>Bestand</th>
+<th>Inhoud</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>abr_versie_*.xlsx</code></td>
+<td>ABR-thesaurus: archeologische perioden, monumenttypen, materialen</td>
+</tr>
+<tr>
+<td><code>Alle Bestanden Archeologisch Depot.xlsx</code></td>
+<td>Inventarisatie van bestanden in het depot</td>
+</tr>
+<tr>
+<td>Overige <code>.mdb</code>-bestanden</td>
+<td>Specifieke referentietabellen (bakselcodes, pijpmakersmerken, etc.)</td>
+</tr>
+</tbody>
+</table>
 <h3 id="fotos-en-media">Foto's en media<a class="headerlink" href="#fotos-en-media" title="Permanent link">&para;</a></h3>
-<p>Foto's en andere mediabestanden worden verwacht in een aparte directory die via een Docker-volume gemount wordt als <code>/input/images</code>. De standaard locatie hiervoor is <code>data/input/basefiles/</code> (de bovenliggende map). De Wasstraat zoekt daar naar bestanden in mappen die <code>velddocument</code>, <code>fotos</code>, <code>tekening</code>, <code>DAN</code> of <code>DAR</code> in het pad bevatten.</p>
-<p>Ondersteunde bestandstypen voor media: <code>.jpg</code>, <code>.jpeg</code>, <code>.png</code>, <code>.gif</code>, <code>.tif</code>, <code>.psd</code>, <code>.pdf</code>, <code>.jp2</code>, <code>.doc</code>, <code>.docx</code>.</p>
+<p>Foto's worden op twee manieren gevonden:</p>
+<ol>
+<li><strong>In de projectdirectory</strong> (<code>projecten/&lt;project&gt;/L Fotos/</code>): de Wasstraat zoekt in paden die <code>velddocument</code>, <code>fotos</code> of <code>tekening</code> bevatten</li>
+<li><strong>Via de fotocatalogus</strong> (<code>fotolijst/</code>): koppelt bestandsnamen aan projecten en vondsten</li>
+</ol>
+<p>Ondersteunde bestandstypen: <code>.jpg</code>, <code>.jpeg</code>, <code>.png</code>, <code>.gif</code>, <code>.tif</code>, <code>.psd</code>, <code>.pdf</code>, <code>.jp2</code>, <code>.doc</code>, <code>.docx</code>.</p>
 <div class="admonition tip">
 <p class="admonition-title">Minimale proefset</p>
-<p>Voor een eerste test volstaat het om één <code>.mdb</code> projectdatabase in <code>digidepot/</code> te plaatsen, samen met de referentietabellen. De extractie verwerkt dan alleen dat ene project.</p>
+<p>Voor een eerste test volstaat het om één <code>.mdb</code> projectdatabase in <code>projecten/</code> te plaatsen, samen met de referentietabellen en een projectenlijst. De extractie verwerkt dan alleen dat ene project.</p>
 </div>
-<h2 id="5-wasstraat_config_harmonize-configureren">5. Wasstraat_Config_Harmonize configureren<a class="headerlink" href="#5-wasstraat_config_harmonize-configureren" title="Permanent link">&para;</a></h2>
+<h2 id="5-wasstraat_config_harmonizev3-configureren">5. Wasstraat_Config_HarmonizeV3 configureren<a class="headerlink" href="#5-wasstraat_config_harmonizev3-configureren" title="Permanent link">&para;</a></h2>
 <p>Het bestand <code>Wasstraat_Config_HarmonizeV3.xlsx</code> is het hart van de dataverwerkingsconfiguratie. Het vertelt de Wasstraat hoe brondata uit diverse Access-databases moet worden omgezet naar een geüniformeerd datamodel.</p>
 <p>Het bestand bevindt zich in:</p>
-<div class="codehilite"><pre><span></span><code>data/wasstraat_config/Wasstraat_Config_HarmonizeV3.xlsx
+<div class="codehilite"><pre><span></span><code>data/delft/wasstraat_config/Wasstraat_Config_HarmonizeV3.xlsx
 </code></pre></div>
 
 <p>De locatie wordt geconfigureerd via de environment-variabele <code>AIRFLOW_WASSTRAAT_CONFIG</code> in <code>config/airflow.env</code>.</p>
@@ -503,6 +750,51 @@ docker exec wasstraat_airflow mdb-export -H /input/projecten/&lt;bestand&gt;.mdb
 <p><strong>Artefacttypen</strong> (overerven van Artefact): Aardewerk, Bouwaardewerk, Dierlijk Bot, Glas, Hout, Kleipijp, Leer, Menselijk Bot, Metaal, Munt, Schelp, Steen, Textiel</p>
 <p><strong>Referentiedata</strong>: ABR, DT_Soort_Plant, DT_Soort_Schelp, DT_Soort_Deel, DT_Soort_Staat</p>
 <p><strong>Speciaal</strong>: Monster_Botanie, Monster_Schelp, Fotobeschrijving, Fotokoppel</p>
+<h2 id="5b-correcties-configureren-optioneel">5b. Correcties configureren (optioneel)<a class="headerlink" href="#5b-correcties-configureren-optioneel" title="Permanent link">&para;</a></h2>
+<p>Naast de harmonisatie-Excel kan je een <code>correcties.yml</code> aanmaken in dezelfde <code>wasstraat_config/</code>-directory. Dit bestand bevat gemeente-specifieke datacorrecties die de pipeline automatisch toepast.</p>
+<div class="codehilite"><pre><span></span><code>data/&lt;omgeving&gt;/wasstraat_config/correcties.yml
+</code></pre></div>
+
+<h3 id="projectcode-correcties">Projectcode-correcties<a class="headerlink" href="#projectcode-correcties" title="Permanent link">&para;</a></h3>
+<p>Als na verwerking bepaalde projectcodes fout zijn (bijv. afkortingen of oude codes), kun je ze automatisch laten corrigeren:</p>
+<div class="codehilite"><pre><span></span><code><span class="nt">projectcode_correcties</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">patroon</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;SCHE&quot;</span>
+<span class="w">    </span><span class="nt">projectcode</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;DC039&quot;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">patroon</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;PPG&quot;</span>
+<span class="w">    </span><span class="nt">projectcode</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;DC067&quot;</span>
+</code></pre></div>
+
+<p>Elke regel matcht het regex-patroon op het <code>projectcd</code>-veld in alle verwerkte documenten en vervangt het door de opgegeven projectcode. Dit gebeurt na harmonisatie (Transform2).</p>
+<h3 id="brondata-correcties">Brondata-correcties<a class="headerlink" href="#brondata-correcties" title="Permanent link">&para;</a></h3>
+<p>Als bronbestanden afwijkende waarden bevatten die niet matchen met de projectenlijst, kun je die vóór harmonisatie laten corrigeren:</p>
+<div class="codehilite"><pre><span></span><code><span class="nt">brondata_correcties</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">collectie</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">COLL_STAGING_MONSTER</span>
+<span class="w">    </span><span class="nt">zoek_veld</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">PROJECT</span>
+<span class="w">    </span><span class="nt">patroon</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;SCHE&quot;</span>
+<span class="w">    </span><span class="nt">waarde</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;DC039&quot;</span>
+</code></pre></div>
+
+<h3 id="overige-opties">Overige opties<a class="headerlink" href="#overige-opties" title="Permanent link">&para;</a></h3>
+<div class="codehilite"><pre><span></span><code><span class="c1"># Projecten waarvan artefacten niet gemerged worden</span>
+<span class="nt">artefact_niet_mergen</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">projectcodes</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;DC112&quot;</span><span class="p p-Indicator">]</span>
+
+<span class="c1"># Rapportcode-prefixen voor bestandsclassificatie</span>
+<span class="nt">rapportcode_prefixen</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">prefix</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;DAR&quot;</span>
+<span class="w">    </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;archeologische_rapportage&quot;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">prefix</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;DAN&quot;</span>
+<span class="w">    </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;archeologische_notitie&quot;</span>
+</code></pre></div>
+
+<div class="admonition tip">
+<p class="admonition-title">Leeg bestand is prima</p>
+<p>Als je geen correcties nodig hebt, laat het bestand leeg of maak het niet aan. De pipeline draait gewoon door zonder correcties.</p>
+</div>
+<div class="admonition info">
+<p class="admonition-title">Foutbestendig</p>
+<p>Als het YAML-bestand fouten bevat (ongeldige syntax, ontbrekende velden), slaat de pipeline de ongeldige regels over en gaat door. Fouten worden gelogd in Airflow.</p>
+</div>
 <h2 id="6-voor-de-eerste-keer-draaien">6. Voor de eerste keer draaien<a class="headerlink" href="#6-voor-de-eerste-keer-draaien" title="Permanent link">&para;</a></h2>
 <h3 id="airflow-ui-openen">Airflow UI openen<a class="headerlink" href="#airflow-ui-openen" title="Permanent link">&para;</a></h3>
 <p>Ga naar <a href="http://localhost:8080">http://localhost:8080</a> en log in. Je ziet een overzicht van alle beschikbare DAGs:</p>
@@ -644,21 +936,51 @@ curl<span class="w"> </span>-s<span class="w"> </span>http://localhost:9200/_cou
 <p><strong>Oplossing</strong>: Controleer of Elasticsearch draait (<code>curl localhost:9200</code>) en herstart eventueel de <code>Load_Only</code> DAG.</p>
               
             </div>
-          </div><footer>
-    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
-        <a href="../overzicht/doelstellingen/" class="btn btn-neutral float-left" title="Doelstellingen"><span class="icon icon-circle-arrow-left"></span> Previous</a>
-        <a href="../architectuur/systeem/" class="btn btn-neutral float-right" title="Systeemarchitectuur">Next <span class="icon icon-circle-arrow-right"></span></a>
+          </div>
+<footer role="contentinfo" class="wasstraat-footer"
+        itemscope itemtype="https://schema.org/WPFooter">
+  <hr>
+  <p class="wasstraat-credits">
+    Gebouwd door
+    <span itemprop="publisher" itemscope itemtype="https://schema.org/Organization">
+      <strong itemprop="name">E-Space</strong>
+    </span>
+    —
+    <span itemprop="author" itemscope itemtype="https://schema.org/Person">
+      <strong itemprop="name">Arjen Brienen</strong><meta itemprop="affiliation" content="E-Space">
+      <link itemprop="sameAs" href="https://www.linkedin.com/in/arjenbrienen/">
+      <link itemprop="sameAs" href="https://github.com/brienen">
+    </span>
+  </p>
+  <p class="wasstraat-license">
+    Uitgegeven onder de
+    <a href="https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12"
+       rel="license">EUPL v1.2</a>.
+    Broncode:
+    <a href="https://github.com/brienen/wasstraat_archeologische_data"
+       rel="external">github.com/brienen/wasstraat_archeologische_data</a>.
+  </p>
+  
+    <p class="wasstraat-copyright"><small>© E-Space — Arjen Brienen. Uitgegeven onder de EUPL v1.2 licentie.</small></p>
+  
+</footer>
+<footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footernavigatie">
+        <a href="../overzicht/doelstellingen/" class="btn btn-neutral float-left" title="Doelstellingen"><span class="icon icon-circle-arrow-left"></span> Vorige</a>
+        <a href="../architectuur/systeem/" class="btn btn-neutral float-right" title="Systeemarchitectuur">Volgende <span class="icon icon-circle-arrow-right"></span></a>
     </div>
 
   <hr/>
 
   <div role="contentinfo">
     <!-- Copyright etc -->
+      <p>© E-Space — Arjen Brienen. Uitgegeven onder de EUPL v1.2 licentie.</p>
   </div>
 
-  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+  Gemaakt met <a href="https://www.mkdocs.org/">MkDocs</a> met behulp van een <a href="https://github.com/readthedocs/sphinx_rtd_theme">Thema</a> geleverd door <a href="https://readthedocs.org">Read the Docs</a>.
 </footer>
           
+
         </div>
       </div>
 
@@ -666,14 +988,14 @@ curl<span class="w"> </span>-s<span class="w"> </span>http://localhost:9200/_cou
 
   </div>
 
-  <div class="rst-versions" role="note" aria-label="Versions">
+  <div class="rst-versions" role="note" aria-label="Versies">
   <span class="rst-current-version" data-toggle="rst-current-version">
     
     
-      <span><a href="../overzicht/doelstellingen/" style="color: #fcfcfc">&laquo; Previous</a></span>
+      <span><a href="../overzicht/doelstellingen/" style="color: #fcfcfc">&laquo; Vorige</a></span>
     
     
-      <span><a href="../architectuur/systeem/" style="color: #fcfcfc">Next &raquo;</a></span>
+      <span><a href="../architectuur/systeem/" style="color: #fcfcfc">Volgende &raquo;</a></span>
     
   </span>
 </div>
