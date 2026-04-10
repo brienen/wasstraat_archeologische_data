@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+
+{#
+  Wasstraat Archeologische Data — semantische uitbreidingen op de
+  readthedocs-theme. Voegt HTML5-metadata, Open Graph, Dublin Core en
+  schema.org JSON-LD toe. Credits voor E-Space en Arjen Brienen zijn
+  zowel machine-leesbaar (JSON-LD + microdata) als zichtbaar in de
+  footer opgenomen.
+#}
+
+{% block extrahead %}
+  {# --- Basis meta tags (HTML5 semantiek) --- #}
+  <meta name="author" content="Arjen Brienen">
+  <meta name="publisher" content="E-Space">
+  <meta name="description" content="{% if page and page.meta and page.meta.description %}{{ page.meta.description }}{% else %}{{ config.site_description }}{% endif %}">
+  <meta name="keywords" content="archeologie, wasstraat, ETL, open data, erfgoed, ABR, CIDOC CRM, Delft, Airflow, open source">
+  <meta name="generator" content="MkDocs">
+  <meta name="robots" content="index, follow">
+  <meta http-equiv="Content-Language" content="nl">
+
+  {# --- Dublin Core --- #}
+  <meta name="DC.title" content="{% if page and page.title %}{{ page.title }}{% else %}{{ config.site_name }}{% endif %}">
+  <meta name="DC.creator" content="Arjen Brienen">
+  <meta name="DC.publisher" content="E-Space">
+  <meta name="DC.language" content="nl">
+  <meta name="DC.rights" content="EUPL v1.2">
+  <meta name="DC.type" content="Text">
+  <meta name="DC.format" content="text/html">
+
+  {# --- Open Graph --- #}
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="{{ config.site_name }}">
+  <meta property="og:title" content="{% if page and page.title %}{{ page.title }}{% else %}{{ config.site_name }}{% endif %}">
+  <meta property="og:description" content="{% if page and page.meta and page.meta.description %}{{ page.meta.description }}{% else %}{{ config.site_description }}{% endif %}">
+  <meta property="og:locale" content="nl_NL">
+  {% if page and page.canonical_url %}<meta property="og:url" content="{{ page.canonical_url }}">{% endif %}
+
+  {# --- Twitter Card --- #}
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="{% if page and page.title %}{{ page.title }}{% else %}{{ config.site_name }}{% endif %}">
+  <meta name="twitter:description" content="{% if page and page.meta and page.meta.description %}{{ page.meta.description }}{% else %}{{ config.site_description }}{% endif %}">
+
+  {# --- Canonical --- #}
+  {% if page and page.canonical_url %}<link rel="canonical" href="{{ page.canonical_url }}">{% endif %}
+
+  {# --- Schema.org JSON-LD (site-brede graph) --- #}
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://wasstraat.e-space.nl/#org-espace",
+        "name": "E-Space",
+        "description": "Ontwikkelaar van de Wasstraat Archeologische Data.",
+        "inLanguage": "nl"
+      },
+      {
+        "@type": "Person",
+        "@id": "https://wasstraat.e-space.nl/#person-arjen",
+        "name": "Arjen Brienen",
+        "jobTitle": "Architect en ontwikkelaar",
+        "affiliation": { "@id": "https://wasstraat.e-space.nl/#org-espace" },
+        "sameAs": [
+          "https://www.linkedin.com/in/arjenbrienen/",
+          "https://github.com/brienen"
+        ]
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://wasstraat.e-space.nl/#website",
+        "url": "https://wasstraat.e-space.nl/",
+        "name": "{{ config.site_name }}",
+        "description": "{{ config.site_description }}",
+        "inLanguage": "nl",
+        "publisher": { "@id": "https://wasstraat.e-space.nl/#org-espace" },
+        "author": { "@id": "https://wasstraat.e-space.nl/#person-arjen" },
+        "creator": { "@id": "https://wasstraat.e-space.nl/#person-arjen" },
+        "copyrightHolder": { "@id": "https://wasstraat.e-space.nl/#org-espace" },
+        "license": "https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12"
+      },
+      {
+        "@type": "SoftwareSourceCode",
+        "@id": "https://wasstraat.e-space.nl/#software",
+        "name": "Wasstraat Archeologische Data",
+        "alternateName": "Wasstraat",
+        "description": "Open-source ETL-platform dat archeologische gegevens verzamelt, verwerkt en toegankelijk maakt. Ontwikkeld voor de gemeente Delft en uitgebreid tot een generiek platform voor Nederlandse gemeenten.",
+        "programmingLanguage": ["Python", "SQL", "YAML"],
+        "runtimePlatform": "Docker Compose",
+        "codeRepository": "https://github.com/brienen/wasstraat_archeologische_data",
+        "license": "https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12",
+        "author": { "@id": "https://wasstraat.e-space.nl/#person-arjen" },
+        "creator": { "@id": "https://wasstraat.e-space.nl/#person-arjen" },
+        "publisher": { "@id": "https://wasstraat.e-space.nl/#org-espace" },
+        "maintainer": { "@id": "https://wasstraat.e-space.nl/#person-arjen" },
+        "copyrightHolder": { "@id": "https://wasstraat.e-space.nl/#org-espace" },
+        "inLanguage": "nl",
+        "keywords": "archeologie, ETL, Airflow, PostgreSQL, MongoDB, Elasticsearch, ABR, CIDOC CRM, GGM, erfgoed, open data",
+        "about": [
+          { "@type": "Thing", "name": "Archeologisch Basisregister (ABR)" },
+          { "@type": "Thing", "name": "CIDOC CRM" },
+          { "@type": "Thing", "name": "Gemeentelijk Gegevensmodel (GGM)" },
+          { "@type": "Thing", "name": "DANS e-Depot" },
+          { "@type": "Thing", "name": "Archis" }
+        ]
+      }
+      {% if page %}
+      ,{
+        "@type": "TechArticle",
+        "@id": "{{ page.canonical_url }}#article",
+        "url": "{{ page.canonical_url }}",
+        "name": "{{ page.title }}",
+        "headline": "{{ page.title }}",
+        "description": "{% if page.meta and page.meta.description %}{{ page.meta.description }}{% else %}{{ config.site_description }}{% endif %}",
+        "inLanguage": "nl",
+        "isPartOf": { "@id": "https://wasstraat.e-space.nl/#website" },
+        "author": { "@id": "https://wasstraat.e-space.nl/#person-arjen" },
+        "publisher": { "@id": "https://wasstraat.e-space.nl/#org-espace" },
+        "license": "https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12"
+      }
+      {% endif %}
+    ]
+  }
+  </script>
+{% endblock %}
+
+{% block footer %}
+<footer role="contentinfo" class="wasstraat-footer"
+        itemscope itemtype="https://schema.org/WPFooter">
+  <hr>
+  <p class="wasstraat-credits">
+    Gebouwd door
+    <span itemprop="publisher" itemscope itemtype="https://schema.org/Organization">
+      <strong itemprop="name">E-Space</strong>
+    </span>
+    —
+    <span itemprop="author" itemscope itemtype="https://schema.org/Person">
+      <strong itemprop="name">Arjen Brienen</strong><meta itemprop="affiliation" content="E-Space">
+      <link itemprop="sameAs" href="https://www.linkedin.com/in/arjenbrienen/">
+      <link itemprop="sameAs" href="https://github.com/brienen">
+    </span>
+  </p>
+  <p class="wasstraat-license">
+    Uitgegeven onder de
+    <a href="https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12"
+       rel="license">EUPL v1.2</a>.
+    Broncode:
+    <a href="https://github.com/brienen/wasstraat_archeologische_data"
+       rel="external">github.com/brienen/wasstraat_archeologische_data</a>.
+  </p>
+  {% if config.copyright %}
+    <p class="wasstraat-copyright"><small>{{ config.copyright }}</small></p>
+  {% endif %}
+</footer>
+{{ super() }}
+{% endblock %}

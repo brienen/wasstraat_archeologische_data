@@ -1,11 +1,13 @@
 site_name: Wasstraat Archeologische Data
 site_description: Technische documentatie voor de Wasstraat Archeologische Data - een open source verwerkingsplatform voor archeologische datasets
 site_author: E-Space / Arjen Brienen
-site_url: ""
+site_url: https://wasstraat.e-space.nl/
+copyright: "© E-Space — Arjen Brienen. Uitgegeven onder de EUPL v1.2 licentie."
 
 theme:
   name: readthedocs
   locale: nl
+  custom_dir: overrides
 
 nav:
   - Home: index.md
@@ -45,6 +47,8 @@ markdown_extensions:
   - admonition
   - codehilite
   - tables
+  - attr_list
+  - md_in_html
 
 extra_css:
   - assets/extra.css

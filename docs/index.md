@@ -63,7 +63,25 @@ Het platform is verbonden met de Nederlandse erfgoed-infrastructuur:
 
 ## Licentie
 
-Wasstraat is uitgegeven onder de **EUPL-licentie** en volledig open-source.
+Wasstraat is uitgegeven onder de **[EUPL-licentie](https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12)** en volledig open-source.
+
+## Bouwers
+
+<section itemscope itemtype="https://schema.org/SoftwareSourceCode" markdown>
+
+De Wasstraat Archeologische Data wordt ontwikkeld en onderhouden door:
+
+- **<span itemprop="publisher" itemscope itemtype="https://schema.org/Organization"><span itemprop="name">E-Space</span></span>** — verantwoordelijk voor ontwerp, ontwikkeling en onderhoud van het platform.
+- **<span itemprop="author" itemscope itemtype="https://schema.org/Person"><span itemprop="name">Arjen Brienen</span><link itemprop="sameAs" href="https://www.linkedin.com/in/arjenbrienen/"><link itemprop="sameAs" href="https://github.com/brienen"></span>** — architect en hoofdontwikkelaar ([LinkedIn](https://www.linkedin.com/in/arjenbrienen/) · [GitHub](https://github.com/brienen)).
+
+De broncode is publiek beschikbaar op <a itemprop="codeRepository" href="https://github.com/brienen/wasstraat_archeologische_data">github.com/brienen/wasstraat_archeologische_data</a>.
+
+<meta itemprop="name" content="Wasstraat Archeologische Data">
+<meta itemprop="programmingLanguage" content="Python">
+<meta itemprop="license" content="https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12">
+<meta itemprop="inLanguage" content="nl">
+
+</section>
 
 !!! info "Over dit project"
-    Wasstraat is ontwikkeld door E-Space (Arjen Brienen) in opdracht van de gemeente Delft. Het wordt nu uitgebreid tot een generiek, configureerbaar systeem voor andere Nederlandse gemeenten via het innovatieproject van Stichting Reuvens.
+    Wasstraat is ontwikkeld door **E-Space** (Arjen Brienen) in opdracht van de gemeente Delft. Het wordt nu uitgebreid tot een generiek, configureerbaar systeem voor andere Nederlandse gemeenten via het innovatieproject van Stichting Reuvens.
