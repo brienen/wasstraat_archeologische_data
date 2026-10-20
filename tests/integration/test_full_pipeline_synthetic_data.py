@@ -52,21 +52,35 @@ EXPECTED_MIN_ARTEFACT_COUNTS = {
 
 # Verwachte MINIMUM-aantallen per soort in Single_Store_Clean.
 # Projecten: 2 (SY001 + SY002)
-# SY001: 3 sporen, 4 vondsten, 2 vullingen
-# SY002: 8 sporen, 12 vondsten, 4 vullingen
-# Monsters: 5 (3x SY001 + 2x SY002), 8 botanie, 4 schelp
+# SY001: 2 putten, 2 vlakken, 3 sporen, 4 vondsten, 2 vullingen
+# SY002: 4 putten, 8 vlakken, 8 sporen, 12 vondsten, 4 vullingen
+# Monsters: 6 (3x SY001 + 2x SY002 + 1x SYNTFOUT, gecorrigeerd naar SY001), 8 botanie, 4 schelp
+# Putten en vlakken hebben geen eigen tabel in de MDB's; Transform5 genereert
+# ze uit de putnr/vlaknr van sporen, vondsten, tekeningen en foto's.
 EXPECTED_MIN_SOORT_COUNTS = {
     "Project": 2,
+    "Put": 6,
+    "Vlak": 10,
     "Spoor": 11,
     "Vondst": 16,
     "Vulling": 6,
-    "Monster": 5,
+    "Monster": 6,
     "Monster_Botanie": 8,
     "Monster_Schelp": 4,
     "DT_Soort_Plant": 5,
     "DT_Soort_Schelp": 3,
     "DT_Soort_Deel": 4,
     "DT_Soort_Staat": 4,
+}
+
+# Verwachte putnummers en (putnr, vlaknr)-combinaties per project.
+EXPECTED_PUTTEN = {
+    "SY001": {1, 2},
+    "SY002": {1, 2, 3, 4},
+}
+EXPECTED_VLAKKEN = {
+    "SY001": {(1, 1), (2, 1)},
+    "SY002": {(1, 1), (1, 2), (2, 1), (2, 2), (3, 1), (3, 2), (4, 1), (4, 3)},
 }
 
 
@@ -413,6 +427,51 @@ class TestFullPipelineSynthetic:
         print(f"\n  Sporen: {actual} (verwacht >= {expected})")
         assert actual >= expected
 
+    def test_08a_verify_putten_per_project(self, mongo_client):
+        """Elk project heeft precies de putten die in de brondata voorkomen."""
+        coll = mongo_client[DB_ANALYSE]["Single_Store_Clean"]
+        putten = list(coll.find({"soort": "Put"}, {"projectcd": 1, "putnr": 1, "key": 1}))
+        print(f"\n  Putten ({len(putten)}): {sorted(p.get('key') or '?' for p in putten)}")
+
+        for projectcd, verwacht in EXPECTED_PUTTEN.items():
+            gevonden = {p.get("putnr") for p in putten if p.get("projectcd") == projectcd}
+            assert gevonden == verwacht, (
+                f"{projectcd}: verwacht putten {sorted(verwacht)}, gevonden {gevonden}. "
+                f"Controleer MOVEANDMERGE_GENERATE_MISSING_PIPELINES voor Put in meta.py."
+            )
+
+    def test_08b_verify_vlakken_per_project(self, mongo_client):
+        """Elk project heeft precies de vlakken die in de brondata voorkomen."""
+        coll = mongo_client[DB_ANALYSE]["Single_Store_Clean"]
+        vlakken = list(coll.find({"soort": "Vlak"}, {"projectcd": 1, "putnr": 1, "vlaknr": 1, "key": 1}))
+        print(f"\n  Vlakken ({len(vlakken)}): {sorted(v.get('key') or '?' for v in vlakken)}")
+
+        for projectcd, verwacht in EXPECTED_VLAKKEN.items():
+            gevonden = {(v.get("putnr"), v.get("vlaknr"))
+                        for v in vlakken if v.get("projectcd") == projectcd}
+            assert gevonden == verwacht, (
+                f"{projectcd}: verwacht vlakken {sorted(verwacht)}, gevonden {gevonden}. "
+                f"Controleer MOVEANDMERGE_GENERATE_MISSING_PIPELINES voor Vlak in meta.py."
+            )
+
+    def test_08c_verify_geen_dubbele_keys(self, mongo_client):
+        """Gegenereerde entiteiten mogen bestaande niet dupliceren (zelfde key)."""
+        coll = mongo_client[DB_ANALYSE]["Single_Store_Clean"]
+        # Records zonder key tellen niet mee: de dozen in de synthetische magazijnlijst
+        # hebben DOOSNO 'D001' enz., dat Transform2 als niet-numeriek verwijdert.
+        dubbel = list(coll.aggregate([
+            {"$match": {"soort": {"$in": ["Put", "Vlak", "Spoor", "Vondst", "Doos"]},
+                        "key": {"$ne": None}}},
+            {"$group": {"_id": {"soort": "$soort", "key": "$key"}, "aantal": {"$sum": 1}}},
+            {"$match": {"aantal": {"$gt": 1}}},
+        ]))
+        print(f"\n  Dubbele keys: {len(dubbel)}")
+        assert not dubbel, (
+            f"Dubbele keys in Single_Store_Clean: {[d['_id'] for d in dubbel]}. "
+            f"De key van een gegenereerd record wijkt af van het bestaande record; "
+            f"controleer MOVEANDMERGE_GENERATE_MISSING_PIPELINES in meta.py."
+        )
+
     def test_09_verify_vondst_count(self, mongo_client):
         """Vondst-documenten in clean-collectie >= verwacht."""
         counts = mongo_soort_counts(DB_ANALYSE, "Single_Store_Clean", mongo_client)
@@ -697,13 +756,33 @@ class TestFullPipelineSynthetic:
         )
 
     @pytest.mark.load
+    def test_22a_verify_postgres_putten_vlakken_per_project(self, airflow_ready):
+        """Def_Put en Def_Vlak in PostgreSQL bevatten de putten en vlakken van elk project."""
+        fouten = []
+        print(f"\n  Putten en vlakken per project in PostgreSQL:")
+        for projectcd in EXPECTED_PUTTEN:
+            putten = _pg_scalar(
+                'SELECT COUNT(*) FROM "Def_Put" p JOIN "Def_Project" pr '
+                f"ON p.\"projectID\" = pr.primary_key WHERE pr.projectcd = '{projectcd}'"
+            )
+            vlakken = _pg_scalar(
+                'SELECT COUNT(*) FROM "Def_Vlak" v JOIN "Def_Project" pr '
+                f"ON v.\"projectID\" = pr.primary_key JOIN \"Def_Put\" p "
+                f"ON v.\"putID\" = p.primary_key WHERE pr.projectcd = '{projectcd}'"
+            )
+            print(f"    {projectcd}: {putten} putten, {vlakken} vlakken (met put)")
+            if putten != len(EXPECTED_PUTTEN[projectcd]):
+                fouten.append(f"{projectcd}: {putten} putten, verwacht {len(EXPECTED_PUTTEN[projectcd])}")
+            if vlakken != len(EXPECTED_VLAKKEN[projectcd]):
+                fouten.append(f"{projectcd}: {vlakken} vlakken, verwacht {len(EXPECTED_VLAKKEN[projectcd])}")
+
+        assert not fouten, "\n  ".join(fouten)
+
+    @pytest.mark.load
     def test_23_verify_postgres_no_empty_def_tables(self, airflow_ready):
         """Geen enkele Def_-tabel uit lst_tables mag 0 rijen hebben."""
-        # NB: Def_Put en Def_Vlak worden niet in de synthetische data
-        # gegenereerd (geen putten/vlakken in de testdata), dus die
-        # zijn verwacht leeg en worden hier uitgesloten.
         lst_tables = [
-            'Def_ABR', 'Def_Project', 'Def_Vondst', 'Def_Spoor',
+            'Def_ABR', 'Def_Project', 'Def_Put', 'Def_Vlak', 'Def_Vondst', 'Def_Spoor',
             'Def_Doos', 'Def_Standplaats', 'Def_Plaatsing',
             'Def_Artefact', 'Def_Bestand', 'Def_Vulling',
             'Def_Monster', 'Def_Monster_Botanie', 'Def_Monster_Schelp',

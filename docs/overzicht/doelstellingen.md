@@ -113,7 +113,7 @@ Dit toont aan dat erfgoeddata net zo geavanceerd beheerd kan worden als bedrijfs
 
 **Implementatie:**
 
-- **Web Interface** (Vue/Vuetify): Intuïtieve zoekopdracht en browsen
+- **Web Interface** (Flask-AppBuilder): Intuïtieve zoekopdracht en browsen
 - **GIS-Dashboards**: Kaart-gebaseerde verkenning
 - **Data Warehouse Exports**: BI-gereedschap (Power BI, Tableau) support
 - **API's**: Programmatische toegang voor onderzoekers

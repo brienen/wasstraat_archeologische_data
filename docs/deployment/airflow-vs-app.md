@@ -11,7 +11,7 @@ De Wasstraat bevat twee hoofdapplicaties die elk een eigen rol vervullen. Beide 
 | **Interface** | Airflow Web UI (:8080) | Web-applicatie (:5051) |
 | **Richting** | Bron → MongoDB → PostgreSQL | PostgreSQL → Gebruiker |
 | **Modus** | Batch (handmatig of gepland) | Interactief (request/response) |
-| **Framework** | Apache Airflow 2.3.3 | Flask + Flask-AppBuilder |
+| **Framework** | Apache Airflow 2.10.5 | Flask + Flask-AppBuilder |
 | **Database-rol** | Schrijft naar MongoDB en PostgreSQL | Leest uit PostgreSQL en Elasticsearch |
 
 ## Airflow Transformatie-applicatie (`airflow_app/`)

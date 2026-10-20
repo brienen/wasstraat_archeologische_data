@@ -103,9 +103,9 @@ Dit document beschrijft hoe de verschillende modules en services van het Wasstra
 ### Web Framework
 | Component | Functie |
 |-----------|---------|
-| **Django** | Backend web framework |
-| **Vue/Vuetify** | Frontend JavaScript framework |
-| **REST Framework** | API architecture |
+| **Flask** | Backend web framework |
+| **Flask-AppBuilder** | Beheerschermen, rechten en standaardviews |
+| **Jinja2 en folium** | Templates en de interactieve kaart |
 
 ### Storing
 | Component | Functie |

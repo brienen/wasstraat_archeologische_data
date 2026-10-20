@@ -5,6 +5,7 @@ Draait tegen echte Docker services (PostgreSQL + Redis + Flask).
 Gebruik: make test-flask
 """
 import pytest
+import re
 import time
 import requests
 
@@ -12,6 +13,31 @@ import requests
 FLASK_BASE_URL = "http://localhost:5061"
 MAX_WAIT_SECONDS = 90
 POLL_INTERVAL = 3
+# Moet overeenkomen met FLASK_ADMIN_PASSWORD van flask-test in docker-compose.test.yml
+FLASK_ADMIN_PASSWORD = "test-beheerder-wachtwoord"
+
+
+def logIn(gebruikersnaam, wachtwoord):
+    """
+    Log in via het loginformulier van Flask-AppBuilder.
+
+    Args:
+        gebruikersnaam: Gebruikersnaam voor het formulier.
+        wachtwoord: Wachtwoord voor het formulier.
+
+    Returns:
+        requests.Response: Antwoord op de POST, zonder redirects te volgen.
+    """
+    sessie = requests.Session()
+    resp = sessie.get(f"{FLASK_BASE_URL}/login/", timeout=10)
+    match = re.search(r'name="csrf_token"[^>]*value="([^"]+)"', resp.text)
+    assert match, "Geen csrf_token gevonden op login-pagina"
+    return sessie.post(
+        f"{FLASK_BASE_URL}/login/",
+        data={"username": gebruikersnaam, "password": wachtwoord, "csrf_token": match.group(1)},
+        timeout=10,
+        allow_redirects=False,
+    )
 
 
 @pytest.fixture(scope="module", autouse=True)
@@ -59,6 +85,24 @@ class TestFlaskStartup:
         html = resp.text.lower()
         assert "<form" in html, "Geen formulier gevonden op login-pagina"
         assert "password" in html, "Geen wachtwoordveld op login-pagina"
+
+
+@pytest.mark.flask_smoke
+class TestFlaskBeheerder:
+    """Verifieer dat de beheerder het wachtwoord uit FLASK_ADMIN_PASSWORD heeft."""
+
+    def test_inloggen_met_wachtwoord_uit_configuratie(self):
+        """Inloggen als admin met FLASK_ADMIN_PASSWORD moet lukken."""
+        resp = logIn("admin", FLASK_ADMIN_PASSWORD)
+        assert resp.status_code == 302, f"Verwacht redirect, kreeg {resp.status_code}"
+        assert "/login" not in resp.headers.get("Location", ""), \
+            "Inloggen met FLASK_ADMIN_PASSWORD mislukt (terug naar login-pagina)"
+
+    def test_inloggen_met_oud_standaardwachtwoord_mislukt(self):
+        """Het oude vaste wachtwoord 'admin' mag niet meer werken."""
+        resp = logIn("admin", "admin")
+        assert resp.status_code != 302 or "/login" in resp.headers.get("Location", ""), \
+            "Inloggen met admin/admin lukte, terwijl FLASK_ADMIN_PASSWORD gezet is"
 
 
 @pytest.mark.flask_smoke

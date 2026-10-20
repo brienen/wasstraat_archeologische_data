@@ -11,12 +11,15 @@ Zorg dat de volgende software op je systeem is geïnstalleerd:
 - **[Docker Desktop](https://www.docker.com/products/docker-desktop/)** — Minimaal versie 20.10
 - **Docker Compose** — Wordt meegeleverd met Docker Desktop
 - **Git** — Voor het clonen van de repository
-- **Minimaal 12 GB RAM** beschikbaar voor Docker (stel dit in via Docker Desktop → Settings → Resources)
+- **GNU Make en bash** — Alle commando's lopen via de `Makefile`. Op Linux installeer je Make zo nodig via de pakketbeheerder, bijvoorbeeld `sudo apt install make`. Op macOS komt Make mee met de Xcode Command Line Tools (`xcode-select --install`). Na een Xcode-update moet je eenmalig de licentie accepteren met `sudo xcodebuild -license`, anders weigert `make` te starten.
+- **Windows** — Gebruik [WSL 2](https://learn.microsoft.com/windows/wsl/) met Docker Desktop, omdat de scripts bash en Make nodig hebben. Voer alle commando's uit in de Linux-shell van WSL.
+- **Minimaal 8 GB RAM** beschikbaar voor Docker, 12 GB aanbevolen (stel dit in via Docker Desktop → Settings → Resources)
 - **Minimaal 2 Cores** beschikbaar voor Docker (stel dit in via Docker Desktop → Settings → Resources)
-- **Minimaal 256 GB** schijfruimte beschikbaar voor Docker (stel dit in via Docker Desktop → Settings → Resources)
+- **Ongeveer 20 GB** schijfruimte voor de Docker-images, plus ruimte voor je eigen brondata (stel dit in via Docker Desktop → Settings → Resources)
+- **Python 3.10, 3.11 of 3.12** — Alleen nodig als je de tests wilt draaien (zie [Testen](testen.md))
 
 !!! tip "Docker Desktop resources"
-    De Wasstraat draait 8 containers tegelijk. Stel in Docker Desktop het beschikbare geheugen in op minimaal 12 GB met 2 cores. Bij productiegebruik zijn meer resources aangeraden; voor Delft is gewerkt met 32 GB RAM, 10 Cores en 521 GB Schijfruimte. 
+    De Wasstraat draait 8 containers tegelijk. Stel in Docker Desktop het beschikbare geheugen in op minimaal 8 GB, liefst 12 GB, met 2 cores. Bij productiegebruik zijn meer resources aangeraden; voor Delft is gewerkt met 32 GB RAM, 10 Cores en 521 GB Schijfruimte. 
 
     Je hebt deze resources overigens maar heel tijdelijk nodig: denk aan een run om alle data te "wassen" van 20 min tot uiterlijk 24 uur.  
 
@@ -48,7 +51,20 @@ Start de wasstraat:
 make app
 ```
 
+`make app` start alle services met de synthetische voorbeelddata uit `data/synthetic/`. Voor eigen data gebruik je `make delft` (zie stap 4).
+
 Bij de allereerste start duurt het enkele minuten omdat Docker alle images moet downloaden en bouwen. Je ziet de voortgang in de terminal.
+
+!!! warning "Linux: mappen vooraf aanmaken"
+    Op Linux maakt Docker ontbrekende mappen voor gekoppelde volumes aan als `root`. De containers draaien als een andere gebruiker en kunnen daar dan niet in schrijven. Maak de uitvoer- en backupmappen daarom vooraf aan en maak ze schrijfbaar:
+    ```bash
+    mkdir -p data/synthetic/output/archeomedia data/synthetic/backup/postgres data/synthetic/backup/mongo
+    chmod -R a+rwX data/synthetic/output data/synthetic/backup
+    ```
+    Doe hetzelfde voor `data/delft/` als je met eigen data werkt. Op macOS en Windows regelt Docker Desktop dit zelf.
+
+!!! warning "Bestaande installatie bijwerken"
+    Installaties van vóór oktober 2026 hebben hun PostgreSQL-data in de container staan in plaats van in het Docker-volume. Start zo'n installatie niet opnieuw met `make app` voordat je de data hebt gemigreerd, anders raak je de database kwijt. Volg de stappen in [Omgevingen](deployment/omgevingen.md#bestaande-installatie-postgresql-data-naar-het-volume).
 
 Controleer of alle containers draaien:
 
@@ -96,7 +112,15 @@ Hier beheer je de dataverwerkingspipeline. Je ziet een overzicht van alle beschi
 http://localhost:5051
 ```
 
-De webapplicatie voor het bekijken van de verwerkte data. Na een succesvolle verwerking zie je hier een interactieve kaart van Delft met alle opgravingslocaties, en kun je doorklikken naar projecten, vondsten, artefacten, foto's en meer.
+De webapplicatie voor het bekijken van de verwerkte data. Na een succesvolle verwerking zie je hier een interactieve kaart met alle opgravingslocaties, en kun je doorklikken naar projecten, vondsten, artefacten, foto's en meer.
+
+Bij de eerste start maakt de Flask App een beheerder aan met gebruikersnaam `admin`. Het wachtwoord is bij de installatie gegenereerd en staat in `config/flask.env` onder `FLASK_ADMIN_PASSWORD`. Dit wachtwoord geldt alleen bij het aanmaken van de beheerder: wijzig je het later via het gebruikersmenu, dan blijft het nieuwe wachtwoord staan, ook na een herstart.
+
+!!! warning "Oudere installaties"
+    Mist `FLASK_ADMIN_PASSWORD` in `config/flask.env`, bijvoorbeeld bij een installatie van vóór oktober 2026, dan krijgt een nieuwe beheerder het wachtwoord `admin` en staat er een waarschuwing in de log van de Flask-container. Wijzig het wachtwoord dan direct via het gebruikersmenu. Een bestaande beheerder wordt nooit aangepast.
+
+!!! info "Kaart ververst na enkele minuten"
+    De homepage wordt gecachet (standaard 300 seconden, `CACHE_DEFAULT_TIMEOUT` in `config/redis.env`). Heb je de homepage al geopend vóór de verwerking klaar was, dan verschijnen de projecten pas op de kaart als die cache verlopen is.
 
 !!! tip "Nog geen data?"
     Bij een verse installatie is de Flask App nog leeg. Dat klopt — je moet eerst data verwerken via Airflow (stap 5–7 van deze handleiding).
@@ -107,7 +131,7 @@ De webapplicatie voor het bekijken van de verwerkte data. Na een succesvolle ver
 http://localhost:8888
 ```
 
-Jupyter Lab voor eigen data-analyse. Er zijn 68+ bestaande notebooks beschikbaar met voorbeelden van data-exploratie en transformatie-validatie. Het wachtwoord staat in `config/jupyter.env`.
+Jupyter Lab voor eigen data-analyse. Er zijn ruim 20 notebooks beschikbaar met voorbeelden van data-exploratie en transformatie-validatie. Log in met het token uit `config/jupyter.env` (variabele `JUPYTER_PASSWORD`).
 
 
 ## 4. Bestanden klaarzetten
@@ -123,7 +147,7 @@ De repository bevat **synthetische voorbeelddata** in `data/synthetic/data/` —
 
 Gemeenten kunnen hun eigen opgravingsdata klaarzetten conform dezelfde directorystructuur als de Delftse pijplijn. De echte Delftse data is niet opgenomen in de repository, maar de synthetische voorbeelddata in `data/synthetic/data/` toont exact welke bestanden en structuren het platform verwacht.
 
-De Wasstraat leest brondata uit de directory `data/delft/data/`. Elke subdirectory heeft een specifiek doel:
+Eigen data verwerk je met `make delft` in plaats van `make app`. Dat gebruikt `docker-compose.delft.yml`, dat de brondata leest uit `data/delft/data/` en de configuratie uit `data/delft/wasstraat_config/`. De naam `delft` is historisch. Wil je een eigen omgevingsnaam, kopieer dan `docker-compose.delft.yml` en pas de paden aan. De lege mappen staan al in de repository. Elke subdirectory heeft een specifiek doel:
 
 ```
 data/delft/data/
@@ -239,7 +263,8 @@ Het bestand `Wasstraat_Config_HarmonizeV3.xlsx` is het hart van de dataverwerkin
 Het bestand bevindt zich in:
 
 ```
-data/delft/wasstraat_config/Wasstraat_Config_HarmonizeV3.xlsx
+data/delft/wasstraat_config/Wasstraat_Config_HarmonizeV3.xlsx      # voor make delft
+data/synthetic/wasstraat_config/Wasstraat_Config_HarmonizeV3.xlsx  # voor make app
 ```
 
 De locatie wordt geconfigureerd via de environment-variabele `AIRFLOW_WASSTRAAT_CONFIG` in `config/airflow.env`.
@@ -398,9 +423,9 @@ Ga naar [http://localhost:8080](http://localhost:8080) en log in. Je ziet een ov
 | DAG | Beschrijving | Wanneer gebruiken |
 |-----|-------------|-------------------|
 | `Extract_Transform_Load_Full_Cycle` | Volledige pipeline | **Eerste keer — gebruik deze** |
-| `Extract_Only` | Alleen data inlezen | Testen of extractie werkt |
-| `Transform1_Harmonize_Only` | Alleen harmonisatie | Stapsgewijs debuggen |
-| `Load_Only` | Alleen naar PostgreSQL laden | Na handmatige correcties |
+| `Extract_only` | Alleen data inlezen | Testen of extractie werkt |
+| `DAG_Transform1_Harmonize_Only` | Alleen harmonisatie | Stapsgewijs debuggen |
+| `DAG_Load_Only` | Alleen naar PostgreSQL laden | Na handmatige correcties |
 
 ### Volledige verwerking starten
 
@@ -436,13 +461,13 @@ De volledige verwerking doorloopt deze stappen:
 Als je stap voor stap wilt werken, draai de individuele DAGs in deze volgorde:
 
 ```
-1. Extract_Only
-2. Transform1_Harmonize_Only
-3. Transform2_Enhance_Attributes_Only
-4. Transform3_Keys_Only
-5. Transform_Move_Only
-6. Transform4_Refs_Only
-7. Load_Only
+1. Extract_only
+2. DAG_Transform1_Harmonize_Only
+3. DAG_Transform2_Enhance_Attributes_Only
+4. DAG_Transform3_Keys_Only
+5. DAG_Transform_Move_Only
+6. DAG_Transform4_Refs_Only
+7. DAG_Load_Only
 ```
 
 Dit is handig voor het debuggen van je configuratie: na stap 3 (Harmonize) kun je in MongoDB controleren of de veldnamen correct zijn geharmoniseerd.
@@ -487,7 +512,7 @@ Het MongoDB-wachtwoord vind je in `config/mongo.env` (variabele `MONGO_INITDB_RO
 De uiteindelijke, gestructureerde data staat in PostgreSQL:
 
 ```bash
-docker exec -it wasstraat_postgres psql -U airflow -d flask
+docker exec -it -u postgres wasstraat_postgres psql -d flask
 
 -- Overzicht van alle tabellen met aantallen
 SELECT schemaname, tablename FROM pg_tables WHERE schemaname = 'public' ORDER BY tablename;
@@ -514,7 +539,13 @@ curl -s http://localhost:9200/_count | python3 -m json.tool
 
 **Oorzaak**: Onvoldoende geheugen of poortconflicten.
 
-**Oplossing**: Controleer dat poorten 8080, 5051, 5432, 27017, 9200, 6379, 5052 en 8888 niet door andere applicaties worden gebruikt. Verhoog het Docker-geheugen naar minimaal 8 GB.
+**Oplossing**: Controleer dat poorten 8080, 5051, 5432, 27017, 9200, 6379, 5052 en 8888 niet door andere applicaties worden gebruikt. Verhoog het Docker-geheugen naar minimaal 8 GB, liefst 12 GB.
+
+### Load mislukt met "relation Def_... does not exist"
+
+**Oorzaak**: De tabellen in PostgreSQL worden aangemaakt door de Flask App bij het opstarten. Is de Flask-container niet (goed) gestart, dan bestaan de tabellen nog niet.
+
+**Oplossing**: Controleer met `make ps` of `wasstraat_flask` draait en bekijk anders `docker logs wasstraat_flask`. Start de Load-stap opnieuw zodra Flask draait.
 
 ### Extractie mislukt met mdb-export error
 
@@ -538,4 +569,4 @@ curl -s http://localhost:9200/_count | python3 -m json.tool
 
 **Oorzaak**: Elasticsearch-index is niet opgebouwd.
 
-**Oplossing**: Controleer of Elasticsearch draait (`curl localhost:9200`) en herstart eventueel de `Load_Only` DAG.
+**Oplossing**: Controleer of Elasticsearch draait (`curl localhost:9200`) en herstart eventueel de `DAG_Load_Only` DAG.

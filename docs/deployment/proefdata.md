@@ -10,7 +10,8 @@ Deze pagina beschrijft hoe je een eerste set proefdata kunt inlezen, transformer
 Zorg dat alle Docker-containers draaien:
 
 ```bash
-make dev    # Of: make app
+make delft  # Eigen data uit data/delft/
+make app    # Of: alleen de synthetische voorbeelddata
 ```
 
 Controleer of alle services actief zijn:
@@ -31,7 +32,7 @@ Je zou minimaal de volgende containers moeten zien:
 
 ### Locatie van invoerdata
 
-De Airflow-container verwacht invoerdata op specifieke paden. Deze worden via Docker-volumes gemount vanuit de `data/delft/data/` directory:
+De Airflow-container verwacht invoerdata op specifieke paden. Bij `make delft` worden die via Docker-volumes gemount vanuit de `data/delft/data/` directory. De lege mappen staan al in de repository. `make app` gebruikt in plaats daarvan `data/synthetic/data/`.
 
 ```
 data/delft/data/
@@ -68,9 +69,9 @@ Je ziet een overzicht van alle beschikbare DAGs. De belangrijkste voor het eerst
 | DAG | Beschrijving | Gebruik |
 |-----|-------------|---------|
 | `Extract_Transform_Load_Full_Cycle` | Volledige pipeline (extract + transform + load) | Eerste keer, volledige run |
-| `Extract_Only` | Alleen extractie uit bronbestanden | Testen of extractie werkt |
-| `Transform1_Harmonize_Only` | Alleen veldnaam-harmonisatie | Stapsgewijs debuggen |
-| `Load_Only` | Alleen laden naar PostgreSQL | Na handmatige correcties in MongoDB |
+| `Extract_only` | Alleen extractie uit bronbestanden | Testen of extractie werkt |
+| `DAG_Transform1_Harmonize_Only` | Alleen veldnaam-harmonisatie | Stapsgewijs debuggen |
+| `DAG_Load_Only` | Alleen laden naar PostgreSQL | Na handmatige correcties in MongoDB |
 
 ## Stap 3: Volledige ETL-cyclus starten
 
@@ -87,13 +88,13 @@ Je kunt de voortgang volgen in de **Graph**-weergave. Elke stap wordt groen bij 
 Als je stap voor stap wilt werken, kun je de individuele DAGs in volgorde starten:
 
 ```
-1. Extract_Only                      → Laadt ruwe data in MongoDB
-2. Transform1_Harmonize_Only         → Harmoniseert veldnamen
-3. Transform2_Enhance_Attributes_Only → Schoont attributen op
-4. Transform3_Keys_Only              → Genereert unieke sleutels
-5. Transform_Move_Only               → Verplaatst en merged data
-6. Transform4_Refs_Only              → Zet referenties om
-7. Load_Only                         → Laadt naar PostgreSQL + Elasticsearch
+1. Extract_only                          → Laadt ruwe data in MongoDB
+2. DAG_Transform1_Harmonize_Only         → Harmoniseert veldnamen
+3. DAG_Transform2_Enhance_Attributes_Only → Schoont attributen op
+4. DAG_Transform3_Keys_Only              → Genereert unieke sleutels
+5. DAG_Transform_Move_Only               → Verplaatst en merged data
+6. DAG_Transform4_Refs_Only              → Zet referenties om
+7. DAG_Load_Only                         → Laadt naar PostgreSQL + Elasticsearch
 ```
 
 !!! warning "Volgorde is belangrijk"
@@ -114,22 +115,22 @@ Klik in de Airflow UI op een specifieke task om de logs te bekijken. Hier zie je
 Je kunt de tussenresultaten direct in MongoDB bekijken:
 
 ```bash
-# Verbind met MongoDB in de container
+# Verbind met MongoDB in de container (gebruiker en wachtwoord staan in config/mongo.env)
 docker exec -it wasstraat_mongo mongosh \
-  --username <user> --password <wachtwoord> --authenticationDatabase admin
+  --username root --password <wachtwoord> --authenticationDatabase admin
 
 # Bekijk beschikbare databases
 show dbs
 
 # Bekijk staging-collecties
-use staging
+use Arch_Staging
 show collections
 
 # Tel records per collectie
 db.getCollectionNames().forEach(c => print(c + ": " + db[c].countDocuments()))
 
 # Bekijk een voorbeeld-record
-db.Project.findOne()
+db.Staging_Projecten_Projectenlijst.findOne()
 ```
 
 ### PostgreSQL controleren
@@ -138,7 +139,7 @@ Na de laadstap kun je de definitieve tabellen controleren:
 
 ```bash
 # Verbind met PostgreSQL in de container
-docker exec -it wasstraat_postgres psql -U airflow -d flask
+docker exec -it -u postgres wasstraat_postgres psql -d flask
 
 # Lijst van tabellen
 \dt public."Def_*"
@@ -188,7 +189,7 @@ curl -s http://localhost:9200/_count | python3 -m json.tool
 
 **Oorzaak**: Het `.mdb` bestand is mogelijk corrupt of in een niet-ondersteund formaat.
 
-**Oplossing**: Controleer of het bestand een geldig Access 2000/2003 bestand is. De `mdbtools`-suite ondersteunt geen `.accdb` (Access 2007+) bestanden.
+**Oplossing**: Controleer of het bestand een geldig Access 2000/2003 bestand is. De `mdbtools`-suite werkt het best met `.mdb`-bestanden; `.accdb`-bestanden (Access 2007+) worden beperkt ondersteund.
 
 ### MongoDB-verbinding faalt
 
@@ -229,4 +230,4 @@ De notebook-omgeving heeft toegang tot:
 - De gedeelde configuratie (via `/home/jovyan/shared/`)
 - De Wasstraat-configuratie (via `/home/jovyan/wasstraat_config/`)
 
-Er zijn 68+ bestaande notebooks beschikbaar in de `notebooks/` directory die voorbeelden bevatten van data-exploratie, transformatie-validatie en analyse.
+Log in met het token uit `config/jupyter.env` (variabele `JUPYTER_PASSWORD`). Er zijn ruim 20 notebooks beschikbaar in de `notebooks/` directory met voorbeelden van data-exploratie, transformatie-validatie en analyse.

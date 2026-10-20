@@ -38,6 +38,7 @@ COMPOSE_TEST := $(DC) -p wasstraat-test -f docker-compose.test.yml
 COMPOSE_DELFT := $(DC) -f docker-compose.delft.yml
 COMPOSE_DELFT_TEST := $(DC) -p wasstraat-delft-test -f docker-compose.delft-test.yml
 DT := $(shell date +"%Y-%m-%d_%H-%M-%S")
+PG_CONTAINER ?= wasstraat_postgres
 
 # --- Init-config: genereer .env uit .env.example als ze nog niet bestaan ---
 define init-config
@@ -172,6 +173,7 @@ test-all: test integration ## Draai unit tests + volledige integratie (Extract�
 .PHONY: synthetic
 synthetic: install ## Genereer synthetische voorbeelddata (MDB-bestanden)
 	@echo "➜ Synthetische data genereren..."
+	$(BIN)/pip install -r data/synthetic/generatie/requirements-synthetic.txt --quiet
 	JAVA_HOME=$$(brew --prefix openjdk 2>/dev/null || echo "/usr/lib/jvm/java-21-openjdk") \
 	PATH="$$(brew --prefix openjdk 2>/dev/null || echo "/usr/lib/jvm/java-21-openjdk")/bin:$$PATH" \
 	$(BIN)/python data/synthetic/generatie/generate_synthetic_data.py
@@ -204,6 +206,10 @@ build-force: ## Bouw alle Docker images opnieuw van de grond af aan (geen cache)
 	$(init-config)
 	$(DC) build --no-cache --pull postgres airflow flask jupyter apache
 
+.PHONY: constraints
+constraints: ## Leg nieuwe pakketversies vast voor Flask en Jupyter (daarna: make test-all)
+	bash scripts/leg_pakketversies_vast.sh
+
 .PHONY: app
 app: ## Start de wasstraat (alle services, synthetische data)
 	$(init-config)
@@ -218,21 +224,6 @@ delft: ## Start de wasstraat met Delftse data
 dev: ## Start in development mode (met hot-reload volumes)
 	$(init-config)
 	$(DC) -f docker-compose.yml -f docker-compose.develop.yml up -d
-
-.PHONY: example
-example: ## Start met voorbeelddata
-	$(init-config)
-	$(DC) -f docker-compose.yml -f docker-compose.example.yml up -d
-
-.PHONY: acc
-acc: ## Start in acceptatie-omgeving
-	$(init-config)
-	$(DC) -f docker-compose.yml -f docker-compose.acc.yml up -d
-
-.PHONY: prod
-prod: ## Start in productie-omgeving
-	$(init-config)
-	$(DC) -f docker-compose.yml -f docker-compose.prod.yml up -d
 
 .PHONY: stop
 stop: ## Stop alle containers
@@ -271,7 +262,7 @@ backup: ## Backup Postgres + MongoDB (naar backup/)
 	docker exec -w /backup wasstraat_mongo bash -c \
 		"mongodump --uri mongodb://\$$MONGO_INITDB_ROOT_USERNAME:\$$MONGO_INITDB_ROOT_PASSWORD@localhost:27017/\$$DB_ANALYSE?authSource=admin --out mongo_$(DT)"
 	$(DC) start flask airflow
-	@echo "✓ Backup gereed: backup/postgres_$(DT).tar + backup/mongo_$(DT)/"
+	@echo "✓ Backup gereed in data/<omgeving>/backup/: postgres/postgres_$(DT).tar + mongo/mongo_$(DT)/"
 
 .PHONY: restore
 restore: ## Restore backup (gebruik: make restore TS=2025-01-15_10-30-00)
@@ -303,7 +294,11 @@ export: ## Exporteer Postgres tabellen naar CSV (backup/)
 			"psql -t -d flask -c \"COPY public.\\\"$$table\\\" TO '/backup/postgres_$(DT)/$$table.csv' DELIMITER ';' CSV HEADER QUOTE '\"' ESCAPE '\"'; \""; \
 	done
 	$(DC) start flask airflow
-	@echo "✓ Export gereed: backup/postgres_$(DT)/"
+	@echo "✓ Export gereed in data/<omgeving>/backup/postgres/postgres_$(DT)/"
+
+.PHONY: migrate-postgres-data
+migrate-postgres-data: ## Eenmalig bij bestaande installaties: zet PostgreSQL-data in het volume (eerst 'make stop')
+	bash scripts/postgres/migreer_data_naar_volume.sh $(PG_CONTAINER)
 
 # ============================================================
 # Release (handmatig — gebruik met zorg)

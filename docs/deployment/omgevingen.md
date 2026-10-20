@@ -19,71 +19,52 @@ Het platform bestaat uit de volgende services:
 
 ## Docker Compose Bestanden
 
-### `docker-compose.yml` — Basisbestand
+### `docker-compose.yml` — Basisbestand (`make app`)
 
-Het hoofdbestand definieert alle services met hun basisinstellingen:
+Het hoofdbestand definieert alle services en gebruikt de synthetische voorbeelddata uit `data/synthetic/`:
 
 ```yaml
 services:
-  postgres:      # PostgreSQL met custom Dockerfile
-  airflow:       # Airflow met volume-mounts naar dags, scripts, config
-  redis:         # Bitnami Redis image
-  flask:         # Flask web-applicatie
-  mongo:         # MongoDB 4.2.21
-  jupyter:       # Jupyter Lab met notebook-volumes
-  apache:        # Apache voor statische bestanden
-  elasticsearch: # Elasticsearch 8.6.1
+  postgres:      # PostgreSQL 18 met PostGIS 3.6 (kartoza/postgis), eigen Dockerfile
+  airflow:       # Apache Airflow 2.10.5 met Python 3.11, eigen Dockerfile
+  redis:         # redis:7.2-alpine
+  flask:         # Flask-webapplicatie op python:3.11-slim, eigen Dockerfile
+  mongo:         # mongo:7.0
+  jupyter:       # Jupyter Lab (jupyter/datascience-notebook, Python 3.11)
+  apache:        # httpd:2.4 voor statische bestanden
+  elasticsearch: # Elasticsearch 8.17.0
 ```
 
-Elk service leest haar configuratie uit `.env`-bestanden in de `config/` directory.
+Elke service leest haar configuratie uit `.env`-bestanden in de `config/` directory.
 
-### `docker-compose.develop.yml` — Ontwikkelomgeving
+### `docker-compose.delft.yml` — Eigen data (`make delft`)
+
+Zelfde services als het basisbestand, maar met de brondata uit `data/delft/data/`, de configuratie uit `data/delft/wasstraat_config/` en de uitvoer en backups in `data/delft/`. De naam is historisch: dit is het bestand voor elke installatie met eigen brondata. Wil je een eigen omgevingsnaam, kopieer het dan en pas de paden aan.
+
+### `docker-compose.develop.yml` — Ontwikkelomgeving (`make dev`)
 
 Overschrijft instellingen voor lokale ontwikkeling:
 
 - **Airflow**: Eén parser-proces (`DAG_FILE_PROCESSOR_PROCESSES=1`), geen parallelle taken (`PARALLELISM=1`, `DAG_CONCURRENCY=1`), debugpy-poort open op `:5678`
 - **Flask**: Container blijft draaien via infinite loop (voor handmatig starten via IDE), broncode wordt als volume gemount, `FLASK_DEBUG=1`
 
-### `docker-compose.acc.yml` — Acceptatieomgeving
+### `docker-compose.test.yml` en `docker-compose.delft-test.yml` — Testomgevingen
 
-Tussenomgeving met debug-mogelijkheden maar productie-achtige configuratie:
-
-- Flask met `FLASK_DEBUG=1` maar productie-entrypoint
-- Broncode als volume (voor snelle iteratie)
-- Geschikt voor testen door eindgebruikers
-
-### `docker-compose.prod.yml` — Productieomgeving
-
-Gebruikt gepubliceerde Docker-images van Docker Hub:
-
-- `brienen/wasstraat_flask:1.0.0` — Vaste versie van Flask-app
-- `brienen/wasstraat_apache:0.8.0` — Vaste versie van Apache
-- `FLASK_DEBUG=0` — Geen debug-modus
-- Geen broncode-volumes (alles zit in de image)
-
-### `docker-compose.example.yml` — Voorbeeldconfiguratie
-
-Template voor een minimale configuratie, bruikbaar als startpunt voor nieuwe omgevingen.
+Zelfstandige testomgevingen voor `make integration` en `make integration-delft`, met eigen containernamen, poorten en databases in het geheugen. Zie [Testen](../testen.md).
 
 ## Starten en Stoppen
 
 De `Makefile` bevat targets voor elke omgeving. Bij het starten wordt automatisch `init-config.sh` aangeroepen om eventueel ontbrekende `.env`-bestanden te genereren.
 
 ```bash
-# Ontwikkelomgeving (met debugpy en hot-reload)
-make dev
-
-# Lokale modus (alle services)
+# Alle services met synthetische voorbeelddata
 make app
 
-# Voorbeeldconfiguratie
-make example
+# Alle services met eigen data uit data/delft/
+make delft
 
-# Acceptatieomgeving
-make acc
-
-# Productieomgeving (met gepubliceerde images)
-make prod
+# Ontwikkelomgeving (met debugpy en hot-reload)
+make dev
 
 # Stoppen van alle containers
 make stop
@@ -91,7 +72,7 @@ make stop
 # Starten van gestopte containers
 make start
 
-# Stop en verwijder alle containers
+# Stop en verwijder alle containers (de volumes blijven bestaan)
 make down
 
 # Toon live logs
@@ -108,20 +89,24 @@ make ps
     ```
     Typ `make help` voor een overzicht van alle beschikbare commando's.
 
+!!! note "Eén installatie per Docker-host"
+    De containers hebben vaste namen, zoals `wasstraat_postgres`. Er kan daarom maar één Wasstraat-installatie tegelijk op een Docker-host bestaan. `make app` en `make delft` gebruiken dezelfde containers.
+
 ## Configuratie via Environment-bestanden
 
 Alle services lezen configuratie uit bestanden in `config/`:
 
 | Bestand | Inhoud |
 |---------|--------|
-| `postgres.env` | PostgreSQL-credentials en database-naam |
+| `postgres.env` | PostgreSQL-credentials en database-namen |
 | `mongo.env` | MongoDB-gebruiker, wachtwoord en database-namen |
-| `airflow.env` | Airflow scheduler-instellingen, executor-type |
+| `airflow.env` | Airflow scheduler-instellingen, executor-type, beheerder |
 | `airflow_db.env` | Airflow metadata-database credentials |
-| `redis.env` | Redis wachtwoord |
-| `flask.env` | Flask geheime sleutel, debug-modus, poort |
-| `elasticsearch.env` | Elasticsearch-host |
-| `version.env` | Huidige versie van de applicatie |
+| `redis.env` | Redis-wachtwoord en cache-instellingen |
+| `flask.env` | Flask geheime sleutel, wachtwoord van de beheerder (`FLASK_ADMIN_PASSWORD`) en mailinstellingen |
+| `jupyter.env` | Token voor Jupyter Lab (`JUPYTER_PASSWORD`) |
+| `elasticsearch.env` | Wordt niet ingelezen; de services gebruiken standaard `http://elasticsearch:9200` |
+| `version.env` | Versienummer, alleen gebruikt door `make release` |
 
 Daarnaast leest de Airflow-container configuratie uit `wasstraat_config/` (gemount als `/opt/airflow/config/`):
 
@@ -137,29 +122,56 @@ Daarnaast leest de Airflow-container configuratie uit `wasstraat_config/` (gemou
 
 ### Data-volumes
 
-De Airflow-container koppelt de invoerdata via volumes:
+De Airflow-container koppelt de invoerdata via volumes. Bij `make app` komen die uit `data/synthetic/data/`, bij `make delft` uit `data/delft/data/`:
 
 ```
-./data/delft/data/projecten        → /input/projecten
-./data/delft/data/projectenlijst   → /input/projectenlijst
-./data/delft/data/magazijnlijst    → /input/magazijnlijst
-./data/delft/data/fotolijst        → /input/fotolijst
-./data/delft/data/monsterdatabase  → /input/monsterdatabase
-./data/delft/data/rapporten        → /input/rapporten
-./data/delft/data/referentietabellen → /input/referentietabellen
+./data/<omgeving>/data/projecten          → /input/projecten
+./data/<omgeving>/data/projectenlijst     → /input/projectenlijst
+./data/<omgeving>/data/magazijnlijst      → /input/magazijnlijst
+./data/<omgeving>/data/fotolijst          → /input/fotolijst
+./data/<omgeving>/data/monsterdatabase    → /input/monsterdatabase
+./data/<omgeving>/data/rapporten          → /input/rapporten          (alleen make delft)
+./data/<omgeving>/data/referentietabellen → /input/referentietabellen
+./data/<omgeving>/output/archeomedia      → /output/archeomedia
+./data/<omgeving>/wasstraat_config        → /opt/airflow/config
 ```
 
 ### Persistente volumes
 
-Docker beheert drie named volumes:
+Docker beheert vier named volumes:
 
-- `wasstraat_postgres_volume` — PostgreSQL-data
-- `wasstraat_mongo_volume` — MongoDB-data
-- `elasticsearch-data` — Elasticsearch-indices
+| Volume | Pad in de container | Inhoud |
+|--------|---------------------|--------|
+| `wasstraat_postgres_volume` | `/data/postgres` | PostgreSQL-data (Flask-database en Airflow-metadata) |
+| `wasstraat_mongo_volume` | `/data/db` | MongoDB-data |
+| `wasstraat_mongo_config_volume` | `/data/configdb` | MongoDB-configuratie |
+| `elasticsearch-data` | `/usr/share/elasticsearch/data` | Elasticsearch-indices |
+
+Docker Compose zet de projectnaam voor de volumenaam, standaard de naam van de map, bijvoorbeeld `wasstraat_archeologische_data_wasstraat_postgres_volume`.
+
+!!! warning "PGDATA en het volume horen bij elkaar"
+    PostgreSQL schrijft naar de map uit `PGDATA`. Die staat in de compose-bestanden op `/data/postgres`, precies waar het volume hangt. Wijzig je de een, wijzig dan ook de ander. Staan ze uit elkaar, dan komt de database in de container zelf terecht en verdwijnt die zodra Docker Compose de container opnieuw aanmaakt.
+
+### Bestaande installatie: PostgreSQL-data naar het volume
+
+Tot oktober 2026 hing het PostgreSQL-volume op `/var/lib/postgresql/data`, terwijl `PGDATA` op `/data/postgres` stond. Bij installaties uit die tijd staat de database daardoor in de container zelf, en is het volume leeg. Zodra je zo'n installatie start met de nieuwe compose-bestanden, maakt Docker Compose de PostgreSQL-container opnieuw aan en is die database weg. Migreer de data daarom eerst:
+
+```bash
+make start                   # start de bestaande containers zonder ze opnieuw aan te maken
+make backup                  # extra zekerheid: dump van PostgreSQL en MongoDB
+make stop
+make migrate-postgres-data   # kopieert de data uit de oude container naar het volume
+make app                     # of: make delft
+```
+
+`make migrate-postgres-data` wijzigt de oude container niet. Het script stopt zonder iets te doen als de container nog draait, als het volume al data bevat of als de migratie al is gedaan. Na het kopiëren telt het de bestanden in bron en volume en meldt het een fout als die niet gelijk zijn. Gebruik je een andere containernaam, geef die dan mee: `make migrate-postgres-data PG_CONTAINER=<naam>`.
+
+!!! danger "Niet eerst make app of make down"
+    Draai bij een bestaande installatie geen `make app`, `make delft`, `make down` of `docker compose up` voordat de migratie klaar is. Elk van die commando's kan de oude PostgreSQL-container verwijderen, en daarmee de database.
 
 ### Gedeelde code
 
-De `shared/` directory wordt in zowel Airflow als Flask gemount en bevat de gezamenlijke configuratie (`config.py`), database-utilities en constanten.
+De `shared/` directory wordt in zowel Airflow als Flask gebruikt en bevat de gezamenlijke configuratie (`config.py`), database-utilities en constanten.
 
 ## Backup en Restore
 
@@ -178,7 +190,7 @@ Bij een backup worden de Flask- en Airflow-containers tijdelijk gestopt. De back
 - PostgreSQL: `pg_dump` als tar-archief
 - MongoDB: `mongodump` van staging-, bestands- en analyse-databases
 
-De backups worden opgeslagen in de `backup/` directory.
+De backups komen in `data/<omgeving>/backup/postgres/` en `data/<omgeving>/backup/mongo/`, dus in `data/synthetic/backup/` bij `make app` en in `data/delft/backup/` bij `make delft`.
 
 ## CSV-export
 
@@ -188,7 +200,7 @@ Alle definitieve tabellen kunnen als CSV worden geëxporteerd:
 make export
 ```
 
-Dit exporteert alle `Def_*` tabellen (Project, Put, Spoor, Vondst, Artefact, Monster, etc.) naar CSV-bestanden in `backup/postgres_<timestamp>/`.
+Dit exporteert alle `Def_*` tabellen (Project, Put, Spoor, Vondst, Artefact, Monster, etc.) naar CSV-bestanden in `data/<omgeving>/backup/postgres/postgres_<timestamp>/`.
 
 ## Release en Publicatie
 

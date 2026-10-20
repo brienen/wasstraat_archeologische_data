@@ -1,5 +1,5 @@
 {
-  "beschrijving": "Golden snapshot Delft testdata (DB034) - gegenereerd voor profielen-refactoring",
+  "beschrijving": "Golden snapshot Delft testdata (DB034) - opnieuw gegenereerd na herstel van Generate_Missing ($ne) op 2026-10-20",
   "testdata": "data/test/ (project DB034 Koningsveld IV)",
   "soort_counts_clean": {
     "Fotokoppel": 31469,
@@ -8,20 +8,22 @@
     "Artefact": 6190,
     "Plaatsing": 5902,
     "ABR": 4838,
-    "Doos": 4442,
+    "Doos": 4443,
+    "Vondst": 3091,
     "Monster": 1613,
-    "Vondst": 1478,
     "Monster_Schelp": 1191,
     "Project": 1049,
     "DT_Soort_Plant": 1016,
     "Fotobeschrijving": 747,
     "Bestand": 531,
-    "Spoor": 456,
+    "Spoor": 457,
     "Vulling": 425,
+    "Put": 278,
     "DT_Soort_Schelp": 124,
     "DT_Soort_Deel": 75,
     "Vindplaats": 37,
     "Stelling": 22,
+    "Vlak": 12,
     "DT_Soort_Staat": 4
   },
   "soort_counts_store": {
@@ -81,8 +83,50 @@
         "projectcd": "DB005"
       }
     ],
-    "Put": [],
-    "Vlak": [],
+    "Put": [
+      {
+        "key": "PDB001P12",
+        "projectcd": "DB001"
+      },
+      {
+        "key": "PDB001P5",
+        "projectcd": "DB001"
+      },
+      {
+        "key": "PDB001P7",
+        "projectcd": "DB001"
+      },
+      {
+        "key": "PDB003P1",
+        "projectcd": "DB003"
+      },
+      {
+        "key": "PDB004P62",
+        "projectcd": "DB004"
+      }
+    ],
+    "Vlak": [
+      {
+        "key": "PDB034P10V1",
+        "projectcd": "DB034"
+      },
+      {
+        "key": "PDB034P10V2",
+        "projectcd": "DB034"
+      },
+      {
+        "key": "PDB034P10V3",
+        "projectcd": "DB034"
+      },
+      {
+        "key": "PDB034P10V4",
+        "projectcd": "DB034"
+      },
+      {
+        "key": "PDB034P10V5",
+        "projectcd": "DB034"
+      }
+    ],
     "Spoor": [
       {
         "key": "PDB034P10S1",
@@ -107,24 +151,24 @@
     ],
     "Vondst": [
       {
-        "key": "PDB034P10V1",
-        "projectcd": "DB034"
+        "key": "PDB001P0V1",
+        "projectcd": "DB001"
       },
       {
-        "key": "PDB034P10V10",
-        "projectcd": "DB034"
+        "key": "PDB001P12V12",
+        "projectcd": "DB001"
       },
       {
-        "key": "PDB034P10V100",
-        "projectcd": "DB034"
+        "key": "PDB001P5V7",
+        "projectcd": "DB001"
       },
       {
-        "key": "PDB034P10V1000",
-        "projectcd": "DB034"
+        "key": "PDB001P7V7",
+        "projectcd": "DB001"
       },
       {
-        "key": "PDB034P10V1001",
-        "projectcd": "DB034"
+        "key": "PDB003V1",
+        "projectcd": "DB003"
       }
     ],
     "Monster": [
@@ -174,23 +218,23 @@
     "Standplaats": [
       {
         "key": "SA",
-        "projectcd": "DB004"
+        "projectcd": "DB04"
       },
       {
         "key": "SA",
-        "projectcd": "DB004"
+        "projectcd": "DB04"
       },
       {
         "key": "SA",
-        "projectcd": "DB004"
+        "projectcd": "DB04"
       },
       {
         "key": "SA",
-        "projectcd": "DB004"
+        "projectcd": "DB04"
       },
       {
         "key": "SA",
-        "projectcd": "DB004"
+        "projectcd": "DB04"
       }
     ],
     "Bestand": [
@@ -199,42 +243,21 @@
         "projectcd": "DAR143"
       },
       {
-        "key": "PDB034P10V1025S2",
-        "projectcd": "DB034"
+        "key": "PDB34P10V1025S2",
+        "projectcd": "DB34"
       },
       {
-        "key": "PDB034P10V127S1",
-        "projectcd": "DB034"
+        "key": "PDB34P10V127S1",
+        "projectcd": "DB34"
       },
       {
-        "key": "PDB034P10V230S1",
-        "projectcd": "DB034"
+        "key": "PDB34P10V230S1",
+        "projectcd": "DB34"
       },
       {
-        "key": "PDB034P10V230S1",
-        "projectcd": "DB034"
+        "key": "PDB34P10V230S1",
+        "projectcd": "DB34"
       }
     ]
-  },
-  "collecties_staging": {
-    "Kolominformatie": 122,
-    "Plaatjes": 540,
-    "Staging_Projecten_Fotolijst": 31469,
-    "Staging_Projecten_Magazijnlijst": 13010,
-    "Staging_Projecten_Monster": 27123,
-    "Staging_Projecten_Oud": 15604,
-    "Staging_Projecten_Projectenlijst": 80927,
-    "Staging_Rapporten": 415,
-    "Staging_Referentietabellen": 4838
-  },
-  "collecties_analyse": {
-    "Single_Store": 93794,
-    "Single_Store_Clean": 91665
-  },
-  "collecties_files": {
-    "Filenames": 541
-  },
-  "plaatjes_count": 540,
-  "filenames_count": 541,
-  "filenames_processed": 540
+  }
 }

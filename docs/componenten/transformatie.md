@@ -149,6 +149,24 @@ Invoer records:
 !!! warning "Deduplicatie Voorzichtigheid"
     Deduplicatie vereist zorgvuldige validatie. Foutieve deduplicatie kan tot verlies van informatie leiden. Alle consolidaties worden vastgelegd met bronverwijzingen.
 
+### 7. Ontbrekende entiteiten aanvullen
+
+Veel opgravingsdatabases hebben geen eigen tabel voor putten of vlakken; die staan alleen als nummer bij sporen, vondsten, tekeningen en foto's. De stap Move and Merge maakt daarom voor elke combinatie die in de data voorkomt een record aan als dat nog niet bestaat:
+
+| Entiteit | Gegenereerd uit | Sleutel |
+|----------|-----------------|---------|
+| Put | `projectcd` + `putnr` | `P<project>P<put>` |
+| Vlak | `projectcd` + `putnr` + `vlaknr` | `P<project>P<put>V<vlak>` |
+| Spoor | `projectcd` + `putnr` + `spoornr` | `P<project>P<put>S<spoor>` |
+| Vondst | `projectcd` + `putnr` + `vondstnr` | `P<project>[P<put>]V<vondst>` |
+| Doos | `projectcd` + `doosnr` van artefacten | `P<project>D<doos>` |
+
+Een gegenereerd record krijgt dezelfde key als een record uit de brondata, zodat alleen echt ontbrekende records worden toegevoegd. Daarom bevat de key van een spoor geen vlak (sporen uit de brondata hebben `vlaknrs`, meervoud) en neemt een gegenereerde vondst de vlag `vondstkey_met_putnr` van de bronrecords over, die bepaalt of het putnummer in de key van een vondst staat.
+
+Nummer `0` telt niet mee. Gegenereerde records herken je aan `brondata.table` = `generated_put`, `generated_vlak`, enzovoort. Een PUT- of VLAK-tabel in de brondata is dus niet verplicht. Is die er wel, dan gebruikt de pipeline die records (met beschrijving en andere attributen) en genereert alleen wat ontbreekt.
+
+De pipelines staan in `airflow_app/dags/wasstraat/meta.py` onder `MOVEANDMERGE_GENERATE_MISSING_PIPELINES`.
+
 ## Architectuur
 
 ```

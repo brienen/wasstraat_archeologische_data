@@ -1,3 +1,11 @@
+# Directe pakketten met ruime grenzen. De exacte versies van alle pakketten
+# (ook afgeleide) liggen vast in constraints.txt; bijwerken met 'make constraints'.
+
+# Webserver
+gunicorn>=23,<27
+gevent>=24.2
+psycogreen>=1.0,<2
+
 # Flask-AppBuilder 4.x (vereist Flask 2.x+)
 flask-appbuilder>=4.5,<5
 Flask>=2.3,<3

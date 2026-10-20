@@ -251,8 +251,12 @@ def mergeMissing(soort):
             if not df_gen.empty and 'key' in df_gen.columns:
                 df_orig = pd.DataFrame(list(cleancollection.find({'soort': soort})))
 
-                df_all = df_gen.merge(df_orig, on=['key', 'soort'], how='left', indicator=True, suffixes=[None, "_orig"])
-                df = df_all[df_all._merge == 'left_only'][df_gen.columns]
+                if df_orig.empty or 'key' not in df_orig.columns:
+                    # Nog geen enkel record van deze soort (bijv. geen PUT-tabel in de brondata): alles ontbreekt
+                    df = df_gen
+                else:
+                    df_all = df_gen.merge(df_orig, on=['key', 'soort'], how='left', indicator=True, suffixes=[None, "_orig"])
+                    df = df_all[df_all._merge == 'left_only'][df_gen.columns]
                 if len(df) < 1:
                     logger.info(f"No missing records for type: {soort} nothing inserted in collection.")
                     return

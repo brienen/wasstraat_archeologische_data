@@ -87,13 +87,13 @@ volumes:
   - ./data/synthetic/data/referentietabellen:/input/referentietabellen
 ```
 
-Om de synthetische data met de volledige Wasstraat-applicatie te gebruiken, pas je dezelfde volume-mappings toe in je eigen docker-compose override.
+De volledige Wasstraat-applicatie gebruikt deze data standaard: `make app` start alle services met `docker-compose.yml`, dat dezelfde mappen koppelt.
 
 ## Opnieuw genereren
 
 Vereisten:
-- Java JRE (`brew install openjdk` op macOS)
-- Python packages: `pip install -r generatie/requirements-synthetic.txt`
+- Java JRE (`brew install openjdk` op macOS, of een OpenJDK 21 in `/usr/lib/jvm/java-21-openjdk` op Linux)
+- Python packages uit `generatie/requirements-synthetic.txt` (installeert `make synthetic` zelf in de `.venv`)
 - Jackcess JARs in `generatie/jars/` (al aanwezig in de repo)
 
 ```bash

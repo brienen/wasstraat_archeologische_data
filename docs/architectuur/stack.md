@@ -2,212 +2,87 @@
 
 ## Overzicht
 
-Het Wasstraat-systeem maakt gebruik van een moderne, schaalbare technologiestapel geoptimaliseerd voor data-intensieve werkstromen in de digitale archeologie. Deze pagina catalogueert alle kerncomponenten georganiseerd op functioneel domein.
+Deze pagina beschrijft de techniek die de Wasstraat op dit moment gebruikt. De versies volgen uit de Dockerfiles in `services/` en de `requirements.txt`-bestanden. Bij twijfel zijn die bestanden leidend.
 
-## Backend & Extractie/Transformatie
+## Containers en basis-images
 
-### Algemeen Doel
+| Service | Basis-image | Rol |
+|---------|-------------|-----|
+| **Airflow** | `apache/airflow:2.10.5-python3.11` | ETL-orchestratie (LocalExecutor) |
+| **Flask** | `python:3.11-slim-bookworm` | Webapplicatie, draait onder gunicorn met gevent |
+| **PostgreSQL** | `kartoza/postgis:18-3.6` | Definitieve relationele opslag met PostGIS |
+| **MongoDB** | `mongo:7.0` | Staging- en analyse-opslag, plus GridFS voor bestanden |
+| **Elasticsearch** | `elasticsearch:8.17.0` | Fulltext-zoekindex (single-node, zonder beveiliging) |
+| **Redis** | `redis:7.2-alpine` | Cache voor de webapplicatie |
+| **Apache** | `httpd:2.4` | Serveert foto's en andere bestanden uit de uitvoermap |
+| **Jupyter** | `quay.io/jupyter/datascience-notebook:python-3.11` | Notebooks voor analyse |
 
-| Component | Versie | Rol | Licentie |
-|-----------|--------|-----|----------|
-| **Python** | 3.9+ | Scriptingtaal voor extractie/transformatie | MIT |
-| **Pandas** | 2.x | Data wrangling & dataframe-manipulatie | BSD |
-| **RDFLib** | 6.x | RDF-processing en semantic modeling | BSD |
-| **SQLAlchemy** | 2.x | Object-relationeel mapping (ORM) | MIT |
-| **Alembic** | 1.x | Database schema versioning & migraties | MIT |
-| **Jinja2** | 3.x | Template-engine voor dynamische queries | BSD |
+Alles draait via Docker Compose. De bediening loopt via een `Makefile` en enkele bash-scripts.
 
-## Web Framework & API's
+## ETL-pipeline (Airflow)
 
-| Component | Versie | Rol | Licentie |
-|-----------|--------|-----|----------|
-| **Django** | 4.2+ | Backend web framework | BSD |
-| **Django REST Framework** | 3.14+ | API framework & serializers | BSD |
-| **Celery** | 5.3+ | Asynchrone taakuitvoering | BSD |
-| **Vue.js** | 3.x | Frontend JavaScript framework | MIT |
-| **Vuetify** | 3.x | Vue component library (Material Design) | MIT |
+| Component | Versie | Rol |
+|-----------|--------|-----|
+| **Python** | 3.11 | Taal van de DAGs en transformatiemodules |
+| **pandas** | < 2.2 | Dataframes. Airflow 2.10 pint SQLAlchemy < 2.0, en pandas 2.2 vereist SQLAlchemy 2 |
+| **pymongo** | 4.x | Toegang tot MongoDB en aggregatie-pipelines |
+| **psycopg2** | 2.9 | Laden naar PostgreSQL met `execute_values` |
+| **openpyxl** | 3.x | Inlezen van de harmonisatie-Excel en ABR-tabellen |
+| **geopandas / shapely** | 1.x / 2.x | Geometrie en coördinaten |
+| **Pillow, pdf2image** | 11.x, 1.17 | Afbeeldingen en PDF's omzetten naar webformaten |
+| **python-magic** | 0.4 | Bestandstypen herkennen |
+| **nltk, editdistance, roman** | | Tekstnormalisatie, fuzzy vergelijken en Romeinse cijfers in dateringen |
+| **elasticsearch** | 8.x | Bouwen van de zoekindex |
+| **PyYAML** | | Inlezen van `correcties.yml` |
 
-## Databases
+Systeemtools in de Airflow-image:
 
-### NoSQL & Semi-Structured
+| Tool | Rol |
+|------|-----|
+| **mdbtools** | Tabellen uit Access-databases (`.mdb`, `.accdb`) exporteren |
+| **MongoDB Database Tools** | `mongoimport` en `mongodump` |
+| **mongosh** | MongoDB-shell voor scripts |
+| **poppler-utils, GDAL** | PDF-verwerking en geodata |
 
-| Component | Rol | Schaal | Licentie |
-|-----------|-----|-------|----------|
-| **MongoDB** | Opslag ruwgegevens, semi-gestructureerde data | Miljarden documenten | SSPL |
-| **SingleStore** | Kolom-georiënteerde analytic store, crossviews | Real-time analytics | Proprietary |
+## Webapplicatie (Flask)
 
-### Relationeel (Primair)
+| Component | Versie | Rol |
+|-----------|--------|-----|
+| **Flask** | 2.3 | Webframework |
+| **Flask-AppBuilder** | 4.x | Beheerschermen, rechten en standaardviews |
+| **SQLAlchemy** | 1.4 | ORM voor de ruim honderd modellen in `app/app/models.py` |
+| **GeoAlchemy2** | | Geometriekolommen, met de eigen extensie `fab_addon_geoalchemy` |
+| **Flask-Caching** | 2.x | Cache in Redis |
+| **Flask-Migrate** | 4.x | Databasemigraties via Alembic |
+| **Flask-Dropzone** | | Uploaden van bestanden |
+| **folium** | | Interactieve kaart op de homepage |
+| **Jinja2** | 3.x | Templates |
 
-| Component | Versie | Rol | Licentie |
-|-----------|--------|-----|----------|
-| **PostgreSQL** | 13+ | Voorkeur relationele database | PostgreSQL License (permissief) |
-| **PostGIS** | 3.x | Geografische dataruguitbreiding | GPL/BSD dual |
+De tabellen in PostgreSQL worden bij het opstarten door de Flask-app aangemaakt. De Load-stap van Airflow verwacht dat die tabellen bestaan.
 
-### Relationeel (Legacy)
+## Opslag
 
-| Component | Versie | Rol | Licentie |
-|-----------|--------|-----|----------|
-| **Oracle Database** | 12c+ | Enterprise relationele database | Proprietary |
+| Laag | Techniek | Inhoud |
+|------|----------|--------|
+| **Staging** | MongoDB, database `Arch_Staging` | Ruwe brondata, zoals ingelezen |
+| **Analyse** | MongoDB, database `Arch_Analyse` | Geharmoniseerde data in de collectie `Single_Store` |
+| **Bestanden** | MongoDB GridFS, database `Arch_Files` | Bestandsinhoud en metadata |
+| **Definitief** | PostgreSQL met PostGIS, database `flask` | Relationeel model voor de webapplicatie |
+| **Zoeken** | Elasticsearch | Index per tabel |
 
-### Analytics & Data Warehouse
+## Standaarden
 
-| Component | Rol | Licentie |
-|-----------|-----|----------|
-| **Snowflake** | Cloud data warehouse voor reporting | Proprietary |
+| Standaard | Gebruik |
+|-----------|---------|
+| **ABR** | Archeologisch Basisregister, ingelezen uit een Excel-export. Vooral materialen en submaterialen worden gebruikt |
+| **Rijksdriehoek (EPSG:28992)** | Coördinaten uit de brondata, omgerekend naar WGS84 voor de kaart |
+| **GGM** | Gemeentelijk Gegevensmodel als referentie voor het doelmodel |
 
-## Processing & Orchestratie
+## Ontwikkelen en testen
 
-### Workflow Management
-
-| Component | Versie | Rol | Licentie |
-|-----------|--------|-----|----------|
-| **Apache Airflow** | 2.5+ | DAG-gebaseerde workflow orchestratie | Apache 2.0 |
-| **Luigi** | 3.x | Task dependency management | Apache 2.0 |
-| **Celery** | 5.3+ | Distributed task queue | BSD |
-
-### Distributed Computing
-
-| Component | Versie | Rol | Licentie |
-|-----------|--------|-----|----------|
-| **Apache Spark** | 3.x | Distributed ETL & data processing | Apache 2.0 |
-
-## Infrastructure & Deployment
-
-### Containerization & Orchestration
-
-| Component | Versie | Rol | Licentie |
-|-----------|--------|-----|----------|
-| **Docker** | 20.10+ | Container verpakking & isolatie | Apache 2.0 |
-| **Kubernetes** | 1.24+ | Container orchestratie & deployment | Apache 2.0 |
-
-### Logging & Monitoring
-
-| Component | Rol | Licentie |
-|-----------|-----|----------|
-| **Docker Logs** | Container log aggregatie | Apache 2.0 |
-| **Kubernetes Logs** | Cluster-level logging | Apache 2.0 |
-| **Custom Monitoring** | Application-level metrics | In-house |
-
-## Analyse & Visualisatie
-
-### Interactive Dashboards
-
-| Component | Versie | Rol | Licentie |
-|-----------|--------|-----|----------|
-| **RShiny** | 1.7+ | Interactive R dashboard framework | GPL/Proprietary dual |
-| **Jupyter Notebook** | 6.x | Interactive Python notebook environment | BSD |
-
-### Visualisatie Libraries
-
-| Component | Rol | Licentie |
-|-----------|-----|----------|
-| **ggplot2** (R) | Grammar of graphics visualisatie | GPL |
-| **Matplotlib/Seaborn** (Python) | Statistical data visualization | BSD |
-| **Leaflet/Mapbox** | Interactive web maps | ISC/Proprietary dual |
-
-## Semantic Tools & Standards
-
-### Semantic Modeling
-
-| Component | Rol | Licentie |
-|-----------|-----|----------|
-| **CIDOC CRM Ontology** | Cultural heritage data model | CIDOC standard (open) |
-| **CRMarchaeo** | Archaeological extension to CRM | Community standard (open) |
-| **CRMsci** | Scientific observation extension | Community standard (open) |
-| **CRMgeo** | Geospatial extension to CRM | Community standard (open) |
-
-### Thesaurus & Authority Files
-
-| Component | Rol | Licentie |
-|-----------|-----|----------|
-| **ABR (Archeologisch Basisregister)** | Dutch archaeology thesaurus | Public use |
-| **Gemeentelijk Gegevensmodel (GGM)** | Municipal data standards | Dutch open data |
-
-## Data Exchange Formats
-
-| Format | Use Case | Support |
-|--------|----------|---------|
-| **JSON** | REST API's, document storage | Native |
-| **XML** | Legacy systems, schema definition | Via parsers |
-| **RDF/Turtle** | Linked Open Data, semantic export | Via RDFLib |
-| **CSV/TSV** | Tabular data, spreadsheet interchange | Pandas native |
-| **GeoJSON** | Geographic feature exchange | PostGIS native |
-| **WMS/WFS** | OGC geographic web services | GIS standard |
-
-## Development Tools
-
-| Component | Rol | Licentie |
-|-----------|-----|----------|
-| **Git** | Version control | GPL |
-| **GitHub/GitLab** | Code repository hosting | Proprietary/AGPL |
-| **pytest** | Python unit testing | MIT |
-| **Black** | Python code formatting | MIT |
-| **PostgreSQL pgAdmin** | Database administration UI | PostgreSQL License |
-
-## Architecture Patterns
-
-### Clean Architecture Principles
-- Separation of concerns (extraction, transformation, output)
-- Dependency inversion (ORM abstracts database)
-- Data immutability (original data preserved)
-- Polymorph awareness (flexible data structures)
-
-### Scalability Patterns
-- Horizontal scaling via Kubernetes
-- Distributed processing via Apache Spark
-- Asynchronous task execution via Celery
-- Read replicas for reporting via Snowflake
-
-### Reliability Patterns
-- Database transactions (ACID in PostgreSQL/Oracle)
-- Retry logic in Airflow/Luigi
-- Health checks in Kubernetes
-- Audit logging at every transformation step
-
-## Integration Points
-
-### External Systems
-
-```
-┌─────────────────────┐
-│   External Data     │
-│ Repositories (ABR,  │
-│  GeoNames, etc.)    │
-└──────────┬──────────┘
-           │
-      [RDFLib HTTP]
-           ↓
-┌─────────────────────┐
-│  Wasstraat Core     │
-│   Data Pipeline     │
-└──────────┬──────────┘
-           │
-      [REST API]
-           ↓
-┌──────────────────────────┐
-│  Output Systems:         │
-│  - Website               │
-│  - GIS (PostGIS/WMS)     │
-│  - Data Warehouse        │
-│  - Reporting (Snowflake) │
-└──────────────────────────┘
-```
-
-## Performance Characteristics
-
-| Component | Throughput | Latency | Notes |
-|-----------|-----------|---------|-------|
-| **MongoDB Ingestion** | 10k+ docs/sec | <100ms | Horizontal scaling via sharding |
-| **PostgreSQL Queries** | 1k+ complex queries/sec | 10-100ms | Query optimization critical |
-| **Spark ETL** | 1GB/min on modest cluster | 1-5 min per job | Distributed processing |
-| **Celery Tasks** | 100+ concurrent tasks | <1s per task | Worker pool configurable |
-| **Web API** | 1000+ req/sec | 10-50ms | Django + caching |
-
-## Version Management
-
-Alle components worden gemonitord op updates:
-- Security patches: Onmiddellijk kritiek
-- Minor updates: Quarterly review
-- Major updates: Annual planning
-- Python package versions: requirements.txt + pipenv locks
-- Database versions: Alembic migration strategy
+| Tool | Rol |
+|------|-----|
+| **pytest** | Unit- en integratietests, zie [Testen](../testen.md) |
+| **debugpy** | Debuggen van Airflow via `make dev` |
+| **MkDocs** | Deze documentatie, met het thema readthedocs |
+| **Jackcess + JPype** | Genereren van de synthetische Access-databases (`make synthetic`) |

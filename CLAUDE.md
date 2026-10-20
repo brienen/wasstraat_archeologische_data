@@ -31,9 +31,9 @@ notebooks/                 # Jupyter notebooks voor analyse
 
 ## Technische stack
 
-- **Orchestratie:** Apache Airflow 2.3.3
-- **Backend:** Python 3.10, Flask, Flask-AppBuilder
-- **Databases:** PostgreSQL (definitieve opslag), MongoDB 4.2 (staging), Elasticsearch 8.6 (zoekindex)
+- **Orchestratie:** Apache Airflow 2.10.5
+- **Backend:** Python 3.11, Flask, Flask-AppBuilder
+- **Databases:** PostgreSQL 18 met PostGIS 3.6 (definitieve opslag), MongoDB 7.0 (staging), Elasticsearch 8.17 (zoekindex)
 - **Caching:** Redis
 - **Infrastructuur:** Docker Compose (dev/test/acc/prod)
 - **Analyse:** Jupyter Lab, Pandas, GeoPandas
@@ -109,7 +109,8 @@ Overige secties: `artefact_niet_mergen`, `rapportcode_prefixen`.
 # Ontwikkelen
 make install          # Maak .venv aan met test-dependencies
 make dev              # Start development-omgeving (hot-reload)
-make app              # Start alle services
+make app              # Start alle services (synthetische data)
+make delft            # Start alle services met eigen data uit data/delft/
 
 # Testen
 make test             # Unit tests (tests/unit/)
@@ -132,6 +133,8 @@ make backup           # Backup PostgreSQL + MongoDB
 make restore TS=...   # Restore vanuit timestamp
 make export           # Exporteer tabellen als CSV
 make stop / start     # Containers stoppen/starten
+make constraints      # Leg pakketversies Flask/Jupyter opnieuw vast (daarna make test-all)
+make migrate-postgres-data # Eenmalig: PostgreSQL-data van oude installatie naar het volume
 make clean            # Verwijder .venv en caches
 ```
 
@@ -204,3 +207,7 @@ De Flask smoke tests controleren of projecten zichtbaar zijn op de kaart en hebb
 - `shared/const.py` bevat alle constanten en enums voor het hele project
 - De Airflow DAGs hebben een strikte verwerkingsvolgorde — verander deze niet zonder overleg
 - Documentatie staat in `docs/` als MkDocs Markdown — houd deze synchroon met codewijzigingen
+- Omgevingsvariabelen zijn altijd tekst. Zet numerieke instellingen in `shared/config.py` om met `int()`; cachelib >= 0.14 weigert bijvoorbeeld een tekst als cache-timeout en dan start Flask niet
+- `PGDATA` en het PostgreSQL-volume moeten hetzelfde pad hebben (`/data/postgres`). Installaties van vóór oktober 2026 hebben hun data in de container; die migreer je met `make migrate-postgres-data` vóór de eerste `make app`
+- De Flask-app maakt bij het opstarten de PostgreSQL-tabellen aan (`db.create_all()`). De Load-stap faalt als Flask niet draait
+- `make integration` hergebruikt bestaande images. Bouw de test-images opnieuw na wijzigingen in Dockerfiles, requirements of `shared/`, anders test je oude code en oude afhankelijkheden

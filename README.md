@@ -2,7 +2,7 @@
 
 [![License: EUPL-1.2](https://img.shields.io/badge/License-EUPL--1.2-yellow.svg)](https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12)
 [![Version](https://img.shields.io/badge/version-1.0.1-blue.svg)](https://github.com/brienen/wasstraat_archeologische_data/releases)
-[![Python](https://img.shields.io/badge/python-3.10-3776ab.svg)](https://www.python.org/)
+[![Python](https://img.shields.io/badge/python-3.11-3776ab.svg)](https://www.python.org/)
 [![Docker](https://img.shields.io/badge/docker-compose-2496ed.svg)](https://docs.docker.com/compose/)
 
 > Een open-source platform dat archeologische gegevens verzamelt, verwerkt en toegankelijk maakt — van ruwe data naar gestructureerd inzicht.
@@ -75,8 +75,10 @@ Elke artefactcategorie kent eigen specifieke velden:
 ### Vereisten
 
 - [Docker](https://www.docker.com/) en Docker Compose
-- [GNU Make](https://www.gnu.org/software/make/) (standaard aanwezig op macOS en Linux)
-- Minimaal 8 GB RAM beschikbaar voor Docker
+- [GNU Make](https://www.gnu.org/software/make/) en bash. Op Linux installeer je Make zo nodig via de pakketbeheerder, bijvoorbeeld `sudo apt install make`. Op macOS komt Make mee met de Xcode Command Line Tools (`xcode-select --install`). Na een Xcode-update moet je eenmalig de licentie accepteren met `sudo xcodebuild -license`, anders weigert `make` te starten.
+- Op Windows gebruik je [WSL 2](https://learn.microsoft.com/windows/wsl/) met Docker Desktop, omdat de scripts bash en Make nodig hebben. Voer alle commando's uit in de Linux-shell van WSL.
+- Minimaal 8 GB RAM beschikbaar voor Docker, 12 GB aanbevolen
+- Alleen voor de tests: Python 3.10, 3.11 of 3.12
 
 ### Installatie
 
@@ -94,13 +96,26 @@ make app
 
 Typ `make help` voor een overzicht van alle beschikbare commando's.
 
+### Inloggen
+
+| Applicatie | Adres | Inloggegevens |
+|------------|-------|---------------|
+| Airflow | http://localhost:8080 | `admin`, wachtwoord in `config/airflow.env` (`SECURITY__ADMIN_PASSWORD`) |
+| Flask App | http://localhost:5051 | `admin`, wachtwoord in `config/flask.env` (`FLASK_ADMIN_PASSWORD`) |
+| Jupyter Lab | http://localhost:8888 | token in `config/jupyter.env` (`JUPYTER_PASSWORD`) |
+
+Het Flask-wachtwoord uit `config/flask.env` wordt alleen gebruikt als de beheerder nog niet bestaat; een bestaande beheerder houdt zijn wachtwoord. Ontbreekt `FLASK_ADMIN_PASSWORD` (installaties van vóór oktober 2026), dan krijgt een nieuwe beheerder het wachtwoord `admin` en staat er een waarschuwing in de log. Wijzig het in dat geval direct via het gebruikersmenu.
+
+### Bestaande installatie bijwerken
+
+Installaties van vóór oktober 2026 hebben hun PostgreSQL-data in de container staan in plaats van in het Docker-volume. Draai bij zo'n installatie eerst `make backup`, dan `make stop` en `make migrate-postgres-data`, en pas daarna `make app` of `make delft`. Zie [Omgevingen](https://brienen.github.io/wasstraat_archeologische_data/deployment/omgevingen/) voor de achtergrond.
+
 ### Omgevingen starten
 
 ```bash
+make app          # Alle services, met de synthetische voorbeelddata
+make delft        # Alle services, met eigen data uit data/delft/
 make dev          # Ontwikkelomgeving (met hot-reload volumes)
-make app          # Lokale modus (alle services)
-make acc          # Acceptatieomgeving
-make prod         # Productie (gepubliceerde images)
 make stop         # Stop alle containers
 make start        # Herstart gestopte containers
 make logs         # Toon live logs
@@ -111,7 +126,7 @@ make ps           # Toon status van alle services
 
 De repo bevat **synthetische voorbeelddata** in `data/synthetic/data/` — twee fictieve opgravingsprojecten (SY001 en SY002) waarmee je de volledige pipeline kunt testen zonder eigen brondata. Dit is het startpunt om het platform te leren kennen.
 
-**Eigen data gebruiken?** Organiseer je bronbestanden in `data/<omgeving>/data/` conform deze structuur:
+**Eigen data gebruiken?** Zet je bronbestanden in `data/delft/data/` en je configuratie in `data/delft/wasstraat_config/`, en start met `make delft`. De naam `delft` is historisch: het bestand `docker-compose.delft.yml` leest gewoon uit die mappen. Wil je een eigen omgevingsnaam, kopieer dan dat bestand en pas de paden aan. De bronbestanden volgen deze structuur:
 
 | Directory | Inhoud | Formaat |
 |-----------|--------|---------|
@@ -121,6 +136,7 @@ De repo bevat **synthetische voorbeelddata** in `data/synthetic/data/` — twee 
 | `fotolijst/` | Fotocatalogus (tabel `Fotos`: koppeling foto ↔ vondst) | `.mdb` |
 | `monsterdatabase/` | Grondmonsters met botanische/zoölogische determinaties | `.mdb` |
 | `referentietabellen/` | ABR-thesaurus (`abr_versie_*.xlsx`) | `.xlsx` |
+| `rapporten/` | Rapportbestanden en rapportendatabases | `.mdb` / `.pdf` |
 
 De Wasstraat doorzoekt elke directory recursief op `.mdb`/`.accdb` bestanden. In `projecten/` bepaalt de directorynaam de projectcode. Zie `data/synthetic/data/` als werkend voorbeeld en de [documentatie](https://brienen.github.io/wasstraat_archeologische_data/aan-de-slag/) voor details.
 
@@ -159,18 +175,19 @@ wasstraat_archeologische_data/
 ├── config/               # Environment-bestanden (.env)
 ├── services/             # Dockerfiles per service
 ├── data/                 # Input- en outputdata
-│   ├── input/basefiles/  # Bronbestanden (eigen data, niet in repo)
-│   └── synthetic/        # Synthetische voorbeelddata (in repo)
+│   ├── delft/            # Eigen data voor 'make delft' (inhoud niet in repo)
+│   ├── synthetic/        # Synthetische voorbeelddata (in repo)
+│   └── test/             # Configuratie voor de Delftse integratietests
 ├── tests/                # Unit- en integratietests
 ├── notebooks/            # Jupyter notebooks voor analyse
 ├── docs/                 # MkDocs documentatie
 ├── image/                # Afbeeldingen voor README
 ├── Makefile              # Alle commando's (make help)
-├── docker-compose.yml    # Basis service-definities
-├── docker-compose.test.yml     # Lichtgewicht test-databases
-├── docker-compose.develop.yml  # Development overrides
-├── docker-compose.acc.yml      # Acceptatie overrides
-└── docker-compose.prod.yml     # Productie overrides
+├── docker-compose.yml          # Alle services met synthetische data (make app)
+├── docker-compose.delft.yml    # Alle services met eigen data (make delft)
+├── docker-compose.develop.yml  # Development overrides (make dev)
+├── docker-compose.test.yml     # Testomgeving met synthetische data (make integration)
+└── docker-compose.delft-test.yml # Testomgeving met Delftse testdata (make integration-delft)
 ```
 
 ## Documentatie
@@ -196,10 +213,10 @@ De documentatie bevat:
 
 | Categorie | Technologieën |
 |-----------|---------------|
-| **Orchestratie** | Apache Airflow 2.3.3 |
-| **Backend** | Python, Flask, Flask-AppBuilder |
-| **Databases** | MongoDB 4.2, PostgreSQL, Elasticsearch 8.6 |
-| **Caching** | Redis |
+| **Orchestratie** | Apache Airflow 2.10.5 |
+| **Backend** | Python 3.11, Flask, Flask-AppBuilder |
+| **Databases** | MongoDB 7.0, PostgreSQL 18 met PostGIS 3.6, Elasticsearch 8.17 |
+| **Caching** | Redis 7.2 |
 | **Infrastructuur** | Docker Compose |
 | **Analyse** | Jupyter Lab, Pandas, GeoPandas |
 | **Data-import** | mdbtools, Pillow, pdf2image |

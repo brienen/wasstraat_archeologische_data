@@ -9,10 +9,22 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-COPY ./services/flask/requirements.txt /tmp/requirements.txt
-RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
-    pip install --no-cache-dir gunicorn gevent psycogreen && \
-    pip install --no-cache-dir -r /tmp/requirements.txt
+# Alle pakketversies (ook afgeleide) liggen vast in constraints.txt, zodat een verse
+# build dezelfde versies oplevert. De build stopt als de geïnstalleerde versies afwijken.
+# 'make constraints' bouwt met VASTE_VERSIES=0: pip kiest dan de nieuwste versies binnen
+# de grenzen van requirements.txt en die worden opnieuw vastgelegd.
+ARG VASTE_VERSIES=1
+COPY ./services/flask/requirements.txt ./services/flask/constraints.txt /tmp/
+RUN if [ "$VASTE_VERSIES" = "0" ]; then VERSIES=/dev/null; else VERSIES=/tmp/constraints.txt; fi && \
+    pip install --no-cache-dir -c $VERSIES --upgrade pip setuptools wheel && \
+    pip install --no-cache-dir -c $VERSIES -r /tmp/requirements.txt && \
+    pip check && \
+    if [ "$VERSIES" != "/dev/null" ]; then \
+      grep -v -e '^#' -e '^$' /tmp/constraints.txt | sort -f > /tmp/vastgelegd.txt && \
+      pip list --format=freeze | sort -f > /tmp/geinstalleerd.txt && \
+      diff /tmp/vastgelegd.txt /tmp/geinstalleerd.txt || \
+      { echo "Geïnstalleerde versies wijken af van services/flask/constraints.txt; draai 'make constraints'." >&2; exit 1; }; \
+    fi
 
 ENV PYTHONPATH=/app:/app/app
 WORKDIR /app/

@@ -1,7 +1,11 @@
 .ipynb_checkpoints
 
-# Delft data gaat niet naar Github
+# Delft data gaat niet naar Github; alleen de lege mappenstructuur (.gitkeep).
+# Git kan geen bestand terughalen uit een genegeerde map, dus eerst de submappen
+# weer toelaten en daarna hun inhoud negeren.
 data/delft/data/*
+!data/delft/data/*/
+data/delft/data/*/*
 !data/delft/data/projectenlijst/.gitkeep
 !data/delft/data/projecten/.gitkeep
 !data/delft/data/fotolijst/.gitkeep

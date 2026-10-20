@@ -5,10 +5,14 @@ services:
     env_file:
        - ./config/postgres.env
        - ./config/flask.env
+    environment:
+      # Datamap van PostgreSQL. Moet gelijk zijn aan het pad van het volume hieronder,
+      # anders staat de database in de container zelf en verdwijnt die bij opnieuw aanmaken.
+      PGDATA: /data/postgres
     ports:
       - "5432:5432"
     volumes:
-      - wasstraat_postgres_volume:/var/lib/postgresql/data
+      - wasstraat_postgres_volume:/data/postgres
       - ./data/delft/backup/postgres:/backup
     build:
       dockerfile: ./services/postgres/Dockerfile
@@ -115,8 +119,10 @@ services:
       - ./data/delft/output/archeomedia:/output/archeomedia
     environment:
       JUPYTER_ENABLE_LAB: "yes"
-    command: "start-notebook.sh --NotebookApp.token='' --NotebookApp.password=''"
+    # Inloggen met het token uit config/jupyter.env (JUPYTER_PASSWORD)
+    command: ["bash", "-c", "exec start-notebook.py --IdentityProvider.token=\"$$JUPYTER_PASSWORD\""]
     env_file:
+       - ./config/jupyter.env
        - ./config/airflow.env
        - ./config/airflow_db.env
        - ./config/mongo.env

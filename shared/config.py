@@ -68,13 +68,14 @@ try:
 
    DEBUG_TB_PROFILER_ENABLED= True if os.getenv("DEBUG_TB_PROFILER_ENABLED") == 'True' else False
 
-   CACHE_DEFAULT_TIMEOUT=os.getenv("CACHE_DEFAULT_TIMEOUT") if os.getenv("CACHE_DEFAULT_TIMEOUT") else 300
+   # Omgevingsvariabelen zijn altijd tekst; Flask-Caching (cachelib >= 0.14) eist getallen
+   CACHE_DEFAULT_TIMEOUT=int(os.getenv("CACHE_DEFAULT_TIMEOUT")) if os.getenv("CACHE_DEFAULT_TIMEOUT") else 300
    CACHE_KEY_PREFIX=os.getenv("CACHE_KEY_PREFIX") if os.getenv("CACHE_KEY_PREFIX") else ''
    CACHE_REDIS_HOST=os.getenv("CACHE_REDIS_HOST")
    CACHE_REDIS_PASSWORD=os.getenv("CACHE_REDIS_PASSWORD")   
    REDIS_PASSWORD=os.getenv("REDIS_PASSWORD")
-   CACHE_REDIS_PORT=os.getenv("CACHE_REDIS_PORT") if os.getenv("CACHE_REDIS_PORT") else 6379
-   CACHE_REDIS_DB=os.getenv("CACHE_REDIS_DB") if os.getenv("CACHE_REDIS_DB") else 0
+   CACHE_REDIS_PORT=int(os.getenv("CACHE_REDIS_PORT")) if os.getenv("CACHE_REDIS_PORT") else 6379
+   CACHE_REDIS_DB=int(os.getenv("CACHE_REDIS_DB")) if os.getenv("CACHE_REDIS_DB") else 0
 
    AIRFLOW_TEMPDIR = os.getenv("AIRFLOW_TEMPDIR")
    AIRFLOW_LOGDIR = os.getenv("AIRFLOW_LOGDIR")

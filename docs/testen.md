@@ -20,7 +20,7 @@ Typ `make help` voor alle beschikbare targets.
 Makefile                                      # Alle commando's (make help)
 requirements-test.txt                         # Python test-dependencies
 docker-compose.test.yml                       # Lichtgewicht test-databases (synthetische data)
-docker-compose.test-delft.yml                 # Override voor Delftse data volumes
+docker-compose.delft-test.yml                 # Zelfstandige testomgeving met Delftse testdata
 tests/
 ├── conftest.py                               # Mocks voor shared.config, roman, etc.
 ├── run_tests.py                              # Fallback runner (zonder venv/pytest)
@@ -31,6 +31,7 @@ tests/
 │   ├── test_foto_parsing.py                  # Regex-patronen voor bestandsclassificatie
 │   ├── test_profielen.py                     # Gemeenteprofielen: selectie, ConventieProfiel, DelftProfiel, VoorbeeldProfiel
 │   ├── test_correcties_yml.py                # Correctiebestand laden en toepassen
+│   ├── test_config_cache.py                  # Cache-instellingen uit shared/config.py zijn getallen
 │   ├── test_encoding.py                      # UTF-8 encoding en conversie
 │   ├── test_fixes_1_to_4.py                  # Bugfixes validatie
 │   ├── test_fix_5_nonetype_foto.py           # NoneType fotobestanden
@@ -91,11 +92,18 @@ Dit target gebruikt de **synthetische voorbeelddata** uit `data/synthetic/data/`
 Het target:
 
 1. Maakt de `.venv` aan als die nog niet bestaat
-2. Start MongoDB 4.2, PostgreSQL 13 en Airflow in Docker (tmpfs voor snelheid)
+2. Start MongoDB 7.0, PostgreSQL 18 met PostGIS, Redis, Airflow en Flask in Docker (databases in tmpfs voor snelheid)
 3. Mount de synthetische data als input-volumes
-4. Triggert de Airflow DAGs (Extract, Transform) en valideert de resultaten
-5. Controleert verwachte aantallen per entiteitstype (sporen, vondsten, artefacten)
-6. Ruimt de containers en volumes op
+4. Triggert de Airflow DAGs (Extract, Transform, Load) en valideert de resultaten
+5. Controleert verwachte aantallen per entiteitstype (sporen, vondsten, artefacten) in MongoDB en PostgreSQL
+6. Draait de Flask smoke tests tegen de geladen database
+7. Ruimt de containers en volumes op
+
+!!! warning "Images worden niet opnieuw gebouwd"
+    `make integration` start de test-containers met de images die al op je machine staan. Wijzigingen in een Dockerfile, in `requirements.txt` of `constraints.txt`, of in `shared/` (die in de Flask-image wordt gekopieerd) zie je pas na een nieuwe build. De Flask-pakketten blijven bij een nieuwe build op de vastgelegde versies (zie [Pakketversies bijwerken](#pakketversies-bijwerken)); die van Airflow kunnen dan wel nieuwer worden. Bouw de images daarom opnieuw na zulke wijzigingen, en zonder cache als je een schone installatie wilt nabootsen:
+    ```bash
+    docker compose -p wasstraat-test -f docker-compose.test.yml build --no-cache --pull
+    ```
 
 ### Delft-specifiek: echte data
 
@@ -108,14 +116,35 @@ Dit target test met de echte Delftse opgravingsdata en controleert op Delft-spec
 ### Handmatig
 
 ```bash
-docker compose -f docker-compose.test.yml up -d
+docker compose -p wasstraat-test -f docker-compose.test.yml up -d
 
 source .venv/bin/activate
 MONGO_TEST_URI="mongodb://testroot:testpass@localhost:27117/" \
 python -m pytest tests/integration/ -v -m integration
 
-docker compose -f docker-compose.test.yml down -v
+docker compose -p wasstraat-test -f docker-compose.test.yml down -v
 ```
+
+## Pakketversies bijwerken
+
+De Flask- en de Jupyter-image installeren hun Python-pakketten met vaste versies uit `services/flask/constraints.txt` en `services/jupyter/constraints.txt`. Daarin staan alle pakketten, ook de afgeleide pakketten die pip zelf meeneemt. Een verse build levert zo dezelfde versies op als de build waarmee de tests geslaagd zijn. `services/flask/requirements.txt` bevat alleen de directe pakketten, met ruime grenzen.
+
+De Flask-build controleert dit: wijken de geïnstalleerde versies af van `constraints.txt`, dan stopt de build met de melding dat je `make constraints` moet draaien. Dat gebeurt bijvoorbeeld als je een pakket aan `requirements.txt` toevoegt of een grens verandert.
+
+Zo werk je de versies bij:
+
+```bash
+make constraints
+git diff services/flask/constraints.txt services/jupyter/constraints.txt
+docker compose -p wasstraat-test -f docker-compose.test.yml build --no-cache --pull
+make test-all
+```
+
+`make constraints` bouwt beide images zonder cache en zonder vaste versies, zodat pip de nieuwste versies binnen de grenzen kiest, en schrijft die versies weg. Werk je maar één image bij, gebruik dan `bash scripts/leg_pakketversies_vast.sh flask` (of `jupyter`).
+
+Commit de nieuwe constraints-bestanden alleen als `make test-all` slaagt. Faalt een test door een nieuwere versie, zet dan een bovengrens in `requirements.txt` en draai `make constraints` opnieuw. De Jupyter-image valt buiten de tests; open na het bijwerken een paar notebooks om te controleren of ze nog werken.
+
+De basisimage van Jupyter staat vast op een digest in `services/jupyter/Dockerfile`. De Flask-image gebruikt `python:3.11-slim-bookworm` zonder digest, zodat beveiligingsupdates van Python en Debian wel binnenkomen. De Airflow-image heeft geen constraints-bestand: de basisimage legt de versies van Airflow zelf vast, maar de extra pakketten uit `services/airflow/requirements.txt` kunnen bij een nieuwe build nog verschuiven.
 
 ## Wat wordt getest?
 
@@ -132,6 +161,7 @@ docker compose -f docker-compose.test.yml down -v
 | `synthetic_data.py` | Validatie dat de synthetische MDB-bestanden de juiste tabellen en kolomstructuur bevatten |
 | `synthetic_monster_data.py` | Structuur, kolomaantallen, referentiële integriteit en projectverwijzingen van synthetische monsterdata |
 | `fix_monster_projectcds.py` | Projectcode-matching logica voor de monsterdatabase (mocking van MongoDB) |
+| `config_cache.py` | Cache-instellingen uit de echte `shared/config.py` zijn getallen en worden door cachelib geaccepteerd |
 
 ### Integratietests
 

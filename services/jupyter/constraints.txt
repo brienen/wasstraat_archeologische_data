@@ -1,0 +1,24 @@
+# Vastgelegde pakketversies voor de Jupyter-image (pip constraints).
+# Gegenereerd met 'make constraints' op 2026-10-20; niet met de hand bijwerken.
+# De grenzen van de directe pakketten staan in services/jupyter/Dockerfile.
+branca==0.8.2
+dnspython==2.9.0
+elastic-transport==9.4.2
+elasticsearch==9.5.1
+folium==0.20.0
+geopandas==1.2.0
+inflect==7.5.0
+mongoengine==0.29.3
+more-itertools==11.2.1
+opencv-python==5.0.0.93
+pdf2image==1.17.0
+psycopg2-binary==2.9.13
+pymongo==4.19.0
+pyogrio==0.13.0
+pyproj==3.7.2
+python-magic==0.4.27
+shapely==2.2.0
+simplejson==4.2.0
+sqlacodegen==4.0.4
+typeguard==4.6.0
+typing_extensions==4.16.0

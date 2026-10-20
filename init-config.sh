@@ -53,6 +53,7 @@ PW_MONGO=$(generate_password)
 PW_REDIS=$(generate_password)
 PW_JUPYTER=$(generate_password)
 PW_FLASK_SECRET=$(generate_password)
+PW_FLASK_ADMIN=$(generate_password)
 PW_AIRFLOW_ADMIN=$(generate_password)
 
 # --- Vervang placeholders in elk .env.example bestand ---
@@ -90,6 +91,7 @@ process_example() {
             ;;
         flask.env)
             _sed_inplace "s/wijzig_deze_geheime_sleutel/$PW_FLASK_SECRET/g" "$target"
+            _sed_inplace "s/flask_admin_secret_42/$PW_FLASK_ADMIN/g" "$target"
             ;;
         airflow.env)
             _sed_inplace "s/SECURITY__ADMIN_PASSWORD=admin/SECURITY__ADMIN_PASSWORD=$PW_AIRFLOW_ADMIN/g" "$target"
@@ -115,6 +117,7 @@ echo "   MongoDB:               $PW_MONGO"
 echo "   Redis:                 $PW_REDIS"
 echo "   Jupyter:               $PW_JUPYTER"
 echo "   Airflow admin:         $PW_AIRFLOW_ADMIN"
+echo "   Flask admin:           $PW_FLASK_ADMIN"
 echo "   Flask secret key:      $PW_FLASK_SECRET"
 echo ""
 echo "💡 Bewaar deze wachtwoorden of bekijk ze in config/*.env"

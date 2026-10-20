@@ -23,24 +23,15 @@ cd /app
 #  flask db upgrade
 #fi
 
-# Check of admin-user al bestaat
+# Maak de beheerder aan als die nog niet bestaat. Het wachtwoord komt uit
+# FLASK_ADMIN_PASSWORD (config/flask.env); zie app/app/beheerder.py.
 echo "==> Checking if admin user exists"
-python <<EOF
-from flask_appbuilder.security.sqla.models import User
+python <<'EOF'
+import os
 from app import appbuilder
+from beheerder import maakBeheerder
 with appbuilder.app.app_context():
-    if not appbuilder.sm.find_user(username="admin"):
-        print("==> Creating admin user")
-        appbuilder.sm.add_user(
-            username="admin",
-            first_name="Admin",
-            last_name="User",
-            email="admin@local",
-            role=appbuilder.sm.find_role("Admin"),
-            password="admin"
-        )
-    else:
-        print("==> Admin user already exists")
+    maakBeheerder(appbuilder.sm, os.environ)
 EOF
 
 # Start de Flask-app met gunicorn

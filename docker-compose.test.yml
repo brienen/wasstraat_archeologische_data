@@ -3,7 +3,7 @@
 # Alle services delen dezelfde PostgreSQL database (airflow_test).
 #
 # Standaard: synthetische data (SY001 + SY002).
-# Voor Delftse data: make integration-delft (gebruikt docker-compose.test-delft.yml override)
+# Voor Delftse data: make integration-delft (gebruikt het aparte docker-compose.delft-test.yml)
 #
 # Gebruik: make integration       (Airflow pipeline tests)
 #          make test-flask         (Flask smoke tests)
@@ -171,6 +171,8 @@ services:
       CACHE_DEFAULT_TIMEOUT: "60"
       ES_HOST: ""
       SECRET_KEY: test-secret-key-voor-flask-smoke-tests
+      # Moet overeenkomen met FLASK_ADMIN_PASSWORD in tests/integration/test_flask_smoke.py
+      FLASK_ADMIN_PASSWORD: test-beheerder-wachtwoord
       MONGO_SERVER: mongo
       MONGO_INITDB_ROOT_USERNAME: testroot
       MONGO_INITDB_ROOT_PASSWORD: testpass
