@@ -3,8 +3,8 @@
 FROM quay.io/jupyter/datascience-notebook:python-3.11@sha256:14379f24c840f27375e3a4b29a9fa55e449633ac85c9cf3806ca62d11e5603ec
 
 USER root
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends libmagic-dev gdal-bin libgdal-dev g++ poppler-utils && \
+RUN apt-get -o Acquire::Retries=3 update && \
+    apt-get -o Acquire::Retries=3 install -y --no-install-recommends libmagic-dev gdal-bin libgdal-dev g++ poppler-utils && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 USER jovyan

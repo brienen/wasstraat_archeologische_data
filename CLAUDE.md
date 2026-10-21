@@ -149,7 +149,7 @@ make backup           # Backup PostgreSQL + MongoDB
 make restore TS=...   # Restore vanuit timestamp
 make export           # Exporteer tabellen als CSV
 make stop / start     # Containers stoppen/starten
-make constraints      # Leg pakketversies Flask/Jupyter opnieuw vast (daarna make test-all)
+make constraints      # Leg pakketversies Flask, Jupyter en Airflow opnieuw vast (daarna make test-all)
 make migrate-postgres-data # Eenmalig: PostgreSQL-data van oude installatie naar het volume
 make clean            # Verwijder .venv en caches
 ```

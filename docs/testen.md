@@ -141,7 +141,7 @@ python -m pytest tests/integration/test_incremental_synthetic_data.py -v -s
 ```
 
 !!! warning "Images worden niet opnieuw gebouwd"
-    `make integration` start de test-containers met de images die al op je machine staan. Wijzigingen in een Dockerfile, in `requirements.txt` of `constraints.txt`, of in `shared/` (die in de Flask-image wordt gekopieerd) zie je pas na een nieuwe build. De Flask-pakketten blijven bij een nieuwe build op de vastgelegde versies (zie [Pakketversies bijwerken](#pakketversies-bijwerken)); die van Airflow kunnen dan wel nieuwer worden. Bouw de images daarom opnieuw na zulke wijzigingen, en zonder cache als je een schone installatie wilt nabootsen:
+    `make integration` start de test-containers met de images die al op je machine staan. Wijzigingen in een Dockerfile, in `requirements.txt` of `constraints.txt`, of in `shared/` (die in de Flask-image wordt gekopieerd) zie je pas na een nieuwe build. De Flask- en Airflow-pakketten blijven bij een nieuwe build op de vastgelegde versies (zie [Pakketversies bijwerken](#pakketversies-bijwerken)). Bouw de images daarom opnieuw na zulke wijzigingen, en zonder cache als je een schone installatie wilt nabootsen:
     ```bash
     docker compose -p wasstraat-test -f docker-compose.test.yml build --no-cache --pull
     ```
@@ -168,24 +168,28 @@ docker compose -p wasstraat-test -f docker-compose.test.yml down -v
 
 ## Pakketversies bijwerken
 
-De Flask- en de Jupyter-image installeren hun Python-pakketten met vaste versies uit `services/flask/constraints.txt` en `services/jupyter/constraints.txt`. Daarin staan alle pakketten, ook de afgeleide pakketten die pip zelf meeneemt. Een verse build levert zo dezelfde versies op als de build waarmee de tests geslaagd zijn. `services/flask/requirements.txt` bevat alleen de directe pakketten, met ruime grenzen.
+De Flask-, de Jupyter- en de Airflow-image installeren hun Python-pakketten met vaste versies uit `services/flask/constraints.txt`, `services/jupyter/constraints.txt` en `services/airflow/constraints.txt`. Een verse build levert zo dezelfde versies op als de build waarmee de tests geslaagd zijn. De `requirements.txt` van Flask en Airflow bevatten alleen de directe pakketten, met ruime grenzen; bij Jupyter staan ze in de pip-opdracht van de Dockerfile.
 
-De Flask-build controleert dit: wijken de geïnstalleerde versies af van `constraints.txt`, dan stopt de build met de melding dat je `make constraints` moet draaien. Dat gebeurt bijvoorbeeld als je een pakket aan `requirements.txt` toevoegt of een grens verandert.
+- **Flask** bouwt op `python:3.11-slim-bookworm`. Daarom staan in `constraints.txt` alle pakketten, ook de afgeleide pakketten die pip zelf meeneemt.
+- **Jupyter en Airflow** bouwen voort op een basisimage die haar eigen versies vastlegt: Jupyter op een digest, Airflow via de constraints waarmee `apache/airflow:2.10.5-python3.11` is gebouwd. In hun `constraints.txt` staat alleen wat pip bovenop de basisimage installeert of wijzigt: de directe pakketten en hun afgeleide pakketten. Pakketten die de basisimage al vastlegt staan er niet nog eens in, zodat de twee nooit botsen.
+- **Airflow** gaat nog een stap verder: de build legt eerst de versies van de basisimage vast (`pip list --format=freeze`) en geeft die als extra constraints aan pip. Pip mag dus alleen pakketten toevoegen, nooit Airflow of een van zijn pakketten bij- of terugwerken, en `pip check` moet slagen. Vraagt `services/airflow/requirements.txt` een versie die de basisimage niet heeft, dan stopt de build; verruim dan de grens in `requirements.txt` (zo staat `opentelemetry-api` op `>=1.27`, de versie van de basisimage).
+
+De Flask- en de Airflow-build controleren de versies: wijken de geïnstalleerde versies af van `constraints.txt`, dan stopt de build met de melding dat je `make constraints` moet draaien. Dat gebeurt bijvoorbeeld als je een pakket aan `requirements.txt` toevoegt of een grens verandert.
 
 Zo werk je de versies bij:
 
 ```bash
 make constraints
-git diff services/flask/constraints.txt services/jupyter/constraints.txt
+git diff services/*/constraints.txt
 docker compose -p wasstraat-test -f docker-compose.test.yml build --no-cache --pull
 make test-all
 ```
 
-`make constraints` bouwt beide images zonder cache en zonder vaste versies, zodat pip de nieuwste versies binnen de grenzen kiest, en schrijft die versies weg. Werk je maar één image bij, gebruik dan `bash scripts/leg_pakketversies_vast.sh flask` (of `jupyter`).
+`make constraints` bouwt de drie images zonder cache en zonder vaste versies, zodat pip de nieuwste versies binnen de grenzen kiest, en schrijft die versies weg. Werk je maar één image bij, gebruik dan `bash scripts/leg_pakketversies_vast.sh flask` (of `jupyter` of `airflow`). Het script bouwt eigen images (`wasstraat-pakketversies-*`), verwijdert ze na afloop en laat draaiende containers ongemoeid.
 
-Commit de nieuwe constraints-bestanden alleen als `make test-all` slaagt. Faalt een test door een nieuwere versie, zet dan een bovengrens in `requirements.txt` en draai `make constraints` opnieuw. De Jupyter-image valt buiten de tests; open na het bijwerken een paar notebooks om te controleren of ze nog werken.
+Commit de nieuwe constraints-bestanden alleen als `make test-all` slaagt. Faalt een test door een nieuwere versie, zet dan een bovengrens in `requirements.txt` (bij Jupyter in de Dockerfile) en draai `make constraints` opnieuw. De Jupyter-image valt buiten de tests; open na het bijwerken een paar notebooks om te controleren of ze nog werken.
 
-De basisimage van Jupyter staat vast op een digest in `services/jupyter/Dockerfile`. De Flask-image gebruikt `python:3.11-slim-bookworm` zonder digest, zodat beveiligingsupdates van Python en Debian wel binnenkomen. De Airflow-image heeft geen constraints-bestand: de basisimage legt de versies van Airflow zelf vast, maar de extra pakketten uit `services/airflow/requirements.txt` kunnen bij een nieuwe build nog verschuiven.
+De basisimage van Jupyter staat vast op een digest in `services/jupyter/Dockerfile`. De Flask-image gebruikt `python:3.11-slim-bookworm` zonder digest, zodat beveiligingsupdates van Python en Debian wel binnenkomen. Ook `apache/airflow:2.10.5-python3.11` staat niet op een digest; de Python-pakketten van die tag liggen vast via de constraints van Airflow 2.10.5. De `apt-get`-opdrachten in de Dockerfiles proberen een mislukte download drie keer opnieuw (`-o Acquire::Retries=3`), zodat een verse build niet stukloopt op een tijdelijke netwerkfout.
 
 ## Wat wordt getest?
 
@@ -204,6 +208,9 @@ De basisimage van Jupyter staat vast op een digest in `services/jupyter/Dockerfi
 | `synthetic_monster_data.py` | Structuur, kolomaantallen, referentiële integriteit en projectverwijzingen van synthetische monsterdata |
 | `fix_monster_projectcds.py` | Projectcode-matching logica voor de monsterdatabase (mocking van MongoDB) |
 | `config_cache.py` | Cache-instellingen uit de echte `shared/config.py` zijn getallen en worden door cachelib geaccepteerd |
+| `wachtwoord_maskeren.py` | `maskeerWachtwoord` (`shared/logutils.py`) voor PostgreSQL-, MongoDB- en Redis-URI's, wachtwoorden met bijzondere tekens, URI's zonder wachtwoord en lege waarden; `shared/database.py`, `shared/fulltext.py` en `loadAll` loggen de verbinding zonder wachtwoord (caplog) |
+| `jupyter_image.py` | De Jupyter-image installeert `roman` (nodig voor de pipelinecode) en een Elasticsearch-client met de hoofd- en minorversie van de server uit `docker-compose.yml`; geen client met een hogere hoofdversie in de Flask- en Jupyter-constraints |
+| `pakketversies.py` | `services/*/constraints.txt` bevatten alleen exacte versies; de Airflow-constraints leggen Airflow zelf niet vast, de Airflow-build houdt de pakketten van de basisimage op hun versie, installeert met constraints, draait `pip check` en controleert de versies; `apt-get` met retries in de Dockerfiles; `make constraints` kent Airflow en raakt geen draaiende containers |
 | `verwerkingsrun.py`, `bronbestanden.py`, `opruimen.py`, `delta_transform.py` | Incrementeel laden: run-document, registratie en delta van bronbestanden, opruimen, delta-transformaties en stabiele sleutels (ook de samengestelde sleutel van artefacten) |
 | `load_incrementeel.py` | Upsert-load (`loadIncrementeel`: upsert, verwijderen, FK-mechaniek, sequence, gebruikerstabellen ongemoeid, tellingen) en de Elasticsearch-delta (`indexTableIncrementeel`) met nagebootste databases |
 
@@ -223,7 +230,7 @@ De basisimage van Jupyter staat vast op een digest in `services/jupyter/Dockerfi
 1. Maak een nieuw bestand aan in `tests/unit/` of `tests/integration/`
 2. Gebruik `pytest.mark.unit` of `pytest.mark.integration` als marker
 3. Gebruik `pytest.mark.delft` voor tests die Delftse data vereisen
-4. De `conftest.py` mockt automatisch `shared.config` en `shared.const`
+4. De `conftest.py` mockt automatisch `shared.config` en laadt de echte `shared.const` en `shared.logutils`
 5. Voor integratietests: gebruik de `mongo_client`, `staging_db` en `analyse_db` fixtures
 
 ## Opruimen

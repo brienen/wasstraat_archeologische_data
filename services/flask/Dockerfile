@@ -3,8 +3,8 @@ FROM python:3.11-slim-bookworm
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
+RUN apt-get -o Acquire::Retries=3 update && \
+    apt-get -o Acquire::Retries=3 install -y --no-install-recommends \
       libmagic-dev gdal-bin libgdal-dev g++ poppler-utils netcat-openbsd && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*

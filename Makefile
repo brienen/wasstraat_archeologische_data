@@ -250,7 +250,7 @@ build-force: ## Bouw alle Docker images opnieuw van de grond af aan (geen cache)
 	$(DC) build --no-cache --pull postgres airflow flask jupyter apache
 
 .PHONY: constraints
-constraints: ## Leg nieuwe pakketversies vast voor Flask en Jupyter (daarna: make test-all)
+constraints: ## Leg nieuwe pakketversies vast voor Flask, Jupyter en Airflow (daarna: make test-all)
 	bash scripts/leg_pakketversies_vast.sh
 
 .PHONY: app

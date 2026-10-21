@@ -18,7 +18,7 @@ Laatst bijgewerkt: 2026-10-21 (Apache als voordeur gepubliceerd; Delftse testomg
 ### 2.1 Installeerbaar op een schone omgeving
 
 - Een verse kloon moet met `make app` werken zonder verborgen afhankelijkheden. Vereisten staan in README en `docs/aan-de-slag.md`: Docker, GNU Make en bash (macOS: Xcode Command Line Tools), Windows via WSL 2, Python 3.10 t/m 3.12 alleen voor de tests.
-- Pakketversies van de Flask- en Jupyter-image liggen vast in `services/*/constraints.txt`; bijwerken met `make constraints`.
+- Pakketversies van de Flask-, Jupyter- en Airflow-image liggen vast in `services/*/constraints.txt`; bijwerken met `make constraints`. De Airflow-build houdt de pakketten van de basisimage vast en voegt alleen toe.
 - Alle wachtwoorden worden gegenereerd door `init-config.sh`, inclusief de Flask-beheerder (`FLASK_ADMIN_PASSWORD`) en het Jupyter-token.
 - PostgreSQL-data staat in het Docker-volume (`PGDATA` en volume beide op `/data/postgres`). Oude installaties migreren met `make migrate-postgres-data`.
 - De documentatie beschrijft de werkelijke stack en de werkelijke DAG-namen; verouderde doelen (`make prod`, `make acc`, `make example`) zijn verwijderd.
@@ -54,7 +54,7 @@ Ontwerp en status: `docs/componenten/incrementeel-laden.md`.
 | `make publish` en `deploy/` | Gebouwd en gecommit (`81efba3`); versie 1.0.1 gepubliceerd op ghcr.io, op 2026-10-21 (middag) opnieuw gepubliceerd onder 1.0.1 inclusief Apache als voordeur en de laadstap-fix |
 | Apache als voordeur | Gebouwd, getest en gecommit (`f5fb594`); eigen installatie opnieuw gebouwd en gestart (webapplicatie op poort 5052, 5051 dicht); images opnieuw gepubliceerd als 1.0.1 |
 | Delftse referentie-uitkomst | Opnieuw vastgelegd na kopregel-fix (+50 munten), &-fix (+96 aardewerk) en fotokoppeling (Put 275, Vondst 3060) |
-| Nachtset 21/22 oktober 2026 | Lokale commits per issue onder de naam van de gebruiker, nog niet gepusht: #77 (wachtwoord gemaskeerd in de verbindingslog, `shared/logutils.py`), #78 (Jupyter-image met `roman` en Elasticsearch-client 8.17) |
+| Nachtset 21/22 oktober 2026 | Lokale commits per issue onder de naam van de gebruiker, nog niet gepusht: #77 (wachtwoord gemaskeerd in de verbindingslog, `shared/logutils.py`), #78 (Jupyter-image met `roman` en Elasticsearch-client 8.17), #80 (Airflow-image met vastgelegde pakketversies, apt-retries) |
 | Delftse testomgeving met Elasticsearch | Toegevoegd op 2026-10-21 (`elasticsearch-test`, container `wasstraat_elasticsearch_delft_test`): `DAG_Load_Only` moet er volledig slagen en een test vergelijkt per tabel Elasticsearch met PostgreSQL |
 | Delftse testomgeving | Het tmpfs-mediavolume van 4 GB uit de Apache-wijziging liep vol (rapporten circa 5 GB), waardoor 93 van de 541 bestanden stil onverwerkt bleven; op 2026-10-21 vervangen door een schijfvolume op `/output/archeomedia` (map in de Airflow-image), met een grens op onverwerkte bestanden in de Delftse extractietest |
 
@@ -69,7 +69,6 @@ Uitvoeringsplan v2 (maart 2026): #61 (incrementeel laden) is uitgevoerd en op 20
 - **Tekstvelden met een regeleinde (#74)** krijgen in de staging de extra kolommen midden in het veld (bestaande beperking van de export per regel).
 - **Codetabellen (#75)** zoals "AARDEWERK 1&2 VOORWERP" en "AARDEWERK 1 BAKSEL" worden als aardewerk geharmoniseerd; configuratievraag voor de harmonisatie-Excel.
 - **Standplaatsen (#76)** houden projectcode "DB34"; de identificatie laat de projectcode daar bewust ongemoeid.
-- **Airflow-image (#80):** de extra pakketten liggen nog niet vast; apt-retries in de Dockerfiles zouden verse builds robuuster maken.
 - **Documentatie (#64):** architectuurdiagrammen en hun tekst noemen nog Django, Vue en Oracle; het advies over schrijfrechten op Linux is niet getest; de Delftse Flask-test voor de projectlijst slaat zichzelf over (login nodig).
 - **Docker-onderhoud:** vier oude testvolumes van `wasstraat-test` kunnen weg.
 - **Extractie slikt fouten bij afbeeldingen in (#70):** mislukte bestanden blijven stil op `processed: False`; ontdekt bij het volle mediavolume op 2026-10-21.

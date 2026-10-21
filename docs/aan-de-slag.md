@@ -56,7 +56,7 @@ make app
 
 `make app` start alle services met de synthetische voorbeelddata uit `data/synthetic/`. Voor eigen data gebruik je `make delft` (zie stap 4).
 
-Bij de allereerste start duurt het enkele minuten omdat Docker alle images moet downloaden en bouwen. Je ziet de voortgang in de terminal.
+Bij de allereerste start duurt het enkele minuten omdat Docker alle images moet downloaden en bouwen. Je ziet de voortgang in de terminal. De Python-pakketten van de Airflow-, Flask- en Jupyter-image liggen vast in `services/*/constraints.txt`, zodat elke build dezelfde, geteste versies krijgt; zie [Pakketversies bijwerken](testen.md#pakketversies-bijwerken).
 
 !!! warning "Linux: mappen vooraf aanmaken"
     Op Linux maakt Docker ontbrekende mappen voor gekoppelde volumes aan als `root`. De containers draaien als een andere gebruiker en kunnen daar dan niet in schrijven. Maak de uitvoer- en backupmappen daarom vooraf aan en maak ze schrijfbaar:
