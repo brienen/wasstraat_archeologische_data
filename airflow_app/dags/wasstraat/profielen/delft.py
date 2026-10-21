@@ -168,6 +168,8 @@ class DelftProfiel(ConventieProfiel):
 
     # ----------------------------------------------------------
     # Per-entiteit methoden — database-entiteiten (Type A)
+    # Foto's gebruiken de geërfde identificeer_foto_db(): de standaard-
+    # normalisatie (projectcd DB34 → DB034, nummers naar integers) volstaat.
     # ----------------------------------------------------------
 
     def identificeer_artefact(self, doc):

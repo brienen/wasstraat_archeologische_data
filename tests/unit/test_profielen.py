@@ -125,6 +125,34 @@ class TestConventieProfiel:
         result = profiel.identificeer('OnbekendType', doc)
         assert result is doc
 
+    @pytest.mark.parametrize("soort", ['Foto', 'Tekening', 'Rapport'])
+    def test_identificeer_bestandsoort_kiest_db_variant(self, profiel, soort):
+        """identificeer() kiest voor bestands-entiteiten identificeer_<soort>_db, niet de bestandsnaam-parser.
+
+        De parser identificeer_<soort>(doc, projectcd) verwacht twee argumenten;
+        hem kiezen gaf een TypeError (en voor Foto: geen artefactkoppeling).
+        """
+        doc = {'soort': soort, 'projectcd': 'TEST', 'fileName': 'TEST_P1_H2_3_4.jpg'}
+        result = profiel.identificeer(soort, doc)
+        assert result is doc
+        assert 'vondstnr' not in result, "de bestandsnaam-parser is aangeroepen"
+
+    def test_identificeer_foto_normaliseert_nummers(self, profiel):
+        """Een Foto-record krijgt integers voor putnr, vondstnr, subnr en fotonr (nodig voor key_foto1)."""
+        doc = {'soort': 'Foto', 'projectcd': 'TEST', 'putnr': '3', 'vondstnr': '456', 'subnr': '789', 'fotonr': '2'}
+        result = profiel.identificeer('Foto', doc)
+        assert result['projectcd'] == 'TEST'
+        assert (result['putnr'], result['vondstnr'], result['subnr'], result['fotonr']) == (3, 456, 789, 2)
+        for veld in ['putnr', 'vondstnr', 'subnr', 'fotonr']:
+            assert type(result[veld]) is int, f"{veld} is geen int maar {type(result[veld])}"
+
+    def test_identificeer_tekening_en_rapport_db_passthrough(self, profiel):
+        """De standaard _db-varianten normaliseren projectcd en laten tekeningcd en rapportnr ongemoeid."""
+        tekening = profiel.identificeer('Tekening', {'soort': 'Tekening', 'projectcd': 'TEST', 'tekeningcd': 'B2'})
+        assert tekening['tekeningcd'] == 'B2'
+        rapport = profiel.identificeer('Rapport', {'soort': 'Rapport', 'rapportnr': 'DAR 12', 'brondata': {}})
+        assert rapport['rapportnr'] == 'DAR 12'
+
     def test_normaliseer_projectcode_passthrough(self, profiel):
         assert profiel.normaliseer_projectcode("abc123") == "abc123"
 
@@ -194,6 +222,53 @@ class TestDelftProfiel:
         result = profiel.identificeer_foto(doc, "DC001")
         assert result is not None
         assert 'putnr' not in result or result.get('putnr') is None
+
+    # --- Database-identificatie van foto's (Type A, via de dispatcher) ---
+
+    def test_identificeer_foto_via_dispatcher_faalt_niet(self, profiel):
+        """identificeer('Foto', doc) roept niet de bestandsnaam-parser met twee argumenten aan (gaf TypeError)."""
+        doc = {'soort': 'Foto', 'projectcd': 'DB34', 'fileName': 'DB34_P10_H0230_216_3.jpg'}
+        result = profiel.identificeer('Foto', doc)
+        assert result is doc
+        assert 'vondstnr' not in result, "de bestandsnaam-parser is aangeroepen"
+
+    def test_identificeer_foto_normaliseert_projectcode_en_nummers(self, profiel):
+        """Een geparste objectfoto krijgt in Transform 2 projectcode DB034 en integers, net als het artefact."""
+        doc = {"fileName": "DB34_P10_H0230_216_3.jpg",
+               "fullFileName": "/input/projecten/DB034/L Fotos/H (Objectfoto's)/Aardewerk/DB34_P10_H0230_216_3.jpg"}
+        projectcd = profiel.extract_projectcode_uit_bestandsnaam(doc['fileName'], '')
+        doc = profiel.identificeer_foto(doc, projectcd)
+        assert (doc['projectcd'], doc['putnr'], doc['vondstnr'], doc['subnr'], doc['fotonr']) == ('DB34', '10', '230', '216', '3')
+
+        result = profiel.identificeer('Foto', doc)
+        assert result['projectcd'] == 'DB034'
+        assert (result['putnr'], result['vondstnr'], result['subnr'], result['fotonr']) == (10, 230, 216, 3)
+        for veld in ['putnr', 'vondstnr', 'subnr', 'fotonr']:
+            assert type(result[veld]) is int, f"{veld} is geen int maar {type(result[veld])}"
+        assert result['artefactsoort'] == const.ARTF_AARDEWERK
+
+    def test_identificeer_foto_zelfde_sleutelvelden_als_artefact(self, profiel):
+        """Foto en artefact krijgen dezelfde velden voor key_foto1: projectcd, artefactsoort, putnr, vondstnr, subnr."""
+        foto = profiel.identificeer('Foto', {'soort': 'Foto', 'projectcd': 'DB34', 'putnr': '10',
+                                             'vondstnr': '230', 'subnr': '216', 'artefactsoort': 'Aardewerk'})
+        artefact = profiel.identificeer('Artefact', {'soort': 'Artefact', 'projectcd': 'db-34', 'putnr': 10,
+                                                     'vondstnr': 230, 'subnr': 216, 'artefactnr': 5, 'artefactsoort': 'Aardewerk'})
+        velden = ['projectcd', 'artefactsoort', 'putnr', 'vondstnr', 'subnr']
+        assert [foto[v] for v in velden] == [artefact[v] for v in velden] == ['DB034', 'Aardewerk', 10, 230, 216]
+
+    def test_identificeer_foto_ongeldig_putnr_verwijderd(self, profiel):
+        """Een niet-numeriek putnr (DB34_PX_H...) verdwijnt; een niet-numeriek fotonr blijft tekst."""
+        result = profiel.identificeer('Foto', {'soort': 'Foto', 'projectcd': 'DB34', 'putnr': 'X', 'vondstnr': '12', 'fotonr': '1a'})
+        assert 'putnr' not in result
+        assert result['vondstnr'] == 12
+        assert result['fotonr'] == '1a'
+
+    def test_identificeer_tekening_en_rapport_via_dispatcher(self, profiel):
+        """identificeer() normaliseert tekeningcd en rapportnr via de Delftse _db-varianten."""
+        tekening = profiel.identificeer('Tekening', {'soort': 'Tekening', 'projectcd': 'dc16', 'tekeningcd': 'B2'})
+        assert (tekening['projectcd'], tekening['tekeningcd']) == ('DC016', 'B002')
+        rapport = profiel.identificeer('Rapport', {'soort': 'Rapport', 'rapportnr': 'DAR 12', 'brondata': {}})
+        assert rapport['rapportnr'] == 'DAR012'
 
     # --- Bestandsnaam-parsing: tekening ---
 
@@ -308,3 +383,12 @@ class TestVoorbeeldProfiel:
         assert profiel.identificeer_foto(
             {"fileName": "test.jpg", "fullFileName": "/test.jpg"}, "TEST"
         ) is None
+
+    def test_identificeer_bestandsoorten_zonder_overrides(self, profiel):
+        """Ook zonder eigen _db-methoden werkt identificeer() voor Foto, Tekening en Rapport."""
+        foto = profiel.identificeer('Foto', {'soort': 'Foto', 'projectcd': 'ab1', 'vondstnr': '7'})
+        assert (foto['projectcd'], foto['vondstnr']) == ('ab1', 7)
+        tekening = profiel.identificeer('Tekening', {'soort': 'Tekening', 'projectcd': 'ab1', 'tekeningcd': 'B2'})
+        assert tekening['tekeningcd'] == 'B2'
+        rapport = profiel.identificeer('Rapport', {'soort': 'Rapport', 'rapportnr': '12'})
+        assert rapport['rapportnr'] == '12'

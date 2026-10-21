@@ -18,6 +18,7 @@ tests/unit/                # Unit tests (pytest)
 tests/integration/         # Integratietests (Docker-based)
 docs/                      # MkDocs documentatie (Nederlands)
 config/                    # Environment-bestanden (.env, gegenereerd door init-config.sh)
+deploy/                    # Live installatie uit gepubliceerde images (compose, Makefile, kopieën van init-config.sh en config/*.env.example)
 services/                  # Dockerfiles per service
 data/delft/data/           # Delftse bronbestanden (.mdb Access-databases, niet in repo)
 data/delft/output/         # Verwerkte Delftse data (niet in repo)
@@ -68,12 +69,12 @@ airflow_app/dags/wasstraat/profielen/
 
 **Twee typen methoden:**
 
-- **Type A — database-entiteiten** (`identificeer(soort, doc)` dispatcher → `identificeer_put/vlak/spoor/vondst/artefact/...`): normaliseer projectcd, converteer identificerende integers.
-- **Type B — bestands-entiteiten** (`identificeer_foto(doc, projectcd)`, `identificeer_tekening(doc, projectcd)`): parse bestandsnaam naar velden. Standaard retourneert `None`; DelftProfiel implementeert regex-parsing.
+- **Type A — database-entiteiten** (`identificeer(soort, doc)` dispatcher → `identificeer_put/vlak/spoor/vondst/artefact/...`): normaliseer projectcd, converteer identificerende integers. Voor Foto, Tekening en Rapport (`const.BESTANDSOORTEN`) kiest de dispatcher `identificeer_foto_db/tekening_db/rapport_db(doc)`, omdat de naam zonder `_db` daar de bestandsnaam-parser is.
+- **Type B — bestands-entiteiten** (`identificeer_foto(doc, projectcd)`, `identificeer_tekening(doc, projectcd)`): parse bestandsnaam naar velden. Standaard retourneert `None`; DelftProfiel implementeert regex-parsing. Alleen `parseFotobestanden()` roept deze aan.
 
 **Aanroep in de pipeline:**
 - `parseFotobestanden()` — `identificeer_foto()` / `identificeer_tekening()` voor bestandsnaam-parsing
-- `enhanceAllAttributes()` — `identificeer(soort, doc)` voor database-entiteiten; `identificeer_tekening_db()` / `identificeer_rapport_db()` voor Tekening/Rapport
+- `enhanceAllAttributes()` — `identificeer(soort, doc)` voor alle soorten; de dispatcher kiest voor Foto/Tekening/Rapport de `_db`-variant
 
 **Tests:** `tests/unit/test_profielen.py` — profielselectie, caching, ConventieProfiel, DelftProfiel, VoorbeeldProfiel.
 
@@ -129,6 +130,11 @@ make synthetic        # Genereer synthetische MDB-bestanden opnieuw
 # Documentatie
 make docs             # MkDocs dev-server op localhost:8000
 make docs-build       # Bouw statische site
+
+# Publiceren (images voor deploy/)
+make publish          # Bouw alle images multi-arch en push naar ghcr.io/brienen/wasstraat-<service>:<versie> en :latest
+make publish SERVICE=flask PUSH=0   # Eén image, alleen lokaal bouwen
+make release VERSION=1.2.3 MSG="..."  # Versie vastleggen, committen, taggen, pushen en publiceren
 
 # Onderhoud
 make backup           # Backup PostgreSQL + MongoDB
@@ -204,6 +210,15 @@ De 3-fase atomic swap is ongewijzigd: (1) laad naar `_new` tabellen, (2a) atomic
 2. **Stap 2:** Flask smoke tests (marker: `flask_smoke`) — vereist geladen PostgreSQL-data uit stap 1
 
 De Flask smoke tests controleren of projecten zichtbaar zijn op de kaart en hebben daarom gevulde `Def_Project` data nodig. Draai `make integration` voor de volledige suite, of `make integration-pipeline` voor alleen Extract + Transform zonder Load.
+
+## Publicatie en live installatie (deploy/)
+
+De repository is de ontwikkelomgeving; gebruikers installeren de Wasstraat vanuit de gepubliceerde images met de map `deploy/` (zie [docs/deployment/installatie-met-images.md](docs/deployment/installatie-met-images.md)).
+
+- `make publish` bouwt de vier eigen images (airflow, flask, postgres, apache) met `docker buildx` voor linux/amd64 en linux/arm64 en pusht ze naar `ghcr.io/brienen/wasstraat-<service>` met de tags `<versie>` (uit `config/version.env`, anders `version.env.example`) en `latest`. `PUSH=0` bouwt alleen lokaal voor het eigen platform. Inloggen gebeurt buiten het doel om (`docker login ghcr.io`).
+- De Airflow-image bevat `airflow_app/dags`, `airflow_app/scripts` en `shared/` (als `dags/shared`). De ontwikkel-compose-bestanden mounten de broncode daaroverheen; de gepubliceerde images draaien zonder volumes naar broncode. Jupyter is een ontwikkelvoorziening: geen image in `make publish` en geen service in `deploy/`.
+- `deploy/docker-compose.yml` heeft alleen `image:`-regels met `${WASSTRAAT_VERSION}` uit `deploy/.env`; brondata en `wasstraat_config` zijn alleen-lezen gemount. `deploy/init-config.sh`, `deploy/config/*.env.example` (alleen de zes die de compose gebruikt) en de harmonisatie-Excel zijn kopieën; `tests/unit/test_deploy.py` bewaakt dat ze gelijk blijven aan het origineel en dat `deploy/.env.example` dezelfde versie heeft als `config/version.env.example`. Wijzig je het origineel, kopieer het dan ook naar `deploy/`.
+- `.dockerignore` houdt `data/`, `notebooks/`, `docs/` en `deploy/` buiten de buildcontext; geen Dockerfile kopieert daaruit.
 
 ## Belangrijke aandachtspunten
 

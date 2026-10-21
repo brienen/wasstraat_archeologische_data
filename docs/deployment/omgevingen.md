@@ -1,6 +1,9 @@
 # Omgevingen & Docker Compose
 
-De Wasstraat draait als een set Docker-containers die via `docker-compose` worden georkestreerd. Er zijn meerdere compose-bestanden die samen de verschillende omgevingen definiëren.
+De Wasstraat draait als een set Docker-containers die via `docker compose` worden georkestreerd. Er zijn meerdere compose-bestanden die samen de verschillende omgevingen definiëren.
+
+!!! info "Ontwikkelomgeving en live installatie"
+    De compose-bestanden in de repository bouwen de images uit de broncode en mounten die broncode in de containers: dit is de **ontwikkelomgeving**. Een installatie voor gebruik draait uit de **gepubliceerde images** op `ghcr.io/brienen`, met het compose-bestand in de map `deploy/`, zonder broncode. Zie [Installatie met images](installatie-met-images.md). Deze pagina beschrijft de ontwikkelomgeving en, onderaan, het publiceren van de images.
 
 ## Services Overzicht
 
@@ -106,7 +109,7 @@ Alle services lezen configuratie uit bestanden in `config/`:
 | `flask.env` | Flask geheime sleutel, wachtwoord van de beheerder (`FLASK_ADMIN_PASSWORD`) en mailinstellingen |
 | `jupyter.env` | Token voor Jupyter Lab (`JUPYTER_PASSWORD`) |
 | `elasticsearch.env` | Wordt niet ingelezen; de services gebruiken standaard `http://elasticsearch:9200` |
-| `version.env` | Versienummer, alleen gebruikt door `make release` |
+| `version.env` | Versienummer voor `make publish` en `make release` (zie [Publicatie van images](#publicatie-van-images)) |
 
 Daarnaast leest de Airflow-container configuratie uit `wasstraat_config/` (gemount als `/opt/airflow/config/`):
 
@@ -173,6 +176,10 @@ make app                     # of: make delft
 
 De `shared/` directory wordt in zowel Airflow als Flask gebruikt en bevat de gezamenlijke configuratie (`config.py`), database-utilities en constanten.
 
+### Broncode in de images
+
+De Dockerfiles kopiëren de code in de images: de Flask-image bevat `app/` en `shared/`, de Airflow-image `airflow_app/dags`, `airflow_app/scripts` en `shared/` (als `/opt/airflow/dags/shared`). De gepubliceerde images draaien daardoor zonder volumes naar broncode. In de ontwikkelomgeving mounten `docker-compose.yml` en `docker-compose.delft.yml` de mappen `airflow_app/dags`, `airflow_app/scripts` en `shared/` over die kopieën heen, zodat wijzigingen direct zichtbaar zijn zonder opnieuw te bouwen. Jupyter is een **ontwikkelvoorziening**: de Jupyter-container krijgt de notebooks en de code via volumes, hoort alleen bij de ontwikkelomgeving en wordt niet gepubliceerd. `.dockerignore` houdt `data/`, `notebooks/`, `docs/` en `deploy/` buiten de buildcontext.
+
 ## Backup en Restore
 
 De Makefile bevat targets voor backup en restore:
@@ -202,19 +209,51 @@ make export
 
 Dit exporteert alle `Def_*` tabellen (Project, Put, Spoor, Vondst, Artefact, Monster, etc.) naar CSV-bestanden in `data/<omgeving>/backup/postgres/postgres_<timestamp>/`.
 
-## Release en Publicatie
+## Publicatie van images
 
-Voor het publiceren van een nieuwe versie:
+De images voor de live installatie staan op de GitHub Container Registry, onder `ghcr.io/brienen/wasstraat-<service>` voor de vier eigen services: `airflow`, `flask`, `postgres` en `apache`. MongoDB, Elasticsearch en Redis komen rechtstreeks van Docker Hub en Elastic. Jupyter is een ontwikkelvoorziening en wordt niet gepubliceerd. Elke image krijgt twee tags: het versienummer en `latest`.
 
 ```bash
-make release VERSION=<versie> MSG="<beschrijving>"
-# Voorbeeld: make release VERSION=1.1.0 MSG="Nieuwe zoekfunctionaliteit"
+make publish                      # alle vier images, linux/amd64 + linux/arm64, push naar ghcr.io
+make publish SERVICE=flask        # één image
+make publish PUSH=0               # alleen lokaal bouwen voor dit platform, niet pushen
+make publish NO_CACHE=1           # schone build met verse basisimages
+make publish VERSION=1.2.0        # andere versie dan die in config/version.env
 ```
 
-Dit voert de volgende stappen uit:
+`make publish` bouwt met `docker buildx` in één keer voor beide platformen en pusht het resultaat als multi-arch image. Daarvoor maakt het eenmalig een builder `wasstraat` aan met de `docker-container`-driver (een gewone `docker build` kan niet voor twee platformen tegelijk bouwen). Met `PUSH=0` gebruikt het de standaardbuilder, bouwt het alleen voor het eigen platform en laadt het de images in de lokale Docker (`--load`); daarmee test je `deploy/` voordat je publiceert. Elke image krijgt de OCI-labels `org.opencontainers.image.source` (de repository, waardoor GitHub het package aan de repository koppelt), `version` en `licenses`.
 
-1. Schrijft versienummer naar `config/version.env`
-2. Maakt een git-tag aan
-3. Commit en pusht alle wijzigingen
-4. Bouwt multi-platform Docker-images (linux/amd64 + linux/arm64) via `docker buildx`
-5. Pusht images naar Docker Hub onder `brienen/wasstraat_flask:<versie>`
+| Variabele | Standaard | Betekenis |
+|-----------|-----------|-----------|
+| `VERSION` | `VERSION=` uit `config/version.env`, anders uit `config/version.env.example` | Versietag |
+| `SERVICE` | `airflow flask postgres apache` | Te bouwen services |
+| `PUSH` | `1` | `0`: alleen lokaal bouwen |
+| `PLATFORMS` | `linux/amd64,linux/arm64` | Doelplatformen bij `PUSH=1` |
+| `NO_CACHE` | `0` | `1`: `--no-cache --pull` |
+| `REGISTRY` | `ghcr.io/brienen` | Registry en naamruimte |
+| `BUILDER` | `wasstraat` | Naam van de buildx-builder |
+
+!!! note "Bouwtijd"
+    De Airflow-image installeert GDAL en veel Python-pakketten; het bouwen voor het andere platform gebeurt onder emulatie en kan op een laptop een half uur tot een uur duren. Met `SERVICE=` publiceer je alleen wat gewijzigd is.
+
+### Inloggen op de registry
+
+Inloggen gebeurt buiten `make publish` om, eenmalig per machine:
+
+```bash
+echo "$GHCR_TOKEN" | docker login ghcr.io -u brienen --password-stdin
+```
+
+Het token is een GitHub *personal access token (classic)* met de scope **`write:packages`** (die omvat `read:packages`); `delete:packages` is alleen nodig om oude versies te verwijderen. Fine-grained tokens werken niet voor de Container Registry. Maak het aan onder GitHub → Settings → Developer settings → Personal access tokens.
+
+Na de eerste publicatie zijn de vier packages **privé**. Zet ze op publiek, zodat gemeenten ze zonder inloggen kunnen ophalen: open het package op <https://github.com/brienen?tab=packages>, kies *Package settings* en wijzig onder *Danger Zone* de zichtbaarheid naar *Public*. Controleer daar ook of het package aan de repository is gekoppeld (dat gebeurt automatisch via het label `org.opencontainers.image.source`).
+
+### Een versie uitbrengen
+
+```bash
+make release VERSION=1.1.0 MSG="Incrementeel laden en installatie met images"
+```
+
+Dit schrijft het versienummer naar `config/version.env.example` (in de repository), `config/version.env` (lokaal, genegeerd door git) en `deploy/.env.example` (de standaardversie voor nieuwe installaties), commit alle wijzigingen, maakt de git-tag `1.1.0` op die commit, pusht de branch en de tags, en roept `make publish` aan. De map `deploy/` van de tag is daarmee precies wat gebruikers ophalen; `tests/unit/test_deploy.py` bewaakt dat `deploy/.env.example` en `config/version.env.example` dezelfde versie noemen.
+
+Controleer vóór een release dat `make test-all` slaagt en test de images met `make publish PUSH=0` in een installatie uit `deploy/`. Een `latest`-tag wijst altijd naar de laatst gepubliceerde versie; installaties horen een versienummer te gebruiken.

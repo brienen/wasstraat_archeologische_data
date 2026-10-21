@@ -125,7 +125,7 @@ De container heeft bewust geen hostpoort: poort 9200 op de host is van de echte 
 | b | Een partij en een bruikleen toegevoegd (SQL) | Gebruikersdata die naar een artefact en het project SY002 verwijst |
 | c | Geen | Run afgerond, alle bronbestanden ongewijzigd, niets ingevoegd, bijgewerkt of verwijderd, aantallen en sleutels gelijk, bruikleen aanwezig, Elasticsearch gelijk |
 | d | Project SY003 als kopie van SY002 (`opgravingSY003.mdb`, foto's `SY003_*`) | SY003 heeft evenveel rijen als SY002, nieuwe `primary_key`s boven het oude maximum, SY001/SY002 ongewijzigd, bruikleen en zijn artefact ongewijzigd, Elasticsearch gelijk aan de tabellen |
-| e | Database van SY003 vervangen door die van SY001, één foto verwijderd | SY003 volgt SY001 (4 vondsten), geen rij meer voor de verwijderde foto, geen achtergebleven rijen, verdwenen id's ook uit Elasticsearch |
+| e | Database van SY003 vervangen door die van SY001, één foto verwijderd | SY003 volgt SY001 (4 vondsten, plus de put en vondst die Transform 5 aanmaakt voor de objectfoto `SY003_P4_H11_1_1.jpg`), geen rij meer voor de verwijderde foto, geen achtergebleven rijen, verdwenen id's ook uit Elasticsearch |
 | f | SY003 verwijderd | Geen SY003-rijen meer in PostgreSQL en Elasticsearch, `Def_Bronbestand` op `verwijderd`, alle sleutels en aantallen gelijk aan stap a |
 
 De fixture `sy003_opruimen` verwijdert `data/synthetic/data/projecten/SY003` vóór en na de test, ook als die faalt. De test duurt ongeveer twee minuten. Los draaien (met een draaiende testomgeving):
@@ -206,8 +206,8 @@ De basisimage van Jupyter staat vast op een digest in `services/jupyter/Dockerfi
 | Test | Wat wordt getest |
 |------|-----------------|
 | `test_full_pipeline.py` | Volledige harmonisatie-pipeline met directe MongoDB-seeding: harmonisatie, enhance, keys, move & merge, references |
-| `test_full_pipeline_synthetic_data.py` | Volledige ETL via Airflow DAGs met synthetische MDB-data: extract, transform, verwachte aantallen per soort (inclusief monsters, botanische/schelpdeterminaties en referentietabellen) |
-| `test_full_pipeline_delft_data.py` | Zelfde pipeline maar met Delftse data en Delft-specifieke verwachte aantallen |
+| `test_full_pipeline_synthetic_data.py` | Volledige ETL via Airflow DAGs met synthetische MDB-data: extract, transform, verwachte aantallen per soort (inclusief monsters, botanische/schelpdeterminaties en referentietabellen), objectfoto's gekoppeld aan hun artefact en vondst (`artefactID`/`vondstID` in Single_Store_Clean en `Def_Bestand`), geen Transform 2-fouten voor foto's |
+| `test_full_pipeline_delft_data.py` | Zelfde pipeline maar met Delftse data en Delft-specifieke verwachte aantallen; objectfoto's met projectcode `DB034`, integers en een `artefactID` |
 | `test_harmonize_pipeline.py` | Individuele harmonisatie-pipelines (Vondst, Spoor, alle objecttypen) |
 | `test_importMDB_bash.py` | MDB-import shell-script: encoding-conversie, CSV-generatie, mongoimport |
 | `test_incremental_synthetic_data.py` | Volledige cyclus gevolgd door vier incrementele runs (geen wijziging, nieuw project, vervangen database en verwijderde foto, verwijderd project): PostgreSQL, Elasticsearch, registratie en gebruikersdata |

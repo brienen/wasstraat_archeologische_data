@@ -13,6 +13,11 @@ Elke entiteit heeft een identificeer_{soort}(doc) methode die:
 2. Ze normaliseert (projectcd, integers)
 3. Ontbrekende velden afleidt indien mogelijk
 4. Het document teruggeeft met alle identificerende velden gevuld
+
+Voor de bestands-entiteiten (Foto, Tekening, Rapport) heet die methode
+identificeer_{soort}_db(doc): de naam zonder _db is daar gereserveerd voor
+de bestandsnaam-parser identificeer_{soort}(doc, projectcd) die
+parseFotobestanden() aanroept.
 """
 import re
 import wasstraat.archutils as ut
@@ -48,20 +53,33 @@ class ConventieProfiel:
     # Dispatcher
     # ----------------------------------------------------------
 
+    # Bestands-entiteiten: identificeer_<soort> is hier de bestandsnaam-parser
+    # (Type B, twee argumenten); de dispatcher gebruikt identificeer_<soort>_db.
+    BESTANDS_ENTITEITEN = tuple(soort.lower() for soort in const.BESTANDSOORTEN)
+
     def identificeer(self, soort, doc):
         """Vul en normaliseer de identificerende velden voor een entiteit.
 
         Roept de juiste per-entiteit methode aan. Als er geen specifieke
         methode bestaat voor het soort, wordt de standaard-methode gebruikt.
 
+        Voor Foto, Tekening en Rapport (const.BESTANDSOORTEN) is dat
+        identificeer_<soort>_db(doc). De methode zonder _db is voor die
+        soorten de bestandsnaam-parser met twee argumenten; die hier kiezen
+        gaf voor elke foto een TypeError in Transform 2, waardoor foto's hun
+        ongenormaliseerde projectcode en tekstnummers hielden en nooit aan
+        een artefact gekoppeld werden.
+
         Args:
-            soort: entiteitstype (bijv. 'Put', 'Vondst', 'Artefact')
+            soort: entiteitstype (bijv. 'Put', 'Vondst', 'Artefact', 'Foto')
             doc: MongoDB-document met brondata-velden
 
         Returns:
             Het document met genormaliseerde identificerende velden.
         """
         method_name = f'identificeer_{soort.lower()}'
+        if soort.lower() in self.BESTANDS_ENTITEITEN:
+            method_name += '_db'
         method = getattr(self, method_name, None)
         if method:
             return method(doc)
@@ -131,7 +149,38 @@ class ConventieProfiel:
         return doc
 
     # ----------------------------------------------------------
-    # Per-entiteit methoden — bestands-entiteiten (Type B)
+    # Per-entiteit methoden — bestands-entiteiten uit de database (Type A)
+    # Aangeroepen door identificeer() voor Foto, Tekening en Rapport, voor
+    # records uit de harmonisatie én voor de records die parseFotobestanden()
+    # uit bestandsnamen heeft gemaakt. Subklassen overschrijven indien nodig.
+    # ----------------------------------------------------------
+
+    def identificeer_foto_db(self, doc):
+        """Identificeer een Foto-record uit de database (niet uit de bestandsnaam).
+
+        Standaard: normaliseer projectcd + converteer putnr, vondstnr, subnr
+        en fotonr naar integers. Daardoor krijgt een foto dezelfde
+        key_foto1/key_foto3 als het artefact waar hij bij hoort.
+        """
+        return self._identificeer_standaard(doc)
+
+    def identificeer_tekening_db(self, doc):
+        """Identificeer een Tekening-record uit de database: projectcd + tekeningcd."""
+        doc = self._identificeer_standaard(doc)
+        if 'tekeningcd' in doc:
+            doc['tekeningcd'] = self.normaliseer_tekeningcode(doc['tekeningcd'])
+        return doc
+
+    def identificeer_rapport_db(self, doc):
+        """Identificeer een Rapport-record uit de database: rapportnr + projectcd?."""
+        doc = self._identificeer_standaard(doc)
+        if 'rapportnr' in doc:
+            doc['rapportnr'] = self.normaliseer_rapportnr(doc['rapportnr'], doc.get('brondata', {}))
+        return doc
+
+    # ----------------------------------------------------------
+    # Per-entiteit methoden — bestands-entiteiten uit de bestandsnaam (Type B)
+    # Aangeroepen door parseFotobestanden(), niet door identificeer().
     # Standaard: geen afleiding. Return None = niet herkend.
     # DelftProfiel overschrijft deze met regex-parsing.
     # ----------------------------------------------------------

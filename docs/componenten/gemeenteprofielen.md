@@ -71,9 +71,14 @@ De centrale methode `identificeer(soort, doc)` delegeert naar de juiste per-enti
 profiel.identificeer('Put', doc)       # → identificeer_put(doc)
 profiel.identificeer('Artefact', doc)  # → identificeer_artefact(doc)
 profiel.identificeer('Vondst', doc)    # → identificeer_vondst(doc)
+profiel.identificeer('Foto', doc)      # → identificeer_foto_db(doc)
+profiel.identificeer('Tekening', doc)  # → identificeer_tekening_db(doc)
+profiel.identificeer('Rapport', doc)   # → identificeer_rapport_db(doc)
 ```
 
 Bij een onbekend soort wordt de standaard-methode gebruikt: normaliseer `projectcd` + converteer integer-velden.
+
+Voor de bestands-entiteiten (`const.BESTANDSOORTEN`: Foto, Tekening, Rapport) kiest de dispatcher de `_db`-variant. De methode zonder `_db` is voor die soorten de bestandsnaam-parser met twee argumenten (`identificeer_foto(doc, projectcd)`), die alleen `parseFotobestanden()` aanroept. Tot oktober 2026 koos de dispatcher voor `Foto` die parser; elke foto gaf dan een `TypeError` in Transform 2, hield zijn ongenormaliseerde projectcode (`DB34` in plaats van `DB034`) en tekstnummers, en werd in Transform 4 nooit aan een artefact gekoppeld.
 
 ### Per-entiteit methoden
 
@@ -89,8 +94,11 @@ Elke entiteit heeft een eigen methode die de identificerende velden normaliseert
 | `identificeer_artefact(doc)` | Normaliseer `projectcd` + integers (`vondstnr` optioneel) |
 | `identificeer_monster(doc)` | Normaliseer `projectcd` |
 | `identificeer_doos(doc)` | Normaliseer `projectcd` (optioneel) + `doosnr` → int |
-| `identificeer_foto(doc, projectcd)` | Standaard: `None` (niet herkend) |
-| `identificeer_tekening(doc, projectcd)` | Standaard: `None` (niet herkend) |
+| `identificeer_foto_db(doc)` | Normaliseer `projectcd` + `putnr`, `vondstnr`, `subnr`, `fotonr` → int (dezelfde `key_foto1`/`key_foto3` als het artefact) |
+| `identificeer_tekening_db(doc)` | Normaliseer `projectcd` + `tekeningcd` via `normaliseer_tekeningcode()` |
+| `identificeer_rapport_db(doc)` | Normaliseer `projectcd` + `rapportnr` via `normaliseer_rapportnr()` |
+| `identificeer_foto(doc, projectcd)` | Bestandsnaam-parser; standaard: `None` (niet herkend) |
+| `identificeer_tekening(doc, projectcd)` | Bestandsnaam-parser; standaard: `None` (niet herkend) |
 
 ### Normalisatie-helpers
 
@@ -186,13 +194,14 @@ Als `artefactsoort` nog niet is ingesteld, leidt het DelftProfiel deze af uit he
 - Patroon `^[a-z]{1,2}(_|-)` → `'Aardewerk'`
 - Patroon `^gl(_|-)` → `'Glas'`
 
-### Rapportnummer-normalisatie vanuit database
+### Bestands-entiteiten vanuit de database
 
-Voor Tekening- en Rapport-records die via de database binnenkomen (niet via bestandsnaam):
+Voor Foto-, Tekening- en Rapport-records in Transform 2 (uit de harmonisatie én uit `parseFotobestanden()`) kiest de dispatcher de `_db`-varianten. Het DelftProfiel overschrijft er twee:
 
 ```python
-doc = profiel.identificeer_tekening_db(doc)  # tekeningcd normaliseren
-doc = profiel.identificeer_rapport_db(doc)   # rapportnr normaliseren
+doc = profiel.identificeer('Foto', doc)      # identificeer_foto_db: geërfd, DB34 → DB034 en nummers → int
+doc = profiel.identificeer('Tekening', doc)  # identificeer_tekening_db: tekeningcd normaliseren
+doc = profiel.identificeer('Rapport', doc)   # identificeer_rapport_db: rapportnr normaliseren
 ```
 
 ### Projectcode uit bestandsnaam
@@ -273,10 +282,7 @@ if parsed is not None:
 profiel = get_profiel()
 soort = doc.get('soort', '')
 
-if soort == 'Tekening':
-    doc = profiel.identificeer_tekening_db(doc)
-elif soort == 'Rapport':
-    doc = profiel.identificeer_rapport_db(doc)
-else:
-    doc = profiel.identificeer(soort, doc)
+# De dispatcher kiest per soort de methode; voor Foto, Tekening en Rapport
+# de _db-variant en niet de bestandsnaam-parser.
+doc = profiel.identificeer(soort, doc)
 ```

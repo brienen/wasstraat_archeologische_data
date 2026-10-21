@@ -1,0 +1,27 @@
+# Correcties voor de eigen brondata (optioneel). De pipeline leest dit bestand bij elke run;
+# fouten in dit bestand worden gelogd en overgeslagen. Haal het hekje weg voor de regels
+# die je nodig hebt. Documentatie:
+# https://brienen.github.io/wasstraat_archeologische_data/aan-de-slag/#5b-correcties-configureren-optioneel
+
+# Projectcode-correcties: regex op het veld projectcd, na harmonisatie (Transform2).
+projectcode_correcties: []
+#  - patroon: "OUDECODE"
+#    projectcode: "AB001"
+
+# Brondata-correcties: op ruwe velden in de staging-collecties, vóór harmonisatie (Transform1).
+brondata_correcties: []
+#  - collectie: COLL_STAGING_MONSTER
+#    zoek_veld: PROJECT
+#    patroon: "OUDECODE"
+#    waarde: "AB001"
+
+# Projecten waarvan artefacten niet samengevoegd worden
+#artefact_niet_mergen:
+#  projectcodes: ["AB001"]
+
+# Prefixen van rapportcodes voor de classificatie van rapporten
+#rapportcode_prefixen:
+#  - prefix: "DAR"
+#    type: "archeologische_rapportage"
+#  - prefix: "DAN"
+#    type: "archeologische_notitie"

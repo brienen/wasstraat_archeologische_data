@@ -122,13 +122,9 @@ def enhanceAllAttributes(incrementeel=False):
                     if 'spijker' in str(doc['brondata']['table']).lower():
                         doc['typevoorwerp'] = 'Spijker'
 
-                # Per-entiteit identificatie: dispatch naar juiste methode
-                if soort == 'Tekening':
-                    doc = profiel.identificeer_tekening_db(doc)
-                elif soort == 'Rapport':
-                    doc = profiel.identificeer_rapport_db(doc)
-                else:
-                    doc = profiel.identificeer(soort, doc)
+                # Per-entiteit identificatie: de dispatcher kiest de methode per soort
+                # (voor Foto, Tekening en Rapport de _db-variant, niet de bestandsnaam-parser)
+                doc = profiel.identificeer(soort, doc)
 
                 #@set projectname
                 if 'projectnaam' in doc:

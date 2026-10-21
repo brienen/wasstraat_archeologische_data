@@ -49,8 +49,15 @@ COPY scripts/airflow/check_init.sql ./extra/check_init.sql
 COPY scripts/airflow/set_init.sql ./extra/set_init.sql
 COPY scripts/airflow/*.sh .
 
+# Pipelinecode, importscripts en gedeelde modules in de image, zodat de gepubliceerde
+# image zonder broncode-volumes draait (deploy/docker-compose.yml). De ontwikkelomgeving
+# (docker-compose.yml) mount airflow_app/dags, airflow_app/scripts en shared/ hieroverheen.
+COPY --chown=airflow:root ./airflow_app/dags ./dags
+COPY --chown=airflow:root ./airflow_app/scripts ./scripts
+COPY --chown=airflow:root ./shared ./dags/shared
+
 USER root
-RUN chmod 744 ./*.sh && chown airflow *.sh
+RUN chmod 744 ./*.sh && chown airflow *.sh && chmod +x ./scripts/*.sh
 
 USER airflow
 ENTRYPOINT ["./init.sh"]

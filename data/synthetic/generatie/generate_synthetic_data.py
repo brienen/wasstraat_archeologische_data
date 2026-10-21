@@ -1341,6 +1341,11 @@ def genereerFotos():
 
     Plaatst 1x1 pixel JPEG's in de directorystructuur die importMDB.sh
     en getImageNamesFromDir verwachten: <project>/L Fotos/<bestandsnaam>.jpg
+
+    Objectfoto's volgen de Delftse conventie: <project>_P<put>_H<vondst>_<subnr>_<fotonr>
+    in een materiaalmap onder "H (Objectfoto's)". De pipeline leidt het
+    artefactsoort uit de mapnaam af en koppelt de foto via projectcd,
+    artefactsoort, putnr, vondstnr en subnr (key_foto1) aan het artefact.
     """
     fotos = {
         "SY001": [
@@ -1356,8 +1361,10 @@ def genereerFotos():
             "SY002_G005.jpg",
             "SY002_F001.jpg",
             "SY002_F002.jpg",
-            "SY002_H4_1.jpg",   # Objectfoto vondst 4 (H-type)
-            "SY002_H11_1.jpg",  # Objectfoto vondst 11 (munt)
+            # Objectfoto put 2, vondst 4, subnr 1: de grape (AARDEWERK 1)
+            os.path.join("H (Objectfoto's)", "Aardewerk", "SY002_P2_H4_1_1.jpg"),
+            # Objectfoto put 4, vondst 11, subnr 1: de duit (MUNTEN EN PENNINGEN)
+            os.path.join("H (Objectfoto's)", "Munt", "SY002_P4_H11_1_1.jpg"),
             "SY002_B001.tif",   # Tekening (B-type, als .tif)
         ],
     }
@@ -1365,9 +1372,9 @@ def genereerFotos():
     count = 0
     for project, bestanden in fotos.items():
         fotos_dir = os.path.join(OUTPUT_DIR, "projecten", project, "L Fotos")
-        os.makedirs(fotos_dir, exist_ok=True)
         for bestand in bestanden:
             pad = os.path.join(fotos_dir, bestand)
+            os.makedirs(os.path.dirname(pad), exist_ok=True)
             with open(pad, "wb") as f:
                 f.write(MINIMAL_JPEG)
             count += 1

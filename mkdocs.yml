@@ -34,6 +34,7 @@ nav:
     - Configuratiemodule: componenten/configuratie.md
     - Zoek- en Indexeringslaag: componenten/zoeken.md
   - Deployment:
+    - Installatie met images: deployment/installatie-met-images.md
     - Omgevingen & Docker Compose: deployment/omgevingen.md
     - Airflow Transformatie vs. Web Applicatie: deployment/airflow-vs-app.md
     - Voorbeelddata: deployment/voorbeelddata.md

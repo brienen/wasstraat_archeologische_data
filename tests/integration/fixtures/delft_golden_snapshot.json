@@ -1,5 +1,5 @@
 {
-  "beschrijving": "Golden snapshot Delft testdata (DB034) - opnieuw gegenereerd op 2026-10-21 na de kopregel-fix in importMDB.sh (tabel MUNTEN EN PENNINGEN: +50 munten) en de sed-escape-fix in importMDB.sh (tabel AARDEWERK 1&2 VOORWERP met & in de naam: +96 aardewerk zonder sleutel voor DB034)",
+  "beschrijving": "Golden snapshot Delft testdata (DB034) - opnieuw gegenereerd op 2026-10-21 na herstel van de foto-identificatie in Transform 2 (de dispatcher identificeer('Foto') koos de bestandsnaam-parser en elke foto gaf een TypeError). Foto's hebben nu projectcode DB034 en integers voor putnr/vondstnr/subnr, waardoor 22 van de 92 objectfoto's een artefactID krijgen en alle 92 een vondstID. Put 278 -> 275 en Vondst 3091 -> 3060: Generate_Missing maakte eerder uit de ongenormaliseerde foto's 3 putten (1, 10, 11) en 32 vondsten aan voor het niet-bestaande project DB34; die vervallen, en van de 32 (put, vondst)-combinaties op de foto's bestaan er 31 al in DB034 en wordt er 1 als DB034-vondst gegenereerd (netto -31). De key_samples van Bestand tonen de genormaliseerde sleutels (PDB034... in plaats van PDB34...). Eerdere aanpassingen: kopregel-fix in importMDB.sh (tabel MUNTEN EN PENNINGEN: +50 munten) en de sed-escape-fix (tabel AARDEWERK 1&2 VOORWERP: +96 aardewerk zonder sleutel).",
   "testdata": "data/test/ (project DB034 Koningsveld IV)",
   "soort_counts_clean": {
     "Fotokoppel": 31469,
@@ -9,7 +9,7 @@
     "Plaatsing": 5902,
     "ABR": 4838,
     "Doos": 4443,
-    "Vondst": 3091,
+    "Vondst": 3060,
     "Monster": 1613,
     "Monster_Schelp": 1191,
     "Project": 1049,
@@ -18,7 +18,7 @@
     "Bestand": 531,
     "Spoor": 457,
     "Vulling": 425,
-    "Put": 278,
+    "Put": 275,
     "DT_Soort_Schelp": 124,
     "DT_Soort_Deel": 75,
     "Vindplaats": 37,
@@ -244,20 +244,20 @@
         "projectcd": "DAR143"
       },
       {
-        "key": "PDB34P10V1025S2",
-        "projectcd": "DB34"
+        "key": "PDB034P10V1025S2",
+        "projectcd": "DB034"
       },
       {
-        "key": "PDB34P10V127S1",
-        "projectcd": "DB34"
+        "key": "PDB034P10V127S1",
+        "projectcd": "DB034"
       },
       {
-        "key": "PDB34P10V230S1",
-        "projectcd": "DB34"
+        "key": "PDB034P10V230S1",
+        "projectcd": "DB034"
       },
       {
-        "key": "PDB34P10V230S1",
-        "projectcd": "DB34"
+        "key": "PDB034P10V230S1",
+        "projectcd": "DB034"
       }
     ]
   }

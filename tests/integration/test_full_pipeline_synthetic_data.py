@@ -6,8 +6,9 @@ verifieert daarna de record-aantallen in de drie MongoDB databases:
   - Arch_Staging_Test  (extract-resultaat)
   - Arch_Analyse_Test  (Single_Store + Single_Store_Clean)
 
-Geen PostgreSQL-verificatie — alleen MongoDB.
-Geen afbeeldingen-verificatie — synthetische data bevat geen fotobestanden.
+Daarna DAG_Load_Only (marker load) met verificatie in PostgreSQL.
+Afbeeldingen: de synthetische objectfoto's van SY002 moeten na Transform 4
+aan hun artefact en vondst gekoppeld zijn (artefactID, vondstID), ook in Def_Bestand.
 
 Draaien:
   make integration
@@ -85,6 +86,16 @@ EXPECTED_PUTTEN = {
 EXPECTED_VLAKKEN = {
     "SY001": {(1, 1), (2, 1)},
     "SY002": {(1, 1), (1, 2), (2, 1), (2, 2), (3, 1), (3, 2), (4, 1), (4, 3)},
+}
+
+# Objectfoto's in de synthetische data, in de Delftse naamconventie
+# <project>_P<put>_H<vondst>_<subnr>_<fotonr> in een materiaalmap onder
+# "L Fotos/H (Objectfoto's)". Transform 4 koppelt ze via key_foto1
+# (projectcd + artefactsoort + putnr + vondstnr + subnr) aan precies één
+# artefact van SY002 en via key_vondst aan de vondst.
+EXPECTED_OBJECTFOTO_KOPPELING = {
+    "SY002_P2_H4_1_1.jpg": {"artefactsoort": "Aardewerk", "putnr": 2, "vondstnr": 4, "subnr": 1},
+    "SY002_P4_H11_1_1.jpg": {"artefactsoort": "Munt", "putnr": 4, "vondstnr": 11, "subnr": 1},
 }
 
 
@@ -563,6 +574,70 @@ class TestFullPipelineSynthetic:
             )
 
     # ----------------------------------------------------------
+    # Stap 3b: Foto's — Transform 2 en koppeling aan artefacten
+    # ----------------------------------------------------------
+    def test_10d_verify_geen_transform2_fouten_voor_bestanden(self, mongo_client):
+        """Transform 2 slaat geen foto's, tekeningen of rapporten over (_processing_errors).
+
+        Tot 2026-10-21 koos de dispatcher identificeer('Foto', doc) de
+        bestandsnaam-parser identificeer_foto(doc, projectcd); elke foto gaf
+        een TypeError, hield zijn tekstnummers en ongenormaliseerde projectcode
+        en kon in Transform 4 nooit aan een artefact gekoppeld worden.
+        """
+        fouten = list(mongo_client[DB_ANALYSE]["_processing_errors"].find({"fase": "enhance_attributes"}))
+        bestand_fouten = [f for f in fouten if f.get("soort") in ("Foto", "Tekening", "Rapport")]
+        print(f"\n  enhance_attributes-fouten: {len(fouten)}, waarvan voor foto's/tekeningen/rapporten: {len(bestand_fouten)}")
+        for f in bestand_fouten[:5]:
+            print(f"    {f.get('soort')} {f.get('original_id')}: {f.get('error_type')}: {f.get('error_msg')}")
+        assert not bestand_fouten, (
+            f"{len(bestand_fouten)} foto's/tekeningen/rapporten zijn in Transform 2 overgeslagen; "
+            f"controleer de dispatcher identificeer() in profielen/conventie.py")
+
+    def test_10e_verify_objectfotos_genormaliseerd(self, mongo_client):
+        """Objectfoto's in Single_Store_Clean hebben integers voor putnr/vondstnr/subnr en de sleutel key_foto1."""
+        coll = mongo_client[DB_ANALYSE]["Single_Store_Clean"]
+        for bestand, verwacht in EXPECTED_OBJECTFOTO_KOPPELING.items():
+            foto = coll.find_one({"soort": "Bestand", "bestandsoort_XX": "Foto", "fileName": bestand})
+            assert foto is not None, f"Objectfoto {bestand} ontbreekt in Single_Store_Clean"
+            print(f"\n  {bestand}: projectcd={foto.get('projectcd')} putnr={foto.get('putnr')!r} "
+                  f"vondstnr={foto.get('vondstnr')!r} subnr={foto.get('subnr')!r} key_foto1={foto.get('key_foto1')}")
+            assert foto.get("projectcd") == "SY002"
+            assert foto.get("bestandsoort") == "Objectfoto"
+            for veld in ("putnr", "vondstnr", "subnr"):
+                assert foto.get(veld) == verwacht[veld], f"{bestand}: {veld}={foto.get(veld)!r}, verwacht {verwacht[veld]}"
+            verwachte_key = (f"PSY002M{verwacht['artefactsoort']}P{verwacht['putnr']}"
+                             f"V{verwacht['vondstnr']}A{verwacht['subnr']}")
+            assert foto.get("key_foto1") == verwachte_key, (
+                f"{bestand}: key_foto1={foto.get('key_foto1')!r}, verwacht {verwachte_key}. "
+                f"Controleer mergeFotoinfo (FOTO_VELDEN) in merge_functions.py.")
+
+    def test_10f_verify_objectfotos_gekoppeld_aan_artefact(self, mongo_client):
+        """Elke objectfoto verwijst met artefactID en vondstID naar het juiste artefact en de juiste vondst."""
+        coll = mongo_client[DB_ANALYSE]["Single_Store_Clean"]
+        for bestand, verwacht in EXPECTED_OBJECTFOTO_KOPPELING.items():
+            foto = coll.find_one({"soort": "Bestand", "bestandsoort_XX": "Foto", "fileName": bestand})
+            assert foto is not None, f"Objectfoto {bestand} ontbreekt in Single_Store_Clean"
+            assert foto.get("artefactID") is not None, (
+                f"{bestand} heeft geen artefactID; controleer Set_Reference_Images_to_Foto1 (key_foto1) in Transform 4")
+            artefact = coll.find_one({"soort": "Artefact", "ID": foto["artefactID"]})
+            assert artefact is not None, f"{bestand}: artefactID {foto['artefactID']} bestaat niet"
+            print(f"\n  {bestand} → artefact {foto['artefactID']}: {artefact.get('artefactsoort')} "
+                  f"put {artefact.get('putnr')} vondst {artefact.get('vondstnr')} subnr {artefact.get('subnr')}")
+            assert artefact.get("artefactsoort") == verwacht["artefactsoort"]
+            assert (artefact.get("putnr"), artefact.get("vondstnr"), artefact.get("subnr")) == \
+                (verwacht["putnr"], verwacht["vondstnr"], verwacht["subnr"])
+
+            assert foto.get("vondstID") is not None, f"{bestand} heeft geen vondstID (key_vondst)"
+            vondst = coll.find_one({"soort": "Vondst", "ID": foto["vondstID"]})
+            assert vondst is not None, f"{bestand}: vondstID {foto['vondstID']} bestaat niet"
+            assert (vondst.get("putnr"), vondst.get("vondstnr")) == (verwacht["putnr"], verwacht["vondstnr"])
+
+        # Project- en sfeerfoto's (G/F) horen niet bij een vondst en mogen geen artefact krijgen
+        onterecht = coll.count_documents({"soort": "Bestand", "bestandsoort_XX": "Foto",
+                                          "bestandsoort": {"$ne": "Objectfoto"}, "artefactID": {"$exists": True}})
+        assert onterecht == 0, f"{onterecht} foto's die geen objectfoto zijn hebben een artefactID"
+
+    # ----------------------------------------------------------
     # Samenvatting
     # ----------------------------------------------------------
     def test_11_summary(self, mongo_client):
@@ -797,6 +872,22 @@ class TestFullPipelineSynthetic:
                 fouten.append(f"{projectcd}: {vlakken} vlakken, verwacht {len(EXPECTED_VLAKKEN[projectcd])}")
 
         assert not fouten, "\n  ".join(fouten)
+
+    @pytest.mark.load
+    def test_22b_verify_postgres_bestand_gekoppeld_aan_artefact(self, airflow_ready):
+        """Def_Bestand bevat de objectfoto's met een artefactID naar hun artefact (lijst 'Alle artefacten met foto')."""
+        gekoppeld = _pg_scalar(
+            'SELECT COUNT(*) FROM "Def_Bestand" b JOIN "Def_Artefact" a ON b."artefactID" = a.primary_key')
+        print(f"\n  Def_Bestand-rijen met een artefactID: {gekoppeld}")
+        assert gekoppeld >= len(EXPECTED_OBJECTFOTO_KOPPELING), (
+            f"Def_Bestand heeft {gekoppeld} rijen met artefactID, verwacht >= {len(EXPECTED_OBJECTFOTO_KOPPELING)}")
+        for bestand, verwacht in EXPECTED_OBJECTFOTO_KOPPELING.items():
+            soort = _pg_tekst(
+                'SELECT a.artefactsoort FROM "Def_Bestand" b JOIN "Def_Artefact" a ON b."artefactID" = a.primary_key '
+                f"WHERE b.\"fileName\" = '{bestand}'")
+            print(f"  {bestand} → {soort or '-'}")
+            assert soort == verwacht["artefactsoort"], (
+                f"{bestand}: gekoppeld aan artefactsoort {soort!r}, verwacht {verwacht['artefactsoort']}")
 
     @pytest.mark.load
     def test_23_verify_postgres_no_empty_def_tables(self, airflow_ready):

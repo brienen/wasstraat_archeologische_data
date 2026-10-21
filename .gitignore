@@ -59,3 +59,10 @@ site
 # Python virtual environment
 .venv/
 __pycache__/
+# Live installatie uit images (deploy/): eigen instellingen, data en notebooks niet naar Github
+deploy/data/input/*/*
+!deploy/data/input/*/.gitkeep
+deploy/data/output/*
+!deploy/data/output/.gitkeep
+deploy/data/backup/*/*
+!deploy/data/backup/*/.gitkeep

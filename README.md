@@ -72,6 +72,11 @@ Elke artefactcategorie kent eigen specifieke velden:
 
 ## Snel starten
 
+Er zijn twee manieren om de Wasstraat te draaien:
+
+- **Installeren voor gebruik**, zonder te bouwen: de gepubliceerde images van `ghcr.io/brienen` met de map [`deploy/`](deploy/). Volg [Installatie met images](https://brienen.github.io/wasstraat_archeologische_data/deployment/installatie-met-images/). Dit is de route voor gemeenten.
+- **De ontwikkelomgeving**: deze repository clonen en de images zelf bouwen, zoals hieronder. Hier draai je ook de tests en publiceer je nieuwe versies (`make publish`).
+
 ### Vereisten
 
 - [Docker](https://www.docker.com/) en Docker Compose
@@ -162,6 +167,17 @@ make integration-delft # Integratietests met Delftse data (indien aanwezig)
 make test-all         # Unit + integratietests
 ```
 
+### Publiceren
+
+```bash
+make publish                      # Bouw alle images voor linux/amd64 en linux/arm64 en push naar ghcr.io/brienen
+make publish SERVICE=flask        # Eén image
+make publish PUSH=0               # Alleen lokaal bouwen, om deploy/ te testen
+make release VERSION=1.2.3 MSG="Release notes"   # Versie vastleggen, taggen, pushen en publiceren
+```
+
+Inloggen op de registry gebeurt vooraf met `docker login ghcr.io`. Zie [Omgevingen](https://brienen.github.io/wasstraat_archeologische_data/deployment/omgevingen/#publicatie-van-images).
+
 ## Projectstructuur
 
 ```
@@ -173,6 +189,7 @@ wasstraat_archeologische_data/
 │   └── app/              # Models, views, API, templates
 ├── shared/               # Gedeelde modules (config, database, constanten)
 ├── config/               # Environment-bestanden (.env)
+├── deploy/               # Live installatie uit gepubliceerde images (zonder broncode)
 ├── services/             # Dockerfiles per service
 ├── data/                 # Input- en outputdata
 │   ├── delft/            # Eigen data voor 'make delft' (inhoud niet in repo)
@@ -205,7 +222,7 @@ De documentatie bevat:
 - **Aan de slag** — Stap-voor-stap handleiding voor eerste gebruik
 - **Architectuur** — Systeemarchitectuur, dataflow, componentenmodel, gegevensmodel en stack
 - **Componenten** — Extractie, SingleStore, Transformatie, Crossviews, Validatie, Configuratie, Zoeken
-- **Deployment** — Omgevingen, Airflow vs. App, proefdata inlezen
+- **Deployment** — Installatie met images, omgevingen, Airflow vs. App, proefdata inlezen
 - **Testen** — Unit tests, integratietests en testinfrastructuur
 - **Diagrammen** — draw.io architectuurdiagrammen
 

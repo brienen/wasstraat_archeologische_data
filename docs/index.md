@@ -55,6 +55,7 @@ Het platform is verbonden met de Nederlandse erfgoed-infrastructuur:
 
 ## Aan de slag
 
+- [Installatie met images](deployment/installatie-met-images.md) — De Wasstraat installeren voor gebruik, zonder te bouwen
 - [Inleiding](overzicht/inleiding.md) — Het archeologische datavraagstuk
 - [Systeemarchitectuur](architectuur/systeem.md) — Hoe het platform is opgebouwd
 - [Omgevingen & Docker Compose](deployment/omgevingen.md) — De Wasstraat opstarten

@@ -2,6 +2,9 @@
 
 Deze handleiding neemt je stap voor stap mee om de Wasstraat Archeologische Data voor het eerst te installeren, te configureren en te draaien. Na het doorlopen heb je een werkende omgeving met verwerkte archeologische data die je kunt bekijken in de webapplicatie.
 
+!!! info "Gebruiken of ontwikkelen?"
+    Deze handleiding beschrijft de **ontwikkelomgeving**: je cloont de repository en bouwt de Docker-images zelf uit de broncode. Wil je de Wasstraat alleen **gebruiken**, installeer haar dan vanuit de gepubliceerde images met de map `deploy/`; dat is lichter en vraagt geen broncode. Zie [Installatie met images](deployment/installatie-met-images.md). De stappen 4 (bestanden klaarzetten), 5 (harmonisatie configureren) en 6 (verwerken) gelden voor beide.
+
 ## 1. Downloaden en installeren
 
 ### Vereisten

@@ -1,0 +1,170 @@
+# ============================================================
+# Wasstraat Archeologische Data — live installatie uit gepubliceerde images
+# ============================================================
+#
+# Dit bestand gebruikt alleen de images van ghcr.io/brienen: er wordt niets gebouwd en
+# er is geen broncode nodig. Van de host komen alleen configuratie en data:
+#   config/*.env        wachtwoorden en instellingen (gegenereerd door init-config.sh)
+#   wasstraat_config/   harmonisatie-Excel en correcties.yml
+#   data/input/         brondata (Access-databases, foto's, rapporten), alleen-lezen
+#   data/output/        verwerkte media (foto's in drie formaten)
+#   data/backup/        backups van PostgreSQL en MongoDB
+# Jupyter is een ontwikkelvoorziening van de repository en maakt geen deel uit van de live installatie.
+# De versie, mappen en poorten staan in .env (zie .env.example).
+#
+# Gebruik: make up (zie 'make help'), of direct: docker compose up -d
+# Documentatie: https://brienen.github.io/wasstraat_archeologische_data/deployment/installatie-met-images/
+
+name: wasstraat
+
+services:
+  postgres:
+    image: ${WASSTRAAT_REGISTRY:-ghcr.io/brienen}/wasstraat-postgres:${WASSTRAAT_VERSION:?Zet WASSTRAAT_VERSION in .env}
+    container_name: wasstraat_postgres
+    restart: unless-stopped
+    env_file:
+      - ./config/postgres.env
+    environment:
+      # Datamap van PostgreSQL. Moet gelijk zijn aan het pad van het volume hieronder,
+      # anders staat de database in de container zelf en verdwijnt die bij opnieuw aanmaken.
+      PGDATA: /data/postgres
+    ports:
+      # Standaard alleen bereikbaar vanaf deze machine (bijvoorbeeld voor QGIS of pgAdmin)
+      - "${WASSTRAAT_BIND_DB:-127.0.0.1}:${WASSTRAAT_PORT_POSTGRES:-5432}:5432"
+    volumes:
+      - postgres:/data/postgres
+      - ${WASSTRAAT_BACKUP:-./data/backup}/postgres:/backup
+    networks:
+      default:
+        aliases:
+          # config/airflow_db.env verwijst naar DB__HOST=wasstraat_postgres
+          - wasstraat_postgres
+
+  airflow:
+    image: ${WASSTRAAT_REGISTRY:-ghcr.io/brienen}/wasstraat-airflow:${WASSTRAAT_VERSION:?Zet WASSTRAAT_VERSION in .env}
+    container_name: wasstraat_airflow
+    restart: unless-stopped
+    env_file:
+      - ./config/airflow.env
+      - ./config/airflow_db.env
+      - ./config/mongo.env
+      - ./config/postgres.env
+    environment:
+      # Gemeenteprofiel: delft of voorbeeld (zie documentatie Gemeenteprofielen)
+      WASSTRAAT_GEMEENTE: ${WASSTRAAT_GEMEENTE:-delft}
+    ports:
+      - "${WASSTRAAT_BIND:-0.0.0.0}:${WASSTRAAT_PORT_AIRFLOW:-8080}:8080"
+    depends_on:
+      postgres:
+        condition: service_started
+      mongo:
+        condition: service_started
+      # De Index_*-taken hebben Elasticsearch nodig
+      elasticsearch:
+        condition: service_healthy
+    volumes:
+      # Brondata, alleen-lezen: de pipeline wijzigt de bronbestanden nooit
+      - ${WASSTRAAT_INPUT:-./data/input}/projecten:/input/projecten:ro
+      - ${WASSTRAAT_INPUT:-./data/input}/projecten:/input/images:ro
+      - ${WASSTRAAT_INPUT:-./data/input}/rapporten:/input/rapporten:ro
+      - ${WASSTRAAT_INPUT:-./data/input}/monsterdatabase:/input/monsterdatabase:ro
+      - ${WASSTRAAT_INPUT:-./data/input}/projectenlijst:/input/projectenlijst:ro
+      - ${WASSTRAAT_INPUT:-./data/input}/magazijnlijst:/input/magazijnlijst:ro
+      - ${WASSTRAAT_INPUT:-./data/input}/fotolijst:/input/fotolijst:ro
+      - ${WASSTRAAT_INPUT:-./data/input}/referentietabellen:/input/referentietabellen:ro
+      # Verwerkte media en pipelineconfiguratie
+      - ${WASSTRAAT_OUTPUT:-./data/output}/archeomedia:/output/archeomedia
+      - ${WASSTRAAT_CONFIG:-./wasstraat_config}:/opt/airflow/config:ro
+      # Taaklogs blijven bewaard als de container opnieuw wordt aangemaakt
+      - airflow_logs:/opt/airflow/logs
+
+  redis:
+    image: redis:7.2-alpine
+    container_name: wasstraat_redis
+    restart: unless-stopped
+    env_file:
+      - ./config/redis.env
+    command: >
+      sh -c "redis-server --requirepass $$REDIS_PASSWORD"
+
+  flask:
+    image: ${WASSTRAAT_REGISTRY:-ghcr.io/brienen}/wasstraat-flask:${WASSTRAAT_VERSION:?Zet WASSTRAAT_VERSION in .env}
+    container_name: wasstraat_flask
+    restart: unless-stopped
+    env_file:
+      - ./config/flask.env
+      - ./config/postgres.env
+      - ./config/mongo.env
+      - ./config/redis.env
+    ports:
+      - "${WASSTRAAT_BIND:-0.0.0.0}:${WASSTRAAT_PORT_FLASK:-5051}:5051"
+    depends_on:
+      postgres:
+        condition: service_started
+      mongo:
+        condition: service_started
+      redis:
+        condition: service_started
+      apache:
+        condition: service_started
+      # Flask raadpleegt Elasticsearch al bij het opstarten
+      elasticsearch:
+        condition: service_healthy
+    volumes:
+      - ${WASSTRAAT_OUTPUT:-./data/output}/archeomedia:/output/archeomedia
+
+  mongo:
+    image: mongo:7.0
+    container_name: wasstraat_mongo
+    restart: unless-stopped
+    env_file:
+      - ./config/mongo.env
+    ports:
+      - "${WASSTRAAT_BIND_DB:-127.0.0.1}:${WASSTRAAT_PORT_MONGO:-27017}:27017"
+    volumes:
+      - mongo:/data/db
+      - mongo_config:/data/configdb
+      - ${WASSTRAAT_BACKUP:-./data/backup}/mongo:/backup
+
+  apache:
+    image: ${WASSTRAAT_REGISTRY:-ghcr.io/brienen}/wasstraat-apache:${WASSTRAAT_VERSION:?Zet WASSTRAAT_VERSION in .env}
+    container_name: wasstraat_apache
+    restart: unless-stopped
+    volumes:
+      - ${WASSTRAAT_OUTPUT:-./data/output}:/usr/local/apache2/htdocs:ro
+    ports:
+      - "${WASSTRAAT_BIND:-0.0.0.0}:${WASSTRAAT_PORT_APACHE:-5052}:5052"
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.17.0
+    container_name: wasstraat_elasticsearch
+    restart: unless-stopped
+    # Zonder beveiliging en zonder hostpoort: alleen bereikbaar binnen het compose-netwerk
+    environment:
+      - xpack.security.enabled=false
+      - discovery.type=single-node
+      - ES_JAVA_OPTS=-Xms${WASSTRAAT_ES_GEHEUGEN:-512m} -Xmx${WASSTRAAT_ES_GEHEUGEN:-512m}
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    cap_add:
+      - IPC_LOCK
+    volumes:
+      - elasticsearch:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fs 'http://localhost:9200/_cluster/health?wait_for_status=yellow&timeout=5s' >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 30
+      start_period: 30s
+
+volumes:
+  postgres:
+  mongo:
+  mongo_config:
+  elasticsearch:
+  airflow_logs:

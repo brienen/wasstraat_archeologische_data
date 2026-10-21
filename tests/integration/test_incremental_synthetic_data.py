@@ -216,19 +216,16 @@ def controleerElasticsearchGelijkAanTabellen():
 
 
 def maakSY003AlsKopieVanSY002():
-    """Kopieer SY002 naar SY003: database als opgravingSY003.mdb, foto's SY002_* als SY003_*."""
+    """Kopieer SY002 naar SY003 (met submappen): database als opgravingSY003.mdb, foto's SY002_* als SY003_*."""
     shutil.rmtree(SY003_DIR, ignore_errors=True)
-    for submap in os.listdir(SY002_DIR):
-        bron = os.path.join(SY002_DIR, submap)
-        if not os.path.isdir(bron):
-            continue
-        doel = os.path.join(SY003_DIR, submap)
-        os.makedirs(doel)
-        for naam in os.listdir(bron):
+    for bron_map, _, namen in os.walk(SY002_DIR):
+        doel_map = os.path.join(SY003_DIR, os.path.relpath(bron_map, SY002_DIR))
+        os.makedirs(doel_map, exist_ok=True)
+        for naam in namen:
             if naam.startswith("."):
                 continue
             nieuwe_naam = "opgravingSY003.mdb" if naam == "opgravingSY002.mdb" else naam.replace("SY002", "SY003")
-            shutil.copyfile(os.path.join(bron, naam), os.path.join(doel, nieuwe_naam))
+            shutil.copyfile(os.path.join(bron_map, naam), os.path.join(doel_map, nieuwe_naam))
 
 
 # ============================================================
@@ -377,12 +374,17 @@ class TestIncrementeelSynthetic:
         delta = run["tellingen"]["delta"]["totaal"]
         assert delta["gewijzigd"] == 1 and delta["verwijderd"] == 1, delta
 
-        # SY003 volgt de inhoud van SY001; de foto's van SY003 blijven (op één na)
-        assert telProject("Def_Vondst", "SY003") == 4
+        # SY003 volgt de inhoud van SY001; de foto's van SY003 blijven (op één na). De objectfoto
+        # SY003_P4_H11_1_1.jpg verwijst naar put 4 en vondst 11, die SY001 niet heeft: Transform 5
+        # (Generate_Missing) maakt die put en vondst aan, zoals bij elke foto zonder bijbehorend record.
+        # De andere objectfoto (put 2, vondst 4) past bij een bestaande vondst van SY001.
+        gegenereerd_uit_foto = {"Def_Put": 1, "Def_Vondst": 1}
+        assert telProject("Def_Vondst", "SY003") == 4 + gegenereerd_uit_foto["Def_Vondst"]
         for tabel in PROJECT_TABELLEN:
             if tabel == "Def_Bestand":
                 continue
-            assert telProject(tabel, "SY003") == telProject(tabel, "SY001"), f"{tabel}: SY003 volgt SY001 niet"
+            assert telProject(tabel, "SY003") == telProject(tabel, "SY001") + gegenereerd_uit_foto.get(tabel, 0), \
+                f"{tabel}: SY003 volgt SY001 niet"
         assert telProject("Def_Bestand", "SY003") == len(TOESTAND["sy003_ids"]["Def_Bestand"]) - 1
         assert pgWaarde(f'SELECT COUNT(*) FROM "Def_Bestand" WHERE "fileName" = \'{VERWIJDERDE_FOTO}\'') == 0
 

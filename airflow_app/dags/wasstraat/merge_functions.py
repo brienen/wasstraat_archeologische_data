@@ -396,6 +396,18 @@ def getProject(brondata):
 
 
 
+# Velden van een foto die mergeFotoinfo() naar Single_Store_Clean overneemt. De
+# sleutels (key_foto1, key_foto3, key_vondst, ...) uit Transform 3 moeten mee,
+# anders kan Transform 4 (Set_Reference_Images_to_Foto1/Foto3) de foto niet aan
+# zijn artefact of vondst koppelen. Velden die een foto niet heeft, worden overgeslagen.
+FOTO_VELDEN = ['_id', 'fileName', 'imageID', 'imageMiddleID', 'imageThumbID',
+    'fileType', 'directory', 'mime_type', 'fototype', 'soort', 'projectcd',
+    'materiaal', 'putnr', 'vondstnr', 'fotonr', 'vondstkey_met_putnr',
+    'key', 'key_project', 'key_project_type', 'key_vondst',
+    'key_artefact', 'subnr', 'brondata', 'key_foto1', 'key_foto2', 'key_foto3',
+    'pad', 'spoornr', 'profiel', 'omschrijving', 'vlaknr', 'richting', 'wasstraat', 'bestandsoort', 'bestandsoort_XX']
+
+
 def mergeFotoinfo(incrementeel=False):
     """Voeg de foto's samen met hun koppelingen (fotolijst) en beschrijvingen in Single_Store_Clean.
 
@@ -440,7 +452,8 @@ def mergeFotoinfo(incrementeel=False):
         else:
             df_fotokoppel = pd.DataFrame()
 
-        # Als er geen koppeldata is, foto's direct als Bestand overnemen
+        # Als er geen koppeldata is, foto's direct als Bestand overnemen (met dezelfde
+        # velden als bij een merge, zodat de sleutels voor de artefactkoppeling meegaan)
         if df_fotokoppel.empty and df_fotobeschr.empty:
             logger.info("Geen Fotokoppel- of Fotobeschrijving-records — foto's worden direct overgenomen.")
             df_foto['soort'] = 'Bestand'
@@ -450,10 +463,7 @@ def mergeFotoinfo(incrementeel=False):
             else:
                 df_foto['brondata'] = df_foto.apply(lambda x: [{}], axis=1)
             df_foto['wasstraat'] = df_foto.apply(lambda x: [{'projectcd': x.get('projectcd'), 'table': getTable(x.get('brondata', [{}])[0])}], axis=1)
-            desired_columns = ['_id', 'fileName', 'imageID', 'imageMiddleID', 'imageThumbID',
-                'fileType', 'directory', 'mime_type', 'fototype', 'soort', 'projectcd',
-                'key', 'key_project', 'key_project_type', 'brondata', 'wasstraat', 'bestandsoort_XX']
-            available_columns = [c for c in desired_columns if c in df_foto.columns]
+            available_columns = [c for c in FOTO_VELDEN if c in df_foto.columns]
             df_merge = df_foto[available_columns]
         else:
             # Merge dataframes to get a complete Photo-dataframe
@@ -474,13 +484,7 @@ def mergeFotoinfo(incrementeel=False):
                 df_merge['materiaal'] = df_merge.apply(lambda x: util.firstValue(x['materiaal'], x['materiaalgroep']), axis=1)
             elif 'materiaalgroep' in df_merge.columns:
                 df_merge['materiaal'] = df_merge['materiaalgroep']
-            desired_columns = ['_id', 'fileName', 'imageID', 'imageMiddleID', 'imageThumbID',
-                'fileType', 'directory', 'mime_type', 'fototype', 'soort', 'projectcd',
-                'materiaal', 'putnr', 'vondstnr', 'fotonr', 'vondstkey_met_putnr',
-                'key', 'key_project', 'key_project_type', 'key_vondst',
-                'key_artefact', 'subnr', 'brondata', 'key_foto1', 'key_foto2', 'key_foto3',
-                'pad', 'spoornr', 'profiel', 'omschrijving', 'vlaknr', 'richting', 'wasstraat', 'bestandsoort', 'bestandsoort_XX']
-            available_columns = [c for c in desired_columns if c in df_merge.columns]
+            available_columns = [c for c in FOTO_VELDEN if c in df_merge.columns]
             df_merge = df_merge[available_columns]
 
 

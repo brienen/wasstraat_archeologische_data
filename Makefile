@@ -13,11 +13,16 @@
 #   make test-all         Draai unit + integratietests
 #   make docs             Start MkDocs dev-server
 #
-# Wasstraat draaien:
+# Wasstraat draaien (ontwikkelomgeving, met broncode-volumes):
 #   make app          Start de wasstraat (standaard)
 #   make dev          Start in development mode (met hot-reload)
 #   make stop         Stop alle containers
 #   make backup       Backup Postgres + MongoDB
+#
+# Publiceren (images voor de live installatie uit deploy/):
+#   make publish      Bouw multi-arch images en push naar ghcr.io/brienen
+#   make publish PUSH=0 SERVICE=flask   Alleen lokaal bouwen, één service
+#   make release VERSION=1.2.3 MSG="..."  Versie taggen, pushen en publiceren
 # ============================================================
 
 SHELL := /bin/bash
@@ -39,6 +44,34 @@ COMPOSE_DELFT := $(DC) -f docker-compose.delft.yml
 COMPOSE_DELFT_TEST := $(DC) -p wasstraat-delft-test -f docker-compose.delft-test.yml
 DT := $(shell date +"%Y-%m-%d_%H-%M-%S")
 PG_CONTAINER ?= wasstraat_postgres
+
+# --- Publicatie van images (GitHub Container Registry) ---
+# 'make publish' bouwt de eigen images voor linux/amd64 en linux/arm64 en pusht ze naar
+# $(REGISTRY)/$(IMAGE_PREFIX)-<service>:<versie> en :latest. Inloggen gebeurt vooraf met
+# 'docker login ghcr.io'. Met PUSH=0 bouwt het alleen lokaal, voor dit platform.
+# Zie docs/deployment/omgevingen.md.
+REGISTRY ?= ghcr.io/brienen
+IMAGE_PREFIX ?= wasstraat
+# Jupyter is een ontwikkelvoorziening en wordt niet gepubliceerd
+IMAGES := airflow flask postgres apache
+SERVICE ?= $(IMAGES)
+PLATFORMS ?= linux/amd64,linux/arm64
+PUSH ?= 1
+NO_CACHE ?= 0
+BUILDER ?= wasstraat
+IMAGE_SOURCE ?= https://github.com/brienen/wasstraat_archeologische_data
+# Versie uit config/version.env; init-config.sh maakt dat bestand aan uit version.env.example
+VERSION ?= $(strip $(shell sed -n 's/^VERSION=//p' config/version.env config/version.env.example 2>/dev/null | head -1))
+ifeq ($(PUSH),1)
+PUBLISH_OPTS := --builder $(BUILDER) --platform $(PLATFORMS) --provenance=false --push
+PUBLISH_DOEL := bouwen voor $(PLATFORMS) en pushen naar $(REGISTRY) (vooraf: docker login ghcr.io)
+else
+PUBLISH_OPTS := --load
+PUBLISH_DOEL := lokaal bouwen voor dit platform, zonder te pushen
+endif
+ifeq ($(NO_CACHE),1)
+PUBLISH_OPTS += --no-cache --pull
+endif
 
 # --- Init-config: genereer .env uit .env.example als ze nog niet bestaan ---
 define init-config
@@ -314,27 +347,50 @@ migrate-postgres-data: ## Eenmalig bij bestaande installaties: zet PostgreSQL-da
 	bash scripts/postgres/migreer_data_naar_volume.sh $(PG_CONTAINER)
 
 # ============================================================
-# Release (handmatig — gebruik met zorg)
+# Publicatie en release
 # ============================================================
 
+.PHONY: publish
+publish: ## Bouw en push images naar ghcr.io (opties: SERVICE=flask PUSH=0 NO_CACHE=1 VERSION=1.2.3)
+	@test -n "$(VERSION)" || { echo "✗ Geen versie gevonden; zet VERSION=x.y.z in config/version.env" >&2; exit 1; }
+	@for s in $(SERVICE); do \
+		test -f services/$$s/Dockerfile || { echo "✗ Onbekende service '$$s' (kies uit: $(IMAGES))" >&2; exit 1; }; \
+	done
+	@if [ "$(PUSH)" = "1" ]; then \
+		docker buildx inspect $(BUILDER) >/dev/null 2>&1 || \
+		{ echo "➜ Multi-arch builder '$(BUILDER)' aanmaken..."; docker buildx create --name $(BUILDER) --driver docker-container >/dev/null; }; \
+	fi
+	@echo "➜ Images $(VERSION): $(PUBLISH_DOEL)"
+	@for s in $(SERVICE); do \
+		echo "➜ $(REGISTRY)/$(IMAGE_PREFIX)-$$s:$(VERSION)"; \
+		docker buildx build $(PUBLISH_OPTS) \
+			-f services/$$s/Dockerfile \
+			-t $(REGISTRY)/$(IMAGE_PREFIX)-$$s:$(VERSION) \
+			-t $(REGISTRY)/$(IMAGE_PREFIX)-$$s:latest \
+			--label org.opencontainers.image.source=$(IMAGE_SOURCE) \
+			--label org.opencontainers.image.version=$(VERSION) \
+			--label org.opencontainers.image.licenses=EUPL-1.2 \
+			. || exit 1; \
+	done
+	@echo "✓ Klaar: $(SERVICE) ($(VERSION))"
+
 .PHONY: release
-release: ## Release bouwen en pushen (gebruik: make release VERSION=1.2.3 MSG="Release notes")
-ifndef VERSION
+release: ## Versie vastleggen, committen, taggen, pushen en images publiceren (gebruik: make release VERSION=1.2.3 MSG="Release notes")
+ifneq ($(origin VERSION),command line)
 	$(error Geef een versie op, bijv: make release VERSION=1.2.3 MSG="Nieuwe features")
 endif
 ifndef MSG
 	$(error Geef een message op, bijv: make release VERSION=1.2.3 MSG="Nieuwe features")
 endif
+	@echo "VERSION=$(VERSION)" > config/version.env.example
 	@echo "VERSION=$(VERSION)" > config/version.env
-	git tag -a $(VERSION) -m "$(MSG)"
+	@sed -i.bak 's/^WASSTRAAT_VERSION=.*/WASSTRAAT_VERSION=$(VERSION)/' deploy/.env.example && rm -f deploy/.env.example.bak
 	git add .
 	git commit -m "$(MSG)"
+	git tag -a $(VERSION) -m "$(MSG)"
 	git push --all
 	git push --tags
-	docker login
-	docker buildx build --no-cache --platform linux/amd64,linux/arm64 \
-		--builder mybuilder -f ./services/flask/Dockerfile \
-		-t brienen/wasstraat_flask:$(VERSION) --push .
+	$(MAKE) publish VERSION=$(VERSION)
 
 # ============================================================
 # Opschonen

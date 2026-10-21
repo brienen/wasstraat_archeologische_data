@@ -65,6 +65,14 @@ EXPECTED_MIN_SOORT_COUNTS = {
 # Verwachte aantallen voor afbeeldingen.
 EXPECTED_MIN_PLAATJES = 21
 EXPECTED_MIN_BESTAND_CLEAN = 21
+# Objectfoto's uit data/test/.../L Fotos/H (Objectfoto's)/<materiaal>/DB34_P<put>_H<vondst>_<subnr>_<fotonr>.jpg.
+# Na Transform 2 hebben ze projectcode DB034 en integers; Transform 4 koppelt ze
+# via key_foto1 (projectcd + artefactsoort + putnr + vondstnr + subnr) aan hun artefact.
+# Tot 2026-10-21 faalde Transform 2 voor elke foto (dispatcher koos de bestandsnaam-parser)
+# en werd geen enkele objectfoto gekoppeld.
+# Gemeten 2026-10-21: 92 objectfoto's (alle bestanden onder H (Objectfoto's)), 22 met artefactID.
+EXPECTED_MIN_OBJECTFOTOS = 92
+EXPECTED_MIN_OBJECTFOTOS_GEKOPPELD = 22
 
 
 # ============================================================
@@ -366,6 +374,49 @@ class TestDelftExtractTransform:
         assert bestand_count >= EXPECTED_MIN_BESTAND_CLEAN, \
             f"Bestand: verwacht >= {EXPECTED_MIN_BESTAND_CLEAN}, gevonden {bestand_count}"
 
+    def test_13a_verify_geen_transform2_fouten_voor_bestanden(self, mongo_client):
+        """Transform 2 slaat geen foto's, tekeningen of rapporten over (_processing_errors)."""
+        fouten = list(mongo_client[DB_ANALYSE]["_processing_errors"].find({"fase": "enhance_attributes"}))
+        bestand_fouten = [f for f in fouten if f.get("soort") in ("Foto", "Tekening", "Rapport")]
+        print(f"\n  enhance_attributes-fouten: {len(fouten)}, waarvan voor foto's/tekeningen/rapporten: {len(bestand_fouten)}")
+        for f in bestand_fouten[:5]:
+            print(f"    {f.get('soort')} {f.get('original_id')}: {f.get('error_type')}: {f.get('error_msg')}")
+        assert not bestand_fouten, (
+            f"{len(bestand_fouten)} foto's/tekeningen/rapporten zijn in Transform 2 overgeslagen; "
+            f"controleer de dispatcher identificeer() in profielen/conventie.py")
+
+    def test_13b_verify_objectfotos_genormaliseerd_en_gekoppeld(self, mongo_client):
+        """Objectfoto's hebben projectcode DB034, integers voor putnr/vondstnr/subnr en een artefactID naar het juiste artefact."""
+        coll = mongo_client[DB_ANALYSE]["Single_Store_Clean"]
+        objectfotos = list(coll.find(
+            {"soort": "Bestand", "bestandsoort_XX": "Foto", "bestandsoort": "Objectfoto"},
+            {"fileName": 1, "projectcd": 1, "putnr": 1, "vondstnr": 1, "subnr": 1, "key_foto1": 1, "artefactID": 1, "vondstID": 1}))
+        gekoppeld = [f for f in objectfotos if f.get("artefactID") is not None]
+        met_vondst = [f for f in objectfotos if f.get("vondstID") is not None]
+        print(f"\n  Objectfoto's: {len(objectfotos)}, met artefactID: {len(gekoppeld)}, met vondstID: {len(met_vondst)}")
+        for f in objectfotos[:5]:
+            print(f"    {f.get('fileName')}: {f.get('projectcd')} put {f.get('putnr')!r} vondst {f.get('vondstnr')!r} "
+                  f"subnr {f.get('subnr')!r} key_foto1={f.get('key_foto1')} artefactID={f.get('artefactID')}")
+        assert len(objectfotos) >= EXPECTED_MIN_OBJECTFOTOS, \
+            f"Objectfoto's: verwacht >= {EXPECTED_MIN_OBJECTFOTOS}, gevonden {len(objectfotos)}"
+
+        verkeerde_code = [f.get("fileName") for f in objectfotos if f.get("projectcd") != "DB034"]
+        assert not verkeerde_code, f"Objectfoto's zonder genormaliseerde projectcode DB034: {verkeerde_code[:5]}"
+        tekst = [f.get("fileName") for f in objectfotos
+                 if any(isinstance(f.get(v), str) for v in ("putnr", "vondstnr", "subnr"))]
+        assert not tekst, f"Objectfoto's met putnr/vondstnr/subnr als tekst: {tekst[:5]}"
+
+        assert len(gekoppeld) >= EXPECTED_MIN_OBJECTFOTOS_GEKOPPELD, (
+            f"Objectfoto's met artefactID: verwacht >= {EXPECTED_MIN_OBJECTFOTOS_GEKOPPELD}, gevonden {len(gekoppeld)}. "
+            f"Controleer identificeer('Foto') in Transform 2 en Set_Reference_Images_to_Foto1 in Transform 4.")
+        for f in gekoppeld[:10]:
+            artefact = coll.find_one({"soort": "Artefact", "ID": f["artefactID"]},
+                                     {"projectcd": 1, "putnr": 1, "vondstnr": 1, "subnr": 1, "artefactsoort": 1})
+            assert artefact is not None, f"{f.get('fileName')}: artefactID {f['artefactID']} bestaat niet"
+            assert (artefact.get("projectcd"), artefact.get("vondstnr"), artefact.get("subnr")) == \
+                (f.get("projectcd"), f.get("vondstnr"), f.get("subnr")), \
+                f"{f.get('fileName')} is aan een ander artefact gekoppeld: {artefact}"
+
     # ----------------------------------------------------------
     # Stap 5: Monster-verificatie
     # ----------------------------------------------------------
@@ -641,6 +692,14 @@ class TestDelftLoad:
         assert not fouten, (
             f"Tabellen niet geladen:\n  " + "\n  ".join(fouten)
         )
+
+    def test_33a_verify_postgres_bestand_gekoppeld_aan_artefact(self, airflow_ready):
+        """Def_Bestand bevat objectfoto's met een artefactID naar een bestaand artefact (lijst 'Alle artefacten met foto')."""
+        gekoppeld = _pg_scalar(
+            'SELECT COUNT(*) FROM "Def_Bestand" b JOIN "Def_Artefact" a ON b."artefactID" = a.primary_key')
+        print(f"\n  Def_Bestand-rijen met een artefactID: {gekoppeld}")
+        assert gekoppeld >= EXPECTED_MIN_OBJECTFOTOS_GEKOPPELD, (
+            f"Def_Bestand heeft {gekoppeld} rijen met artefactID, verwacht >= {EXPECTED_MIN_OBJECTFOTOS_GEKOPPELD}")
 
     def test_34_verify_postgres_no_empty_key_tables(self, airflow_ready):
         """Kerntabellen in PostgreSQL zijn niet leeg."""

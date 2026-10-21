@@ -24,3 +24,22 @@
 **/secrets.dev.yaml
 **/values.dev.yaml
 README.md
+
+# Alleen de code voor de images hoort in de buildcontext. data/ kan terabytes groot zijn
+# en notebooks/ bevat grote afbeeldingen; geen enkele Dockerfile kopieert hieruit.
+data
+notebooks
+docs
+site
+tests
+Analyse
+graphify-out
+image
+_internal
+overrides
+deploy
+mkdocs.yml
+Makefile
+*.md
+.pytest_cache
+.claude

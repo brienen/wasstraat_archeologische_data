@@ -27,7 +27,10 @@ data/synthetic/data/
 │   │   └── L Fotos/                         # Foto's
 │   └── SY002/
 │       ├── C Database/opgravingSY002.mdb
-│       └── L Fotos/
+│       └── L Fotos/                         # Project- en sfeerfoto's (G/F), tekening (B)
+│           └── H (Objectfoto's)/            # Objectfoto's per materiaal, bijv.
+│               ├── Aardewerk/SY002_P2_H4_1_1.jpg    # put 2, vondst 4, subnr 1 → artefact
+│               └── Munt/SY002_P4_H11_1_1.jpg
 ├── projectenlijst/projectenlijst.mdb         # Projectenlijst
 ├── magazijnlijst/MAGAZIJN.mdb               # Depotdata
 ├── fotolijst/Digifotos.mdb                  # Fotocatalogus
