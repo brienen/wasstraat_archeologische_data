@@ -7,7 +7,9 @@ verifieert daarna de record-aantallen in de drie MongoDB databases:
   - Arch_Analyse_Test  (Single_Store + Single_Store_Clean)
 
 Daarna DAG_Load_Only (marker load) met verificatie in PostgreSQL.
-Afbeeldingen: de synthetische objectfoto's van SY002 moeten na Transform 4
+Afbeeldingen: na Extract_only heeft geen enkel bestand in Filenames de status
+mislukt of onverwerkt en is de controletaak Controleer_Afbeeldingen geslaagd
+(issue 70); de synthetische objectfoto's van SY002 moeten na Transform 4
 aan hun artefact en vondst gekoppeld zijn (artefactID, vondstID), ook in Def_Bestand.
 
 Draaien:
@@ -99,6 +101,18 @@ EXPECTED_OBJECTFOTO_KOPPELING = {
 }
 
 
+# Controletaak van de extractie van afbeeldingen (issue 70) per DAG die afbeeldingen importeert
+CONTROLETAAK_PER_DAG = {
+    "Extract_only": "Extract_Group.Controleer_Afbeeldingen",
+    "Extract_Transform_Load_Full_Cycle": "Extract_Group.Controleer_Afbeeldingen",
+    "Extract_Transform_Load_Incremental": "Extract_Group.Controleer_Afbeeldingen",
+    "Redo_Images": "Controleer_Afbeeldingen",
+}
+
+# Uitvoer van de laatste 'airflow dags test' per DAG (voor controles op afzonderlijke taken)
+DAG_UITVOER = {}
+
+
 # ============================================================
 # Helpers
 # ============================================================
@@ -125,6 +139,7 @@ def run_dag(dag_id: str, timeout: int = 1800, poll_interval: int = 3) -> str:
     )
 
     t_elapsed = time.time() - t_start
+    DAG_UITVOER[dag_id] = result.stdout + "\n" + result.stderr
 
     if result.returncode != 0:
         # Toon de laatste regels van stdout en stderr voor debugging
@@ -364,6 +379,80 @@ class TestFullPipelineSynthetic:
     def test_01_run_extract(self, airflow_ready):
         """Trigger Extract_only DAG."""
         run_dag("Extract_only", timeout=1200)
+
+    def test_01a_verify_afbeeldingen_status(self, mongo_client):
+        """Na Extract_only is elk bestand in Filenames verwerkt of bewust overgeslagen (issue 70).
+
+        Geen enkel bestand heeft de status mislukt (processed False met fout) of
+        onverwerkt (processed False zonder fout), en de controletaak
+        Extract_Group.Controleer_Afbeeldingen is geslaagd.
+        """
+        col = mongo_client[DB_FILES]["Filenames"]
+        totaal = col.count_documents({})
+        verwerkt = col.count_documents({"processed": True, "overgeslagen": {"$exists": False}})
+        overgeslagen = col.count_documents({"processed": True, "overgeslagen": {"$exists": True}})
+        mislukt = list(col.find({"processed": False, "fout": {"$exists": True}}, {"_id": 0, "filename": 1, "fout": 1}))
+        onverwerkt = col.count_documents({"processed": False, "fout": {"$exists": False}})
+        print(f"\n  Filenames: {totaal} totaal, {verwerkt} verwerkt, {overgeslagen} overgeslagen, "
+              f"{len(mislukt)} mislukt, {onverwerkt} onverwerkt")
+        assert totaal > 0, "Filenames is leeg"
+        assert not mislukt, f"{len(mislukt)} bestanden mislukt: {mislukt[:5]}"
+        assert onverwerkt == 0, f"{onverwerkt} bestanden niet verwerkt (processed False zonder fout)"
+        assert verwerkt + overgeslagen == totaal
+        assert col.count_documents({"processed": True, "verwerkt_op": {"$exists": False}}) == 0, \
+            "Verwerkte of overgeslagen bestanden zonder verwerkt_op"
+
+        uitvoer = DAG_UITVOER.get("Extract_only", "")
+        assert re.search(r"Marking task as SUCCESS\. dag_id=Extract_only, task_id=Extract_Group\.Controleer_Afbeeldingen,",
+                         uitvoer), "Taak Extract_Group.Controleer_Afbeeldingen niet geslaagd in Extract_only"
+        assert f"Controle afbeeldingen: {totaal} bestanden, {verwerkt} verwerkt" in uitvoer
+
+    def test_01b_verify_controletaak_in_dags(self, airflow_ready):
+        """Elke DAG die afbeeldingen importeert controleert ze na alle import-taken en vóór de transformatie.
+
+        Leest de DagBag in de Airflow-container. In de incrementele cyclus moet
+        Markeer_Run_Mislukt stroomafwaarts van de controletaak liggen, zodat een
+        mislukte controle de run op 'mislukt' zet.
+        """
+        script = (
+            "import json\n"
+            "from airflow.models import DagBag\n"
+            "bag = DagBag(include_examples=False)\n"
+            f"taken = {CONTROLETAAK_PER_DAG!r}\n"
+            "uit = {}\n"
+            "for dag_id, taak_id in taken.items():\n"
+            "    dag = bag.get_dag(dag_id)\n"
+            "    if dag is None or not dag.has_task(taak_id):\n"
+            "        uit[dag_id] = None\n"
+            "        continue\n"
+            "    taak = dag.get_task(taak_id)\n"
+            "    uit[dag_id] = {\n"
+            "        'upstream': sorted(taak.upstream_task_ids),\n"
+            "        'downstream': sorted(t.task_id for t in taak.get_flat_relatives(upstream=False)),\n"
+            "        'imports': sorted(t for t in dag.task_ids if t.split('.')[-1].startswith('Extract_Data_From_Fotos_')),\n"
+            "    }\n"
+            "print('RESULTAAT:' + json.dumps(uit))\n"
+        )
+        result = subprocess.run(["docker", "exec", AIRFLOW_CONTAINER, "python", "-c", script],
+                                capture_output=True, text=True, timeout=300)
+        regels = [r for r in result.stdout.split("\n") if r.startswith("RESULTAAT:")]
+        assert result.returncode == 0 and regels, f"DagBag niet gelezen: {result.stderr[-2000:]}"
+        structuur = json.loads(regels[-1][len("RESULTAAT:"):])
+
+        for dag_id, taak_id in CONTROLETAAK_PER_DAG.items():
+            info = structuur.get(dag_id)
+            assert info is not None, f"{dag_id}: taak {taak_id} ontbreekt"
+            print(f"\n  {dag_id}: {taak_id} na {len(info['upstream'])} import-taken")
+            assert info["imports"], f"{dag_id}: geen import-taken gevonden"
+            assert info["upstream"] == info["imports"], (
+                f"{dag_id}: {taak_id} moet direct na alle import-taken komen, upstream is {info['upstream']}")
+        for dag_id in ["Extract_only", "Extract_Transform_Load_Full_Cycle", "Extract_Transform_Load_Incremental"]:
+            assert "Extract_Group.last" in structuur[dag_id]["downstream"]
+        for dag_id in ["Extract_Transform_Load_Full_Cycle", "Extract_Transform_Load_Incremental"]:
+            assert any(t.startswith("Transform1_Harmonize_Group.") for t in structuur[dag_id]["downstream"]), (
+                f"{dag_id}: de transformatie hangt niet af van de controle van de afbeeldingen")
+        assert "Markeer_Run_Mislukt" in structuur["Extract_Transform_Load_Incremental"]["downstream"], (
+            "Markeer_Run_Mislukt bewaakt Controleer_Afbeeldingen niet in de incrementele cyclus")
 
     def test_02_verify_staging(self, mongo_client):
         """Staging-collectie bevat geëxtraheerde tabellen uit de MDB."""

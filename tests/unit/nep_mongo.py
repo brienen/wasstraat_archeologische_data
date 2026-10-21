@@ -1,15 +1,17 @@
 """
 Minimale in-memory nabootsing van pymongo voor unit tests (geen mongomock nodig).
 
-Ondersteunt alleen wat de modules voor incrementeel laden gebruiken:
-find/find_one (met projectie en sortering), insert_one/insert_many,
-update_one met $set, delete_many, count_documents, estimated_document_count,
-create_index (unieke, eventueel partiële indexen worden gecontroleerd) en
-aggregate met $match + $group/$sum.
+Ondersteunt alleen wat de modules voor incrementeel laden en de extractie van
+afbeeldingen gebruiken: find/find_one (met projectie, sortering en limit),
+insert_one/insert_many, update_one met $set en $unset, delete_many,
+count_documents, estimated_document_count, create_index (unieke, eventueel
+partiële indexen worden gecontroleerd) en aggregate met $match + $group/$sum.
 
-Filters: gelijkheid, $in, $nin, $ne, $exists, $gt, $or, $and en veldnamen met punten.
+Filters: gelijkheid, een gecompileerde reguliere expressie, $in, $nin, $ne,
+$exists, $gt, $gte, $lt, $lte, $or, $and en veldnamen met punten.
 """
 import copy
+import re
 
 from bson import ObjectId
 from pymongo.errors import DuplicateKeyError
@@ -33,6 +35,23 @@ def _zetWaarde(doc, pad, waarde):
     for sleutel in delen[:-1]:
         doc = doc.setdefault(sleutel, {})
     doc[delen[-1]] = waarde
+
+
+def _verwijderWaarde(doc, pad):
+    delen = pad.split('.')
+    for sleutel in delen[:-1]:
+        doc = doc.get(sleutel)
+        if not isinstance(doc, dict):
+            return
+    doc.pop(delen[-1], None)
+
+
+_VERGELIJK = {
+    '$gt': lambda a, b: a > b,
+    '$gte': lambda a, b: a >= b,
+    '$lt': lambda a, b: a < b,
+    '$lte': lambda a, b: a <= b,
+}
 
 
 def _bevat(waarde, lijst):
@@ -65,12 +84,15 @@ def matcht(doc, filt):
                     ok = waarde is _ONTBREEKT or waarde != arg
                 elif op == '$exists':
                     ok = (waarde is not _ONTBREEKT) == bool(arg)
-                elif op == '$gt':
-                    ok = waarde is not _ONTBREEKT and waarde is not None and waarde > arg
+                elif op in ('$gt', '$gte', '$lt', '$lte'):
+                    ok = waarde is not _ONTBREEKT and waarde is not None and _VERGELIJK[op](waarde, arg)
                 else:
                     raise NotImplementedError(f"Operator {op} niet ondersteund in nep_mongo")
                 if not ok:
                     return False
+        elif isinstance(voorwaarde, re.Pattern):
+            if not isinstance(waarde, str) or not voorwaarde.search(waarde):
+                return False
         else:
             if waarde is _ONTBREEKT:
                 if voorwaarde is not None:
@@ -97,7 +119,10 @@ def _projecteer(doc, projectie):
 
 
 class NepCursor(list):
-    """Lijst met sort- en distinct-methoden zoals een pymongo-cursor."""
+    """Lijst met sort-, limit- en distinct-methoden zoals een pymongo-cursor."""
+
+    def limit(self, aantal):
+        return NepCursor(self[:aantal]) if aantal else self
 
     def sort(self, sleutel, richting=1):
         if isinstance(sleutel, list):
@@ -198,6 +223,8 @@ class NepCollectie:
             if matcht(d, filt):
                 for pad, waarde in update.get('$set', {}).items():
                     _zetWaarde(d, pad, copy.deepcopy(waarde))
+                for pad in update.get('$unset', {}):
+                    _verwijderWaarde(d, pad)
                 return NepResultaat(matched_count=1, modified_count=1)
         return NepResultaat(matched_count=0, modified_count=0)
 

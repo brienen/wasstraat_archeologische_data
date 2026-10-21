@@ -73,7 +73,19 @@ EXPECTED_MIN_BESTAND_CLEAN = 21
 # Gemeten 2026-10-21: 92 objectfoto's (alle bestanden onder H (Objectfoto's)), 22 met artefactID.
 EXPECTED_MIN_OBJECTFOTOS = 92
 EXPECTED_MIN_OBJECTFOTOS_GEKOPPELD = 22
-EXPECTED_MAX_ONVERWERKTE_BESTANDEN = 5  # bestanden die image_util niet kan verwerken (processed blijft False)
+# Statussen in Filenames (issue 70): verwerkt, overgeslagen (bijv. een tif met jpg-versie) of
+# mislukt (processed False met fout). Een vol mediavolume is een harde fout in de import-taken en
+# de taak Controleer_Afbeeldingen faalt boven AIRFLOW_MAX_MISLUKTE_AFBEELDINGEN; deze grens is het
+# vangnet in de test. Gemeten 2026-10-21: 540 verwerkt, 0 overgeslagen, 1 mislukt: de lijst
+# "rapporten/DAR/Lijst met Delftse Archeologische Rapporten.doc" heeft geen projectcode en geen
+# DAN/DAR in de bestandsnaam (image_util weigert hem). Dat is het ene bestand dat vóór issue 70
+# stil op processed=False bleef staan.
+EXPECTED_MAX_MISLUKTE_BESTANDEN = 1
+CONTROLETAAK_AFBEELDINGEN = "Extract_Group.Controleer_Afbeeldingen"
+
+
+# Uitvoer van de laatste 'airflow dags test' per DAG (voor controles op afzonderlijke taken)
+DAG_UITVOER = {}
 
 
 # ============================================================
@@ -94,6 +106,7 @@ def run_dag(dag_id: str, timeout: int = 1800, poll_interval: int = 3) -> str:
     )
 
     t_elapsed = time.time() - t_start
+    DAG_UITVOER[dag_id] = result.stdout + "\n" + result.stderr
 
     if result.returncode != 0:
         all_output = (result.stdout + "\n" + result.stderr).strip().split("\n")
@@ -376,19 +389,36 @@ class TestDelftExtractTransform:
     # Stap 4: Afbeeldingen
     # ----------------------------------------------------------
     def test_11_verify_filenames_collection(self, mongo_client):
-        """Filenames-collectie is gevuld na Extract."""
-        db = mongo_client[DB_FILES]
-        filenames_count = db["Filenames"].count_documents({})
-        processed_count = db["Filenames"].count_documents({"processed": True})
-        onverwerkt = filenames_count - processed_count
-        print(f"\n  Filenames: {filenames_count} totaal, {processed_count} verwerkt, {onverwerkt} onverwerkt")
-        assert filenames_count > 0, "Filenames collectie is leeg"
-        assert processed_count > 0, "Geen verwerkte bestanden"
-        assert onverwerkt <= EXPECTED_MAX_ONVERWERKTE_BESTANDEN, (
-            f"{onverwerkt} bestanden niet verwerkt, verwacht <= {EXPECTED_MAX_ONVERWERKTE_BESTANDEN}. "
-            f"Een bestand blijft op processed=False staan als image_util een fout geeft; zoek in het "
-            f"Airflow-log van Extract_only naar 'Onbekende fout bij het laden van image' (bijvoorbeeld "
-            f"'No space left on device' als het mediavolume vol is).")
+        """Filenames is gevuld na Extract en elk bestand is verwerkt, overgeslagen of mislukt (issue 70)."""
+        coll = mongo_client[DB_FILES]["Filenames"]
+        totaal = coll.count_documents({})
+        verwerkt = coll.count_documents({"processed": True, "overgeslagen": {"$exists": False}})
+        overgeslagen = coll.count_documents({"processed": True, "overgeslagen": {"$exists": True}})
+        mislukt = list(coll.find({"processed": False, "fout": {"$exists": True}}, {"_id": 0, "filename": 1, "fout": 1}))
+        onverwerkt = coll.count_documents({"processed": False, "fout": {"$exists": False}})
+        redenen = {d["_id"]: d["aantal"] for d in coll.aggregate([
+            {"$match": {"overgeslagen": {"$exists": True}}},
+            {"$group": {"_id": "$overgeslagen", "aantal": {"$sum": 1}}}])}
+        print(f"\n  Filenames: {totaal} totaal, {verwerkt} verwerkt, {overgeslagen} overgeslagen {redenen}, "
+              f"{len(mislukt)} mislukt, {onverwerkt} onverwerkt")
+        for m in mislukt[:10]:
+            print(f"    mislukt: {m['filename']}: {m['fout'][:200]}")
+        assert totaal > 0, "Filenames collectie is leeg"
+        assert verwerkt > 0, "Geen verwerkte bestanden"
+        assert onverwerkt == 0, (
+            f"{onverwerkt} bestanden zonder status (processed False zonder fout): een import-taak is niet "
+            f"(volledig) gedraaid; controleer de taken Extract_Group.Extract_Data_From_Fotos_* van Extract_only")
+        assert len(mislukt) <= EXPECTED_MAX_MISLUKTE_BESTANDEN, (
+            f"{len(mislukt)} bestanden mislukt, verwacht <= {EXPECTED_MAX_MISLUKTE_BESTANDEN}. De foutmelding "
+            f"staat per bestand in Filenames (velden fout en fout_op) en in het log van de taak "
+            f"{CONTROLETAAK_AFBEELDINGEN}; een vol mediavolume ('No space left on device') laat de "
+            f"import-taken direct falen.")
+        assert verwerkt + overgeslagen + len(mislukt) == totaal
+
+        uitvoer = DAG_UITVOER.get("Extract_only", "")
+        assert re.search(rf"Marking task as SUCCESS\. dag_id=Extract_only, task_id={re.escape(CONTROLETAAK_AFBEELDINGEN)},",
+                         uitvoer), (f"Taak {CONTROLETAAK_AFBEELDINGEN} niet geslaagd in Extract_only; zie het log "
+                                    f"van die taak voor de mislukte bestanden")
 
     def test_12_verify_plaatjes_collection(self, mongo_client):
         """Plaatjes-collectie bevat verwerkte afbeeldingen."""

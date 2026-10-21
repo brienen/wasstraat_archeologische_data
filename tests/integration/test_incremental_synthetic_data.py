@@ -14,7 +14,12 @@ incrementele cyclus (Extract_Transform_Load_Incremental) via
      SY003_*): SY003 komt erbij met nieuwe primary_keys, SY001/SY002 blijven gelijk;
   e. de database van SY003 vervangen door die van SY001 en één foto
      verwijderd: SY003 volgt de nieuwe inhoud, geen achtergebleven rijen;
-  f. SY003 verwijderd: alles weer gelijk aan a.
+  f. SY003 verwijderd: alles weer gelijk aan a;
+  g. een onleesbare foto in SY003 met drempel 0 (issue 70): de taak
+     Controleer_Afbeeldingen faalt, Markeer_Run_Mislukt zet de run op
+     'mislukt' en PostgreSQL blijft ongewijzigd;
+  h. de onleesbare foto weggehaald: de volgende run slaagt, de openstaande
+     entry in Filenames is opgeruimd en alles is weer gelijk aan a.
 
 Na elke run worden PostgreSQL (via ``docker exec psql``), MongoDB (run-document)
 en Elasticsearch (via ``docker exec curl`` in de Elasticsearch-container; die
@@ -47,6 +52,7 @@ AIRFLOW_CONTAINER = os.getenv("AIRFLOW_CONTAINER", "wasstraat_airflow_test")
 POSTGRES_CONTAINER = os.getenv("POSTGRES_CONTAINER", "wasstraat_postgres_test")
 ES_CONTAINER = os.getenv("ES_CONTAINER", "wasstraat_elasticsearch_test")
 DB_STAGING = "Arch_Staging_Test"
+DB_FILES = "Arch_Files_Test"
 
 PROJECTEN_DIR = os.path.abspath(os.path.join(
     os.path.dirname(__file__), "..", "..", "data", "synthetic", "data", "projecten"))
@@ -55,6 +61,8 @@ SY002_DIR = os.path.join(PROJECTEN_DIR, "SY002")
 SY003_DIR = os.path.join(PROJECTEN_DIR, "SY003")
 SY003_MDB = os.path.join(SY003_DIR, "C Database", "opgravingSY003.mdb")
 VERWIJDERDE_FOTO = "SY003_F002.jpg"
+ONLEESBARE_FOTO = os.path.join(SY003_DIR, "L Fotos", "SY003_onleesbaar.jpg")
+CONTROLETAAK = "Extract_Group.Controleer_Afbeeldingen"
 PAD_SY003_IN_CONTAINER = "/input/projecten/SY003/"
 
 # Tabellen waarvan de sleutels (key → primary_key) vastgelegd en vergeleken worden
@@ -72,9 +80,23 @@ TOESTAND = {}
 # Helpers
 # ============================================================
 
-def draaiDag(dag_id, timeout=1200):
-    """Draai een DAG met ``airflow dags test`` en eis dat de DagRun slaagt (ook alle Index-taken)."""
-    cmd = ["docker", "exec", AIRFLOW_CONTAINER, "airflow", "dags", "test", dag_id, "2026-01-01"]
+def draaiDag(dag_id, timeout=1200, omgeving=None, verwacht_mislukt=None):
+    """Draai een DAG met ``airflow dags test`` en eis dat de DagRun slaagt (ook alle Index-taken).
+
+    Args:
+        dag_id: de DAG
+        timeout: maximale looptijd in seconden
+        omgeving: extra omgevingsvariabelen voor deze run (``docker exec -e``)
+        verwacht_mislukt: lijst met task_id's die moeten mislukken; de DagRun moet dan 'failed' zijn
+            en er mogen geen andere taken mislukken
+
+    Returns:
+        Tuple (looptijd in seconden, uitvoer van ``airflow dags test``)
+    """
+    cmd = ["docker", "exec"]
+    for naam, waarde in (omgeving or {}).items():
+        cmd += ["-e", f"{naam}={waarde}"]
+    cmd += [AIRFLOW_CONTAINER, "airflow", "dags", "test", dag_id, "2026-01-01"]
     print(f"\n  ▶ {' '.join(cmd)}")
     start = time.time()
     resultaat = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
@@ -82,14 +104,19 @@ def draaiDag(dag_id, timeout=1200):
     duur = time.time() - start
     status = re.findall(r"DagRun Finished: dag_id=\S+.*?state=(\w+)", uitvoer)
     mislukt = sorted(set(re.findall(r"Marking task as FAILED\. dag_id=\S+, task_id=([\w.]+)", uitvoer)))
-    if resultaat.returncode != 0 or not status or status[-1] != "success" or mislukt:
+    if verwacht_mislukt is None:
+        geslaagd = resultaat.returncode == 0 and status and status[-1] == "success" and not mislukt
+    else:
+        geslaagd = status and status[-1] == "failed" and mislukt == sorted(verwacht_mislukt)
+    if not geslaagd:
         regels = [r for r in uitvoer.split("\n") if any(w in r for w in ("ERROR", "Error", "Traceback", "FAILED"))]
         for regel in (regels or uitvoer.split("\n"))[-40:]:
             print(f"    {regel}")
-        pytest.fail(f"DAG {dag_id} niet geslaagd (exit {resultaat.returncode}, status {status[-1:]}, "
+        verwacht = "geslaagd" if verwacht_mislukt is None else f"mislukt met alleen {sorted(verwacht_mislukt)}"
+        pytest.fail(f"DAG {dag_id} niet {verwacht} (exit {resultaat.returncode}, status {status[-1:]}, "
                     f"mislukte taken {mislukt}) na {duur:.0f}s")
-    print(f"  ✓  {dag_id} geslaagd in {duur:.1f}s")
-    return duur
+    print(f"  ✓  {dag_id} {'geslaagd' if verwacht_mislukt is None else 'mislukt zoals verwacht'} in {duur:.1f}s")
+    return duur, uitvoer
 
 
 def pgRijen(sql):
@@ -175,13 +202,25 @@ def laatsteRun(mongo_client):
 
 
 def controleerRun(mongo_client):
-    """Controleer dat de laatste incrementele run is afgerond en retourneer het run-document."""
+    """Controleer dat de laatste incrementele run is afgerond en retourneer het run-document.
+
+    Controleert ook de tellingen van de afbeeldingen (issue 70): geen mislukte of
+    onverwerkte bestanden, en precies de nieuwe en gewijzigde afbeeldingen uit de
+    delta zijn in deze run verwerkt of overgeslagen.
+    """
     run = laatsteRun(mongo_client)
     assert run is not None, "Geen run-document van een incrementele run gevonden"
     assert run["status"] == "afgerond", f"Run {run['run_id']} heeft status {run['status']}: {run.get('melding')}"
     assert "load" in run.get("tellingen", {}), "tellingen.load ontbreekt in het run-document"
+    afbeeldingen = run["tellingen"].get("afbeeldingen")
+    assert afbeeldingen is not None, "tellingen.afbeeldingen ontbreekt in het run-document"
+    assert afbeeldingen["mislukt"] == 0 and afbeeldingen["onverwerkt"] == 0, afbeeldingen
+    delta_afbeeldingen = run["tellingen"]["delta"].get("afbeeldingen", {})
+    assert afbeeldingen["totaal"] == delta_afbeeldingen.get("nieuw", 0) + delta_afbeeldingen.get("gewijzigd", 0)
+    assert afbeeldingen["verwerkt"] + afbeeldingen["overgeslagen"] == afbeeldingen["totaal"]
     print(f"  Run {run['run_id']}: delta {run['tellingen']['delta']['totaal']}, "
-          f"load {run['tellingen']['load']['totaal']}")
+          f"load {run['tellingen']['load']['totaal']}, afbeeldingen "
+          f"{ {k: afbeeldingen[k] for k in ('totaal', 'verwerkt', 'overgeslagen', 'mislukt')} }")
     return run
 
 
@@ -273,7 +312,12 @@ class TestIncrementeelSynthetic:
     # ----------------------------------------------------------
     def test_01_volledige_cyclus(self, mongo_client):
         assert not os.path.exists(SY003_DIR)
-        TOESTAND["duur"] = {"volledig": draaiDag("Extract_Transform_Load_Full_Cycle")}
+        duur, uitvoer = draaiDag("Extract_Transform_Load_Full_Cycle")
+        TOESTAND["duur"] = {"volledig": duur}
+        assert re.search(rf"Marking task as SUCCESS\. dag_id=\S+, task_id={re.escape(CONTROLETAAK)},", uitvoer), \
+            f"{CONTROLETAAK} niet geslaagd in de volledige cyclus"
+        filenames = mongo_client[DB_FILES]["Filenames"]
+        assert filenames.count_documents({"processed": False}) == 0, "Onverwerkte of mislukte afbeeldingen"
 
     def test_02_uitgangssituatie_vastleggen(self):
         TOESTAND["aantallen"] = telTabellen()
@@ -318,7 +362,7 @@ class TestIncrementeelSynthetic:
     # c. Incrementele run zonder wijzigingen
     # ----------------------------------------------------------
     def test_04_incrementeel_zonder_wijzigingen(self, mongo_client):
-        TOESTAND["duur"]["c"] = draaiDag("Extract_Transform_Load_Incremental")
+        TOESTAND["duur"]["c"], _ = draaiDag("Extract_Transform_Load_Incremental")
         run = controleerRun(mongo_client)
         delta = run["tellingen"]["delta"]["totaal"]
         assert delta["nieuw"] == 0 and delta["gewijzigd"] == 0 and delta["verwijderd"] == 0, delta
@@ -341,9 +385,10 @@ class TestIncrementeelSynthetic:
     # ----------------------------------------------------------
     def test_05_nieuw_project_sy003(self, mongo_client):
         maakSY003AlsKopieVanSY002()
-        TOESTAND["duur"]["d"] = draaiDag("Extract_Transform_Load_Incremental")
+        TOESTAND["duur"]["d"], _ = draaiDag("Extract_Transform_Load_Incremental")
         run = controleerRun(mongo_client)
         assert run["tellingen"]["delta"]["totaal"]["nieuw"] == telBestanden(SY003_DIR)
+        assert run["tellingen"]["afbeeldingen"]["verwerkt"] > 0, "Geen foto's van SY003 verwerkt"
 
         aantallen = telTabellen()
         TOESTAND["sy003_ids"] = {}
@@ -369,7 +414,7 @@ class TestIncrementeelSynthetic:
     def test_06_sy003_vervangen_en_foto_verwijderd(self, mongo_client):
         shutil.copyfile(SY001_MDB, SY003_MDB)
         os.remove(os.path.join(SY003_DIR, "L Fotos", VERWIJDERDE_FOTO))
-        TOESTAND["duur"]["e"] = draaiDag("Extract_Transform_Load_Incremental")
+        TOESTAND["duur"]["e"], _ = draaiDag("Extract_Transform_Load_Incremental")
         run = controleerRun(mongo_client)
         delta = run["tellingen"]["delta"]["totaal"]
         assert delta["gewijzigd"] == 1 and delta["verwijderd"] == 1, delta
@@ -408,7 +453,7 @@ class TestIncrementeelSynthetic:
     def test_07_sy003_verwijderd(self, mongo_client):
         aantal_bestanden = telBestanden(SY003_DIR)
         shutil.rmtree(SY003_DIR)
-        TOESTAND["duur"]["f"] = draaiDag("Extract_Transform_Load_Incremental")
+        TOESTAND["duur"]["f"], _ = draaiDag("Extract_Transform_Load_Incremental")
         run = controleerRun(mongo_client)
         assert run["tellingen"]["delta"]["totaal"]["verwijderd"] == aantal_bestanden
 
@@ -429,3 +474,58 @@ class TestIncrementeelSynthetic:
         assert set(statussen) == {"verwijderd"} and statussen["verwijderd"] > 0, statussen
         print(f"\n  Bronbestanden SY003: {statussen}; looptijden: "
               f"{ {k: round(v, 1) for k, v in TOESTAND['duur'].items()} }")
+
+    # ----------------------------------------------------------
+    # g. Onleesbare foto boven de drempel (issue 70)
+    # ----------------------------------------------------------
+    def test_08_onleesbare_foto_boven_drempel(self, mongo_client):
+        """Controleer_Afbeeldingen faalt bij drempel 0; Markeer_Run_Mislukt zet de run op 'mislukt'."""
+        os.makedirs(os.path.dirname(ONLEESBARE_FOTO), exist_ok=True)
+        with open(ONLEESBARE_FOTO, "wb") as f:
+            f.write(b"dit is geen afbeelding")
+        drempel_nul = {"AIRFLOW_MAX_MISLUKTE_AFBEELDINGEN": "0", "AIRFLOW_MAX_MISLUKTE_AFBEELDINGEN_PCT": "0"}
+        TOESTAND["duur"]["g"], uitvoer = draaiDag("Extract_Transform_Load_Incremental", omgeving=drempel_nul,
+                                                  verwacht_mislukt=[CONTROLETAAK])
+        assert re.search(r"Marking task as SUCCESS\. dag_id=\S+, task_id=Markeer_Run_Mislukt,", uitvoer), \
+            "Markeer_Run_Mislukt is niet geslaagd"
+        # De controle faalt direct (AirflowFailException), zonder herhalingen
+        herhaald = sorted(set(re.findall(r"Marking task as UP_FOR_RETRY\. dag_id=\S+, task_id=([\w.]+)", uitvoer)))
+        for regel in [r for r in uitvoer.split("\n") if "UP_FOR_RETRY" in r or "Immediate failure" in r][:10]:
+            print(f"    {regel[:300]}")
+        assert CONTROLETAAK not in herhaald, f"{CONTROLETAAK} is herhaald: {herhaald}"
+        assert "SY003_onleesbaar.jpg" in uitvoer, "De foutmelding noemt het onleesbare bestand niet"
+
+        run = laatsteRun(mongo_client)
+        assert run["status"] == "mislukt", f"Run {run['run_id']} heeft status {run['status']}"
+        afbeeldingen = run["tellingen"]["afbeeldingen"]
+        assert afbeeldingen["totaal"] == 1 and afbeeldingen["mislukt"] == 1, afbeeldingen
+        assert afbeeldingen["boven_drempel"] is True and afbeeldingen["drempel"] == 0
+        assert afbeeldingen["voorbeelden"][0]["filename"].endswith("SY003_onleesbaar.jpg")
+        assert afbeeldingen["voorbeelden"][0]["fout"]
+        assert "load" not in run["tellingen"], "De run is na de mislukte controle toch doorgegaan naar de load"
+
+        doc = mongo_client[DB_FILES]["Filenames"].find_one({"filename": {"$regex": "SY003_onleesbaar\\.jpg$"}})
+        assert doc is not None and doc["processed"] is False and doc.get("fout") and doc.get("fout_op")
+
+        # Niets geladen: PostgreSQL gelijk aan stap a
+        assert telTabellen() == TOESTAND["aantallen"]
+        controleerBruikleen()
+
+    # ----------------------------------------------------------
+    # h. Onleesbare foto weggehaald: herstel
+    # ----------------------------------------------------------
+    def test_09_herstel_na_mislukte_controle(self, mongo_client):
+        """Na het weghalen van de foto slaagt de volgende run en is de openstaande entry opgeruimd."""
+        shutil.rmtree(SY003_DIR)
+        TOESTAND["duur"]["h"], _ = draaiDag("Extract_Transform_Load_Incremental")
+        run = controleerRun(mongo_client)
+        assert run["tellingen"]["afbeeldingen"]["totaal"] == 0
+        assert mongo_client[DB_FILES]["Filenames"].count_documents(
+            {"filename": {"$regex": "SY003_onleesbaar\\.jpg$"}}) == 0
+        assert mongo_client[DB_FILES]["Filenames"].count_documents({"processed": False}) == 0
+        assert telTabellen() == TOESTAND["aantallen"]
+        for tabel in SLEUTEL_TABELLEN:
+            assert sleutels(tabel) == TOESTAND["sleutels"][tabel], f"{tabel}: sleutels niet gelijk aan stap a"
+        controleerBruikleen()
+        assert controleerElasticsearchGelijkAanTabellen() == TOESTAND["es"]
+        print(f"\n  Looptijden: { {k: round(v, 1) for k, v in TOESTAND['duur'].items()} }")

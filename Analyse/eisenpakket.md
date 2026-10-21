@@ -54,7 +54,7 @@ Ontwerp en status: `docs/componenten/incrementeel-laden.md`.
 | `make publish` en `deploy/` | Gebouwd en gecommit (`81efba3`); versie 1.0.1 gepubliceerd op ghcr.io, op 2026-10-21 (middag) opnieuw gepubliceerd onder 1.0.1 inclusief Apache als voordeur en de laadstap-fix |
 | Apache als voordeur | Gebouwd, getest en gecommit (`f5fb594`); eigen installatie opnieuw gebouwd en gestart (webapplicatie op poort 5052, 5051 dicht); images opnieuw gepubliceerd als 1.0.1 |
 | Delftse referentie-uitkomst | Opnieuw vastgelegd na kopregel-fix (+50 munten), &-fix (+96 aardewerk) en fotokoppeling (Put 275, Vondst 3060) |
-| Nachtset 21/22 oktober 2026 | Lokale commits per issue onder de naam van de gebruiker, nog niet gepusht: #77 (wachtwoord gemaskeerd in de verbindingslog, `shared/logutils.py`), #78 (Jupyter-image met `roman` en Elasticsearch-client 8.17), #80 (Airflow-image met vastgelegde pakketversies, apt-retries) |
+| Nachtset 21/22 oktober 2026 | Lokale commits per issue onder de naam van de gebruiker, nog niet gepusht: #77 (wachtwoord gemaskeerd in de verbindingslog, `shared/logutils.py`), #78 (Jupyter-image met `roman` en Elasticsearch-client 8.17), #80 (Airflow-image met vastgelegde pakketversies, apt-retries), #70 (extractie telt mislukte afbeeldingen, harde fout bij vol volume, drempel) |
 | Delftse testomgeving met Elasticsearch | Toegevoegd op 2026-10-21 (`elasticsearch-test`, container `wasstraat_elasticsearch_delft_test`): `DAG_Load_Only` moet er volledig slagen en een test vergelijkt per tabel Elasticsearch met PostgreSQL |
 | Delftse testomgeving | Het tmpfs-mediavolume van 4 GB uit de Apache-wijziging liep vol (rapporten circa 5 GB), waardoor 93 van de 541 bestanden stil onverwerkt bleven; op 2026-10-21 vervangen door een schijfvolume op `/output/archeomedia` (map in de Airflow-image), met een grens op onverwerkte bestanden in de Delftse extractietest |
 
@@ -71,7 +71,7 @@ Uitvoeringsplan v2 (maart 2026): #61 (incrementeel laden) is uitgevoerd en op 20
 - **Standplaatsen (#76)** houden projectcode "DB34"; de identificatie laat de projectcode daar bewust ongemoeid.
 - **Documentatie (#64):** architectuurdiagrammen en hun tekst noemen nog Django, Vue en Oracle; het advies over schrijfrechten op Linux is niet getest; de Delftse Flask-test voor de projectlijst slaat zichzelf over (login nodig).
 - **Docker-onderhoud:** vier oude testvolumes van `wasstraat-test` kunnen weg.
-- **Extractie slikt fouten bij afbeeldingen in (#70):** mislukte bestanden blijven stil op `processed: False`; ontdekt bij het volle mediavolume op 2026-10-21.
+- **Delftse rapportenlijst:** `rapporten/DAR/Lijst met Delftse Archeologische Rapporten.doc` heeft geen projectcode en geen rapportnummer en telt sinds #70 als mislukt bestand (1 van 541 in de testdata). Vraag voor de opdrachtgever: bewust overslaan (bijvoorbeeld via een filterpatroon in `correcties.yml`) of als rapport verwerken.
 
 ## 5. Vindplaatsen
 

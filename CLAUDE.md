@@ -51,7 +51,7 @@ notebooks/                 # Jupyter notebooks voor analyse
 
 De verwerkingsvolgorde is strikt:
 1. Drop All Databases (schone start)
-2. Extract — Lees brondata in (Access-databases, bestanden)
+2. Extract — Lees brondata in (Access-databases, bestanden); de taak `Controleer_Afbeeldingen` telt daarna verwerkte, overgeslagen en mislukte afbeeldingen en rapporten (statusvelden in `Filenames`) en laat de DAG falen boven de drempel `AIRFLOW_MAX_MISLUKTE_AFBEELDINGEN` / `_PCT`; een vol mediavolume is altijd een harde fout
 3. Transform1 Harmonize — Harmoniseer veldnamen over alle bronnen + brondata-correcties uit correcties.yml
 4. Transform2 Enhance Attributes — Normaliseer inhoud (datums, codes, metadata) + projectcode-correcties uit correcties.yml
 5. Transform3 Set Keys — Genereer unieke sleutels per entiteit
@@ -214,7 +214,7 @@ De 3-fase atomic swap is ongewijzigd: (1) laad naar `_new` tabellen, (2a) atomic
 
 `make integration` draait de volledige testsuite in twee stappen binnen één Docker-sessie:
 
-1. **Stap 1:** Extract → Transform → Load pipeline (marker: `integration or load`), als laatste `test_incremental_synthetic_data.py`: volledige cyclus plus vier incrementele runs met een tijdelijk project SY003 (de fixture ruimt `data/synthetic/data/projecten/SY003` altijd op)
+1. **Stap 1:** Extract → Transform → Load pipeline (marker: `integration or load`), als laatste `test_incremental_synthetic_data.py`: volledige cyclus plus zes incrementele runs met een tijdelijk project SY003 (waaronder een onleesbare foto met drempel 0 en het opruimen daarna) (de fixture ruimt `data/synthetic/data/projecten/SY003` altijd op)
 2. **Stap 2:** Flask smoke tests (marker: `flask_smoke`) — vereist geladen PostgreSQL-data uit stap 1
 
 De Flask smoke tests controleren of projecten zichtbaar zijn op de kaart en hebben daarom gevulde `Def_Project` data nodig. Draai `make integration` voor de volledige suite, of `make integration-pipeline` voor alleen Extract + Transform zonder Load.

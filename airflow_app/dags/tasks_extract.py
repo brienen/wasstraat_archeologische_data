@@ -8,7 +8,7 @@ from airflow.operators.dummy import DummyOperator
 from airflow.operators.python import PythonOperator
 
 import shared.config as config
-from wasstraat.image_import import importImages, getAndStoreImageFilenames
+from wasstraat.image_import import importImages, getAndStoreImageFilenames, controleerAfbeeldingen
 from wasstraat.extract_referentietabellen import extractAllRefs
 from wasstraat.extract_extra_projects import extractExtraProjects
 from wasstraat.bronbestanden import getLijstbestandPad
@@ -89,6 +89,14 @@ def getExtractTaskGroup(incrementeel=False):
             python_callable=extractExtraProjects,
             op_kwargs={'incrementeel': incrementeel},
         )
+        # Na alle import-taken: tel verwerkte, overgeslagen en mislukte bestanden en faal
+        # boven de drempel (issue 70). Zit vóór 'last', dus vóór de transformatie; in de
+        # incrementele cyclus valt de taak daarmee onder Markeer_Run_Mislukt.
+        Controleer_Afbeeldingen = PythonOperator(
+            task_id='Controleer_Afbeeldingen',
+            python_callable=controleerAfbeeldingen,
+            op_kwargs={'incrementeel': incrementeel},
+        )
         first >> GetAndStoreImageFilenames
         i=0
         while i < NUM_PROCESSOR:
@@ -100,8 +108,9 @@ def getExtractTaskGroup(incrementeel=False):
                 retry_delay=timedelta(minutes=1)
 
             )
-            GetAndStoreImageFilenames >> tsk >> last
+            GetAndStoreImageFilenames >> tsk >> Controleer_Afbeeldingen
             i += 1
+        Controleer_Afbeeldingen >> last
         
         
         first >> [Extract_Data_From_Projecten, Extract_Data_From_Projectenlijst, Extract_Data_From_Magazijnlijst, Extract_Data_From_Fotolijst, Extract_Data_From_MonsterDB, Extract_Data_From_RapportaneDBs, Extract_Referentietabellen] >> Extract_ExtraProjecten >> last
