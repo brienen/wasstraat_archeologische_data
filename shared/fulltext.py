@@ -2,6 +2,7 @@ from elasticsearch import Elasticsearch, helpers
 
 import shared.config as config
 import shared.const as const
+from shared.logutils import maskeerWachtwoord
 import logging
 
 import sqlalchemy as db
@@ -36,7 +37,7 @@ def indexTable(table):
     logger.info(f"Starting indexing table {table} for fulltext indexing...")
 
     engine = create_engine(config.SQLALCHEMY_DATABASE_URI)
-    logger.info("Connecting to " + config.SQLALCHEMY_DATABASE_URI)
+    logger.info(f"Connecting to {maskeerWachtwoord(config.SQLALCHEMY_DATABASE_URI)}")
     es = Elasticsearch(config.ES_HOST)
 
     alias_name = table.lower()

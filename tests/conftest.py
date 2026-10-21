@@ -157,3 +157,11 @@ _const_path = os.path.join(_project_root, "shared", "const.py")
 with open(_const_path) as f:
     exec(f.read(), _const_mod.__dict__)
 sys.modules["shared.const"] = _const_mod
+
+# Laad de echte logutils (geen env vars nodig); 'shared' is hierboven een gewone module
+# zonder pakketpad, dus registreer de submodule zelf
+_logutils_mod = types.ModuleType("shared.logutils")
+_logutils_path = os.path.join(_project_root, "shared", "logutils.py")
+with open(_logutils_path) as f:
+    exec(f.read(), _logutils_mod.__dict__)
+sys.modules["shared.logutils"] = _logutils_mod

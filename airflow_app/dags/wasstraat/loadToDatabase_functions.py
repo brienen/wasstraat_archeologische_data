@@ -29,6 +29,7 @@ import wasstraat.delta_transform as delta_transform
 import wasstraat.verwerkingsrun as verwerkingsrun
 import shared.config as config
 import shared.const as const
+from shared.logutils import maskeerWachtwoord
 import logging
 
 logger = logging.getLogger("airflow.task")
@@ -643,8 +644,8 @@ def loadAll():
     """
     logger.info("Starting Loading data to relational database...")
 
+    logger.info(f"Connecting to {maskeerWachtwoord(config.SQLALCHEMY_DATABASE_URI)}")
     conn = getPgConnection()
-    logger.info(f"Connecting to {config.SQLALCHEMY_DATABASE_URI}")
 
     lst_tables = list(LOAD_TABELLEN)
 

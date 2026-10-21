@@ -4,6 +4,7 @@ from sqlalchemy.engine import reflection
 
 import shared.config as config
 import shared.const as const
+from shared.logutils import maskeerWachtwoord
 import logging
 logger = logging.getLogger("airflow.task")
 
@@ -13,7 +14,7 @@ def getAllTables():
     logger.info("Starting retrieving tables names from relational database...")
 
     engine = create_engine(config.SQLALCHEMY_DATABASE_URI)
-    logger.info("Connecting to " + config.SQLALCHEMY_DATABASE_URI)
+    logger.info(f"Connecting to {maskeerWachtwoord(config.SQLALCHEMY_DATABASE_URI)}")
 
     metadata = MetaData()
     metadata.reflect(bind=engine)

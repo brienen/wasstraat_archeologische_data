@@ -124,6 +124,8 @@ Daarnaast leest de Airflow-container configuratie uit `wasstraat_config/` (gemou
 !!! warning "Gevoelige gegevens"
     De `.env`-bestanden bevatten wachtwoorden en credentials. Neem deze **nooit** op in versiebeheer. Gebruik het `config/`-directory als template en vul per omgeving de juiste waarden in.
 
+    De logs van Airflow en Flask tonen de databaseverbinding zonder wachtwoord (`postgresql://gebruiker:***@postgres/database`). Log je in nieuwe code een verbindings-URI zoals `SQLALCHEMY_DATABASE_URI` of `MONGO_URI`, gebruik dan `maskeerWachtwoord()` uit `shared/logutils.py`.
+
 ## Volume-Mounts
 
 ### Data-volumes

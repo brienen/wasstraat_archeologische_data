@@ -5,6 +5,7 @@ Laatst bijgewerkt: 2026-10-21 (Apache als voordeur gepubliceerd; Delftse testomg
 ## 1. Werkafspraken
 
 - **Geen commits en geen pushes door Claude.** Werk wordt hooguit voorbereid: wijzigingen stagen, commitbericht in `.git/WASSTRAAT_COMMIT_MSG`, en de commando's `git commit -F .git/WASSTRAAT_COMMIT_MSG` en `git push` in losse codeblokken. De gebruiker voert ze zelf uit.
+  - *Uitzondering voor de nachtset van 21 op 22 oktober 2026:* de gebruiker heeft toestemming gegeven om per afgerond onderdeel lokaal te committen onder zijn eigen git-identiteit (geen pushes, geen verwijzingen naar Claude). Buiten die nachtset geldt de hoofdregel.
 - **Commitberichten zonder verwijzing naar Claude:** geen Co-Authored-By-regel, geen vermelding in de tekst, geen bestandsnaam `CLAUDE.md` erin. Commits gaan onder de naam van de gebruiker.
 - **Werk in de huidige branch** (`Paths_Names_Restructure`), geen nieuwe branches. Alles belandt in de hoofdmap, niet in worktrees; parallelle sessies leveren patches of werken in disjuncte bestanden.
 - **Nederlands** in code-commentaar, docstrings, documentatie en commitberichten; camelCase-functies, geen type hints (CLAUDE.md).
@@ -53,6 +54,7 @@ Ontwerp en status: `docs/componenten/incrementeel-laden.md`.
 | `make publish` en `deploy/` | Gebouwd en gecommit (`81efba3`); versie 1.0.1 gepubliceerd op ghcr.io, op 2026-10-21 (middag) opnieuw gepubliceerd onder 1.0.1 inclusief Apache als voordeur en de laadstap-fix |
 | Apache als voordeur | Gebouwd, getest en gecommit (`f5fb594`); eigen installatie opnieuw gebouwd en gestart (webapplicatie op poort 5052, 5051 dicht); images opnieuw gepubliceerd als 1.0.1 |
 | Delftse referentie-uitkomst | Opnieuw vastgelegd na kopregel-fix (+50 munten), &-fix (+96 aardewerk) en fotokoppeling (Put 275, Vondst 3060) |
+| Nachtset 21/22 oktober 2026 | Lokale commits per issue onder de naam van de gebruiker, nog niet gepusht: #77 (wachtwoord gemaskeerd in de verbindingslog, `shared/logutils.py`) |
 | Delftse testomgeving met Elasticsearch | Toegevoegd op 2026-10-21 (`elasticsearch-test`, container `wasstraat_elasticsearch_delft_test`): `DAG_Load_Only` moet er volledig slagen en een test vergelijkt per tabel Elasticsearch met PostgreSQL |
 | Delftse testomgeving | Het tmpfs-mediavolume van 4 GB uit de Apache-wijziging liep vol (rapporten circa 5 GB), waardoor 93 van de 541 bestanden stil onverwerkt bleven; op 2026-10-21 vervangen door een schijfvolume op `/output/archeomedia` (map in de Airflow-image), met een grens op onverwerkte bestanden in de Delftse extractietest |
 
@@ -67,7 +69,6 @@ Uitvoeringsplan v2 (maart 2026): #61 (incrementeel laden) is uitgevoerd en op 20
 - **Tekstvelden met een regeleinde (#74)** krijgen in de staging de extra kolommen midden in het veld (bestaande beperking van de export per regel).
 - **Codetabellen (#75)** zoals "AARDEWERK 1&2 VOORWERP" en "AARDEWERK 1 BAKSEL" worden als aardewerk geharmoniseerd; configuratievraag voor de harmonisatie-Excel.
 - **Standplaatsen (#76)** houden projectcode "DB34"; de identificatie laat de projectcode daar bewust ongemoeid.
-- **Databaseverbinding inclusief wachtwoord in het log (#77)**, in `shared/database.py` en `shared/fulltext.py`.
 - **Jupyter-image (#78)** mist het pakket `roman` en heeft een Elasticsearch-client 9.x bij een server 8.17.
 - **Airflow-image (#80):** de extra pakketten liggen nog niet vast; apt-retries in de Dockerfiles zouden verse builds robuuster maken.
 - **Documentatie (#64):** architectuurdiagrammen en hun tekst noemen nog Django, Vue en Oracle; het advies over schrijfrechten op Linux is niet getest; de Delftse Flask-test voor de projectlijst slaat zichzelf over (login nodig).
