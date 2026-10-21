@@ -1,6 +1,9 @@
 # docker-compose.test.yml
-# Standalone testomgeving: MongoDB + PostgreSQL/PostGIS + Elasticsearch + Airflow + Flask + Redis.
+# Standalone testomgeving: MongoDB + PostgreSQL/PostGIS + Elasticsearch + Airflow + Flask + Redis + Apache.
 # Alle services delen dezelfde PostgreSQL database (airflow_test).
+# Apache is net als in de echte installatie de voordeur: hostpoort 5061 leidt naar apache-test,
+# dat /archeomedia uit het gedeelde mediavolume serveert en al het overige doorstuurt naar
+# flask-test (zonder hostpoort). De Flask smoke tests lopen dus via Apache.
 # Elasticsearch draait zonder hostpoort (9200 is op de host in gebruik door de echte
 # installatie); tests benaderen het via 'docker exec wasstraat_elasticsearch_test curl ...'.
 #
@@ -166,6 +169,8 @@ services:
       - ./airflow_app/scripts:/opt/airflow/scripts
       - ./shared:/opt/airflow/dags/shared
       - ./data/synthetic/wasstraat_config:/opt/airflow/config
+      # Verwerkte media (AIRFLOW_OUTPUT_MEDIA), gedeeld met apache-test
+      - archeomedia-test:/tmp/archeomedia_test
       # Zonder :ro zodat tests een project kunnen toevoegen (incrementeel laden, SY003)
       - ./data/synthetic/data/projecten:/input/projecten
       - ./data/synthetic/data/projectenlijst:/input/projectenlijst:ro
@@ -182,10 +187,11 @@ services:
     depends_on:
       - postgres-test
       - redis-test
-    ports:
-      - "5061:5051"
+    # Geen hostpoort: bereikbaar via apache-test op 5061, zoals in de echte installatie
     networks:
-      - testnet
+      testnet:
+        aliases:
+          - flask
     environment:
       POSTGRES_DB: airflow_test
       POSTGRES_USER: testuser
@@ -231,6 +237,33 @@ services:
       COLL_ANALYSE_PLAATSING: Def_Plaatsing
       COLL_ANALYSE_VINDPLAATS: Def_Vindplaats
 
+  apache-test:
+    build:
+      context: .
+      dockerfile: services/apache/Dockerfile
+    container_name: "wasstraat_apache_test"
+    depends_on:
+      - flask-test
+    ports:
+      - "5061:5052"
+    networks:
+      testnet:
+        aliases:
+          - apache
+    volumes:
+      # De media die airflow-test schrijft, alleen-lezen onder /archeomedia
+      - archeomedia-test:/usr/local/apache2/htdocs/archeomedia:ro
+
 networks:
   testnet:
     driver: bridge
+
+volumes:
+  # Uitvoermap voor media, gedeeld door airflow-test (schrijft) en apache-test (serveert).
+  # In het geheugen, met de uid van de airflow-gebruiker zodat die erin kan schrijven.
+  archeomedia-test:
+    driver: local
+    driver_opts:
+      type: tmpfs
+      device: tmpfs
+      o: "uid=50000,gid=0,size=1g"

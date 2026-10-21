@@ -14,11 +14,14 @@ Het platform bestaat uit de volgende services:
 | **PostgreSQL** | `wasstraat_postgres` | 5432 | Definitieve relationele opslag (GGM-compatibel) |
 | **MongoDB** | `wasstraat_mongo` | 27017 | Ruwe opslag, staging, bestands-metadata |
 | **Airflow** | `wasstraat_airflow` | 8080 | ETL-orchestratie en dataverwerkingspipeline |
-| **Flask** | `wasstraat_flask` | 5051 | Web-applicatie voor data-inzicht en -beheer |
+| **Flask** | `wasstraat_flask` | — (via Apache) | Web-applicatie voor data-inzicht en -beheer |
 | **Elasticsearch** | `wasstraat_elasticsearch` | 9200 | Fulltext-zoekindex |
 | **Redis** | `wasstraat_redis` | 6379 | Caching-laag voor de web-applicatie |
-| **Apache** | `wasstraat_apache` | 5052 | Statische bestandsserver (foto's, rapporten) |
+| **Apache** | `wasstraat_apache` | 5052 | Voordeur: reverse proxy naar Flask en bestandsserver voor `/archeomedia` (foto's, rapporten) |
 | **Jupyter** | `wasstraat_jupyter` | 8888 | Notebooks voor data-analyse en exploratie |
+
+!!! info "Apache is de voordeur van de webapplicatie"
+    De browser praat alleen met Apache (poort 5052). Apache serveert de verwerkte media onder `/archeomedia` rechtstreeks uit de uitvoermap (`data/<omgeving>/output`, alleen-lezen gemount) en stuurt alle overige verzoeken door naar `http://flask:5051/` binnen het compose-netwerk (`services/apache/httpd.conf`: `ProxyPass`, `ProxyPreserveHost On`, `X-Forwarded-Proto`). Flask heeft daardoor geen hostpoort. De webapplicatie verwijst naar foto's met relatieve paden `/archeomedia/...`; rechtstreeks op Flask blijven die leeg. In Flask neemt `ProxyFix` (`app/app/app.py`) de host en het protocol van de buitenkant over uit de `X-Forwarded`-headers, zodat redirects kloppen, ook achter een TLS-proxy vóór Apache.
 
 ## Docker Compose Bestanden
 
@@ -34,7 +37,7 @@ services:
   flask:         # Flask-webapplicatie op python:3.11-slim, eigen Dockerfile
   mongo:         # mongo:7.0
   jupyter:       # Jupyter Lab (jupyter/datascience-notebook, Python 3.11)
-  apache:        # httpd:2.4 voor statische bestanden
+  apache:        # httpd:2.4: voordeur, reverse proxy naar Flask en bestandsserver voor /archeomedia
   elasticsearch: # Elasticsearch 8.17.0
 ```
 
@@ -49,7 +52,7 @@ Zelfde services als het basisbestand, maar met de brondata uit `data/delft/data/
 Overschrijft instellingen voor lokale ontwikkeling:
 
 - **Airflow**: Eén parser-proces (`DAG_FILE_PROCESSOR_PROCESSES=1`), geen parallelle taken (`PARALLELISM=1`, `DAG_CONCURRENCY=1`), debugpy-poort open op `:5678`
-- **Flask**: Container blijft draaien via infinite loop (voor handmatig starten via IDE), broncode wordt als volume gemount, `FLASK_DEBUG=1`
+- **Flask**: Container blijft draaien via infinite loop (voor handmatig starten via IDE), broncode wordt als volume gemount, `FLASK_DEBUG=1`, en hostpoort 5051 om Flask rechtstreeks te benaderen (normaal loopt alles via Apache op 5052)
 
 ### `docker-compose.test.yml` en `docker-compose.delft-test.yml` — Testomgevingen
 

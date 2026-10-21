@@ -74,14 +74,14 @@ services:
       - ./config/postgres.env
       - ./config/mongo.env
       - ./config/redis.env
-    ports:
-      - '5051:5051'
+    # Geen hostpoort: de webapplicatie is bereikbaar via Apache (poort 5052), dat alle
+    # verzoeken behalve /archeomedia doorstuurt naar flask:5051. Voor debuggen geeft
+    # docker-compose.develop.yml Flask wel een hostpoort.
     depends_on:
       - postgres
       - mongo
       - redis
       - elasticsearch
-      - apache
     volumes:
       - ./data/synthetic/output/archeomedia:/output/archeomedia
 
@@ -125,13 +125,17 @@ services:
        - ./config/mongo.env
        - ./config/postgres.env
 
+  # Voordeur van de Wasstraat: serveert /archeomedia uit de uitvoermap en stuurt al het
+  # overige door naar Flask (reverse proxy, zie services/apache/httpd.conf)
   apache:
     container_name: wasstraat_apache
     build:
       dockerfile: ./services/apache/Dockerfile
       context: .
+    depends_on:
+      - flask
     volumes:
-      - ./data/synthetic/output:/usr/local/apache2/htdocs
+      - ./data/synthetic/output:/usr/local/apache2/htdocs:ro
     ports:
       - '5052:5052'
 

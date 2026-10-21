@@ -88,8 +88,7 @@ logs: ## Toon live logs van alle services (of één: make logs S=airflow)
 inloggegevens: ## Toon de adressen en wachtwoorden van Airflow en de Flask App
 	@set -a; [ -f .env ] && . ./.env; set +a; \
 	echo "Airflow     http://localhost:$${WASSTRAAT_PORT_AIRFLOW:-8080}   admin / $$(sed -n 's/^SECURITY__ADMIN_PASSWORD=//p' config/airflow.env 2>/dev/null)"; \
-	echo "Flask App   http://localhost:$${WASSTRAAT_PORT_FLASK:-5051}   admin / $$(sed -n 's/^FLASK_ADMIN_PASSWORD=//p' config/flask.env 2>/dev/null)"; \
-	echo "Media       http://localhost:$${WASSTRAAT_PORT_APACHE:-5052}"
+	echo "Flask App   http://localhost:$${WASSTRAAT_PORT_APACHE:-5052}   admin / $$(sed -n 's/^FLASK_ADMIN_PASSWORD=//p' config/flask.env 2>/dev/null)   (via Apache; media onder /archeomedia)"
 
 # ============================================================
 # Verwerken

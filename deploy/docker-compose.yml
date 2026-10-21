@@ -7,7 +7,7 @@
 #   config/*.env        wachtwoorden en instellingen (gegenereerd door init-config.sh)
 #   wasstraat_config/   harmonisatie-Excel en correcties.yml
 #   data/input/         brondata (Access-databases, foto's, rapporten), alleen-lezen
-#   data/output/        verwerkte media (foto's in drie formaten)
+#   data/output/        verwerkte media (foto's in drie formaten), geserveerd door Apache
 #   data/backup/        backups van PostgreSQL en MongoDB
 # Jupyter is een ontwikkelvoorziening van de repository en maakt geen deel uit van de live installatie.
 # De versie, mappen en poorten staan in .env (zie .env.example).
@@ -96,16 +96,14 @@ services:
       - ./config/postgres.env
       - ./config/mongo.env
       - ./config/redis.env
-    ports:
-      - "${WASSTRAAT_BIND:-0.0.0.0}:${WASSTRAAT_PORT_FLASK:-5051}:5051"
+    # Geen hostpoort: de webapplicatie is bereikbaar via Apache (WASSTRAAT_PORT_APACHE),
+    # dat alle verzoeken behalve /archeomedia doorstuurt naar flask:5051
     depends_on:
       postgres:
         condition: service_started
       mongo:
         condition: service_started
       redis:
-        condition: service_started
-      apache:
         condition: service_started
       # Flask raadpleegt Elasticsearch al bij het opstarten
       elasticsearch:
@@ -126,10 +124,15 @@ services:
       - mongo_config:/data/configdb
       - ${WASSTRAAT_BACKUP:-./data/backup}/mongo:/backup
 
+  # Voordeur van de Wasstraat: serveert /archeomedia uit de uitvoermap en stuurt al het
+  # overige door naar Flask (reverse proxy)
   apache:
     image: ${WASSTRAAT_REGISTRY:-ghcr.io/brienen}/wasstraat-apache:${WASSTRAAT_VERSION:?Zet WASSTRAAT_VERSION in .env}
     container_name: wasstraat_apache
     restart: unless-stopped
+    depends_on:
+      flask:
+        condition: service_started
     volumes:
       - ${WASSTRAAT_OUTPUT:-./data/output}:/usr/local/apache2/htdocs:ro
     ports:

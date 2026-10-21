@@ -119,7 +119,7 @@ test-quick: install ## Draai unit tests (korte output)
 .PHONY: integration
 integration: install ## Draai volledige integratietests: Extract + Transform + Load + Flask
 	@echo "➜ Test-omgeving starten (synthetische data)..."
-	$(COMPOSE_TEST) up -d mongo-test postgres-test redis-test elasticsearch-test airflow-test flask-test
+	$(COMPOSE_TEST) up -d mongo-test postgres-test redis-test elasticsearch-test airflow-test flask-test apache-test
 	@echo "➜ Stap 1: Extract + Transform + Load pipeline..."
 	$(PYTEST) tests/integration/ \
 		-v -s -m "(integration or load) and not delft" --tb=short; \
@@ -146,7 +146,7 @@ integration-keep: install ## Zelfde als integration maar laat containers draaien
 .PHONY: integration-pipeline
 integration-pipeline: install ## Draai alleen Extract + Transform (zonder Load en Flask)
 	@echo "➜ Test-omgeving starten (synthetische data)..."
-	$(COMPOSE_TEST) up -d mongo-test postgres-test elasticsearch-test airflow-test flask-test
+	$(COMPOSE_TEST) up -d mongo-test postgres-test elasticsearch-test airflow-test flask-test apache-test
 	$(PYTEST) tests/integration/ \
 		-v -s -m "integration and not delft and not load" --tb=short; \
 	EXIT=$$?; \
@@ -157,7 +157,7 @@ integration-pipeline: install ## Draai alleen Extract + Transform (zonder Load e
 .PHONY: integration-load
 integration-load: install ## Draai Extract + Transform + Load (zonder Flask)
 	@echo "➜ Test-omgeving starten (inclusief Load)..."
-	$(COMPOSE_TEST) up -d mongo-test postgres-test elasticsearch-test airflow-test flask-test
+	$(COMPOSE_TEST) up -d mongo-test postgres-test elasticsearch-test airflow-test flask-test apache-test
 	$(PYTEST) tests/integration/test_full_pipeline_synthetic_data.py \
 		-v -s -m "integration or load" --tb=short; \
 	EXIT=$$?; \
@@ -168,7 +168,7 @@ integration-load: install ## Draai Extract + Transform + Load (zonder Flask)
 .PHONY: integration-delft
 integration-delft: install ## Draai volledige Delft-integratietests: Extract + Transform + Load + Flask
 	@echo "➜ Delft test-omgeving starten (data/test, project DB034)..."
-	$(COMPOSE_DELFT_TEST) up -d mongo-test postgres-test redis-test airflow-test flask-test
+	$(COMPOSE_DELFT_TEST) up -d mongo-test postgres-test redis-test airflow-test flask-test apache-test
 	@echo "➜ Stap 1: Extract + Transform + Load pipeline..."
 	$(PYTEST) tests/integration/ \
 		-v -s -m "(delft or delft_load) and not delft_flask" --tb=short; \
@@ -197,7 +197,7 @@ integration-delft-pipeline: install ## Draai alleen Delft Extract + Transform (z
 test-flask: install ## Draai Flask smoke tests (NB: vereist geladen PostgreSQL, gebruik 'make integration')
 	@echo "➜ Flask test-omgeving starten..."
 	@echo "⚠  Let op: Flask tests vereisen geladen data. Gebruik 'make integration' voor de volledige suite."
-	$(COMPOSE_TEST) up -d postgres-test redis-test elasticsearch-test flask-test
+	$(COMPOSE_TEST) up -d postgres-test redis-test elasticsearch-test flask-test apache-test
 	@echo "➜ Wachten tot Flask klaar is..."
 	$(PYTEST) tests/integration/ \
 		-v -s -m flask_smoke --tb=short; \

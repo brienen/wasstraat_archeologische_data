@@ -14,7 +14,7 @@ Deze pagina beschrijft de techniek die de Wasstraat op dit moment gebruikt. De v
 | **MongoDB** | `mongo:7.0` | Staging- en analyse-opslag, plus GridFS voor bestanden |
 | **Elasticsearch** | `elasticsearch:8.17.0` | Fulltext-zoekindex (single-node, zonder beveiliging) |
 | **Redis** | `redis:7.2-alpine` | Cache voor de webapplicatie |
-| **Apache** | `httpd:2.4` | Serveert foto's en andere bestanden uit de uitvoermap |
+| **Apache** | `httpd:2.4` | Voordeur van de webapplicatie: reverse proxy naar Flask (`mod_proxy_http`) en serveert foto's en andere bestanden onder `/archeomedia` uit de uitvoermap |
 | **Jupyter** | `quay.io/jupyter/datascience-notebook:python-3.11` | Notebooks voor analyse |
 
 Alles draait via Docker Compose. De bediening loopt via een `Makefile` en enkele bash-scripts.
@@ -59,6 +59,8 @@ Systeemtools in de Airflow-image:
 | **Jinja2** | 3.x | Templates |
 
 De tabellen in PostgreSQL worden bij het opstarten door de Flask-app aangemaakt. De Load-stap van Airflow verwacht dat die tabellen bestaan.
+
+Flask draait achter Apache en heeft geen hostpoort; `ProxyFix` van Werkzeug neemt de host en het protocol van de buitenkant over uit de `X-Forwarded`-headers die Apache meestuurt.
 
 ## Opslag
 

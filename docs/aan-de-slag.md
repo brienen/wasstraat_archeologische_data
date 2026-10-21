@@ -80,7 +80,7 @@ Je zou deze 8 containers moeten zien:
 | Container | Poort | Status verwacht |
 |-----------|-------|-----------------|
 | `wasstraat_airflow` | :8080 | Up |
-| `wasstraat_flask` | :5051 | Up |
+| `wasstraat_flask` | (via Apache) | Up |
 | `wasstraat_postgres` | :5432 | Up |
 | `wasstraat_mongo` | :27017 | Up |
 | `wasstraat_elasticsearch` | :9200 | Up |
@@ -112,10 +112,10 @@ Hier beheer je de dataverwerkingspipeline. Je ziet een overzicht van alle beschi
 ### Flask App — Data inzien
 
 ```
-http://localhost:5051
+http://localhost:5052
 ```
 
-De webapplicatie voor het bekijken van de verwerkte data. Na een succesvolle verwerking zie je hier een interactieve kaart met alle opgravingslocaties, en kun je doorklikken naar projecten, vondsten, artefacten, foto's en meer.
+De webapplicatie voor het bekijken van de verwerkte data. Je bereikt haar via Apache, de voordeur op poort 5052: Apache serveert de verwerkte foto's en documenten onder `/archeomedia` rechtstreeks uit de uitvoermap en stuurt alle overige verzoeken door naar Flask. Flask zelf heeft geen hostpoort (alleen `make dev` opent poort 5051 om Flask rechtstreeks te debuggen; foto's blijven dan leeg). Na een succesvolle verwerking zie je hier een interactieve kaart met alle opgravingslocaties, en kun je doorklikken naar projecten, vondsten, artefacten, foto's en meer.
 
 Bij de eerste start maakt de Flask App een beheerder aan met gebruikersnaam `admin`. Het wachtwoord is bij de installatie gegenereerd en staat in `config/flask.env` onder `FLASK_ADMIN_PASSWORD`. Dit wachtwoord geldt alleen bij het aanmaken van de beheerder: wijzig je het later via het gebruikersmenu, dan blijft het nieuwe wachtwoord staan, ook na een herstart.
 
@@ -491,7 +491,7 @@ Dit is handig voor het debuggen van je configuratie: na stap 3 (Harmonize) kun j
 
 ### Flask webapplicatie
 
-Open [http://localhost:5051](http://localhost:5051). Na een succesvolle verwerking zie je:
+Open [http://localhost:5052](http://localhost:5052). Na een succesvolle verwerking zie je:
 
 - **Interactieve kaart** — Een kaart van Delft met alle opgravingslocaties. Blauwe markers zijn projecten zonder verwerkte artefacten, rode markers projecten mét verwerkte artefacten. Klik op een marker om naar het project te navigeren.
 - **Projecten** — Overzicht van alle geïmporteerde opgravingsprojecten met doorklik naar details
@@ -553,7 +553,7 @@ curl -s http://localhost:9200/_count | python3 -m json.tool
 
 **Oorzaak**: Onvoldoende geheugen of poortconflicten.
 
-**Oplossing**: Controleer dat poorten 8080, 5051, 5432, 27017, 9200, 6379, 5052 en 8888 niet door andere applicaties worden gebruikt. Verhoog het Docker-geheugen naar minimaal 8 GB, liefst 12 GB.
+**Oplossing**: Controleer dat poorten 8080, 5052, 5432, 27017, 9200, 6379 en 8888 niet door andere applicaties worden gebruikt. Verhoog het Docker-geheugen naar minimaal 8 GB, liefst 12 GB.
 
 ### Load mislukt met "relation Def_... does not exist"
 

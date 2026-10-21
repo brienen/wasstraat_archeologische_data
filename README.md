@@ -26,7 +26,7 @@ Het platform bestaat uit twee hoofdapplicaties die als Docker-containers draaien
 | Applicatie | Doel | Poort |
 |------------|------|-------|
 | **Airflow** (`airflow_app/`) | Data verwerken (ETL-pipeline) | :8080 |
-| **Flask App** (`app/`) | Data inzichtelijk maken (web-interface) | :5051 |
+| **Flask App** (`app/`) | Data inzichtelijk maken (web-interface) | :5052 (via Apache) |
 
 Daarnaast draaien de volgende ondersteunende services:
 
@@ -36,8 +36,10 @@ Daarnaast draaien de volgende ondersteunende services:
 | **MongoDB** | Ruwe opslag en staging | :27017 |
 | **Elasticsearch** | Fulltext-zoekindex | :9200 |
 | **Redis** | Caching | :6379 |
-| **Apache** | Statische bestanden (foto's) | :5052 |
+| **Apache** | Voordeur: stuurt de webapplicatie door naar Flask en serveert de foto's (`/archeomedia`) | :5052 |
 | **Jupyter** | Data-analyse notebooks | :8888 |
+
+Apache is de voordeur van de webapplicatie: de browser praat alleen met poort 5052. Apache serveert de verwerkte foto's en documenten onder `/archeomedia` rechtstreeks uit de uitvoermap en stuurt alle overige verzoeken door naar Flask (reverse proxy). Flask zelf heeft geen hostpoort.
 
 ## Verwerken van archeologische data
 
@@ -106,7 +108,7 @@ Typ `make help` voor een overzicht van alle beschikbare commando's.
 | Applicatie | Adres | Inloggegevens |
 |------------|-------|---------------|
 | Airflow | http://localhost:8080 | `admin`, wachtwoord in `config/airflow.env` (`SECURITY__ADMIN_PASSWORD`) |
-| Flask App | http://localhost:5051 | `admin`, wachtwoord in `config/flask.env` (`FLASK_ADMIN_PASSWORD`) |
+| Flask App | http://localhost:5052 | `admin`, wachtwoord in `config/flask.env` (`FLASK_ADMIN_PASSWORD`) |
 | Jupyter Lab | http://localhost:8888 | token in `config/jupyter.env` (`JUPYTER_PASSWORD`) |
 
 Het Flask-wachtwoord uit `config/flask.env` wordt alleen gebruikt als de beheerder nog niet bestaat; een bestaande beheerder houdt zijn wachtwoord. Ontbreekt `FLASK_ADMIN_PASSWORD` (installaties van vóór oktober 2026), dan krijgt een nieuwe beheerder het wachtwoord `admin` en staat er een waarschuwing in de log. Wijzig het in dat geval direct via het gebruikersmenu.
@@ -147,7 +149,7 @@ De Wasstraat doorzoekt elke directory recursief op `.mdb`/`.accdb` bestanden. In
 
 1. Open Airflow UI op [http://localhost:8080](http://localhost:8080)
 2. Start de DAG **`Extract_Transform_Load_Full_Cycle`**
-3. Bekijk het resultaat in de Flask App op [http://localhost:5051](http://localhost:5051)
+3. Bekijk het resultaat in de Flask App op [http://localhost:5052](http://localhost:5052)
 
 ### Backup en restore
 

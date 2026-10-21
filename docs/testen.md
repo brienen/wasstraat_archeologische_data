@@ -101,12 +101,12 @@ Dit target gebruikt de **synthetische voorbeelddata** uit `data/synthetic/data/`
 Het target:
 
 1. Maakt de `.venv` aan als die nog niet bestaat
-2. Start MongoDB 7.0, PostgreSQL 18 met PostGIS, Elasticsearch 8.17, Redis, Airflow en Flask in Docker (MongoDB en PostgreSQL in tmpfs voor snelheid)
+2. Start MongoDB 7.0, PostgreSQL 18 met PostGIS, Elasticsearch 8.17, Redis, Airflow, Flask en Apache in Docker (MongoDB, PostgreSQL en het mediavolume in tmpfs voor snelheid)
 3. Mount de synthetische data als input-volumes
 4. Triggert de Airflow DAGs (Extract, Transform, Load en indexering) en valideert de resultaten
 5. Controleert verwachte aantallen per entiteitstype (sporen, vondsten, artefacten) in MongoDB en PostgreSQL
 6. Draait de volledige en daarna de incrementele cyclus (`test_incremental_synthetic_data.py`, zie hieronder)
-7. Draait de Flask smoke tests tegen de geladen database
+7. Draait de Flask smoke tests via Apache tegen de geladen database, inclusief de media uit het gedeelde mediavolume
 8. Ruimt de containers en volumes op
 
 ### Elasticsearch in de testomgeving
@@ -114,6 +114,12 @@ Het target:
 `docker-compose.test.yml` heeft een eigen Elasticsearch (`elasticsearch-test`, container `wasstraat_elasticsearch_test`, image `docker.elastic.co/elasticsearch/elasticsearch:8.17.0`, zonder beveiliging, single-node, 512 MB heap). Airflow en Flask bereiken die via `ES_HOST=http://elasticsearch:9200`. Airflow start pas als Elasticsearch gezond is (healthcheck met `depends_on: condition: service_healthy`). De Index_*-taken van de volledige cyclus, van `DAG_Load_Only` en van de incrementele cyclus slagen daardoor ook in de testomgeving; `test_full_pipeline_synthetic_data.py` eist dat `DAG_Load_Only` volledig slaagt.
 
 De container heeft bewust geen hostpoort: poort 9200 op de host is van de echte installatie. Tests benaderen Elasticsearch via `docker exec wasstraat_elasticsearch_test curl -s http://localhost:9200/...`.
+
+### Apache in de testomgeving
+
+Net als in de echte installatie is Apache de voordeur: `apache-test` (container `wasstraat_apache_test`, gebouwd uit `services/apache/Dockerfile`) luistert op hostpoort 5061, serveert `/archeomedia` en stuurt al het overige door naar `flask-test`, dat geen hostpoort heeft (netwerkalias `flask`, zoals `httpd.conf` verwacht). De media die `airflow-test` schrijft (`AIRFLOW_OUTPUT_MEDIA=/tmp/archeomedia_test`) staan in het volume `archeomedia-test`, een tmpfs-volume met de uid van de airflow-gebruiker, dat `apache-test` alleen-lezen mount onder `htdocs/archeomedia`.
+
+De Flask smoke tests (`tests/integration/test_flask_smoke.py`, marker `flask_smoke`) lopen daardoor via Apache. Naast de kaart, het inloggen en de statische bestanden controleren ze dat een media-URL uit `Def_Bestand` via Apache 200 geeft (alle drie formaten van alle foto's), dat paden met spaties en diakritische tekens werken, dat redirects de `Host`-header van de browser en `X-Forwarded-Proto` van een TLS-proxy volgen, en dat `/archeomedia/` niet te bladeren is. `make test-flask` start de omgeving zonder pipeline; de mediatests slaan dan over. De Delftse testomgeving (`docker-compose.delft-test.yml`) heeft dezelfde opzet op hostpoort 5062. De unit tests in `tests/unit/test_apache_voordeur.py` bewaken de Apache-configuratie en de compose-bestanden.
 
 ### Incrementele cyclus
 

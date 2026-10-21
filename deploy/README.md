@@ -24,7 +24,7 @@ bijwerken, backup en restore, staat op
 | `config/*.env.example` | Sjablonen voor de configuratie van de services |
 | `wasstraat_config/` | Harmonisatie-Excel en `correcties.yml` voor de pipeline |
 | `data/input/` | Brondata (zie de handleiding voor de mappenstructuur) |
-| `data/output/` | Verwerkte media, geserveerd door Apache |
+| `data/output/` | Verwerkte media, door Apache geserveerd onder `/archeomedia` |
 | `data/backup/` | Backups van `make backup` |
 
-Jupyter is een ontwikkelvoorziening van de repository en maakt geen deel uit van de live installatie.
+De webapplicatie is bereikbaar via Apache op poort `WASSTRAAT_PORT_APACHE` (standaard 5052): Apache serveert de media zelf en stuurt al het overige door naar Flask, dat geen hostpoort heeft. Jupyter is een ontwikkelvoorziening van de repository en maakt geen deel uit van de live installatie.

@@ -8,7 +8,7 @@ De Wasstraat bevat twee hoofdapplicaties die elk een eigen rol vervullen. Beide 
 |--------|--------------------------|---------------------|
 | **Doel** | Data verwerken (ETL) | Data inzichtelijk maken |
 | **Gebruiker** | Data-engineers, beheerders | Archeologen, onderzoekers |
-| **Interface** | Airflow Web UI (:8080) | Web-applicatie (:5051) |
+| **Interface** | Airflow Web UI (:8080) | Web-applicatie (:5052, via Apache) |
 | **Richting** | Bron → MongoDB → PostgreSQL | PostgreSQL → Gebruiker |
 | **Modus** | Batch (handmatig of gepland) | Interactief (request/response) |
 | **Framework** | Apache Airflow 2.10.5 | Flask + Flask-AppBuilder |
@@ -145,7 +145,7 @@ app/
 - **SQLAlchemy ORM**: Alle `Def_*` PostgreSQL-tabellen zijn als Python-klassen gemodelleerd in `models.py`
 - **Elasticsearch**: Fulltext-zoekfunctie over alle entiteiten
 - **Redis**: Caching van veelgebruikte queries en weergaven
-- **Apache**: Serveert statische bestanden (foto's, rapporten) via een apart volume
+- **Apache**: De voordeur op poort 5052: serveert de media onder `/archeomedia` uit de uitvoermap en stuurt alle overige verzoeken door naar Flask (reverse proxy)
 - **Jinja2 templates**: HTML-rendering met Bootstrap (via Flask-AppBuilder)
 
 ### Functionaliteiten
@@ -197,7 +197,9 @@ Bronbestanden ──→ │ Extract ──→ MongoDB    │
                    │ PostgreSQL ──→ Views   │──→ Webbrowser
                    │ Elasticsearch ──→ Zoek │    (archeologen)
                    │ Redis ──→ Cache        │
-                   │ Apache ──→ Foto's      │
+                   │ Apache ──→ voordeur:   │
+                   │   proxy naar Flask     │
+                   │   + foto's (media)     │
                     ════════════════════════
 ```
 
@@ -216,7 +218,7 @@ Beide applicaties gebruiken de `shared/` directory:
 | Scenario | Applicatie | Hoe |
 |----------|-----------|-----|
 | Nieuwe data importeren | Airflow | Start DAG via Airflow UI (:8080) |
-| Bestaande data bekijken | Flask App | Open webbrowser op :5051 |
+| Bestaande data bekijken | Flask App | Open webbrowser op :5052 (Apache) |
 | Zoeken in data | Flask App | Gebruik zoekbalk in web-interface |
 | Transformaties debuggen | Airflow | Bekijk task-logs in Airflow UI |
 | Data-model aanpassen | Beide | Pas `meta.py` (Airflow) en `models.py` (Flask) aan |

@@ -137,6 +137,8 @@ services:
       - ./airflow_app/scripts:/opt/airflow/scripts
       - ./shared:/opt/airflow/dags/shared
       - ./data/test/wasstraat_config:/opt/airflow/config
+      # Verwerkte media (AIRFLOW_OUTPUT_MEDIA), gedeeld met apache-test
+      - archeomedia-delft-test:/tmp/archeomedia_test
       - ./data/test/data/projecten:/input/projecten:ro
       - ./data/test/data/projectenlijst:/input/projectenlijst:ro
       - ./data/test/data/magazijnlijst:/input/magazijnlijst:ro
@@ -153,10 +155,11 @@ services:
     depends_on:
       - postgres-test
       - redis-test
-    ports:
-      - "5062:5051"
+    # Geen hostpoort: bereikbaar via apache-test op 5062, zoals in de echte installatie
     networks:
-      - testnet-delft
+      testnet-delft:
+        aliases:
+          - flask
     environment:
       POSTGRES_DB: airflow_test
       POSTGRES_USER: testuser
@@ -200,6 +203,33 @@ services:
       COLL_ANALYSE_PLAATSING: Def_Plaatsing
       COLL_ANALYSE_VINDPLAATS: Def_Vindplaats
 
+  apache-test:
+    build:
+      context: .
+      dockerfile: services/apache/Dockerfile
+    container_name: "wasstraat_apache_delft_test"
+    depends_on:
+      - flask-test
+    ports:
+      - "5062:5052"
+    networks:
+      testnet-delft:
+        aliases:
+          - apache
+    volumes:
+      # De media die airflow-test schrijft, alleen-lezen onder /archeomedia
+      - archeomedia-delft-test:/usr/local/apache2/htdocs/archeomedia:ro
+
 networks:
   testnet-delft:
     driver: bridge
+
+volumes:
+  # Uitvoermap voor media, gedeeld door airflow-test (schrijft) en apache-test (serveert).
+  # In het geheugen, met de uid van de airflow-gebruiker zodat die erin kan schrijven.
+  archeomedia-delft-test:
+    driver: local
+    driver_opts:
+      type: tmpfs
+      device: tmpfs
+      o: "uid=50000,gid=0,size=4g"

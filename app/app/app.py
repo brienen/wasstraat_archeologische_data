@@ -12,6 +12,7 @@ import warnings
 warnings.filterwarnings("ignore", category=UserWarning, module="jinja2.loaders")
 
 from flask import Flask, request
+from werkzeug.middleware.proxy_fix import ProxyFix
 from flask_appbuilder import AppBuilder, SQLA
 from flask_migrate import Migrate
 from flask_dropzone import Dropzone
@@ -28,6 +29,11 @@ logging.getLogger().setLevel(logging.INFO)
 
 
 app = Flask(__name__)
+# Flask staat achter Apache (reverse proxy, zie services/apache/httpd.conf). ProxyFix neemt
+# het adres van de browser, de host en het protocol van de buitenkant over uit de
+# X-Forwarded-headers, zodat redirects en absolute links de buitenkant volgen. Zonder
+# proxy (rechtstreeks op poort 5051, make dev) doet ProxyFix niets.
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
 app.config.from_object("shared.config")
 dropzone = Dropzone(app)
 

@@ -1,6 +1,6 @@
 # Eisenpakket Wasstraat — afspraken, eisen en stand van zaken
 
-Laatst bijgewerkt: 2026-10-21 (Apache als voordeur toegevoegd). Dit document bundelt de afspraken en eisen die in de sessies van 20 en 21 oktober 2026 zijn uitgesproken, plus de stand van zaken en de bekende vervolgpunten. Het is het geheugen voor volgende sessies: CLAUDE.md verwijst ernaar en vraagt om het bij te houden. De map `Analyse/` staat in `.gitignore`, maar dit bestand is daarvan uitgezonderd en staat in de repo.
+Laatst bijgewerkt: 2026-10-21 (Apache als voordeur gerealiseerd). Dit document bundelt de afspraken en eisen die in de sessies van 20 en 21 oktober 2026 zijn uitgesproken, plus de stand van zaken en de bekende vervolgpunten. Het is het geheugen voor volgende sessies: CLAUDE.md verwijst ernaar en vraagt om het bij te houden. De map `Analyse/` staat in `.gitignore`, maar dit bestand is daarvan uitgezonderd en staat in de repo.
 
 ## 1. Werkafspraken
 
@@ -39,7 +39,7 @@ Ontwerp en status: `docs/componenten/incrementeel-laden.md`.
 - De map `deploy/` is de live-installatie voor andere gemeenten: een compose die volledig op de gepubliceerde images draait (geen build, geen broncode-volumes), een eigen Makefile (init, up, update, backup, restore, cycli), configuratiesjablonen en de harmonisatie-Excel. Handleiding: `docs/deployment/installatie-met-images.md`.
 - **Jupyter hoort niet in de publicatieversie.** Het blijft een ontwikkelvoorziening in de repo.
 - Deze repository is daarmee uitsluitend de ontwikkelomgeving.
-- **Apache is de voordeur (eis van 2026-10-21).** Apache serveert de bestanden onder `/archeomedia` zelf uit de uitvoermap en stuurt alle overige verzoeken door naar Flask (reverse proxy). Flask bevat alleen de logica en de links naar de bestanden en staat achter Apache; Flask hoeft geen eigen hostpoort te hebben. De webapplicatie verwijst naar afbeeldingen met relatieve paden `/archeomedia/...`, dus zonder deze opzet blijven foto's leeg. Dit geldt voor de ontwikkelomgeving en voor `deploy/`.
+- **Apache is de voordeur (eis van 2026-10-21).** Apache serveert de bestanden onder `/archeomedia` zelf uit de uitvoermap en stuurt alle overige verzoeken door naar Flask (reverse proxy). Flask bevat alleen de logica en de links naar de bestanden en staat achter Apache; Flask hoeft geen eigen hostpoort te hebben. De webapplicatie verwijst naar afbeeldingen met relatieve paden `/archeomedia/...`, dus zonder deze opzet blijven foto's leeg. Dit geldt voor de ontwikkelomgeving en voor `deploy/`. Gerealiseerd op 2026-10-21: poort 5052 is het adres van de webapplicatie, Flask heeft geen hostpoort meer (alleen `make dev` opent 5051 voor debuggen), `WASSTRAAT_PORT_FLASK` is uit `deploy/.env.example` verdwenen, en de testomgevingen hebben een `apache-test` als voordeur van de smoke tests. Uitwerking: CLAUDE.md (sectie Publicatie en live installatie) en `docs/deployment/omgevingen.md`.
 - Packages op GitHub staan na de eerste publicatie standaard privé; de gebruiker zet ze zelf op Public (github.com/brienen, tabblad Packages).
 
 ## 3. Stand van zaken op 2026-10-21
@@ -48,9 +48,10 @@ Ontwerp en status: `docs/componenten/incrementeel-laden.md`.
 |---|---|
 | Schone installatie | Gefixt en gecommit (`47aad92`) |
 | Incrementeel laden | Gebouwd, getest en gecommit (`b76f6af`) |
-| Fotokoppeling Transform 2 | Gefixt en gecommit (`81efba3`) |
+| Fotokoppeling Transform 2 | Gefixt en gecommit (`81efba3`); de laadstap las `artefactID` daarna nog niet voor alle rijen (steekproef van tien documenten), gefixt op 2026-10-21 met tests |
+| Eigen installatie van de gebruiker | Volledige cyclus gedraaid op 2026-10-21 (9.600 bronbestanden geregistreerd); na de laadstap-fix 1.232 foto's gekoppeld aan 430 artefacten, lijst "Artefacten met foto" gevuld |
 | `make publish` en `deploy/` | Gebouwd en gecommit (`81efba3`); versie 1.0.1 gepubliceerd op ghcr.io |
-| Eigen installatie van de gebruiker | Gemigreerd naar het volume; draait op de nieuwe images; volledige cyclus nog te draaien |
+| Apache als voordeur | Gebouwd en getest op 2026-10-21 (nog niet gecommit); de images moeten opnieuw gepubliceerd worden (`make publish`) en de eigen installatie opnieuw gebouwd en gestart (`make build`, `make delft`) |
 | Delftse referentie-uitkomst | Opnieuw vastgelegd na kopregel-fix (+50 munten), &-fix (+96 aardewerk) en fotokoppeling (Put 275, Vondst 3060) |
 
 Uitvoeringsplan v2 (maart 2026): alleen issue 61 is uitgevoerd; #57 (profielensysteem), #54 (foutafhandeling), #62 (verwerkingsrapport) en de docs-issues #63 t/m #65 zijn bewust geparkeerd. Het plan in Obsidian en in `Analyse/wasstraat-v2-plan.md` beschrijft nog de stand van maart.

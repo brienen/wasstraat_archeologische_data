@@ -13,7 +13,7 @@ Zeven containers uit vaste images:
 | Airflow | `ghcr.io/brienen/wasstraat-airflow` | Verwerkingspipeline (ETL), inclusief de pipelinecode |
 | Flask App | `ghcr.io/brienen/wasstraat-flask` | Webapplicatie om de verwerkte data te bekijken en te beheren |
 | PostgreSQL | `ghcr.io/brienen/wasstraat-postgres` | PostgreSQL 18 met PostGIS, definitieve opslag |
-| Apache | `ghcr.io/brienen/wasstraat-apache` | Serveert de verwerkte foto's en documenten |
+| Apache | `ghcr.io/brienen/wasstraat-apache` | Voordeur van de webapplicatie: stuurt door naar Flask en serveert de verwerkte foto's en documenten |
 | MongoDB | `mongo:7.0` | Tussenopslag van de pipeline |
 | Elasticsearch | `elasticsearch:8.17.0` | Zoekindex, alleen bereikbaar binnen de installatie |
 | Redis | `redis:7.2-alpine` | Cache van de webapplicatie |
@@ -43,7 +43,7 @@ De databases staan in Docker-volumes (`wasstraat_postgres`, `wasstraat_mongo`, `
 - **Netwerk**: toegang tot `ghcr.io` en Docker Hub om de images op te halen. Op een Linux-server maak je een gebruiker met rechten op Docker (`docker`-groep).
 
 !!! note "Vrije poorten"
-    Standaard gebruikt de installatie de poorten 8080 (Airflow), 5051 (Flask) en 5052 (media) op alle netwerkkaarten, en 5432 (PostgreSQL) en 27017 (MongoDB) alleen op `127.0.0.1`. Elasticsearch en Redis krijgen geen hostpoort. Alle poorten zijn in te stellen in `.env`.
+    Standaard gebruikt de installatie de poorten 8080 (Airflow) en 5052 (de webapplicatie via Apache, inclusief de media) op alle netwerkkaarten, en 5432 (PostgreSQL) en 27017 (MongoDB) alleen op `127.0.0.1`. Flask, Elasticsearch en Redis krijgen geen hostpoort. Alle poorten zijn in te stellen in `.env`.
 
 ## 2. De map deploy ophalen
 
@@ -151,13 +151,13 @@ make inloggegevens
 | Applicatie | Adres | Inloggegevens |
 |------------|-------|---------------|
 | Airflow | http://localhost:8080 | `admin`, wachtwoord in `config/airflow.env` (`SECURITY__ADMIN_PASSWORD`) |
-| Flask App | http://localhost:5051 | `admin`, wachtwoord in `config/flask.env` (`FLASK_ADMIN_PASSWORD`) |
-| Media | http://localhost:5052 | Geen inlog: Apache serveert `data/output/` |
+| Flask App | http://localhost:5052 | `admin`, wachtwoord in `config/flask.env` (`FLASK_ADMIN_PASSWORD`) |
+| Media | http://localhost:5052/archeomedia/... | Geen inlog: Apache serveert `data/output/archeomedia/` rechtstreeks |
 
-Vervang `localhost` door de naam van de server als je op afstand werkt. Het Flask-wachtwoord uit `config/flask.env` geldt alleen bij het aanmaken van de beheerder; wijzig je het later via het gebruikersmenu, dan blijft het nieuwe wachtwoord staan. Het Airflow-wachtwoord werkt op dezelfde manier.
+Apache is de voordeur van de webapplicatie: het serveert de media onder `/archeomedia` zelf en stuurt alle overige verzoeken door naar Flask, dat geen eigen hostpoort heeft. Vervang `localhost` door de naam van de server als je op afstand werkt. Het Flask-wachtwoord uit `config/flask.env` geldt alleen bij het aanmaken van de beheerder; wijzig je het later via het gebruikersmenu, dan blijft het nieuwe wachtwoord staan. Het Airflow-wachtwoord werkt op dezelfde manier.
 
 !!! warning "Beveiliging"
-    De webapplicaties luisteren standaard op alle netwerkkaarten en Apache serveert de media zonder inlog. Zet een installatie niet rechtstreeks aan het internet: gebruik een firewall of een reverse proxy met TLS en zet `WASSTRAAT_BIND=127.0.0.1` in `.env` als de proxy op dezelfde server draait. De databases zijn standaard alleen vanaf de server zelf bereikbaar (`WASSTRAAT_BIND_DB=127.0.0.1`), bijvoorbeeld voor QGIS of pgAdmin.
+    De webapplicaties luisteren standaard op alle netwerkkaarten en Apache serveert de media zonder inlog. Zet een installatie niet rechtstreeks aan het internet: gebruik een firewall of een reverse proxy met TLS vóór Apache en zet `WASSTRAAT_BIND=127.0.0.1` in `.env` als die proxy op dezelfde server draait. Laat die proxy de `Host`-header en `X-Forwarded-Proto: https` doorgeven; Apache en Flask nemen ze over, zodat redirects naar het juiste adres wijzen. De databases zijn standaard alleen vanaf de server zelf bereikbaar (`WASSTRAAT_BIND_DB=127.0.0.1`), bijvoorbeeld voor QGIS of pgAdmin.
 
 ## 7. De eerste volledige verwerking
 

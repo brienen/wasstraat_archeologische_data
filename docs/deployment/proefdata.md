@@ -25,7 +25,8 @@ Je zou minimaal de volgende containers moeten zien:
 - `wasstraat_postgres` (poort 5432)
 - `wasstraat_mongo` (poort 27017)
 - `wasstraat_airflow` (poort 8080)
-- `wasstraat_flask` (poort 5051)
+- `wasstraat_flask` (geen hostpoort, bereikbaar via Apache)
+- `wasstraat_apache` (poort 5052, de voordeur van de webapplicatie)
 - `wasstraat_elasticsearch` (poort 9200)
 
 ## Stap 1: Bronbestanden klaarzetten
@@ -156,10 +157,10 @@ SELECT 'Def_Vondst', count(*) FROM public."Def_Vondst";
 
 ## Stap 5: Data bekijken in de web-applicatie
 
-Na succesvolle verwerking is de data beschikbaar in de Flask-applicatie:
+Na succesvolle verwerking is de data beschikbaar in de Flask-applicatie, via Apache:
 
 ```
-http://localhost:5051
+http://localhost:5052
 ```
 
 ### Wat je ziet

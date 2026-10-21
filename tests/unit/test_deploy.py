@@ -155,6 +155,16 @@ class TestDeployCompose:
         assert "ports" not in es
         assert "xpack.security.enabled=false" in es["environment"]
 
+    def test_apache_is_de_voordeur_flask_zonder_hostpoort(self):
+        """Alleen Apache (WASSTRAAT_PORT_APACHE) is van buiten bereikbaar; Flask staat erachter."""
+        services = leesCompose()["services"]
+        assert "ports" not in services["flask"], services["flask"].get("ports")
+        assert services["apache"]["ports"] == ["${WASSTRAAT_BIND:-0.0.0.0}:${WASSTRAAT_PORT_APACHE:-5052}:5052"]
+        assert "flask" in services["apache"]["depends_on"]
+        assert "apache" not in services["flask"]["depends_on"]
+        assert leesVariabele(os.path.join(DEPLOY, ".env.example"), "WASSTRAAT_PORT_FLASK") is None
+        assert leesVariabele(os.path.join(DEPLOY, ".env.example"), "WASSTRAAT_PORT_APACHE") == "5052"
+
     def test_databasepoorten_standaard_alleen_lokaal(self):
         services = leesCompose()["services"]
         for naam in ("postgres", "mongo"):
