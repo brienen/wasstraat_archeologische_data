@@ -141,21 +141,35 @@ class TestComposeVoordeur:
 class TestTestomgeving:
     """apache-test deelt het mediavolume met airflow-test en is de voordeur van de smoke tests."""
 
-    @pytest.mark.parametrize("pad,volume,poort", [
-        ("docker-compose.test.yml", "archeomedia-test", "5061:5052"),
-        ("docker-compose.delft-test.yml", "archeomedia-delft-test", "5062:5052"),
+    @pytest.mark.parametrize("pad,volume,poort,mediapad", [
+        ("docker-compose.test.yml", "archeomedia-test", "5061:5052", "/tmp/archeomedia_test"),
+        ("docker-compose.delft-test.yml", "archeomedia-delft-test", "5062:5052", "/output/archeomedia"),
     ])
-    def test_mediavolume_gedeeld_en_schrijfbaar_voor_airflow(self, pad, volume, poort):
-        compose = leesCompose(pad)
-        services = compose["services"]
-        assert f"{volume}:/tmp/archeomedia_test" in services["airflow-test"]["volumes"]
-        assert services["airflow-test"]["environment"]["AIRFLOW_OUTPUT_MEDIA"] == "/tmp/archeomedia_test"
+    def test_mediavolume_gedeeld_met_apache(self, pad, volume, poort, mediapad):
+        services = leesCompose(pad)["services"]
+        assert f"{volume}:{mediapad}" in services["airflow-test"]["volumes"]
+        assert services["airflow-test"]["environment"]["AIRFLOW_OUTPUT_MEDIA"] == mediapad
         assert f"{volume}:/usr/local/apache2/htdocs/archeomedia:ro" in services["apache-test"]["volumes"]
         assert poort in hostPoorten(services["apache-test"])
-        # De airflow-gebruiker (uid 50000) moet in het volume kunnen schrijven
-        opties = compose["volumes"][volume]["driver_opts"]
+
+    def test_synthetisch_mediavolume_tmpfs_schrijfbaar_voor_airflow(self):
+        """De airflow-gebruiker (uid 50000) moet in het tmpfs-volume kunnen schrijven."""
+        opties = leesCompose("docker-compose.test.yml")["volumes"]["archeomedia-test"]["driver_opts"]
         assert opties["type"] == "tmpfs"
         assert "uid=50000" in opties["o"]
+
+    def test_delfts_mediavolume_op_schijf_in_map_van_de_image(self):
+        """De Delftse testdata (circa 5 GB rapporten) past niet in tmpfs.
+
+        Een vol tmpfs liet op 2026-10-21 93 van de 541 bestanden stil onverwerkt. Het volume
+        staat daarom op schijf en wordt gemount op /output/archeomedia, de map die de
+        Airflow-image aanmaakt met airflow als eigenaar: een leeg named volume neemt die
+        rechten over, zodat airflow-test erin kan schrijven.
+        """
+        volume = leesCompose("docker-compose.delft-test.yml")["volumes"]["archeomedia-delft-test"]
+        assert not volume or (volume.get("driver_opts") or {}).get("type") != "tmpfs"
+        dockerfile = leesBestand("services/airflow/Dockerfile")
+        assert "mkdir -p /output/archeomedia && chown airflow:root /output/archeomedia" in dockerfile
 
     @pytest.mark.parametrize("pad", ["docker-compose.test.yml", "docker-compose.delft-test.yml"])
     def test_flask_test_heet_flask_in_het_netwerk(self, pad):

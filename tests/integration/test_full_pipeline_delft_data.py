@@ -73,6 +73,7 @@ EXPECTED_MIN_BESTAND_CLEAN = 21
 # Gemeten 2026-10-21: 92 objectfoto's (alle bestanden onder H (Objectfoto's)), 22 met artefactID.
 EXPECTED_MIN_OBJECTFOTOS = 92
 EXPECTED_MIN_OBJECTFOTOS_GEKOPPELD = 22
+EXPECTED_MAX_ONVERWERKTE_BESTANDEN = 5  # bestanden die image_util niet kan verwerken (processed blijft False)
 
 
 # ============================================================
@@ -367,9 +368,15 @@ class TestDelftExtractTransform:
         db = mongo_client[DB_FILES]
         filenames_count = db["Filenames"].count_documents({})
         processed_count = db["Filenames"].count_documents({"processed": True})
-        print(f"\n  Filenames: {filenames_count} totaal, {processed_count} verwerkt")
+        onverwerkt = filenames_count - processed_count
+        print(f"\n  Filenames: {filenames_count} totaal, {processed_count} verwerkt, {onverwerkt} onverwerkt")
         assert filenames_count > 0, "Filenames collectie is leeg"
         assert processed_count > 0, "Geen verwerkte bestanden"
+        assert onverwerkt <= EXPECTED_MAX_ONVERWERKTE_BESTANDEN, (
+            f"{onverwerkt} bestanden niet verwerkt, verwacht <= {EXPECTED_MAX_ONVERWERKTE_BESTANDEN}. "
+            f"Een bestand blijft op processed=False staan als image_util een fout geeft; zoek in het "
+            f"Airflow-log van Extract_only naar 'Onbekende fout bij het laden van image' (bijvoorbeeld "
+            f"'No space left on device' als het mediavolume vol is).")
 
     def test_12_verify_plaatjes_collection(self, mongo_client):
         """Plaatjes-collectie bevat verwerkte afbeeldingen."""

@@ -130,7 +130,7 @@ services:
       AIRFLOW_INPUT_FOTOLIJST: /input/fotolijst
       AIRFLOW_INPUT_MONSTER: /input/monsterdatabase
       AIRFLOW_INPUT_RAPPORTEN: /input/rapporten
-      AIRFLOW_OUTPUT_MEDIA: /tmp/archeomedia_test
+      AIRFLOW_OUTPUT_MEDIA: /output/archeomedia
       ES_HOST: "http://localhost:9200"
     volumes:
       - ./airflow_app/dags:/opt/airflow/dags
@@ -138,7 +138,7 @@ services:
       - ./shared:/opt/airflow/dags/shared
       - ./data/test/wasstraat_config:/opt/airflow/config
       # Verwerkte media (AIRFLOW_OUTPUT_MEDIA), gedeeld met apache-test
-      - archeomedia-delft-test:/tmp/archeomedia_test
+      - archeomedia-delft-test:/output/archeomedia
       - ./data/test/data/projecten:/input/projecten:ro
       - ./data/test/data/projectenlijst:/input/projectenlijst:ro
       - ./data/test/data/magazijnlijst:/input/magazijnlijst:ro
@@ -226,10 +226,9 @@ networks:
 
 volumes:
   # Uitvoermap voor media, gedeeld door airflow-test (schrijft) en apache-test (serveert).
-  # In het geheugen, met de uid van de airflow-gebruiker zodat die erin kan schrijven.
+  # Op schijf, niet in tmpfs: de Delftse testdata bevat circa 5 GB aan rapporten die de
+  # extractie integraal naar de mediamap kopieert, en een vol tmpfs laat de verwerking van
+  # de overige bestanden stil mislukken. Het volume wordt gemount op /output/archeomedia,
+  # dat in de Airflow-image bestaat met de airflow-gebruiker als eigenaar; een leeg named
+  # volume neemt die rechten over, zodat airflow-test erin kan schrijven.
   archeomedia-delft-test:
-    driver: local
-    driver_opts:
-      type: tmpfs
-      device: tmpfs
-      o: "uid=50000,gid=0,size=4g"

@@ -58,6 +58,10 @@ COPY --chown=airflow:root ./shared ./dags/shared
 
 USER root
 RUN chmod 744 ./*.sh && chown airflow *.sh && chmod +x ./scripts/*.sh
+# Standaard uitvoermap voor media (AIRFLOW_OUTPUT_MEDIA). De compose-bestanden mounten hier
+# een map of volume overheen; een leeg named volume neemt eigenaar en rechten van deze map
+# over, zodat de airflow-gebruiker er zonder bind mount of tmpfs in kan schrijven.
+RUN mkdir -p /output/archeomedia && chown airflow:root /output/archeomedia
 
 USER airflow
 ENTRYPOINT ["./init.sh"]
