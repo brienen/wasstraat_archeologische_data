@@ -390,7 +390,7 @@ class TestLoadAllSequences:
     """
 
     @staticmethod
-    def draaiLoadAll(log, zet_sequence=None, afgeleid_fout=None):
+    def draaiLoadAll(log, zet_sequence=None, afgeleid_fout=None, migratie_fout=None):
         """Draai loadAll met een nagebootste verbinding; statements en aanroepen komen in log."""
         import wasstraat.loadToDatabase_functions as load
 
@@ -425,7 +425,14 @@ class TestLoadAllSequences:
                 raise afgeleid_fout
             return {}
 
+        def nepMigratie(conn, lock_timeout='30s'):
+            log.append(('migreerSchemaGebruikersdata',))
+            if migratie_fout:
+                raise migratie_fout
+            return []
+
         with patch.object(load, 'getPgConnection', return_value=Conn()), \
+                patch.object(load, 'migreerSchemaGebruikersdata', side_effect=nepMigratie), \
                 patch.object(load, 'transferToDB'), \
                 patch.object(load, 'leesFkConstraints', return_value=[]), \
                 patch.object(load, 'verwijderFkConstraints'), \
@@ -479,6 +486,20 @@ class TestLoadAllSequences:
         self.draaiLoadAll(log)
         assert log[-5:] == [('valideerFkConstraints',), ('commit',), ('herberekenAfgeleideVelden',),
                             ('commit',), ('close',)]
+
+    def test_schemamigratie_gebruikersdata_eerst(self):
+        """Issue 73: de schemamigratie van de gebruikerstabellen draait vóór de rest (eigen transactie)."""
+        log = []
+        self.draaiLoadAll(log)
+        assert log[0] == ('migreerSchemaGebruikersdata',)
+        # Daarna pas het opruimen van restanten van een vorige run (eerste statement van loadAll)
+        assert log[1][0] == 'sql' and log[1][1].startswith('DROP TABLE IF EXISTS "')
+
+    def test_fout_in_schemamigratie_laadt_niets(self):
+        log = []
+        with pytest.raises(RuntimeError, match='migratie kapot'):
+            self.draaiLoadAll(log, migratie_fout=RuntimeError('migratie kapot'))
+        assert log == [('migreerSchemaGebruikersdata',), ('rollback',), ('close',)]
 
     def test_fout_in_afgeleide_velden_rolt_alleen_fase4_terug(self):
         log = []

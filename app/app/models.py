@@ -7,7 +7,7 @@ from flask_appbuilder.models.decorators import renders
 from flask_appbuilder import Model
 from flask_appbuilder.filemanager import ImageManager
 from sqlalchemy import BigInteger, Column, Date, DateTime, Float, ForeignKey, Integer, LargeBinary, String, Table, Text, Boolean, JSON, UniqueConstraint, Enum, Index
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, object_session
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy import select, func
 from sqlalchemy.ext.hybrid import hybrid_property, hybrid_method
@@ -1435,29 +1435,72 @@ class Partij(WasstraatModel):
         return self.naam
             
 
+def tekstVerdwenen(soort, key, op):
+    """Tekst bij een verwijzing naar een rij die uit de brondata is verdwenen (issue 73).
+
+    Args:
+        soort: 'Artefact' of 'Project'
+        key: de key van de verdwenen rij (markering ..._verdwenen_key), of None
+        op: het tijdstip van loskoppelen (markering ..._verdwenen_op), of None
+
+    Returns:
+        Tekst zoals 'Artefact PSY003P1V1A1|Glas verdwenen op 22-10-2026', of '' zonder markering
+    """
+    if not key and not op:
+        return ''
+    tekst = f"{soort} {key if key else '(key onbekend)'} verdwenen"
+    if op:
+        tekst += f" op {op:%d-%m-%Y}"
+    return tekst
+
+
 class Bruikleen(WasstraatModel):
     __tablename__ = 'Def_Bruikleen'
 
     primary_key = Column(Integer, primary_key=True, autoincrement=True)
     datum_uitgeleend = Column(Date, nullable=False)
     datum_retour = Column(Date)
-    projectID = Column(ForeignKey('Def_Project.primary_key', deferrable=True), index=True, nullable=False)
+    # artefactID en projectID mogen leeg zijn (issue 73): verdwijnt het artefact of het project bij
+    # een incrementele run uit de brondata, dan blijft de bruikleen bestaan, maakt de laadstap de
+    # verwijzing leeg en vult hij de markering (key en tijdstip van de verdwenen rij). Keert een rij
+    # met dezelfde key terug, dan koppelt de laadstap de bruikleen weer. Zie shared/gebruikersdata.py;
+    # de laadstap en de webapplicatie (views.py) migreren bestaande tabellen naar dit schema.
+    projectID = Column(ForeignKey('Def_Project.primary_key', deferrable=True), index=True, nullable=True)
     project = relationship('Project', lazy="joined", backref="bruiklenen")
-    artefactID = Column(ForeignKey('Def_Artefact.primary_key', deferrable=True), index=True, nullable=False)
+    artefactID = Column(ForeignKey('Def_Artefact.primary_key', deferrable=True), index=True, nullable=True)
     artefact = relationship('Artefact', backref="bruiklenen")
     partijID = Column(ForeignKey('Def_Partij.primary_key', deferrable=True), index=True, nullable=False)
     partij = relationship('Partij', backref="bruiklenen")
+    artefact_verdwenen_key = Column(Text)
+    artefact_verdwenen_op = Column(DateTime)
+    project_verdwenen_key = Column(Text)
+    project_verdwenen_op = Column(DateTime)
+
+    def verdwenen(self):
+        """Tekst over een artefact of project dat uit de brondata is verdwenen; leeg als de bruikleen gekoppeld is.
+
+        Een methode (geen property), zodat Flask-AppBuilder hem in de lijst toont maar er niet op laat sorteren.
+        """
+        delen = [tekstVerdwenen('Artefact', self.artefact_verdwenen_key, self.artefact_verdwenen_op),
+                 tekstVerdwenen('Project', self.project_verdwenen_key, self.project_verdwenen_op)]
+        return '; '.join(deel for deel in delen if deel)
 
     def __repr__(self):
-        return f"{self.artefact} aan: {self.partij} dd: {self.datum_uitgeleend} {self.datum_retour if self.datum_retour else ''}"
+        artefact = self.artefact if self.artefact is not None else (
+            tekstVerdwenen('Artefact', self.artefact_verdwenen_key, self.artefact_verdwenen_op) or 'Geen artefact')
+        return f"{artefact} aan: {self.partij} dd: {self.datum_uitgeleend} {self.datum_retour if self.datum_retour else ''}"
 
 
 
 
+# artefact_id kan leeg zijn met een markering (issue 73): verdwijnt een artefact bij een incrementele
+# run uit de brondata, dan blijft vastgelegd dat het conserveringsproject het behandelde.
 assoc_artefact_conservering = Table('Def_artefact_conservering', Model.metadata,
                                       Column('id', Integer, primary_key=True),
                                       Column('conservering_id', Integer, ForeignKey('Def_Conserveringsproject.primary_key')),
-                                      Column('artefact_id', Integer, ForeignKey('Def_Artefact.primary_key'))
+                                      Column('artefact_id', Integer, ForeignKey('Def_Artefact.primary_key')),
+                                      Column('artefact_verdwenen_key', Text),
+                                      Column('artefact_verdwenen_op', DateTime)
 )
 
 
@@ -1474,6 +1517,22 @@ class Conserveringsproject(WasstraatModel):
     #fotos = relationship("Bestand", backref="conserveringsproject")
     #rapporten = relationship("Conserveringsrapport", backref="conserveringsproject")
     artefacten = relationship('Artefact', secondary=assoc_artefact_conservering, backref='conserveringsprojecten')
+
+    def verdwenen_artefacten(self):
+        """Artefacten van dit project die uit de brondata zijn verdwenen (issue 73), als tekst.
+
+        De koppelrijen blijven met een lege artefact_id en een markering staan;
+        de relatie artefacten ziet ze niet. Een methode, zoals Bruikleen.verdwenen.
+        """
+        sessie = object_session(self)
+        if sessie is None or self.primary_key is None:
+            return ''
+        tabel = assoc_artefact_conservering
+        rijen = sessie.execute(
+            select(tabel.c.artefact_verdwenen_key, tabel.c.artefact_verdwenen_op)
+            .where(tabel.c.conservering_id == self.primary_key, tabel.c.artefact_id.is_(None))
+            .order_by(tabel.c.artefact_verdwenen_key)).all()
+        return '; '.join(tekstVerdwenen('Artefact', key, op) for key, op in rijen)
 
     def __repr__(self):
         return f"{self.korte_omschrijving} door: {self.uitvoerder} dd: {self.begindatum}"

@@ -29,18 +29,19 @@ AIRFLOW_CONTAINER = "wasstraat_airflow_test"
 AIRFLOW_OUTPUT_MEDIA = "/tmp/archeomedia_test"
 
 
-def logIn(gebruikersnaam, wachtwoord):
+def logIn(gebruikersnaam, wachtwoord, sessie=None):
     """
     Log in via het loginformulier van Flask-AppBuilder.
 
     Args:
         gebruikersnaam: Gebruikersnaam voor het formulier.
         wachtwoord: Wachtwoord voor het formulier.
+        sessie: Optionele requests.Session die na het inloggen ingelogd is; anders een nieuwe.
 
     Returns:
         requests.Response: Antwoord op de POST, zonder redirects te volgen.
     """
-    sessie = requests.Session()
+    sessie = sessie if sessie is not None else requests.Session()
     resp = sessie.get(f"{BASE_URL}/login/", timeout=10)
     match = re.search(r'name="csrf_token"[^>]*value="([^"]+)"', resp.text)
     assert match, "Geen csrf_token gevonden op login-pagina"
@@ -239,6 +240,66 @@ class TestApacheVoordeur:
             assert resp.headers.get("Content-Type", "").startswith("image/jpeg")
         finally:
             airflowShell(f"rm -rf '{AIRFLOW_OUTPUT_MEDIA}/Smoke test'")
+
+
+@pytest.mark.flask_smoke
+class TestVerdwenenUitBrondata:
+    """Issue 73: bruikleen en conservering van een artefact dat uit de brondata verdween, zijn te bekijken.
+
+    De laadstap maakt de verwijzing leeg en vult een markering; hier wordt zo'n rij met SQL aangemaakt
+    (ook zonder geladen data) en opgevraagd als beheerder.
+    """
+
+    KEY = "PSMOKE1P1V1A1|Glas"
+
+    @pytest.fixture
+    def sessie(self):
+        sessie = requests.Session()
+        resp = logIn("admin", FLASK_ADMIN_PASSWORD, sessie)
+        assert resp.status_code == 302 and "/login" not in resp.headers.get("Location", ""), "Inloggen mislukt"
+        return sessie
+
+    @pytest.fixture
+    def losgekoppeld(self):
+        """Partij, bruikleen en conserveringsproject met een losgekoppeld artefact; achteraf opgeruimd."""
+        def eerste(sql):
+            return pgTekst(sql).splitlines()[0]
+
+        partij = eerste("INSERT INTO \"Def_Partij\" (naam) VALUES ('Smoke test verdwenen artefact') "
+                        "RETURNING primary_key")
+        try:
+            bruikleen = eerste(
+                'INSERT INTO "Def_Bruikleen" (datum_uitgeleend, "projectID", "artefactID", "partijID", '
+                'artefact_verdwenen_key, artefact_verdwenen_op) VALUES (DATE \'2026-10-01\', '
+                f'(SELECT MIN(primary_key) FROM "Def_Project"), NULL, {partij}, \'{self.KEY}\', '
+                "TIMESTAMP '2026-10-22 03:00') RETURNING primary_key")
+            conservering = eerste(
+                'INSERT INTO "Def_Conserveringsproject" (korte_omschrijving, begindatum, "uitvoerderID") '
+                f"VALUES ('Smoke test conservering', DATE '2026-09-01', {partij}) RETURNING primary_key")
+            pgTekst('INSERT INTO "Def_artefact_conservering" (conservering_id, artefact_id, artefact_verdwenen_key, '
+                    f"artefact_verdwenen_op) VALUES ({conservering}, NULL, '{self.KEY}', TIMESTAMP '2026-10-22 03:00')")
+            yield {"bruikleen": bruikleen, "conservering": conservering}
+        finally:
+            pgTekst(f'DELETE FROM "Def_artefact_conservering" WHERE conservering_id IN '
+                    f'(SELECT primary_key FROM "Def_Conserveringsproject" WHERE "uitvoerderID" = {partij})')
+            pgTekst(f'DELETE FROM "Def_Conserveringsproject" WHERE "uitvoerderID" = {partij}')
+            pgTekst(f'DELETE FROM "Def_Bruikleen" WHERE "partijID" = {partij}')
+            pgTekst(f'DELETE FROM "Def_Partij" WHERE primary_key = {partij}')
+
+    def test_bruiklenen_lijst_met_losgekoppelde_bruikleen(self, sessie, losgekoppeld):
+        resp = sessie.get(f"{BASE_URL}/archbruikleenview/list/", timeout=30)
+        assert resp.status_code == 200, f"Lijst bruiklenen gaf {resp.status_code}"
+        assert f"Artefact {self.KEY} verdwenen op 22-10-2026" in resp.text
+
+    def test_bruikleen_detail_met_markering(self, sessie, losgekoppeld):
+        resp = sessie.get(f"{BASE_URL}/archbruikleenview/show/{losgekoppeld['bruikleen']}", timeout=30)
+        assert resp.status_code == 200, f"Detail bruikleen gaf {resp.status_code}"
+        assert self.KEY in resp.text and "Verdwenen artefact (key)" in resp.text
+
+    def test_conserveringsproject_toont_verdwenen_artefact(self, sessie, losgekoppeld):
+        resp = sessie.get(f"{BASE_URL}/conserveringsprojectview/show/{losgekoppeld['conservering']}", timeout=30)
+        assert resp.status_code == 200, f"Detail conserveringsproject gaf {resp.status_code}"
+        assert f"Artefact {self.KEY} verdwenen op 22-10-2026" in resp.text
 
 
 @pytest.mark.flask_smoke

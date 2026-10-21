@@ -55,8 +55,13 @@ class LoadClient(NepClient):
 class NepPostgres:
     """In-memory PostgreSQL met tabellen, FK-constraints en een log van alle statements.
 
-    tabellen: naam -> {'kolommen': {kolom: (data_type, max_length)}, 'rijen': {primary_key: {kolom: waarde}}}
+    tabellen: naam -> {'kolommen': {kolom: (data_type, max_length)}, 'rijen': {primary_key: {kolom: waarde}},
+    optioneel 'niet_null': set met kolommen met NOT NULL}
     fks: lijst met (tabel, naam, definitie, verwezen tabel)
+
+    De statements van de verwijzingen vanuit gebruikerstabellen (issue 73) worden
+    herkend aan hun vorm (alias g voor de gebruikerstabel, d voor de doeltabel);
+    CURRENT_TIMESTAMP wordt de waarde NU.
     """
 
     def __init__(self, tabellen, fks=None, sequences=True):
@@ -98,6 +103,8 @@ class NepPgCursor:
         db.log.append(sql)
         self.resultaat = []
         self.rowcount = 0
+        if self.verwijzingen(sql, params):
+            return
         if 'information_schema.table_constraints' in sql:
             self.resultaat = [(t, n, d, f'"{r}"') for t, n, d, r in db.fks]
         elif 'ORDER BY ordinal_position' in sql:
@@ -127,6 +134,80 @@ class NepPgCursor:
         elif sql.startswith('SELECT COUNT(*) FILTER'):
             # Telling van de afgeleide velden (herberekenAfgeleideVelden): niets verandert
             self.resultaat = [tuple(0 for _ in range(sql.count('COUNT(*) FILTER')))]
+
+    def verwijzingen(self, sql, params):
+        """Schemamigratie en verwijzingen vanuit gebruikerstabellen (issue 73); True als het statement herkend is."""
+        db = self.db
+        tekst = ' '.join(sql.split())
+        if tekst.startswith('SELECT column_name, is_nullable FROM information_schema.columns'):
+            tabel = db.tabellen.get(params[0])
+            if tabel:
+                self.resultaat = [(k, 'NO' if k in tabel.get('niet_null', set()) else 'YES') for k in tabel['kolommen']]
+            return True
+        m = re.match(r'ALTER TABLE "(\w+)" ADD COLUMN IF NOT EXISTS "(\w+)" (\w+)$', tekst)
+        if m:
+            soort = {'TEXT': 'text', 'TIMESTAMP': 'timestamp without time zone'}[m.group(3)]
+            db.tabellen[m.group(1)]['kolommen'].setdefault(m.group(2), (soort, None))
+            return True
+        m = re.match(r'ALTER TABLE "(\w+)" ALTER COLUMN "(\w+)" DROP NOT NULL$', tekst)
+        if m:
+            db.tabellen[m.group(1)].get('niet_null', set()).discard(m.group(2))
+            return True
+        # Loskoppelen vóór het verwijderen: key uit de doeltabel
+        m = re.match(r'UPDATE "(\w+)" AS g SET "(\w+)" = NULL, "(\w+)" = d\.key, "(\w+)" = CURRENT_TIMESTAMP '
+                     r'FROM "(\w+)" AS d WHERE d\.primary_key = g\."\2" AND d\.primary_key = ANY\(%s\) '
+                     r'RETURNING g\."\3"$', tekst)
+        if m:
+            tabel, kolom, key_kolom, op_kolom, doel = m.groups()
+            doelrijen = db.tabellen[doel]['rijen']
+            for rij in db.tabellen[tabel]['rijen'].values():
+                if rij.get(kolom) in params[0] and rij.get(kolom) in doelrijen:
+                    rij.update({kolom: None, key_kolom: doelrijen[rij[kolom]].get('key'), op_kolom: NU})
+                    self.resultaat.append((rij[key_kolom],))
+            self.rowcount = len(self.resultaat)
+            return True
+        # Vangnet: verwijzing naar een niet-bestaande rij
+        m = re.match(r'(UPDATE|DELETE FROM) "(\w+)" AS g (?:SET "(\w+)" = NULL, "(\w+)" = NULL, '
+                     r'"(\w+)" = CURRENT_TIMESTAMP )?WHERE g\."(\w+)" IS NOT NULL AND NOT EXISTS '
+                     r'\(SELECT 1 FROM "(\w+)" AS d WHERE d\.primary_key = g\."\6"\)$', tekst)
+        if m:
+            actie, tabel, _, key_kolom, op_kolom, kolom, doel = m.groups()
+            rijen = db.tabellen[tabel]['rijen']
+            zonder_doel = [pk for pk, rij in rijen.items()
+                           if rij.get(kolom) is not None and rij[kolom] not in db.tabellen[doel]['rijen']]
+            for pk in zonder_doel:
+                if actie == 'DELETE FROM':
+                    del rijen[pk]
+                else:
+                    rijen[pk].update({kolom: None, key_kolom: None, op_kolom: NU})
+            self.rowcount = len(zonder_doel)
+            return True
+        # Terugkoppelen op een unieke key, en de telling van dubbele keys
+        m = re.match(r'UPDATE "(\w+)" AS g SET "(\w+)" = d\.primary_key, "(\w+)" = NULL, "(\w+)" = NULL '
+                     r'FROM \(SELECT key, MIN\(primary_key\) AS primary_key FROM "(\w+)" WHERE key IS NOT NULL '
+                     r'GROUP BY key HAVING COUNT\(\*\) = 1\) AS d WHERE g\."\2" IS NULL AND g\."\3" = d\.key$', tekst)
+        if m:
+            tabel, kolom, key_kolom, op_kolom, doel = m.groups()
+            per_key = {}
+            for pk, rij in db.tabellen[doel]['rijen'].items():
+                if rij.get('key') is not None:
+                    per_key.setdefault(rij['key'], []).append(pk)
+            for rij in db.tabellen[tabel]['rijen'].values():
+                pks = per_key.get(rij.get(key_kolom))
+                if rij.get(kolom) is None and pks and len(pks) == 1:
+                    rij.update({kolom: pks[0], key_kolom: None, op_kolom: None})
+                    self.rowcount += 1
+            return True
+        m = re.match(r'SELECT COUNT\(\*\) FROM "(\w+)" AS g WHERE g\."(\w+)" IS NULL AND g\."(\w+)" IN '
+                     r'\(SELECT key FROM "(\w+)" WHERE key IS NOT NULL GROUP BY key HAVING COUNT\(\*\) > 1\)$', tekst)
+        if m:
+            tabel, kolom, key_kolom, doel = m.groups()
+            keys = [rij.get('key') for rij in db.tabellen[doel]['rijen'].values() if rij.get('key') is not None]
+            dubbel = {k for k in keys if keys.count(k) > 1}
+            self.resultaat = [(sum(1 for rij in db.tabellen[tabel]['rijen'].values()
+                                   if rij.get(kolom) is None and rij.get(key_kolom) in dubbel),)]
+            return True
+        return False
 
     def fetchall(self):
         return self.resultaat
@@ -160,6 +241,8 @@ def kolommen(*namen, **typen):
 
 PG_KOLOMMEN = ('primary_key', '_id', 'key', 'soort', 'naam', 'ft_search', 'aantal_fotos')
 OID_P0, OID_P1, OID_P2, OID_A0, OID_B0 = (ObjectId() for _ in range(5))
+NU = 'NU'  # CURRENT_TIMESTAMP in de nagebootste PostgreSQL
+BRUIKLEEN_0 = {'primary_key': 0, 'artefactID': 0, 'projectID': 0, 'partijID': 0}
 
 
 @pytest.fixture
@@ -199,8 +282,10 @@ def omgeving(monkeypatch):
         'Def_Bestand': {'kolommen': kolommen(*PG_KOLOMMEN, primary_key='integer'), 'rijen': {
             0: {'primary_key': 0, '_id': str(OID_B0), 'key': 'PSY001S1', 'soort': 'Bestand', 'naam': 'SY001_F001.jpg'},
         }},
-        'Def_Bruikleen': {'kolommen': kolommen('primary_key', 'artefactID', 'partijID'), 'rijen': {
-            0: {'primary_key': 0, 'artefactID': 0, 'partijID': 0}}},
+        # Schema van vóór issue 73: artefactID en projectID NOT NULL, geen markering
+        'Def_Bruikleen': {'kolommen': kolommen('primary_key', 'artefactID', 'projectID', 'partijID'),
+                          'niet_null': {'artefactID', 'projectID', 'partijID'},
+                          'rijen': {0: dict(BRUIKLEEN_0)}},
         'Def_Partij': {'kolommen': kolommen('primary_key', 'naam'), 'rijen': {0: {'primary_key': 0, 'naam': 'Museum'}}},
     }, fks=[
         ('Def_Artefact', 'Def_Artefact_projectID_fkey', 'FOREIGN KEY ("projectID") REFERENCES "Def_Project"(primary_key) DEFERRABLE', 'Def_Project'),
@@ -367,16 +452,20 @@ class TestLoadIncrementeel:
         assert run['tellingen']['load']['totaal'] == resultaat['totaal']
 
     def test_gebruikerstabellen_niet_aangeraakt(self, omgeving):
+        """Gebruikersdata die naar bestaande rijen verwijst blijft gelijk; Def_Partij blijft buiten beeld."""
         load.loadIncrementeel()
         pg = omgeving.pg
-        assert pg.tabellen['Def_Bruikleen']['rijen'] == {0: {'primary_key': 0, 'artefactID': 0, 'partijID': 0}}
+        assert pg.tabellen['Def_Bruikleen']['rijen'] == {0: BRUIKLEEN_0}
         assert pg.tabellen['Def_Partij']['rijen'] == {0: {'primary_key': 0, 'naam': 'Museum'}}
         # Alleen de verwijzing naar Def_Artefact wordt tijdelijk verwijderd en hersteld; Def_Partij blijft buiten beeld
         assert pg.sqlVoor('Def_Partij') == []
-        bruikleen = pg.sqlVoor('Def_Bruikleen')
+        bruikleen = [s for s in pg.sqlVoor('Def_Bruikleen') if 'CONSTRAINT' in s]
         assert len(bruikleen) == 3
         assert all('"Def_Bruikleen_artefactID_fkey"' in s for s in bruikleen)
-        assert not any(s.startswith(('INSERT', 'DELETE', 'UPDATE', 'TRUNCATE')) for s in bruikleen)
+        # Verder alleen de schemamigratie en de verwijzingen (issue 73): nooit invoegen, verwijderen of legen
+        overig = [s for s in pg.sqlVoor('Def_Bruikleen') if 'CONSTRAINT' not in s]
+        assert all(s.startswith(('ALTER TABLE "Def_Bruikleen" A', 'UPDATE "Def_Bruikleen" AS g', 'SELECT COUNT(*)'))
+                   for s in overig), overig
         assert not any('TRUNCATE' in s for s in pg.log if isinstance(s, str))
 
     def test_volgorde_fk_mechaniek(self, omgeving):
@@ -389,13 +478,16 @@ class TestLoadIncrementeel:
         def laatste(fragment):
             return max(i for i, s in enumerate(log) if fragment in s)
 
-        assert log[0] == "SET lock_timeout = '30s'"
+        # Eerst de schemamigratie van de gebruikerstabellen (issue 73) in een eigen transactie
+        assert log[0] == "SET LOCAL lock_timeout = '30s'"
+        commits = [i for i, s in enumerate(log) if s == 'COMMIT']
+        assert log[commits[0] + 1] == "SET lock_timeout = '30s'"
         assert laatste('DROP CONSTRAINT') < eerste('INSERT INTO')
         assert laatste('DELETE FROM') < eerste('ADD CONSTRAINT')
         assert all(s.endswith(' NOT VALID') for s in log if 'ADD CONSTRAINT' in s)
         # Eén commit na het herstel (upsert atomair), validatie daarna in een eigen transactie
-        assert eerste('ADD CONSTRAINT') < log.index('COMMIT') < eerste('VALIDATE CONSTRAINT')
-        assert log[-1] == 'COMMIT' and omgeving.pg.commits == 2
+        assert eerste('ADD CONSTRAINT') < commits[1] < eerste('VALIDATE CONSTRAINT')
+        assert log[-1] == 'COMMIT' and omgeving.pg.commits == 3
         assert omgeving.pg.gesloten
 
     def test_lege_clean_geeft_fout(self, omgeving):
@@ -409,13 +501,14 @@ class TestLoadIncrementeel:
         omgeving.clean.insert_one({'soort': 'Project', 'key': 'PSY004', 'naam': 'Zonder ID'})
         with pytest.raises(Exception, match='geen ID'):
             load.loadIncrementeel()
-        assert omgeving.pg.commits == 0 and omgeving.pg.rollbacks == 1
+        # Alleen de schemamigratie (eigen transactie) is gecommit
+        assert omgeving.pg.commits == 1 and omgeving.pg.rollbacks == 1
 
     def test_dubbel_id_geeft_fout(self, omgeving):
         omgeving.clean.insert_one({'soort': 'Project', 'key': 'PSY004', 'naam': 'Dubbel', 'ID': 1})
         with pytest.raises(Exception, match="dubbele ID's"):
             load.loadIncrementeel()
-        assert omgeving.pg.commits == 0
+        assert omgeving.pg.commits == 1  # alleen de schemamigratie
 
     def test_tweede_run_verandert_niets(self, omgeving):
         load.loadIncrementeel()
@@ -436,7 +529,7 @@ class TestLoadIncrementeel:
             load.loadIncrementeel()
 
         pg = omgeving.pg
-        assert pg.commits == 0 and pg.rollbacks == 1
+        assert pg.commits == 1 and pg.rollbacks == 1  # alleen de schemamigratie is gecommit
         assert 'ROLLBACK TO SAVEPOINT fk_restore_sp' in pg.log
         # De andere constraint is nog wel geprobeerd; gevalideerd wordt er niets meer
         assert any('ADD CONSTRAINT "Def_Artefact_projectID_fkey"' in s for s in pg.log)
@@ -447,12 +540,14 @@ class TestLoadIncrementeel:
         """Issue 72: na de upsert en vóór het herstel van de FK's, zonder commit ertussen."""
         load.loadIncrementeel()
         log = omgeving.pg.log
-        updates = [i for i, s in enumerate(log) if isinstance(s, str) and s.startswith('UPDATE "Def_')]
+        updates = [i for i, s in enumerate(log) if isinstance(s, str) and s.startswith('UPDATE "Def_') and ' AS t ' in s]
         assert [log[i].split(' AS t ')[0] for i in updates] == ['UPDATE "Def_Artefact"', 'UPDATE "Def_Project"']
         laatste_delete = max(i for i, s in enumerate(log) if s.startswith('DELETE FROM'))
         eerste_add = min(i for i, s in enumerate(log) if 'ADD CONSTRAINT' in s)
         assert laatste_delete < min(updates) and max(updates) < eerste_add
-        assert 'COMMIT' not in log[:eerste_add]
+        # Geen commit tussen het begin van de upsert-transactie en het herstel (alleen die van de schemamigratie ervoor)
+        begin = log.index("SET lock_timeout = '30s'")
+        assert 'COMMIT' not in log[begin:eerste_add]
 
     def test_afgeleide_velden_in_run_document(self, omgeving, monkeypatch):
         tellingen = {'Def_Artefact': {'aantal_fotos': 2, 'rijen': 2}, 'Def_Project': {'aantal_artefacten': 1, 'rijen': 1}}
@@ -469,7 +564,7 @@ class TestLoadIncrementeel:
         monkeypatch.setattr(load, 'herberekenAfgeleideVelden', kapot)
         with pytest.raises(RuntimeError, match='afgeleide velden kapot'):
             load.loadIncrementeel()
-        assert omgeving.pg.commits == 0 and omgeving.pg.rollbacks == 1
+        assert omgeving.pg.commits == 1 and omgeving.pg.rollbacks == 1  # alleen de schemamigratie is gecommit
         assert 'load' not in (verwerkingsrun.huidigeRun().get('tellingen') or {})
 
     def test_herstel_fk_geeft_namen_van_mislukte_constraints(self):
@@ -488,7 +583,226 @@ class TestLoadIncrementeel:
 
 
 # ============================================================
-# Klasse 4: Elasticsearch-delta (shared/fulltext.py)
+# Klasse 4: schemamigratie en verwijzingen vanuit gebruikerstabellen (issue 73)
+# ============================================================
+
+ARTEFACT_WEG = 'PSY001P1V1A9|Metaal'  # key van een artefact dat in Single_Store_Clean ontbreekt
+
+
+@pytest.fixture
+def gebruikersdata(omgeving):
+    """Omgeving met gebruikersdata die naar een verdwijnend artefact (3) en project (5, PSY009) verwijst.
+
+    - bruikleen 0: artefact 0 en project 0 (blijven bestaan);
+    - bruikleen 1: artefact 3 (verdwijnt) en project 5 (verdwijnt);
+    - conservering 0: artefact 3, conservering 1: artefact 0;
+    - extra ABR-materiaal 0: artefact 3, 1: artefact 0.
+    """
+    pg = omgeving.pg
+    pg.tabellen['Def_Artefact']['rijen'][3] = {'primary_key': 3, '_id': 'weg', 'key': ARTEFACT_WEG,
+                                               'soort': 'Artefact', 'artefactsoort': 'Metaal'}
+    pg.tabellen['Def_Bruikleen']['rijen'][1] = {'primary_key': 1, 'artefactID': 3, 'projectID': 5, 'partijID': 0}
+    pg.tabellen['Def_artefact_conservering'] = {
+        'kolommen': kolommen('id', 'conservering_id', 'artefact_id'), 'rijen': {
+            0: {'id': 0, 'conservering_id': 0, 'artefact_id': 3},
+            1: {'id': 1, 'conservering_id': 0, 'artefact_id': 0}}}
+    pg.tabellen['Def_artefact_abr'] = {
+        'kolommen': kolommen('id', 'abr_materiaal_id', 'artefact_id'), 'rijen': {
+            0: {'id': 0, 'abr_materiaal_id': 0, 'artefact_id': 3},
+            1: {'id': 1, 'abr_materiaal_id': 0, 'artefact_id': 0}}}
+    return omgeving
+
+
+def nieuwArtefact(clean, id_, key_subnr='PSY001P1V1A9', artefactsoort='Metaal'):
+    """Voeg een artefact toe aan Single_Store_Clean (de key wordt key_subnr|artefactsoort)."""
+    clean.insert_one({'_id': ObjectId(), 'soort': 'Artefact', 'key_subnr': key_subnr,
+                      'artefactsoort': artefactsoort, 'ID': id_})
+
+
+@pytest.mark.unit
+class TestSchemamigratieGebruikersdata:
+    """shared/gebruikersdata.migreerSchema: idempotent, alleen wat nodig is, in een eigen transactie."""
+
+    def test_schemawijzigingen_oud_schema(self):
+        statements = load.gebruikersdata.bepaalSchemawijzigingen(
+            'Def_Bruikleen', {'primary_key': 'NO', 'artefactID': 'NO', 'projectID': 'NO', 'partijID': 'NO'})
+        assert statements == [
+            'ALTER TABLE "Def_Bruikleen" ALTER COLUMN "artefactID" DROP NOT NULL',
+            'ALTER TABLE "Def_Bruikleen" ADD COLUMN IF NOT EXISTS "artefact_verdwenen_key" TEXT',
+            'ALTER TABLE "Def_Bruikleen" ADD COLUMN IF NOT EXISTS "artefact_verdwenen_op" TIMESTAMP',
+            'ALTER TABLE "Def_Bruikleen" ALTER COLUMN "projectID" DROP NOT NULL',
+            'ALTER TABLE "Def_Bruikleen" ADD COLUMN IF NOT EXISTS "project_verdwenen_key" TEXT',
+            'ALTER TABLE "Def_Bruikleen" ADD COLUMN IF NOT EXISTS "project_verdwenen_op" TIMESTAMP',
+        ]
+
+    def test_schemawijzigingen_bijgewerkt_schema_of_geen_tabel(self):
+        bijgewerkt = {'artefact_id': 'YES', 'artefact_verdwenen_key': 'YES', 'artefact_verdwenen_op': 'YES'}
+        assert load.gebruikersdata.bepaalSchemawijzigingen('Def_artefact_conservering', bijgewerkt) == []
+        assert load.gebruikersdata.bepaalSchemawijzigingen('Def_artefact_conservering', {}) == []
+        # Koppelrijen die verwijderd worden hebben geen markering nodig
+        assert load.gebruikersdata.bepaalSchemawijzigingen('Def_artefact_abr', {'artefact_id': 'YES'}) == []
+
+    def test_migratie_bij_load_en_idempotent(self, gebruikersdata):
+        pg = gebruikersdata.pg
+        load.loadIncrementeel()
+        alters = [s for s in pg.log if s.startswith('ALTER TABLE') and 'CONSTRAINT' not in s]
+        assert sorted(alters) == sorted([
+            'ALTER TABLE "Def_Bruikleen" ALTER COLUMN "artefactID" DROP NOT NULL',
+            'ALTER TABLE "Def_Bruikleen" ALTER COLUMN "projectID" DROP NOT NULL',
+            'ALTER TABLE "Def_Bruikleen" ADD COLUMN IF NOT EXISTS "artefact_verdwenen_key" TEXT',
+            'ALTER TABLE "Def_Bruikleen" ADD COLUMN IF NOT EXISTS "artefact_verdwenen_op" TIMESTAMP',
+            'ALTER TABLE "Def_Bruikleen" ADD COLUMN IF NOT EXISTS "project_verdwenen_key" TEXT',
+            'ALTER TABLE "Def_Bruikleen" ADD COLUMN IF NOT EXISTS "project_verdwenen_op" TIMESTAMP',
+            'ALTER TABLE "Def_artefact_conservering" ADD COLUMN IF NOT EXISTS "artefact_verdwenen_key" TEXT',
+            'ALTER TABLE "Def_artefact_conservering" ADD COLUMN IF NOT EXISTS "artefact_verdwenen_op" TIMESTAMP',
+        ])
+        assert pg.tabellen['Def_Bruikleen']['niet_null'] == {'partijID'}
+        # Vóór de upsert-transactie en in een eigen transactie gecommit
+        assert pg.log.index('COMMIT') < pg.log.index("SET lock_timeout = '30s'")
+        assert max(pg.log.index(s) for s in alters) < pg.log.index('COMMIT')
+
+        # Tweede load: het schema klopt, dus alleen lezen
+        pg.log.clear()
+        load.loadIncrementeel()
+        assert not [s for s in pg.log if s.startswith('ALTER TABLE') and 'CONSTRAINT' not in s]
+
+    def test_ontbrekende_gebruikerstabel_overgeslagen(self, omgeving):
+        """Def_artefact_conservering bestaat in deze omgeving niet: geen migratie, geen verwijzingen."""
+        resultaat = load.loadIncrementeel()
+        assert not any('Def_artefact_conservering' in s for s in omgeving.pg.log if s.startswith(('ALTER', 'UPDATE')))
+        assert set(resultaat['gebruikersdata']) == {'Def_Bruikleen'}
+
+    def test_fout_in_migratie_rolt_terug_en_laadt_niets(self, omgeving, monkeypatch):
+        origineel = NepPgCursor.execute
+
+        def execute(self, sql, params=None):
+            if sql.startswith('ALTER TABLE "Def_Bruikleen" ADD COLUMN'):
+                raise Exception('nep: lock timeout')
+            origineel(self, sql, params)
+        monkeypatch.setattr(NepPgCursor, 'execute', execute)
+        with pytest.raises(Exception, match='lock timeout'):
+            load.loadIncrementeel()
+        pg = omgeving.pg
+        assert pg.commits == 0 and pg.rollbacks >= 1
+        assert not any(s.startswith('INSERT INTO') for s in pg.log)
+
+    def test_migratie_in_transactie_met_set_local(self):
+        pg = NepPostgres({'Def_Bruikleen': {'kolommen': kolommen('artefactID'), 'niet_null': {'artefactID'}, 'rijen': {}}})
+        uitgevoerd = load.gebruikersdata.migreerSchemaInTransactie(pg, lock_timeout='10s')
+        assert pg.log[0] == "SET LOCAL lock_timeout = '10s'"
+        assert uitgevoerd[0] == 'ALTER TABLE "Def_Bruikleen" ALTER COLUMN "artefactID" DROP NOT NULL'
+        assert pg.log[-1] == 'COMMIT' and pg.commits == 1
+
+
+@pytest.mark.unit
+class TestVerwijzingenGebruikersdata:
+    """Loskoppelen, verwijderen en terugkoppelen van gebruikersdata bij verdwenen rijen (issue 73)."""
+
+    def test_loskoppelen_met_markering(self, gebruikersdata):
+        resultaat = load.loadIncrementeel()
+        pg = gebruikersdata.pg
+        assert 3 not in pg.tabellen['Def_Artefact']['rijen'] and 5 not in pg.tabellen['Def_Project']['rijen']
+
+        bruiklenen = pg.tabellen['Def_Bruikleen']['rijen']
+        assert bruiklenen[0] == BRUIKLEEN_0
+        assert bruiklenen[1] == {'primary_key': 1, 'artefactID': None, 'projectID': None, 'partijID': 0,
+                                 'artefact_verdwenen_key': ARTEFACT_WEG, 'artefact_verdwenen_op': NU,
+                                 'project_verdwenen_key': 'PSY009', 'project_verdwenen_op': NU}
+        conservering = pg.tabellen['Def_artefact_conservering']['rijen']
+        assert conservering[0] == {'id': 0, 'conservering_id': 0, 'artefact_id': None,
+                                   'artefact_verdwenen_key': ARTEFACT_WEG, 'artefact_verdwenen_op': NU}
+        assert conservering[1] == {'id': 1, 'conservering_id': 0, 'artefact_id': 0}
+        # Extra ABR-materiaal is een pure koppelrij: verwijderd
+        assert pg.tabellen['Def_artefact_abr']['rijen'] == {1: {'id': 1, 'abr_materiaal_id': 0, 'artefact_id': 0}}
+
+        assert resultaat['gebruikersdata'] == {
+            'Def_Bruikleen': {'artefactID': {'losgekoppeld': 1, 'teruggekoppeld': 0, 'dubbele_key': 0},
+                              'projectID': {'losgekoppeld': 1, 'teruggekoppeld': 0, 'dubbele_key': 0}},
+            'Def_artefact_conservering': {'artefact_id': {'losgekoppeld': 1, 'teruggekoppeld': 0, 'dubbele_key': 0}},
+            'Def_artefact_abr': {'artefact_id': {'verwijderd': 1}},
+        }
+        run = verwerkingsrun.huidigeRun()
+        assert run['tellingen']['gebruikersdata'] == resultaat['gebruikersdata']
+        assert 'gebruikersdata' not in run['tellingen']['load']
+        assert resultaat['fk_niet_gevalideerd'] == []
+
+    def test_loskoppelen_voor_verwijderen_in_transactie(self, gebruikersdata):
+        load.loadIncrementeel()
+        log = gebruikersdata.pg.log
+        loskoppelen = log.index(next(s for s in log if s.startswith('UPDATE "Def_Bruikleen" AS g SET "artefactID" = NULL')))
+        verwijderen = log.index(next(s for s in log if s.startswith('DELETE FROM "Def_Artefact"')))
+        abr = log.index(next(s for s in log if s.startswith('DELETE FROM "Def_artefact_abr" AS g')))
+        eerste_add = min(i for i, s in enumerate(log) if 'ADD CONSTRAINT' in s)
+        assert loskoppelen < verwijderen < abr < eerste_add
+        begin = log.index("SET lock_timeout = '30s'")
+        assert 'COMMIT' not in log[begin:eerste_add]
+
+    def test_terugkoppelen_bij_terugkeer_van_dezelfde_key(self, gebruikersdata):
+        load.loadIncrementeel()
+        # Het artefact keert terug (zelfde key_subnr en artefactsoort) met een nieuwe primary_key
+        nieuwArtefact(gebruikersdata.clean, 7)
+        resultaat = load.loadIncrementeel()
+        pg = gebruikersdata.pg
+        assert pg.tabellen['Def_Artefact']['rijen'][7]['key'] == ARTEFACT_WEG
+
+        bruikleen = pg.tabellen['Def_Bruikleen']['rijen'][1]
+        assert bruikleen['artefactID'] == 7
+        assert bruikleen['artefact_verdwenen_key'] is None and bruikleen['artefact_verdwenen_op'] is None
+        # Het project PSY009 is niet teruggekeerd: die verwijzing blijft losgekoppeld
+        assert bruikleen['projectID'] is None and bruikleen['project_verdwenen_key'] == 'PSY009'
+        conservering = pg.tabellen['Def_artefact_conservering']['rijen'][0]
+        assert conservering['artefact_id'] == 7 and conservering['artefact_verdwenen_key'] is None
+
+        assert resultaat['gebruikersdata']['Def_Bruikleen'] == {
+            'artefactID': {'losgekoppeld': 0, 'teruggekoppeld': 1, 'dubbele_key': 0},
+            'projectID': {'losgekoppeld': 0, 'teruggekoppeld': 0, 'dubbele_key': 0}}
+        assert resultaat['gebruikersdata']['Def_artefact_conservering']['artefact_id']['teruggekoppeld'] == 1
+        # Een volgende run verandert niets meer
+        assert load.loadIncrementeel()['gebruikersdata']['Def_Bruikleen']['artefactID'] == {
+            'losgekoppeld': 0, 'teruggekoppeld': 0, 'dubbele_key': 0}
+
+    def test_niet_terugkoppelen_bij_dubbele_key(self, gebruikersdata):
+        load.loadIncrementeel()
+        nieuwArtefact(gebruikersdata.clean, 7)
+        nieuwArtefact(gebruikersdata.clean, 8)
+        resultaat = load.loadIncrementeel()
+        bruikleen = gebruikersdata.pg.tabellen['Def_Bruikleen']['rijen'][1]
+        assert bruikleen['artefactID'] is None and bruikleen['artefact_verdwenen_key'] == ARTEFACT_WEG
+        assert resultaat['gebruikersdata']['Def_Bruikleen']['artefactID'] == {
+            'losgekoppeld': 0, 'teruggekoppeld': 0, 'dubbele_key': 1}
+
+    def test_vangnet_voor_verwijzing_naar_niet_bestaande_rij(self, gebruikersdata):
+        """Een bruikleen die al naar een niet-bestaand artefact wees (van vóór issue 73) wordt losgekoppeld zonder key."""
+        pg = gebruikersdata.pg
+        pg.tabellen['Def_Bruikleen']['rijen'][2] = {'primary_key': 2, 'artefactID': 42, 'projectID': 0, 'partijID': 0}
+        pg.tabellen['Def_artefact_abr']['rijen'][2] = {'id': 2, 'abr_materiaal_id': 0, 'artefact_id': 42}
+        resultaat = load.loadIncrementeel()
+        bruikleen = pg.tabellen['Def_Bruikleen']['rijen'][2]
+        assert bruikleen['artefactID'] is None and bruikleen['artefact_verdwenen_key'] is None
+        assert bruikleen['artefact_verdwenen_op'] == NU and bruikleen['projectID'] == 0
+        assert 2 not in pg.tabellen['Def_artefact_abr']['rijen']
+        assert resultaat['gebruikersdata']['Def_Bruikleen']['artefactID']['losgekoppeld'] == 2
+        assert resultaat['gebruikersdata']['Def_artefact_abr']['artefact_id']['verwijderd'] == 2
+
+    def test_niets_verdwenen_niets_gewijzigd(self, omgeving):
+        resultaat = load.loadIncrementeel()
+        assert omgeving.pg.tabellen['Def_Bruikleen']['rijen'] == {0: BRUIKLEEN_0}
+        assert resultaat['gebruikersdata'] == {
+            'Def_Bruikleen': {'artefactID': {'losgekoppeld': 0, 'teruggekoppeld': 0, 'dubbele_key': 0},
+                              'projectID': {'losgekoppeld': 0, 'teruggekoppeld': 0, 'dubbele_key': 0}}}
+
+    def test_tabel_zonder_markering_overgeslagen(self, omgeving, monkeypatch):
+        """Ontbreekt de markering (migratie overgeslagen), dan worden de verwijzingen niet bijgewerkt."""
+        monkeypatch.setattr(load, 'migreerSchemaGebruikersdata', lambda conn, lock_timeout=None: [])
+        omgeving.pg.tabellen['Def_Bruikleen']['rijen'][1] = {'primary_key': 1, 'artefactID': 0, 'projectID': 5,
+                                                             'partijID': 0}
+        resultaat = load.loadIncrementeel()
+        assert resultaat['gebruikersdata'] == {}
+        assert omgeving.pg.tabellen['Def_Bruikleen']['rijen'][1]['projectID'] == 5
+
+
+# ============================================================
+# Klasse 5: Elasticsearch-delta (shared/fulltext.py)
 # ============================================================
 
 def laadFulltext():

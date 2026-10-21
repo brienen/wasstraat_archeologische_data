@@ -165,3 +165,11 @@ _logutils_path = os.path.join(_project_root, "shared", "logutils.py")
 with open(_logutils_path) as f:
     exec(f.read(), _logutils_mod.__dict__)
 sys.modules["shared.logutils"] = _logutils_mod
+
+# Laad de echte gebruikersdata-module (issue 73: verwijzingen vanuit gebruikerstabellen en de
+# schemamigratie; alleen standaardbibliotheek), op dezelfde manier als logutils
+_gebruikersdata_mod = types.ModuleType("shared.gebruikersdata")
+_gebruikersdata_path = os.path.join(_project_root, "shared", "gebruikersdata.py")
+with open(_gebruikersdata_path) as f:
+    exec(f.read(), _gebruikersdata_mod.__dict__)
+sys.modules["shared.gebruikersdata"] = _gebruikersdata_mod

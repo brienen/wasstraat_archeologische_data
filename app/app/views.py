@@ -19,6 +19,7 @@ from validators import ABRCompare_Artefactsoort, ABRCompare_SUBArtefactsoort
 import foto_util as foto_util
 import util
 import shared.const as const
+import shared.gebruikersdata as gebruikersdata
 
 from flask_appbuilder.actions import action
 from flask import redirect, request, url_for
@@ -81,16 +82,26 @@ class ArtefactLineChartView(GroupByChartView):
 
 class ArchBruikleenView(WSModelView):
     datamodel = WSSQLAInterface(Bruikleen)
-    list_columns = ["project", "artefact", "partij", "datum_uitgeleend", 'datum_retour']
+    list_columns = ["project", "artefact", "partij", "datum_uitgeleend", 'datum_retour', 'verdwenen']
     list_title="Bruiklenen"
     search_exclude_columns = ['artefact']
+    new_label_columns = {
+        'verdwenen': 'Verdwenen uit de brondata',
+        'artefact_verdwenen_key': 'Verdwenen artefact (key)',
+        'artefact_verdwenen_op': 'Artefact verdwenen op',
+        'project_verdwenen_key': 'Verdwenen project (key)',
+        'project_verdwenen_op': 'Project verdwenen op',
+    }
+    label_columns = {**new_label_columns, **WSModelViewMixin.label_columns}
 
-    show_fieldsets = [
-        ("Bruikleenvelden", {"fields": ["project", "artefact", "partij", "datum_uitgeleend", 'datum_retour']}),
-        flds_migratie_info
-    ]
-    edit_fieldsets = show_fieldsets
-    add_fieldsets = show_fieldsets
+    flds_bruikleen = ("Bruikleenvelden", {"fields": ["project", "artefact", "partij", "datum_uitgeleend", 'datum_retour']})
+    # Markering van de laadstap als het artefact of project uit de brondata verdwijnt (issue 73);
+    # alleen tonen, de laadstap vult en wist hem
+    flds_verdwenen = ("Verdwenen uit de brondata", {"fields": [
+        'artefact_verdwenen_key', 'artefact_verdwenen_op', 'project_verdwenen_key', 'project_verdwenen_op']})
+    show_fieldsets = [flds_bruikleen, flds_verdwenen, flds_migratie_info]
+    edit_fieldsets = [flds_bruikleen, flds_migratie_info]
+    add_fieldsets = edit_fieldsets
     add_form_extra_fields = {
         "artefact": fieldDefinitionFactory('artefact', datamodel),
         }
@@ -115,6 +126,26 @@ class ArchBruikleenView(WSModelView):
             self.edit_form_extra_fields = self.add_form_extra_fields
 
         return None
+
+    def _controleerKoppelingen(self, item):
+        """Eis een project en een artefact, behalve als de laadstap de verwijzing heeft losgekoppeld (issue 73).
+
+        artefactID en projectID mogen in de database leeg zijn, zodat een bruikleen blijft
+        bestaan als zijn artefact of project uit de brondata verdwijnt. Kiest de gebruiker
+        weer een artefact of project, dan vervalt de markering.
+        """
+        for relatie, naam in (('project', 'een project'), ('artefact', 'een artefact')):
+            if getattr(item, relatie) is not None:
+                setattr(item, f'{relatie}_verdwenen_key', None)
+                setattr(item, f'{relatie}_verdwenen_op', None)
+            elif getattr(item, f'{relatie}_verdwenen_op') is None:
+                raise ValueError(f"Kies {naam} voor de bruikleen.")
+
+    def pre_add(self, item):
+        self._controleerKoppelingen(item)
+
+    def pre_update(self, item):
+        self._controleerKoppelingen(item)
 
     
 class ArchPartijView(WSModelView):
@@ -946,16 +977,34 @@ class ConserveringsprojectView(WSModelView):
     related_views = [ArchArtefactView]
     search_exclude_columns = ['artefacten', 'uuid', 'herkomst', 'brondata']
 
+    label_columns = {'verdwenen_artefacten': 'Verdwenen artefacten', **WSModelViewMixin.label_columns}
+
+    flds_conservering = ("Conserveringsprojectvelden", {"fields": ["korte_omschrijving", "omschrijving", "begindatum", 'einddatum', 'uitvoerder']})
+    # Artefacten die uit de brondata zijn verdwenen (issue 73); alleen tonen
     show_fieldsets = [
-        ("Conserveringsprojectvelden", {"fields": ["korte_omschrijving", "omschrijving", "begindatum", 'einddatum', 'uitvoerder']}),
+        flds_conservering,
+        ("Verdwenen uit de brondata", {"fields": ['verdwenen_artefacten']}),
         flds_migratie_info
     ]
-    edit_fieldsets = show_fieldsets
-    add_fieldsets = show_fieldsets
+    edit_fieldsets = [flds_conservering, flds_migratie_info]
+    add_fieldsets = edit_fieldsets
 
 
 
 db.create_all()
+
+# Schemamigratie van de gebruikerstabellen (issue 73): db.create_all() maakt alleen ontbrekende
+# tabellen aan en voegt geen kolommen toe aan bestaande tabellen (Def_Bruikleen,
+# Def_artefact_conservering). De laadstap van de pipeline voert dezelfde migratie uit; hier
+# gebeurt het bij het starten, zodat de webapplicatie niet op een ontbrekende kolom stuit.
+try:
+    _verbinding = db.engine.raw_connection()
+    try:
+        gebruikersdata.migreerSchemaInTransactie(_verbinding, lock_timeout='10s')
+    finally:
+        _verbinding.close()
+except Exception as err:
+    logging.getLogger(__name__).error(f"Schemamigratie van de gebruikerstabellen mislukt: {err}")
 
 appbuilder.add_view(ABRMaterialenView,"Materialen uit ABR",icon="fa-dashboard",category="Beheer")
 appbuilder.add_view(ABRArtefactsoortenView,"Artefactsoorten uit ABR",icon="fa-dashboard",category="Beheer")

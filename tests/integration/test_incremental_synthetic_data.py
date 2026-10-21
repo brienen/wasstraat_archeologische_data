@@ -1,7 +1,7 @@
 """
 Integratietest: incrementeel laden met synthetische data (issue 61, fase 3).
 
-Draait eerst de volledige cyclus op SY001 en SY002 en daarna vier keer de
+Draait eerst de volledige cyclus op SY001 en SY002 en daarna zeven keer de
 incrementele cyclus (Extract_Transform_Load_Incremental) via
 ``airflow dags test``:
 
@@ -12,9 +12,15 @@ incrementele cyclus (Extract_Transform_Load_Incremental) via
   c. incrementele run zonder wijzigingen: niets verandert;
   d. project SY003 als kopie van SY002 (database opgravingSY003.mdb, foto's
      SY003_*): SY003 komt erbij met nieuwe primary_keys, SY001/SY002 blijven gelijk;
+     daarna een tweede bruikleen voor een artefact van SY003 dat in stap e verdwijnt;
   e. de database van SY003 vervangen door die van SY001 en één foto
-     verwijderd: SY003 volgt de nieuwe inhoud, geen achtergebleven rijen;
-  f. SY003 verwijderd: alles weer gelijk aan a;
+     verwijderd: SY003 volgt de nieuwe inhoud, geen achtergebleven rijen; de
+     bruikleen van het verdwenen artefact blijft bestaan met een lege
+     verwijzing en een markering (issue 73) en alle FK's zijn geldig;
+  e2. de database van SY003 weer die van SY002: het artefact keert terug met
+     dezelfde key en de bruikleen wordt er weer aan gekoppeld;
+  f. SY003 verwijderd: alles weer gelijk aan a; de bruikleen van het SY003-artefact
+     is weer losgekoppeld en bestaat nog;
   g. een onleesbare foto in SY003 met drempel 0 (issue 70): de taak
      Controleer_Afbeeldingen faalt, Markeer_Run_Mislukt zet de run op
      'mislukt' en PostgreSQL blijft ongewijzigd;
@@ -63,6 +69,7 @@ PROJECTEN_DIR = os.path.abspath(os.path.join(
     os.path.dirname(__file__), "..", "..", "data", "synthetic", "data", "projecten"))
 SY001_MDB = os.path.join(PROJECTEN_DIR, "SY001", "C Database", "opgravingSY001.mdb")
 SY002_DIR = os.path.join(PROJECTEN_DIR, "SY002")
+SY002_MDB = os.path.join(SY002_DIR, "C Database", "opgravingSY002.mdb")
 SY003_DIR = os.path.join(PROJECTEN_DIR, "SY003")
 SY003_MDB = os.path.join(SY003_DIR, "C Database", "opgravingSY003.mdb")
 VERWIJDERDE_FOTO = "SY003_F002.jpg"
@@ -237,14 +244,60 @@ def controleerRun(mongo_client):
 def controleerBruikleen():
     """De bruikleen uit stap b bestaat nog en zijn artefact heeft dezelfde primary_key en key."""
     b = TOESTAND["bruikleen"]
-    rij = pgRijen(f'SELECT "artefactID", "projectID" FROM "Def_Bruikleen" WHERE primary_key = {b["primary_key"]}')
+    rij = pgRijen(f'SELECT "artefactID", "projectID", {tekst("artefact_verdwenen_key")}, '
+                  f'{tekst("artefact_verdwenen_op")} FROM "Def_Bruikleen" WHERE primary_key = {b["primary_key"]}')
     assert rij, "De bruikleen is verdwenen"
     assert int(rij[0][0]) == b["artefact_pk"] and int(rij[0][1]) == b["project_pk"]
+    assert rij[0][2:] == ["NULL", "NULL"], f"De bruikleen uit stap b heeft een markering: {rij[0][2:]}"
     artefact = pgRijen(f'SELECT key FROM "Def_Artefact" WHERE primary_key = {b["artefact_pk"]}')
     assert artefact and artefact[0][0] == b["artefact_key"], (
         f"Artefact {b['artefact_pk']} van de bruikleen heeft niet meer key {b['artefact_key']}: {artefact}")
     project = pgRijen(f'SELECT projectcd FROM "Def_Project" WHERE primary_key = {b["project_pk"]}')
     assert project and project[0][0] == "SY002"
+
+
+def bruikleenSY003():
+    """De bruikleen van het SY003-artefact (stap d): (artefactID, projectID, markering key, markering tijdstip).
+
+    Lege waarden zijn 'NULL' (zie tekst()); het tijdstip als tekst van PostgreSQL.
+    """
+    kolommen = ", ".join(tekst(k) for k in ('"artefactID"', '"projectID"', "artefact_verdwenen_key",
+                                             "artefact_verdwenen_op"))
+    rij = pgRijen(f'SELECT {kolommen} FROM "Def_Bruikleen" '
+                  f'WHERE primary_key = {TOESTAND["bruikleen_sy003"]["primary_key"]}')
+    assert rij, "De bruikleen van het SY003-artefact is verdwenen"
+    return rij[0]
+
+
+def pgTijd():
+    """Het huidige tijdstip van de test-PostgreSQL (LOCALTIMESTAMP, zoals de markering), als tekst."""
+    return pgRijen("SELECT LOCALTIMESTAMP::text")[0][0]
+
+
+def controleerBruikleenSY003Losgekoppeld(run, van, tot):
+    """De bruikleen van het SY003-artefact bestaat, zonder artefact, met de key en een tijdstip tussen van en tot.
+
+    De verwijzing naar project SY002 blijft staan; de run telt één losgekoppelde bruikleen.
+    """
+    b = TOESTAND["bruikleen_sy003"]
+    artefact, project, key, op = bruikleenSY003()
+    assert artefact == "NULL", f"De bruikleen verwijst nog naar artefact {artefact}"
+    assert key == b["artefact_key"], f"Markering {key} in plaats van {b['artefact_key']}"
+    binnen_run = pgWaarde(f'SELECT COUNT(*) FROM "Def_Bruikleen" WHERE primary_key = {b["primary_key"]} '
+                          f"AND artefact_verdwenen_op BETWEEN '{van}' AND '{tot}'")
+    assert op != "NULL" and binnen_run == 1, f"Tijdstip {op} van de markering ligt niet tussen {van} en {tot}"
+    assert int(project) == b["project_pk"], "De verwijzing naar het (bestaande) project is gewijzigd"
+    telling = run["tellingen"]["gebruikersdata"]["Def_Bruikleen"]["artefactID"]
+    assert telling["losgekoppeld"] == 1 and telling["teruggekoppeld"] == 0, telling
+    print(f"  Bruikleen {b['primary_key']} losgekoppeld: key {key}, op {op}")
+
+
+def controleerFkGeldig(run):
+    """Geen enkele FK-constraint is NOT VALID (pg_constraint.convalidated) en de run meldt er geen."""
+    ongeldig = pgRijen("SELECT conrelid::regclass::text, conname FROM pg_constraint "
+                       "WHERE contype = 'f' AND NOT convalidated")
+    assert ongeldig == [], f"FK-constraints die NOT VALID zijn: {ongeldig}"
+    assert run["tellingen"]["load"]["fk_niet_gevalideerd"] == []
 
 
 def controleerSY001SY002Ongewijzigd():
@@ -436,7 +489,7 @@ def sy003_opruimen():
 @pytest.mark.integration
 @pytest.mark.load
 class TestIncrementeelSynthetic:
-    """Volledige cyclus gevolgd door vier incrementele runs op SY001, SY002 en een tijdelijk project SY003."""
+    """Volledige cyclus gevolgd door zeven incrementele runs op SY001, SY002 en een tijdelijk project SY003."""
 
     # ----------------------------------------------------------
     # a. Volledige cyclus
@@ -572,13 +625,38 @@ class TestIncrementeelSynthetic:
         vergelijkMetFlaskInit()
         controleerAantalFotosInElasticsearch()
 
+    def test_05b_bruikleen_voor_artefact_van_sy003(self):
+        """Issue 73: een bruikleen voor een artefact van SY003 dat in stap e verdwijnt.
+
+        In stap e krijgt SY003 de inhoud van SY001; een artefact van SY003 (kopie van SY002) waarvan
+        de key met SY003 in plaats van SY001 niet bij SY001 voorkomt, verdwijnt dan. SY003 staat
+        niet in de projectenlijst (geen rij in Def_Project); de bruikleen hangt aan project SY002.
+        """
+        keys_na_e = {r[0] for r in pgRijen(f"SELECT replace(key, 'PSY001', 'PSY003') FROM \"Def_Artefact\" "
+                                            f"WHERE {filterProject('SY001')}")}
+        kandidaten = [r for r in pgRijen(f'SELECT primary_key, key FROM "Def_Artefact" WHERE {filterProject("SY003")} '
+                                         f'ORDER BY primary_key') if r[1] not in keys_na_e]
+        assert kandidaten, "Geen artefact van SY003 dat in stap e verdwijnt"
+        artefact_pk, artefact_key = int(kandidaten[0][0]), kandidaten[0][1]
+        assert pgWaarde(f"SELECT COUNT(*) FROM \"Def_Artefact\" WHERE key = '{artefact_key}'") == 1
+        b = TOESTAND["bruikleen"]
+        bruikleen_pk = pgWaarde(
+            f'INSERT INTO "Def_Bruikleen" (datum_uitgeleend, "projectID", "artefactID", "partijID") '
+            f'VALUES (DATE \'2026-10-15\', {b["project_pk"]}, {artefact_pk}, {b["partij_pk"]}) RETURNING primary_key')
+        TOESTAND["bruikleen_sy003"] = {"primary_key": bruikleen_pk, "artefact_pk": artefact_pk,
+                                       "artefact_key": artefact_key, "project_pk": b["project_pk"]}
+        print(f"\n  Bruikleen SY003 {TOESTAND['bruikleen_sy003']}")
+        assert bruikleenSY003() == [str(artefact_pk), str(b["project_pk"]), "NULL", "NULL"]
+
     # ----------------------------------------------------------
     # e. Database van SY003 vervangen door die van SY001, één foto verwijderd
     # ----------------------------------------------------------
     def test_06_sy003_vervangen_en_foto_verwijderd(self, mongo_client):
         shutil.copyfile(SY001_MDB, SY003_MDB)
         os.remove(os.path.join(SY003_DIR, "L Fotos", VERWIJDERDE_FOTO))
+        van = pgTijd()
         TOESTAND["duur"]["e"], _ = draaiDag("Extract_Transform_Load_Incremental")
+        tot = pgTijd()
         run = controleerRun(mongo_client)
         delta = run["tellingen"]["delta"]["totaal"]
         assert delta["gewijzigd"] == 1 and delta["verwijderd"] == 1, delta
@@ -615,13 +693,52 @@ class TestIncrementeelSynthetic:
         print(f"  Afgeleide velden: {run['tellingen']['afgeleide_velden']}")
         controleerAfgeleideVelden()
 
+        # Issue 73: het artefact van de bruikleen is verdwenen; de bruikleen blijft bestaan met een lege
+        # verwijzing en een markering (key en tijdstip), de bruikleen uit stap b is ongemoeid (hierboven) en
+        # alle FK's zijn geldig
+        b = TOESTAND["bruikleen_sy003"]
+        assert pgWaarde(f'SELECT COUNT(*) FROM "Def_Artefact" WHERE primary_key = {b["artefact_pk"]} '
+                        f"OR key = '{b['artefact_key']}'") == 0, "Het artefact van de bruikleen bestaat nog"
+        controleerBruikleenSY003Losgekoppeld(run, van, tot)
+        controleerFkGeldig(run)
+        print(f"  Gebruikersdata: {run['tellingen']['gebruikersdata']}")
+
+    # ----------------------------------------------------------
+    # e2. Database van SY003 weer die van SY002: het artefact keert terug
+    # ----------------------------------------------------------
+    def test_06b_artefact_keert_terug(self, mongo_client):
+        """Issue 73: een artefact met dezelfde key keert terug; de bruikleen wordt er weer aan gekoppeld."""
+        shutil.copyfile(SY002_MDB, SY003_MDB)
+        TOESTAND["duur"]["e2"], _ = draaiDag("Extract_Transform_Load_Incremental")
+        run = controleerRun(mongo_client)
+        delta = run["tellingen"]["delta"]["totaal"]
+        assert delta["gewijzigd"] == 1 and delta["nieuw"] == 0 and delta["verwijderd"] == 0, delta
+        assert telProject("Def_Artefact", "SY003") == telProject("Def_Artefact", "SY002")
+
+        b = TOESTAND["bruikleen_sy003"]
+        teruggekeerd = pgRijen(f"SELECT primary_key FROM \"Def_Artefact\" WHERE key = '{b['artefact_key']}'")
+        assert len(teruggekeerd) == 1, f"Artefact {b['artefact_key']} is niet (eenmaal) teruggekeerd: {teruggekeerd}"
+        assert bruikleenSY003() == [teruggekeerd[0][0], str(b["project_pk"]), "NULL", "NULL"]
+        telling = run["tellingen"]["gebruikersdata"]["Def_Bruikleen"]["artefactID"]
+        assert telling == {"losgekoppeld": 0, "teruggekoppeld": 1, "dubbele_key": 0}, telling
+        print(f"  Bruikleen {b['primary_key']} weer gekoppeld aan artefact {teruggekeerd[0][0]} "
+              f"(was {b['artefact_pk']})")
+
+        controleerSY001SY002Ongewijzigd()
+        controleerBruikleen()
+        controleerFkGeldig(run)
+        controleerElasticsearchGelijkAanTabellen()
+        controleerAfgeleideVelden()
+
     # ----------------------------------------------------------
     # f. SY003 verwijderd
     # ----------------------------------------------------------
     def test_07_sy003_verwijderd(self, mongo_client):
         aantal_bestanden = telBestanden(SY003_DIR)
         shutil.rmtree(SY003_DIR)
+        van = pgTijd()
         TOESTAND["duur"]["f"], _ = draaiDag("Extract_Transform_Load_Incremental")
+        tot = pgTijd()
         run = controleerRun(mongo_client)
         assert run["tellingen"]["delta"]["totaal"]["verwijderd"] == aantal_bestanden
 
@@ -632,6 +749,10 @@ class TestIncrementeelSynthetic:
         for tabel in SLEUTEL_TABELLEN:
             assert sleutels(tabel) == TOESTAND["sleutels"][tabel], f"{tabel}: sleutels niet gelijk aan stap a"
         controleerBruikleen()
+
+        # Issue 73: het artefact van de bruikleen is met SY003 weer verdwenen; de bruikleen bestaat nog
+        controleerBruikleenSY003Losgekoppeld(run, van, tot)
+        controleerFkGeldig(run)
 
         # Elasticsearch: geen SY003 meer, gelijk aan stap a
         assert controleerElasticsearchGelijkAanTabellen() == TOESTAND["es"]

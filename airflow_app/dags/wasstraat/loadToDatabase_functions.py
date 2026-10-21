@@ -20,6 +20,12 @@ VALID (herstelFkConstraints) en daarna valideren (valideerFkConstraints).
 Beide herberekenen na het laden de afgeleide velden die de webapplicatie
 toont (aantal_fotos, aantal_artefacten en de dateringen van artefacten) met
 herberekenAfgeleideVelden (issue 72).
+
+Beide beginnen met de schemamigratie van de gebruikerstabellen
+(migreerSchemaGebruikersdata, issue 73), in een eigen transactie. De
+incrementele load koppelt verwijzingen vanuit gebruikerstabellen naar
+verdwenen rijen los (bruikleen, conservering) of verwijdert ze (pure
+koppelrijen), volgens shared/gebruikersdata.VERWIJZINGEN.
 """
 import pymongo
 import psycopg2
@@ -33,6 +39,7 @@ import wasstraat.delta_transform as delta_transform
 import wasstraat.verwerkingsrun as verwerkingsrun
 import shared.config as config
 import shared.const as const
+import shared.gebruikersdata as gebruikersdata
 from shared.logutils import maskeerWachtwoord
 import logging
 
@@ -50,7 +57,9 @@ LOAD_TABELLEN = [
 ]
 
 # Tabellen met gebruikersdata (ingevoerd in de webapplicatie). De incrementele cyclus
-# laat ze ongemoeid; de volledige cyclus leegt alle behalve Def_Partij (zie loadAll).
+# laadt ze niet; hij werkt alleen verwijzingen naar verdwenen rijen bij volgens
+# shared/gebruikersdata.VERWIJZINGEN (issue 73). De volledige cyclus leegt alle behalve
+# Def_Partij (zie loadAll).
 GEBRUIKERS_TABELLEN = [
     'Def_artefact_abr', 'Def_Bruikleen',
     'Def_artefact_conservering', 'Def_Conserveringsproject', 'Def_Partij',
@@ -747,6 +756,35 @@ def herberekenAfgeleideVelden(cursor):
 
 
 # ============================================================
+# Schemamigratie van de gebruikerstabellen (issue 73, gedeeld door loadAll en loadIncrementeel)
+# ============================================================
+
+def migreerSchemaGebruikersdata(conn, lock_timeout=LOCK_TIMEOUT_INCREMENTEEL):
+    """Breng het schema van de gebruikerstabellen in orde, in een eigen transactie (issue 73).
+
+    Maakt de verwijzingen die losgekoppeld kunnen worden nullable en voegt de
+    kolommen van de markering toe (zie shared/gebruikersdata.migreerSchema).
+    db.create_all() van de webapplicatie doet dat niet bij bestaande tabellen;
+    zo gaan bestaande installaties (ook die uit deploy/) zonder handwerk mee.
+    Idempotent: als het schema al klopt wordt er alleen gelezen. De webapplicatie
+    voert dezelfde migratie uit bij het starten.
+
+    Args:
+        conn: psycopg2-verbinding zonder openstaande transactie (wordt gecommit)
+        lock_timeout: maximale wachttijd op een lock (ALTER TABLE vraagt een ACCESS EXCLUSIVE-lock)
+
+    Returns:
+        Lijst met de uitgevoerde ALTER TABLE-statements
+    """
+    uitgevoerd = gebruikersdata.migreerSchemaInTransactie(conn, lock_timeout)
+    if uitgevoerd:
+        logger.info(f"Schemamigratie gebruikerstabellen: {len(uitgevoerd)} wijziging(en) uitgevoerd.")
+    else:
+        logger.info("Schemamigratie gebruikerstabellen: schema is al bijgewerkt.")
+    return uitgevoerd
+
+
+# ============================================================
 # Hoofdfunctie: 3-fase atomic swap
 # ============================================================
 
@@ -761,6 +799,9 @@ def loadAll():
     Fase 4: Herbereken de afgeleide velden van de webapplicatie
             (herberekenAfgeleideVelden, issue 72), zodat ze na een volledige
             cyclus gevuld zijn zonder Flask te herstarten
+
+    Vooraf, in een eigen transactie: de schemamigratie van de
+    gebruikerstabellen (migreerSchemaGebruikersdata, issue 73).
     """
     logger.info("Starting Loading data to relational database...")
 
@@ -778,6 +819,9 @@ def loadAll():
     temp_tables_created = []
 
     try:
+        # Schemamigratie van de gebruikerstabellen (issue 73), vóór de rest en in een eigen transactie
+        migreerSchemaGebruikersdata(conn)
+
         cursor = conn.cursor()
 
         # ============================================================
@@ -1014,6 +1058,178 @@ def verwijderRijen(cursor, table, primary_keys):
     return aantal
 
 
+# ------------------------------------------------------------
+# Verwijzingen vanuit gebruikerstabellen naar verdwenen rijen (issue 73)
+# ------------------------------------------------------------
+
+def bepaalVerwijzingen(cursor, tabellen):
+    """Selecteer de verwijzingen uit gebruikersdata.VERWIJZINGEN naar de tabellen die worden bijgewerkt.
+
+    Alleen verwijzingen waarvan de gebruikerstabel bestaat en de nodige kolommen
+    heeft: de verwijzende kolom en bij LOSKOPPELEN de markering (die maakt
+    migreerSchemaGebruikersdata aan het begin van de load aan).
+
+    Args:
+        cursor: psycopg2 cursor
+        tabellen: de Def_-tabellen die de load bijwerkt
+
+    Returns:
+        Tuple (lijst met verwijzingen, dict met de beginstand van de tellingen per
+        gebruikerstabel en kolom: bij LOSKOPPELEN 'losgekoppeld', 'teruggekoppeld' en
+        'dubbele_key', bij VERWIJDEREN 'verwijderd')
+    """
+    verwijzingen = []
+    tellingen = {}
+    kolommen_per_tabel = {}
+    for verwijzing in gebruikersdata.VERWIJZINGEN:
+        if verwijzing['doel'] not in tabellen:
+            continue
+        tabel = verwijzing['tabel']
+        if tabel not in kolommen_per_tabel:
+            kolommen_per_tabel[tabel] = {c['name'] for c in getColumnMetadata(cursor, tabel)}
+        nodig = {verwijzing['kolom']} | {naam for naam, _ in gebruikersdata.getMarkeringKolommen(verwijzing)}
+        ontbrekend = nodig - kolommen_per_tabel[tabel]
+        if ontbrekend:
+            if kolommen_per_tabel[tabel]:
+                logger.warning(f"Tabel {tabel} mist de kolommen {sorted(ontbrekend)}; verwijzingen in "
+                               f"{tabel}.{verwijzing['kolom']} naar verdwenen rijen worden niet bijgewerkt.")
+            continue
+        verwijzingen.append(verwijzing)
+        if verwijzing['beleid'] == gebruikersdata.LOSKOPPELEN:
+            telling = {'losgekoppeld': 0, 'teruggekoppeld': 0, 'dubbele_key': 0}
+        else:
+            telling = {'verwijderd': 0}
+        tellingen.setdefault(tabel, {})[verwijzing['kolom']] = telling
+    return verwijzingen, tellingen
+
+
+def _markering(verwijzing):
+    """Kolomnamen (key, tijdstip) van de markering van een verwijzing met beleid LOSKOPPELEN."""
+    key_kolom, op_kolom = [naam for naam, _ in gebruikersdata.getMarkeringKolommen(verwijzing)]
+    return key_kolom, op_kolom
+
+
+def koppelVerwijzingenLos(cursor, doel, primary_keys, verwijzingen, tellingen):
+    """Koppel rijen in gebruikerstabellen los van rijen die uit doel verwijderd gaan worden.
+
+    Moet vóór het verwijderen draaien: de key van de verdwijnende rij komt uit
+    doel. Voor elke verwijzing met beleid LOSKOPPELEN naar doel wordt de
+    verwijzing NULL en krijgt de markering de key van de verdwijnende rij en het
+    tijdstip (CURRENT_TIMESTAMP: het begin van de transactie, voor alle rijen
+    van een run hetzelfde). Verwijzingen met beleid VERWIJDEREN ruimt
+    ruimVerwijzingenOp na het verwijderen op.
+
+    Args:
+        cursor: psycopg2 cursor
+        doel: Def_-tabel waaruit rijen verdwijnen
+        primary_keys: de primary_keys die verdwijnen
+        verwijzingen: lijst uit bepaalVerwijzingen
+        tellingen: dict uit bepaalVerwijzingen; 'losgekoppeld' wordt opgehoogd
+
+    Returns:
+        Aantal losgekoppelde rijen
+    """
+    totaal = 0
+    if not primary_keys:
+        return totaal
+    for verwijzing in verwijzingen:
+        if verwijzing['doel'] != doel or verwijzing['beleid'] != gebruikersdata.LOSKOPPELEN:
+            continue
+        tabel, kolom = verwijzing['tabel'], verwijzing['kolom']
+        key_kolom, op_kolom = _markering(verwijzing)
+        keys = []
+        for batch in delta_transform.inBatches(primary_keys):
+            cursor.execute(f'UPDATE "{tabel}" AS g SET "{kolom}" = NULL, "{key_kolom}" = d.key, '
+                           f'"{op_kolom}" = CURRENT_TIMESTAMP FROM "{doel}" AS d '
+                           f'WHERE d.primary_key = g."{kolom}" AND d.primary_key = ANY(%s) '
+                           f'RETURNING g."{key_kolom}"', (list(batch),))
+            keys.extend(rij[0] for rij in cursor.fetchall())
+        if keys:
+            tellingen[tabel][kolom]['losgekoppeld'] += len(keys)
+            totaal += len(keys)
+            logger.info(f"{len(keys)} rij(en) in {tabel} losgekoppeld van verdwenen rijen in {doel} "
+                        f"({kolom} leeg, key in {key_kolom}): {sorted(str(k) for k in keys)[:20]}")
+    return totaal
+
+
+def ruimVerwijzingenOp(cursor, doel, verwijzingen, tellingen):
+    """Werk verwijzingen vanuit gebruikerstabellen bij die naar een niet-bestaande rij in doel wijzen.
+
+    Na het verwijderen van rijen uit doel:
+
+    - VERWIJDEREN (pure koppelrijen): de rijen worden verwijderd;
+    - LOSKOPPELEN: vangnet voor verwijzingen die koppelVerwijzingenLos niet
+      heeft gezien, bijvoorbeeld uit een incrementele run van vóór issue 73,
+      waardoor de FK-constraint NOT VALID bleef. De verwijzing wordt NULL en het
+      tijdstip wordt gezet; de key van de verdwenen rij is niet meer bekend en
+      blijft leeg.
+
+    Args:
+        cursor: psycopg2 cursor
+        doel: Def_-tabel die is bijgewerkt
+        verwijzingen: lijst uit bepaalVerwijzingen
+        tellingen: dict uit bepaalVerwijzingen; 'verwijderd' of 'losgekoppeld' wordt opgehoogd
+    """
+    for verwijzing in verwijzingen:
+        if verwijzing['doel'] != doel:
+            continue
+        tabel, kolom = verwijzing['tabel'], verwijzing['kolom']
+        zonder_doel = (f'g."{kolom}" IS NOT NULL AND NOT EXISTS '
+                       f'(SELECT 1 FROM "{doel}" AS d WHERE d.primary_key = g."{kolom}")')
+        if verwijzing['beleid'] == gebruikersdata.VERWIJDEREN:
+            cursor.execute(f'DELETE FROM "{tabel}" AS g WHERE {zonder_doel}')
+            if cursor.rowcount:
+                tellingen[tabel][kolom]['verwijderd'] += cursor.rowcount
+                logger.info(f"{cursor.rowcount} koppelrij(en) in {tabel} verwijderd: {kolom} verwees naar een "
+                            f"verdwenen rij in {doel}.")
+        else:
+            key_kolom, op_kolom = _markering(verwijzing)
+            cursor.execute(f'UPDATE "{tabel}" AS g SET "{kolom}" = NULL, "{key_kolom}" = NULL, '
+                           f'"{op_kolom}" = CURRENT_TIMESTAMP WHERE {zonder_doel}')
+            if cursor.rowcount:
+                tellingen[tabel][kolom]['losgekoppeld'] += cursor.rowcount
+                logger.warning(f"{cursor.rowcount} rij(en) in {tabel} verwezen via {kolom} naar een niet-bestaande "
+                               f"rij in {doel} (achtergebleven uit een eerdere run); losgekoppeld zonder key.")
+
+
+def koppelVerwijzingenTerug(cursor, verwijzingen, tellingen):
+    """Koppel losgekoppelde rijen weer aan een teruggekeerde rij met dezelfde key.
+
+    Voor elke verwijzing met beleid LOSKOPPELEN: rijen met een lege verwijzing en
+    een markering waarvan de key nu precies één keer in de doeltabel voorkomt,
+    krijgen de primary_key van die rij en de markering wordt gewist. Komt de key
+    vaker voor, dan is niet te zeggen welke rij bedoeld is (dezelfde regel als
+    delta_transform.bepaalStabieleIds); die rijen blijven losgekoppeld en worden
+    geteld als 'dubbele_key'.
+
+    Args:
+        cursor: psycopg2 cursor
+        verwijzingen: lijst uit bepaalVerwijzingen
+        tellingen: dict uit bepaalVerwijzingen; 'teruggekoppeld' en 'dubbele_key' worden gezet
+    """
+    for verwijzing in verwijzingen:
+        if verwijzing['beleid'] != gebruikersdata.LOSKOPPELEN:
+            continue
+        tabel, kolom, doel = verwijzing['tabel'], verwijzing['kolom'], verwijzing['doel']
+        key_kolom, op_kolom = _markering(verwijzing)
+        cursor.execute(f'UPDATE "{tabel}" AS g SET "{kolom}" = d.primary_key, "{key_kolom}" = NULL, '
+                       f'"{op_kolom}" = NULL FROM (SELECT key, MIN(primary_key) AS primary_key FROM "{doel}" '
+                       f'WHERE key IS NOT NULL GROUP BY key HAVING COUNT(*) = 1) AS d '
+                       f'WHERE g."{kolom}" IS NULL AND g."{key_kolom}" = d.key')
+        if cursor.rowcount:
+            tellingen[tabel][kolom]['teruggekoppeld'] += cursor.rowcount
+            logger.info(f"{cursor.rowcount} rij(en) in {tabel} weer gekoppeld aan een teruggekeerde rij in {doel} "
+                        f"(zelfde key als in {key_kolom}).")
+        cursor.execute(f'SELECT COUNT(*) FROM "{tabel}" AS g WHERE g."{kolom}" IS NULL AND g."{key_kolom}" IN '
+                       f'(SELECT key FROM "{doel}" WHERE key IS NOT NULL GROUP BY key HAVING COUNT(*) > 1)')
+        rij = cursor.fetchone()
+        dubbel = int(rij[0]) if rij and rij[0] else 0
+        tellingen[tabel][kolom]['dubbele_key'] = dubbel
+        if dubbel:
+            logger.warning(f"{dubbel} losgekoppelde rij(en) in {tabel} niet teruggekoppeld: hun key ({key_kolom}) "
+                           f"komt meer dan één keer voor in {doel}.")
+
+
 def werkGeometrieBij(cursor, table):
     """Werk de geometriekolom location bij uit longitude en latitude, zoals transferToDB.
 
@@ -1128,16 +1344,21 @@ def bereidTabelVoor(cursor, col, soort, table):
     return {'kolommen': kolommen, 'rijen': rijen, 'ids': ids, 'geometrie': geometrie}
 
 
-def werkTabelBij(cursor, col, table):
+def werkTabelBij(cursor, col, table, verwijzingen=None, tellingen_verwijzingen=None):
     """Werk één Def_-tabel bij: upsert, verwijderen van verdwenen rijen, geometrie en sequence.
 
     Moet draaien binnen een transactie waarin de betrokken FK-constraints
-    verwijderd zijn (zie loadIncrementeel).
+    verwijderd zijn (zie loadIncrementeel). Rijen in gebruikerstabellen die naar
+    een verdwijnende rij verwijzen worden vóór het verwijderen losgekoppeld
+    (koppelVerwijzingenLos) en daarna worden verwijzingen zonder doel opgeruimd
+    (ruimVerwijzingenOp), volgens shared/gebruikersdata.VERWIJZINGEN (issue 73).
 
     Args:
         cursor: psycopg2 cursor
         col: Single_Store_Clean-collectie
         table: Def_-tabel uit LOAD_TABELLEN
+        verwijzingen: lijst uit bepaalVerwijzingen (None: geen)
+        tellingen_verwijzingen: dict uit bepaalVerwijzingen, wordt bijgewerkt
 
     Returns:
         Dict met tellingen ('upsert': aangeboden rijen, 'ingevoegd', 'bijgewerkt'
@@ -1156,7 +1377,10 @@ def werkTabelBij(cursor, col, table):
     gewijzigd = upsertRijen(cursor, table, voorbereid['kolommen'], voorbereid['rijen'])
     nieuw = {int(i) for i in voorbereid['ids']} - bestaand
     verdwenen = delta_transform.bepaalVerdwenenPrimaryKeys(pg_rijen, voorbereid['ids'])
+    verwijzingen = verwijzingen or []
+    koppelVerwijzingenLos(cursor, table, verdwenen, verwijzingen, tellingen_verwijzingen)
     verwijderd = verwijderRijen(cursor, table, verdwenen)
+    ruimVerwijzingenOp(cursor, table, verwijzingen, tellingen_verwijzingen)
 
     if voorbereid['geometrie']:
         werkGeometrieBij(cursor, table)
@@ -1184,33 +1408,42 @@ def loadIncrementeel():
     soort Bestand):
 
     1. alle documenten van de soort upserten op primary_key (werkTabelBij);
-    2. rijen verwijderen waarvan de primary_key niet meer als ID in
-       Single_Store_Clean voorkomt (delta_transform.bepaalVerdwenenPrimaryKeys);
-    3. de geometrie (location) bijwerken;
-    4. de sequence van primary_key op max + 1 zetten.
+    2. rijen in gebruikerstabellen loskoppelen die verwijzen naar rijen die
+       gaan verdwijnen (koppelVerwijzingenLos, issue 73);
+    3. rijen verwijderen waarvan de primary_key niet meer als ID in
+       Single_Store_Clean voorkomt (delta_transform.bepaalVerdwenenPrimaryKeys),
+       en daarna koppelrijen zonder doel verwijderen (ruimVerwijzingenOp);
+    4. de geometrie (location) bijwerken;
+    5. de sequence van primary_key op max + 1 zetten.
 
-    Daarna worden de afgeleide velden van de webapplicatie (aantal_fotos,
-    aantal_artefacten, dateringen) voor alle rijen herberekend
-    (herberekenAfgeleideVelden, issue 72).
+    Daarna worden losgekoppelde rijen weer gekoppeld aan een teruggekeerde rij
+    met dezelfde key (koppelVerwijzingenTerug, issue 73) en worden de afgeleide
+    velden van de webapplicatie (aantal_fotos, aantal_artefacten, dateringen)
+    voor alle rijen herberekend (herberekenAfgeleideVelden, issue 72).
 
     Alles gebeurt in één transactie, binnen de FK-mechaniek van loadAll: de
     betrokken FK-constraints worden eerst verwijderd, na het bijwerken
     hersteld met NOT VALID en na de commit gevalideerd. SET CONSTRAINTS ALL
     DEFERRED is geen optie: niet alle FK's zijn deferrable (bijv.
     Def_Bestand.artefactID, Def_Doos.projectID, Def_artefact_abr.artefact_id).
-    Een verwijzing vanuit een gebruikerstabel naar een verdwenen rij blijft
-    staan; de constraint blijft dan NOT VALID (zie tellingen.load.fk_niet_gevalideerd).
-    Kan een constraint niet hersteld worden, dan wordt de hele transactie
-    teruggedraaid en faalt de taak (anders zou de constraint na de commit
-    definitief ontbreken).
+    Verwijzingen vanuit gebruikerstabellen naar verdwenen rijen worden volgens
+    shared/gebruikersdata.VERWIJZINGEN losgekoppeld of verwijderd, zodat hun
+    constraints valideren; blijft een constraint toch NOT VALID (bijv. door een
+    verwijzing tussen Def_-tabellen van de pipeline), dan staat hij in
+    tellingen.load.fk_niet_gevalideerd. Kan een constraint niet hersteld worden,
+    dan wordt de hele transactie teruggedraaid en faalt de taak (anders zou de
+    constraint na de commit definitief ontbreken).
 
-    Tabellen met gebruikersdata (GEBRUIKERS_TABELLEN) en Def_Bronbestand
-    worden niet geleegd en niet bijgewerkt. De tellingen per tabel komen in het
+    Vooraf, in een eigen transactie, draait de schemamigratie van de
+    gebruikerstabellen (migreerSchemaGebruikersdata). Tabellen met
+    gebruikersdata (GEBRUIKERS_TABELLEN) en Def_Bronbestand worden verder niet
+    geleegd en niet bijgewerkt. De tellingen per tabel komen in het
     run-document onder tellingen.load, die van de afgeleide velden onder
-    tellingen.afgeleide_velden.
+    tellingen.afgeleide_velden en die van de verwijzingen vanuit
+    gebruikerstabellen onder tellingen.gebruikersdata.
 
     Returns:
-        Dict met de tellingen per tabel, plus 'afgeleide_velden'
+        Dict met de tellingen per tabel, plus 'afgeleide_velden' en 'gebruikersdata'
     """
     logger.info("Starten met de incrementele load (upsert) naar PostgreSQL...")
     tabellen = [t for t in LOAD_TABELLEN if t not in GEBRUIKERS_TABELLEN and t not in const.PIPELINE_TABELLEN]
@@ -1233,17 +1466,25 @@ def _upsertAlleTabellen(col, tabellen):
     """Voer de upsert van alle tabellen uit in één transactie (zie loadIncrementeel)."""
     conn = getPgConnection()
     try:
+        # Schemamigratie van de gebruikerstabellen (issue 73), vóór de rest en in een eigen transactie
+        migreerSchemaGebruikersdata(conn, LOCK_TIMEOUT_INCREMENTEEL)
+
         cursor = conn.cursor()
         cursor.execute(f"SET lock_timeout = '{LOCK_TIMEOUT_INCREMENTEEL}'")
         fk_constraints = getBetrokkenFkConstraints(leesFkConstraints(cursor), tabellen)
         logger.info(f"Gevonden: {len(fk_constraints)} betrokken FK constraints om tijdelijk te verwijderen")
         verwijderFkConstraints(cursor, fk_constraints)
+        verwijzingen, gebruikers = bepaalVerwijzingen(cursor, tabellen)
 
         tellingen = {}
         for table in tabellen:
-            telling = werkTabelBij(cursor, col, table)
+            telling = werkTabelBij(cursor, col, table, verwijzingen, gebruikers)
             if telling is not None:
                 tellingen[table] = telling
+
+        # Losgekoppelde gebruikersdata weer koppelen aan teruggekeerde rijen (issue 73), na alle tabellen
+        koppelVerwijzingenTerug(cursor, verwijzingen, gebruikers)
+        logger.info(f"Verwijzingen vanuit gebruikerstabellen bijgewerkt: {gebruikers}")
 
         # Afgeleide velden (issue 72) in dezelfde transactie, zodat de webapplicatie ze nooit
         # verouderd ziet, en vóór het herstel van de FK's: na een ADD CONSTRAINT ... NOT VALID
@@ -1271,10 +1512,11 @@ def _upsertAlleTabellen(col, tabellen):
         resultaat = dict(tellingen, totaal=totaal, fk_niet_hersteld=fk_failed, fk_niet_gevalideerd=niet_gevalideerd)
         run = verwerkingsrun.huidigeRun(verplicht=False)
         if run is not None:
-            verwerkingsrun.werkRunBij({'tellingen.load': resultaat, 'tellingen.afgeleide_velden': afgeleid},
+            verwerkingsrun.werkRunBij({'tellingen.load': resultaat, 'tellingen.afgeleide_velden': afgeleid,
+                                       'tellingen.gebruikersdata': gebruikers},
                                       run_id=run['run_id'])
         logger.info(f"Incrementele load afgerond: {totaal}; niet gevalideerde FK's: {niet_gevalideerd}.")
-        return dict(resultaat, afgeleide_velden=afgeleid)
+        return dict(resultaat, afgeleide_velden=afgeleid, gebruikersdata=gebruikers)
 
     except Exception:
         try:
