@@ -1,6 +1,6 @@
 # Eisenpakket Wasstraat — afspraken, eisen en stand van zaken
 
-Laatst bijgewerkt: 2026-10-21 (Apache als voordeur gepubliceerd; Delftse testomgeving met mediavolume op schijf en eigen Elasticsearch). Dit document bundelt de afspraken en eisen die in de sessies van 20 en 21 oktober 2026 zijn uitgesproken, plus de stand van zaken en de bekende vervolgpunten. Het is het geheugen voor volgende sessies: CLAUDE.md verwijst ernaar en vraagt om het bij te houden. De map `Analyse/` staat in `.gitignore`, maar dit bestand is daarvan uitgezonderd en staat in de repo.
+Laatst bijgewerkt: 2026-10-21 (Apache als voordeur gepubliceerd; Delftse testomgeving met mediavolume op schijf en eigen Elasticsearch; GitHub-issues bijgewerkt). Dit document bundelt de afspraken en eisen die in de sessies van 20 en 21 oktober 2026 zijn uitgesproken, plus de stand van zaken en de bekende vervolgpunten. Het is het geheugen voor volgende sessies: CLAUDE.md verwijst ernaar en vraagt om het bij te houden. De map `Analyse/` staat in `.gitignore`, maar dit bestand is daarvan uitgezonderd en staat in de repo.
 
 ## 1. Werkafspraken
 
@@ -56,22 +56,23 @@ Ontwerp en status: `docs/componenten/incrementeel-laden.md`.
 | Delftse testomgeving met Elasticsearch | Toegevoegd op 2026-10-21 (`elasticsearch-test`, container `wasstraat_elasticsearch_delft_test`): `DAG_Load_Only` moet er volledig slagen en een test vergelijkt per tabel Elasticsearch met PostgreSQL |
 | Delftse testomgeving | Het tmpfs-mediavolume van 4 GB uit de Apache-wijziging liep vol (rapporten circa 5 GB), waardoor 93 van de 541 bestanden stil onverwerkt bleven; op 2026-10-21 vervangen door een schijfvolume op `/output/archeomedia` (map in de Airflow-image), met een grens op onverwerkte bestanden in de Delftse extractietest |
 
-Uitvoeringsplan v2 (maart 2026): alleen issue 61 is uitgevoerd; #57 (profielensysteem), #54 (foutafhandeling), #62 (verwerkingsrapport) en de docs-issues #63 t/m #65 zijn bewust geparkeerd. Het plan in Obsidian en in `Analyse/wasstraat-v2-plan.md` beschrijft nog de stand van maart.
+Uitvoeringsplan v2 (maart 2026): #61 (incrementeel laden) is uitgevoerd en op 2026-10-21 gesloten; #57 (profielensysteem) bleek al in maart gerealiseerd (commit 8b88c73) en is eveneens gesloten. #54 (foutafhandeling), #62 (verwerkingsrapport) en #64 (technische documentatie) staan open met een stand-van-zakenreactie van 2026-10-21; #63 en #65 (documentatie) staan ongewijzigd open. Het plan in Obsidian en in `Analyse/wasstraat-v2-plan.md` beschrijft nog de stand van maart. De bekende beperkingen hieronder zijn op 2026-10-21 als GitHub-issues #70 t/m #80 vastgelegd; nieuwe punten horen daar ook als issue.
 
 ## 4. Bekende beperkingen en vervolgpunten
 
-- **Lockduur van de upsert:** elke incrementele run vergelijkt alle rijen van alle tabellen onder exclusieve locks; bij Delft naar schatting minuten (niet gemeten). Draai buiten kantooruren of beperk de upsert later tot de delta.
-- **Volledige cyclus** nummert de sleutels opnieuw en leegt bruiklenen en conservering; alleen de incrementele cyclus bewaart die.
-- **Afgeleide velden** van de webapplicatie (aantal foto's, dateringen) worden na een incrementele run niet herberekend.
-- **Bruikleen van een verdwenen artefact** blijft staan; de FK blijft dan ongeldig en wordt in het run-document gemeld.
-- **Tekstvelden met een regeleinde** krijgen in de staging de extra kolommen midden in het veld (bestaande beperking van de export per regel).
-- **Codetabellen** zoals "AARDEWERK 1&2 VOORWERP" en "AARDEWERK 1 BAKSEL" worden als aardewerk geharmoniseerd; configuratievraag voor de harmonisatie-Excel.
-- **Standplaatsen** houden projectcode "DB34"; de identificatie laat de projectcode daar bewust ongemoeid.
-- **Flask logt bij het opstarten de databaseverbinding inclusief wachtwoord.**
-- **Jupyter-image** mist het pakket `roman` en heeft een Elasticsearch-client 9.x bij een server 8.17.
-- **Airflow-image:** de extra pakketten liggen nog niet vast; apt-retries in de Dockerfiles zouden verse builds robuuster maken.
-- **Documentatie:** architectuurdiagrammen en hun tekst noemen nog Django, Vue en Oracle; het advies over schrijfrechten op Linux is niet getest; de Delftse Flask-test voor de projectlijst slaat zichzelf over (login nodig).
+- **Lockduur van de upsert (#79):** elke incrementele run vergelijkt alle rijen van alle tabellen onder exclusieve locks; bij Delft naar schatting minuten (niet gemeten). Draai buiten kantooruren of beperk de upsert later tot de delta.
+- **Volledige cyclus (#71)** nummert de sleutels opnieuw en leegt bruiklenen en conservering; alleen de incrementele cyclus bewaart die.
+- **Afgeleide velden (#72)** van de webapplicatie (aantal foto's, dateringen) worden na een incrementele run niet herberekend.
+- **Bruikleen van een verdwenen artefact (#73)** blijft staan; de FK blijft dan ongeldig en wordt in het run-document gemeld.
+- **Tekstvelden met een regeleinde (#74)** krijgen in de staging de extra kolommen midden in het veld (bestaande beperking van de export per regel).
+- **Codetabellen (#75)** zoals "AARDEWERK 1&2 VOORWERP" en "AARDEWERK 1 BAKSEL" worden als aardewerk geharmoniseerd; configuratievraag voor de harmonisatie-Excel.
+- **Standplaatsen (#76)** houden projectcode "DB34"; de identificatie laat de projectcode daar bewust ongemoeid.
+- **Databaseverbinding inclusief wachtwoord in het log (#77)**, in `shared/database.py` en `shared/fulltext.py`.
+- **Jupyter-image (#78)** mist het pakket `roman` en heeft een Elasticsearch-client 9.x bij een server 8.17.
+- **Airflow-image (#80):** de extra pakketten liggen nog niet vast; apt-retries in de Dockerfiles zouden verse builds robuuster maken.
+- **Documentatie (#64):** architectuurdiagrammen en hun tekst noemen nog Django, Vue en Oracle; het advies over schrijfrechten op Linux is niet getest; de Delftse Flask-test voor de projectlijst slaat zichzelf over (login nodig).
 - **Docker-onderhoud:** vier oude testvolumes van `wasstraat-test` kunnen weg.
+- **Extractie slikt fouten bij afbeeldingen in (#70):** mislukte bestanden blijven stil op `processed: False`; ontdekt bij het volle mediavolume op 2026-10-21.
 
 ## 5. Vindplaatsen
 
