@@ -1,6 +1,6 @@
 # Eisenpakket Wasstraat — afspraken, eisen en stand van zaken
 
-Laatst bijgewerkt: 2026-10-21 (Apache als voordeur gepubliceerd; Delftse testomgeving met mediavolume op schijf). Dit document bundelt de afspraken en eisen die in de sessies van 20 en 21 oktober 2026 zijn uitgesproken, plus de stand van zaken en de bekende vervolgpunten. Het is het geheugen voor volgende sessies: CLAUDE.md verwijst ernaar en vraagt om het bij te houden. De map `Analyse/` staat in `.gitignore`, maar dit bestand is daarvan uitgezonderd en staat in de repo.
+Laatst bijgewerkt: 2026-10-21 (Apache als voordeur gepubliceerd; Delftse testomgeving met mediavolume op schijf en eigen Elasticsearch). Dit document bundelt de afspraken en eisen die in de sessies van 20 en 21 oktober 2026 zijn uitgesproken, plus de stand van zaken en de bekende vervolgpunten. Het is het geheugen voor volgende sessies: CLAUDE.md verwijst ernaar en vraagt om het bij te houden. De map `Analyse/` staat in `.gitignore`, maar dit bestand is daarvan uitgezonderd en staat in de repo.
 
 ## 1. Werkafspraken
 
@@ -53,6 +53,7 @@ Ontwerp en status: `docs/componenten/incrementeel-laden.md`.
 | `make publish` en `deploy/` | Gebouwd en gecommit (`81efba3`); versie 1.0.1 gepubliceerd op ghcr.io, op 2026-10-21 (middag) opnieuw gepubliceerd onder 1.0.1 inclusief Apache als voordeur en de laadstap-fix |
 | Apache als voordeur | Gebouwd, getest en gecommit (`f5fb594`); eigen installatie opnieuw gebouwd en gestart (webapplicatie op poort 5052, 5051 dicht); images opnieuw gepubliceerd als 1.0.1 |
 | Delftse referentie-uitkomst | Opnieuw vastgelegd na kopregel-fix (+50 munten), &-fix (+96 aardewerk) en fotokoppeling (Put 275, Vondst 3060) |
+| Delftse testomgeving met Elasticsearch | Toegevoegd op 2026-10-21 (`elasticsearch-test`, container `wasstraat_elasticsearch_delft_test`): `DAG_Load_Only` moet er volledig slagen en een test vergelijkt per tabel Elasticsearch met PostgreSQL |
 | Delftse testomgeving | Het tmpfs-mediavolume van 4 GB uit de Apache-wijziging liep vol (rapporten circa 5 GB), waardoor 93 van de 541 bestanden stil onverwerkt bleven; op 2026-10-21 vervangen door een schijfvolume op `/output/archeomedia` (map in de Airflow-image), met een grens op onverwerkte bestanden in de Delftse extractietest |
 
 Uitvoeringsplan v2 (maart 2026): alleen issue 61 is uitgevoerd; #57 (profielensysteem), #54 (foutafhandeling), #62 (verwerkingsrapport) en de docs-issues #63 t/m #65 zijn bewust geparkeerd. Het plan in Obsidian en in `Analyse/wasstraat-v2-plan.md` beschrijft nog de stand van maart.
@@ -71,7 +72,6 @@ Uitvoeringsplan v2 (maart 2026): alleen issue 61 is uitgevoerd; #57 (profielensy
 - **Airflow-image:** de extra pakketten liggen nog niet vast; apt-retries in de Dockerfiles zouden verse builds robuuster maken.
 - **Documentatie:** architectuurdiagrammen en hun tekst noemen nog Django, Vue en Oracle; het advies over schrijfrechten op Linux is niet getest; de Delftse Flask-test voor de projectlijst slaat zichzelf over (login nodig).
 - **Docker-onderhoud:** vier oude testvolumes van `wasstraat-test` kunnen weg.
-- **Delftse testomgeving zonder Elasticsearch:** `docker-compose.delft-test.yml` heeft geen `elasticsearch-test`; de Index-taken van `DAG_Load_Only` falen daar en `test_30_run_load` accepteert dat bewust. De synthetische testomgeving heeft wel een Elasticsearch.
 
 ## 5. Vindplaatsen
 

@@ -168,7 +168,7 @@ integration-load: install ## Draai Extract + Transform + Load (zonder Flask)
 .PHONY: integration-delft
 integration-delft: install ## Draai volledige Delft-integratietests: Extract + Transform + Load + Flask
 	@echo "➜ Delft test-omgeving starten (data/test, project DB034)..."
-	$(COMPOSE_DELFT_TEST) up -d mongo-test postgres-test redis-test airflow-test flask-test apache-test
+	$(COMPOSE_DELFT_TEST) up -d mongo-test postgres-test redis-test elasticsearch-test airflow-test flask-test apache-test
 	@echo "➜ Stap 1: Extract + Transform + Load pipeline..."
 	$(PYTEST) tests/integration/ \
 		-v -s -m "(delft or delft_load) and not delft_flask" --tb=short; \
@@ -185,7 +185,7 @@ integration-delft: install ## Draai volledige Delft-integratietests: Extract + T
 .PHONY: integration-delft-pipeline
 integration-delft-pipeline: install ## Draai alleen Delft Extract + Transform (zonder Load en Flask)
 	@echo "➜ Delft test-omgeving starten (data/test, project DB034)..."
-	$(COMPOSE_DELFT_TEST) up -d mongo-test postgres-test airflow-test
+	$(COMPOSE_DELFT_TEST) up -d mongo-test postgres-test elasticsearch-test airflow-test
 	$(PYTEST) tests/integration/ \
 		-v -s -m "delft and not delft_load and not delft_flask" --tb=short; \
 	EXIT=$$?; \

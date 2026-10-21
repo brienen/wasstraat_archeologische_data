@@ -111,9 +111,9 @@ Het target:
 
 ### Elasticsearch in de testomgeving
 
-`docker-compose.test.yml` heeft een eigen Elasticsearch (`elasticsearch-test`, container `wasstraat_elasticsearch_test`, image `docker.elastic.co/elasticsearch/elasticsearch:8.17.0`, zonder beveiliging, single-node, 512 MB heap). Airflow en Flask bereiken die via `ES_HOST=http://elasticsearch:9200`. Airflow start pas als Elasticsearch gezond is (healthcheck met `depends_on: condition: service_healthy`). De Index_*-taken van de volledige cyclus, van `DAG_Load_Only` en van de incrementele cyclus slagen daardoor ook in de testomgeving; `test_full_pipeline_synthetic_data.py` eist dat `DAG_Load_Only` volledig slaagt.
+Beide testomgevingen hebben een eigen Elasticsearch (`elasticsearch-test`; container `wasstraat_elasticsearch_test` in `docker-compose.test.yml` en `wasstraat_elasticsearch_delft_test` in `docker-compose.delft-test.yml`; image `docker.elastic.co/elasticsearch/elasticsearch:8.17.0`, zonder beveiliging, single-node, 512 MB heap). Airflow en Flask bereiken die via `ES_HOST=http://elasticsearch:9200`. Airflow start pas als Elasticsearch gezond is (healthcheck met `depends_on: condition: service_healthy`). De Index_*-taken van de volledige cyclus, van `DAG_Load_Only` en van de incrementele cyclus slagen daardoor ook in de testomgeving; `test_full_pipeline_synthetic_data.py` en `test_full_pipeline_delft_data.py` eisen dat `DAG_Load_Only` volledig slaagt, en de Delftse test vergelijkt daarna per geïndexeerde tabel het aantal documenten in Elasticsearch met het aantal rijen in PostgreSQL.
 
-De container heeft bewust geen hostpoort: poort 9200 op de host is van de echte installatie. Tests benaderen Elasticsearch via `docker exec wasstraat_elasticsearch_test curl -s http://localhost:9200/...`.
+De container heeft bewust geen hostpoort: poort 9200 op de host is van de echte installatie. Tests benaderen Elasticsearch via `docker exec wasstraat_elasticsearch_test curl -s http://localhost:9200/...` (Delft: `wasstraat_elasticsearch_delft_test`).
 
 ### Apache in de testomgeving
 

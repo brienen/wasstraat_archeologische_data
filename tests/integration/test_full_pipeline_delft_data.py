@@ -193,6 +193,18 @@ def _pg_table_count(table):
     return _pg_scalar(f'SELECT COUNT(*) FROM "{table}"')
 
 
+ES_CONTAINER = os.getenv("ES_CONTAINER_DELFT", "wasstraat_elasticsearch_delft_test")
+
+
+def _es_json(pad):
+    """GET op Elasticsearch in de Delftse testcontainer (geen hostpoort: 9200 is van de echte installatie)."""
+    cmd = ["docker", "exec", ES_CONTAINER, "curl", "-s", f"http://localhost:9200/{pad}"]
+    resultaat = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+    if resultaat.returncode != 0:
+        raise RuntimeError(f"curl in {ES_CONTAINER} mislukt: {resultaat.stderr.strip()}")
+    return json.loads(resultaat.stdout)
+
+
 def _pg_tekst(sql):
     """Voer een SQL-query uit op de test-PostgreSQL en retourneer de eerste waarde als tekst ('' bij NULL)."""
     cmd = [
@@ -662,15 +674,14 @@ class TestDelftLoad:
     """Load naar PostgreSQL en verificatie."""
 
     def test_30_run_load(self, airflow_ready):
-        """Trigger DAG_Load_Only DAG (MongoDB → PostgreSQL).
+        """Trigger DAG_Load_Only DAG (MongoDB → PostgreSQL + Elasticsearch).
 
-        De DAG kan falen door Elasticsearch (niet in testomgeving).
-        We controleren de PostgreSQL resultaten in de volgende tests.
+        De Delftse testomgeving heeft een eigen Elasticsearch (elasticsearch-test),
+        dus ook de Index_*-taken moeten slagen.
         """
-        try:
-            run_dag("DAG_Load_Only", timeout=1800)
-        except AssertionError:
-            print("  ℹ  DAG gefaald (verwacht: Elasticsearch niet beschikbaar)")
+        assert run_dag("DAG_Load_Only", timeout=1800) == "success", (
+            "DAG_Load_Only niet geslaagd; controleer LoadToDatabase_postgres en de Index_*-taken "
+            "(draait elasticsearch-test?)")
 
     def test_31_verify_postgres_project(self, airflow_ready):
         """Def_Project in PostgreSQL bevat minimaal 1 project (DB034)."""
@@ -753,6 +764,34 @@ class TestDelftLoad:
                 if in_mongo != in_pg:
                     fouten.append(f"{table}.{kolom}: {in_mongo} gevuld in Single_Store_Clean, {in_pg} in PostgreSQL")
         assert not fouten, "Verwijzingen gaan verloren in de laadstap:\n  " + "\n  ".join(fouten)
+
+    def test_33c_verify_elasticsearch_gelijk_aan_postgres(self, airflow_ready):
+        """Elke geïndexeerde tabel heeft in Elasticsearch evenveel documenten als rijen in PostgreSQL.
+
+        De Delftse testomgeving heeft een eigen Elasticsearch (elasticsearch-test,
+        container wasstraat_elasticsearch_delft_test), zodat de Index_*-taken van
+        DAG_Load_Only ook hier slagen. Tabellen zonder index worden overgeslagen.
+        """
+        tabellen = _pg_tekst(
+            "SELECT string_agg(table_name, ',') FROM information_schema.tables "
+            "WHERE table_schema = 'public' AND table_name LIKE 'Def\\_%'")
+        _es_json("_refresh")
+        fouten, geindexeerd = [], 0
+        print("\n  Elasticsearch (documenten) vs PostgreSQL (rijen)")
+        for table in sorted(t for t in tabellen.split(",") if t):
+            antwoord = _es_json(f"{table.lower()}/_count")
+            if "count" not in antwoord:
+                continue  # geen index voor deze tabel
+            geindexeerd += 1
+            in_pg = _pg_table_count(table)
+            status = "✓" if antwoord["count"] == in_pg else "✗"
+            print(f"  {table:<28} es {antwoord['count']:>6}  postgres {in_pg:>6}  {status}")
+            if antwoord["count"] != in_pg:
+                fouten.append(f"{table}: {antwoord['count']} in Elasticsearch, {in_pg} in PostgreSQL")
+        assert geindexeerd >= 5, (
+            f"Slechts {geindexeerd} tabellen met een Elasticsearch-index; draait elasticsearch-test "
+            f"en zijn de Index_*-taken van DAG_Load_Only geslaagd?")
+        assert not fouten, "Elasticsearch wijkt af van PostgreSQL:\n  " + "\n  ".join(fouten)
 
     def test_34_verify_postgres_no_empty_key_tables(self, airflow_ready):
         """Kerntabellen in PostgreSQL zijn niet leeg."""

@@ -208,7 +208,7 @@ De 3-fase atomic swap is ongewijzigd: (1) laad naar `_new` tabellen, (2a) atomic
 - `archutils.convertToBool()` retourneert `0`/`1` (integers) — wrap altijd met `bool()` voor psycopg2
 - Geometry kolom `location` wordt NIET meegegeven in de INSERT maar via een aparte UPDATE bijgewerkt
 - ENUM kolommen worden gedetecteerd via `pg_type.typtype = 'e'` — lege waarden worden `'Onbekend'`
-- De testomgeving heeft een eigen Elasticsearch (`elasticsearch-test`, container `wasstraat_elasticsearch_test`, zonder hostpoort want 9200 is van de echte installatie); de Index_*-taken van de volledige cyclus, `DAG_Load_Only` en de incrementele cyclus slagen daar dus ook
+- Beide testomgevingen hebben een eigen Elasticsearch (`elasticsearch-test`; containers `wasstraat_elasticsearch_test` en `wasstraat_elasticsearch_delft_test`, zonder hostpoort want 9200 is van de echte installatie); de Index_*-taken van de volledige cyclus, `DAG_Load_Only` en de incrementele cyclus slagen daar dus ook, en de pipelinetests eisen dat. Bewaakt door `tests/unit/test_elasticsearch_testomgeving.py`
 
 ## Integratietests en volgorde
 
