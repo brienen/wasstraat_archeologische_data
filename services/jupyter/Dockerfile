@@ -11,10 +11,14 @@ USER jovyan
 
 # De versies van wat pip bovenop de basisimage installeert liggen vast in constraints.txt.
 # 'make constraints' bouwt met VASTE_VERSIES=0 en legt de nieuwste versies opnieuw vast.
+# roman: de pipelinecode (wasstraat.archutils, references_functions) importeert het.
+# elasticsearch: de client hoort bij de server (8.17, zie docker-compose.yml); een
+# 9.x-client weigert een 8.x-server.
 ARG VASTE_VERSIES=1
 COPY ./services/jupyter/constraints.txt /tmp/constraints.txt
 RUN if [ "$VASTE_VERSIES" = "0" ]; then VERSIES=/dev/null; else VERSIES=/tmp/constraints.txt; fi && \
     pip install --no-cache-dir -c $VERSIES \
     python-magic altair geopandas folium mongoengine \
     psycopg2-binary pymongo sqlacodegen openpyxl \
-    simplejson opencv-python pdf2image elasticsearch
+    simplejson opencv-python pdf2image "roman>=4.2,<5" \
+    "elasticsearch>=8.17,<8.18"
