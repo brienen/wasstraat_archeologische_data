@@ -268,22 +268,31 @@ def vulArtefactKey(doc):
     return doc
 
 
-def leesDocumenten(col, soort):
+def leesDocumenten(col, soort, extra_velden=None):
     """Lees de documenten van een soort uit Single_Store_Clean voor het laden naar PostgreSQL.
 
-    De velden komen uit getFields. Artefacten krijgen zo nodig de samengestelde
-    sleutel in key (vulArtefactKey).
+    De velden komen uit getFields, aangevuld met extra_velden (de kolommen van
+    de doeltabel). getFields kijkt behalve naar meta.py alleen naar een
+    steekproef van tien documenten; een veld dat pas later in de pipeline
+    wordt gezet (zoals artefactID op foto's, door setReferences) en dat in die
+    tien documenten ontbreekt, zou anders voor de hele tabel niet gelezen
+    worden. Artefacten krijgen zo nodig de samengestelde sleutel in key
+    (vulArtefactKey).
 
     Args:
         col: MongoDB collectie (Single_Store_Clean)
         soort: Entiteitstype (bijv. 'Project', 'Artefact', 'Bestand')
+        extra_velden: extra veldnamen om altijd te lezen (meestal de kolomnamen van de doeltabel)
 
     Returns:
-        Tuple (lijst met veldnamen, lijst met documenten)
+        Tuple (lijst met veldnamen uit getFields, lijst met documenten)
     """
     fields = getFields(col, soort)
     projection = {f: 1 for f in fields}
+    for veld in (extra_velden or []):
+        projection[veld] = 1
     projection['_id'] = 1
+    projection['ID'] = 1
     if soort == 'Artefact':
         projection.update({'key': 1, 'key_subnr': 1, 'artefactsoort': 1})
     documents = list(col.find({'soort': soort}, projection=projection))
@@ -441,7 +450,7 @@ def transferToDB(soort, table, cursor):
 
         # 2. Haal MongoDB documenten op (artefacten: key zo nodig samengesteld)
         col = getAnalyseCleanCollection()
-        fields, documents = leesDocumenten(col, soort)
+        fields, documents = leesDocumenten(col, soort, extra_velden=db_colnames)
 
         if not documents:
             logger.info(f"Geen documenten gevonden voor soort: {soort}")
@@ -953,7 +962,7 @@ def bereidTabelVoor(cursor, col, soort, table):
     col_lookup = {c['name']: c for c in db_columns}
     enum_columns = getEnumColumns(cursor, table)
 
-    fields, documents = leesDocumenten(col, soort)
+    fields, documents = leesDocumenten(col, soort, extra_velden=db_colnames)
     all_doc_keys = getDocumentKolommen(documents)
     kolommen = bepaalUpsertKolommen(fields, all_doc_keys, db_colnames)
     if 'primary_key' not in kolommen:

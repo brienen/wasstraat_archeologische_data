@@ -4,6 +4,14 @@
 
 De Wasstraat is een open-source ETL-platform dat archeologische gegevens verzamelt, verwerkt en toegankelijk maakt. Ontwikkeld voor de gemeente Delft: ~1.000 opgravingen, ~100.000 foto's, bijna 1 TB aan data. Het platform draait als Docker Compose-stack met twee hoofdapplicaties (Airflow voor ETL, Flask voor webinterface) en ondersteunende services (PostgreSQL, MongoDB, Elasticsearch, Redis).
 
+## Eisenpakket en afspraken
+
+[Analyse/eisenpakket.md](Analyse/eisenpakket.md) bundelt de werkafspraken met de opdrachtgever, de producteisen, de stand van zaken en de bekende vervolgpunten. Dit bestand is leidend naast CLAUDE.md:
+
+- **Lees het aan het begin van elke sessie** die aan de pipeline, de installatie, de publicatie of de planning werkt, en volg de werkafspraken erin (onder meer: geen commits of pushes door Claude, commitberichten zonder verwijzing naar Claude, de echte `wasstraat_*`-containers nooit aanraken).
+- **Werk het bij in dezelfde sessie** waarin iets verandert: een nieuwe of gewijzigde eis of afspraak van de opdrachtgever, een afgeronde of geparkeerde stap in de stand van zaken, een nieuw of opgelost vervolgpunt. Zet de datum in de kopregel. Houd de bestaande hoofdstukindeling aan (werkafspraken, producteisen, stand van zaken, beperkingen en vervolgpunten, vindplaatsen) en neem wijzigingen eraan mee in de commit van het bijbehorende werk.
+- Zet er geen zaken in die de repo al vastlegt (code, git-geschiedenis, documentatie in `docs/`); verwijs daar dan naar.
+
 ## Projectstructuur
 
 ```

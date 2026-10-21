@@ -192,6 +192,19 @@ def _pg_table_count(table):
     return _pg_scalar(f'SELECT COUNT(*) FROM "{table}"')
 
 
+def _pg_tekst(sql):
+    """Voer een SQL-query uit op de test-PostgreSQL en retourneer de eerste waarde als tekst ('' bij NULL)."""
+    cmd = [
+        "docker", "exec", "-e", "PGPASSWORD=testpass", POSTGRES_CONTAINER,
+        "psql", "-U", "testuser", "-h", "localhost", "-d", "airflow_test",
+        "-t", "-A", "-c", sql,
+    ]
+    result = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
+    if result.returncode != 0:
+        raise RuntimeError(f"psql fout: {result.stderr.strip()}")
+    return result.stdout.strip()
+
+
 # ============================================================
 # Fixtures
 # ============================================================
@@ -700,6 +713,39 @@ class TestDelftLoad:
         print(f"\n  Def_Bestand-rijen met een artefactID: {gekoppeld}")
         assert gekoppeld >= EXPECTED_MIN_OBJECTFOTOS_GEKOPPELD, (
             f"Def_Bestand heeft {gekoppeld} rijen met artefactID, verwacht >= {EXPECTED_MIN_OBJECTFOTOS_GEKOPPELD}")
+
+    def test_33b_verify_postgres_verwijzingskolommen_volledig(self, mongo_client, airflow_ready):
+        """Elke verwijzingskolom (<soort>ID) in PostgreSQL is even vaak gevuld als het veld in Single_Store_Clean.
+
+        Bewaakt de veldselectie van de load. getFields kijkt naar meta.py plus een
+        steekproef van tien documenten; een verwijzing die pas later in de pipeline
+        wordt gezet (artefactID op foto's, door setReferences) kan in die tien
+        ontbreken. Zonder de kolommen van de doeltabel in de projectie verloor
+        Def_Bestand in de Delftse data alle artefactID's, terwijl Single_Store_Clean
+        er ruim duizend had. Deze test vergelijkt per tabel en per ID-kolom de
+        aantallen, zodat zo'n verlies in de laadstap direct zichtbaar is.
+        """
+        clean = mongo_client[DB_ANALYSE]["Single_Store_Clean"]
+        tabellen = _pg_tekst(
+            "SELECT string_agg(table_name, ',') FROM information_schema.tables "
+            "WHERE table_schema = 'public' AND table_name LIKE 'Def\\_%'")
+        fouten = []
+        print("\n  Verwijzingskolommen: Mongo (veld gevuld) vs PostgreSQL (kolom gevuld)")
+        for table in sorted(t for t in tabellen.split(",") if t):
+            soort = table[4:]
+            if clean.count_documents({"soort": soort}) == 0:
+                continue  # gebruikerstabellen en pipelinetabellen zonder documenten
+            kolommen = _pg_tekst(
+                "SELECT string_agg(column_name, ',') FROM information_schema.columns "
+                f"WHERE table_name = '{table}' AND column_name LIKE '%ID'")
+            for kolom in sorted(k for k in kolommen.split(",") if k):
+                in_mongo = clean.count_documents({"soort": soort, kolom: {"$exists": True, "$ne": None}})
+                in_pg = _pg_scalar(f'SELECT COUNT(*) FROM "{table}" WHERE "{kolom}" IS NOT NULL')
+                status = "✓" if in_mongo == in_pg else "✗"
+                print(f"  {table}.{kolom:<20} mongo {in_mongo:>6}  postgres {in_pg:>6}  {status}")
+                if in_mongo != in_pg:
+                    fouten.append(f"{table}.{kolom}: {in_mongo} gevuld in Single_Store_Clean, {in_pg} in PostgreSQL")
+        assert not fouten, "Verwijzingen gaan verloren in de laadstap:\n  " + "\n  ".join(fouten)
 
     def test_34_verify_postgres_no_empty_key_tables(self, airflow_ready):
         """Kerntabellen in PostgreSQL zijn niet leeg."""

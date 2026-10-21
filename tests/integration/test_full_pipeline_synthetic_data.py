@@ -890,6 +890,40 @@ class TestFullPipelineSynthetic:
                 f"{bestand}: gekoppeld aan artefactsoort {soort!r}, verwacht {verwacht['artefactsoort']}")
 
     @pytest.mark.load
+    def test_22c_verify_postgres_verwijzingskolommen_volledig(self, mongo_client, airflow_ready):
+        """Elke verwijzingskolom (<soort>ID) in PostgreSQL is even vaak gevuld als het veld in Single_Store_Clean.
+
+        Bewaakt de veldselectie van de load. getFields kijkt naar meta.py plus een
+        steekproef van tien documenten; een verwijzing die pas later in de pipeline
+        wordt gezet (artefactID op foto's, door setReferences) kan in die tien
+        ontbreken. Zonder de kolommen van de doeltabel in de projectie verloor
+        Def_Bestand in de Delftse data alle artefactID's, terwijl Single_Store_Clean
+        er ruim duizend had. Deze test vergelijkt per tabel en per ID-kolom de
+        aantallen, zodat zo'n verlies in de laadstap direct zichtbaar is.
+        """
+        clean = mongo_client[DB_ANALYSE]["Single_Store_Clean"]
+        tabellen = _pg_tekst(
+            "SELECT string_agg(table_name, ',') FROM information_schema.tables "
+            "WHERE table_schema = 'public' AND table_name LIKE 'Def\\_%'")
+        fouten = []
+        print("\n  Verwijzingskolommen: Mongo (veld gevuld) vs PostgreSQL (kolom gevuld)")
+        for table in sorted(t for t in tabellen.split(",") if t):
+            soort = table[4:]
+            if clean.count_documents({"soort": soort}) == 0:
+                continue  # gebruikerstabellen en pipelinetabellen zonder documenten
+            kolommen = _pg_tekst(
+                "SELECT string_agg(column_name, ',') FROM information_schema.columns "
+                f"WHERE table_name = '{table}' AND column_name LIKE '%ID'")
+            for kolom in sorted(k for k in kolommen.split(",") if k):
+                in_mongo = clean.count_documents({"soort": soort, kolom: {"$exists": True, "$ne": None}})
+                in_pg = _pg_scalar(f'SELECT COUNT(*) FROM "{table}" WHERE "{kolom}" IS NOT NULL')
+                status = "✓" if in_mongo == in_pg else "✗"
+                print(f"  {table}.{kolom:<20} mongo {in_mongo:>6}  postgres {in_pg:>6}  {status}")
+                if in_mongo != in_pg:
+                    fouten.append(f"{table}.{kolom}: {in_mongo} gevuld in Single_Store_Clean, {in_pg} in PostgreSQL")
+        assert not fouten, "Verwijzingen gaan verloren in de laadstap:\n  " + "\n  ".join(fouten)
+
+    @pytest.mark.load
     def test_23_verify_postgres_no_empty_def_tables(self, airflow_ready):
         """Geen enkele Def_-tabel uit lst_tables mag 0 rijen hebben."""
         lst_tables = [
