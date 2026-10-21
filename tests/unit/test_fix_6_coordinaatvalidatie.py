@@ -37,7 +37,7 @@ class TestFix6_CoordinaatValidatie_StaticAnalysis(unittest.TestCase):
     def setUpClass(cls):
         cls.source = read_source('../airflow_app/dags/wasstraat/setAttributes_functions.py')
         match = re.search(
-            r'(def enhanceAllAttributes\(\):.*?)(?=\ndef |\Z)',
+            r'(def enhanceAllAttributes\([^)]*\):.*?)(?=\ndef |\Z)',
             cls.source, re.DOTALL)
         cls.func_source = match.group(1) if match else ''
 

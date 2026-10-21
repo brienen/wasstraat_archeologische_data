@@ -4,6 +4,17 @@
 
 Het zoeken en indexeringsysteem van Wasstraat Archeologische Data biedt krachtige, snelle queryopties over het hele gegevensreservoir. Dit onderdeel is bewust gemaakt voor polymorfische gegevens en multidimensionale zoekmogelijkheden.
 
+## Indexering door de pipeline
+
+De zoekindex staat in Elasticsearch: één index per `Def_`-tabel, met als document-id de `primary_key` van de rij en als velden de tekst-, varchar- en enum-kolommen van de tabel (zonder de kolommen uit `SKIP_FULLTEXT` in `shared/const.py`, zoals `key`, `_id` en `brondata`). De webapplicatie zoekt via een alias met de tabelnaam in kleine letters (bijv. `def_artefact`). De code staat in `shared/fulltext.py`.
+
+| Functie | Gebruikt door | Werking |
+|---------|---------------|---------|
+| `indexTable(table)` | Volledige cyclus en `DAG_Load_Only` (taken `Index_<tabel>`), de webapplicatie bij de eerste start | Bouwt een nieuwe index `<alias>_<tijdstempel>` met alle rijen en zet de alias daarna in één keer om (zero-downtime); de oude index wordt verwijderd |
+| `indexTableIncrementeel(table)` | Incrementele cyclus (taken `Index_<tabel>` na `Load_Upsert`) | Indexeert alle rijen van de tabel opnieuw in de bestaande index achter de alias (een document met dezelfde `_id` wordt overschreven) en verwijdert daarna de documenten waarvan de `_id` niet meer als `primary_key` in de tabel staat (id's opgehaald met `helpers.scan` zonder `_source`). Bestaat de alias nog niet, of wijst hij naar meer dan één index, dan volgt een volledige indexering met `indexTable` |
+
+Bij de incrementele cyclus zijn de `primary_key`s stabiel (zie [Incrementeel laden](incrementeel-laden.md)), zodat de bestaande documenten in de index gewoon worden bijgewerkt. De Index-taken staan buiten de bewaking van de verwerkingsrun: mislukt de indexering, dan klopt PostgreSQL al en blijft de run `afgerond`. Draai de mislukte Index-taak dan opnieuw (taak wissen in Airflow); de volgende incrementele run indexeert ook weer alle rijen.
+
 ## Kernfunctionaliteiten
 
 ### 1. Fulltext-Zoeking
@@ -367,18 +378,7 @@ Alle universele velden worden standaard geïndexeerd. Type-specifieke velden wor
 
 ### Incrementele Indexering
 
-Bij wijzigingen worden alleen gemodificeerde velden opnieuw geïndexeerd:
-
-```
-Record Wijziging:
-  Field 1 (geïndexeerd): gewijzigd
-  Field 2 (geïndexeerd): ongewijzigd
-  Field 3 (niet geïndexeerd): gewijzigd
-
-→ Alleen Field 1 wordt opnieuw geïndexeerd
-→ Field 2 behoudt bestaande index
-→ Field 3 vereist geen indexering
-```
+Zie [Indexering door de pipeline](#indexering-door-de-pipeline): de incrementele cyclus werkt de bestaande index per tabel bij in plaats van een nieuwe index te bouwen.
 
 ## Best Practices
 

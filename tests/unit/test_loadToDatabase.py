@@ -372,3 +372,96 @@ class TestInsertBatch:
         count = insertBatch(cursor, 'Def_Test', ['naam'], [])
         assert count == 0
         mock_execute_values.assert_not_called()
+
+
+
+# ============================================================
+# TestLoadAllSequences
+# ============================================================
+
+@pytest.mark.unit
+class TestLoadAllSequences:
+    """loadAll herstelt in FASE 3 de sequence van primary_key van elke tabel (zetSequence).
+
+    CREATE TABLE ... LIKE INCLUDING DEFAULTS kopieert de default nextval(...) van
+    de oude tabel; die sequence verdwijnt met DROP TABLE <tabel>_old CASCADE en
+    de default dus ook. PostgreSQL, MongoDB en het laden zelf worden nagebootst;
+    alleen de volgorde van de statements en aanroepen wordt gecontroleerd.
+    """
+
+    @staticmethod
+    def draaiLoadAll(log, zet_sequence=None):
+        """Draai loadAll met een nagebootste verbinding; statements en aanroepen komen in log."""
+        import wasstraat.loadToDatabase_functions as load
+
+        class Cursor:
+            def execute(self, sql, params=None):
+                log.append(('sql', sql))
+
+        class Conn:
+            def cursor(self):
+                return Cursor()
+
+            def commit(self):
+                log.append(('commit',))
+
+            def rollback(self):
+                log.append(('rollback',))
+
+            def close(self):
+                log.append(('close',))
+
+        def logZetSequence(cursor, table):
+            log.append(('zetSequence', table))
+            return zet_sequence(cursor, table) if zet_sequence else 1
+
+        def nepValideer(cursor, fk_constraints):
+            log.append(('valideerFkConstraints',))
+            return []
+
+        with patch.object(load, 'getPgConnection', return_value=Conn()), \
+                patch.object(load, 'transferToDB'), \
+                patch.object(load, 'leesFkConstraints', return_value=[]), \
+                patch.object(load, 'verwijderFkConstraints'), \
+                patch.object(load, 'herstelFkConstraints', return_value=(0, 0)), \
+                patch.object(load, 'valideerFkConstraints', side_effect=nepValideer), \
+                patch.object(load, 'zetSequence', side_effect=logZetSequence):
+            load.loadAll()
+
+    def test_zetSequence_voor_elke_tabel(self):
+        from wasstraat.loadToDatabase_functions import LOAD_TABELLEN
+        log = []
+        self.draaiLoadAll(log)
+        tabellen = [regel[1] for regel in log if regel[0] == 'zetSequence']
+        assert tabellen == list(LOAD_TABELLEN)
+
+    def test_na_opruimen_old_en_voor_laatste_commit(self):
+        """zetSequence draait na de DROP van alle _old-tabellen, in de transactie van FASE 3."""
+        log = []
+        self.draaiLoadAll(log)
+        drops_old = [i for i, regel in enumerate(log)
+                     if regel[0] == 'sql' and regel[1].startswith('DROP TABLE IF EXISTS "')
+                     and regel[1].endswith('_old" CASCADE')]
+        renames = [i for i, regel in enumerate(log) if regel[0] == 'sql' and 'RENAME TO' in regel[1]]
+        # De DROP's van FASE 3 zijn die na de swap (de laatste RENAME)
+        drops_fase3 = [i for i in drops_old if i > max(renames)]
+        posities = [i for i, regel in enumerate(log) if regel[0] == 'zetSequence']
+        laatste_commit = max(i for i, regel in enumerate(log) if regel[0] == 'commit')
+        assert drops_fase3
+        assert min(posities) > max(drops_fase3)
+        assert max(posities) < laatste_commit
+        # Zelfde transactie: geen commit tussen het opruimen en het herstellen van de sequences
+        assert ('commit',) not in log[min(drops_fase3):max(posities)]
+
+    def test_fout_bij_sequence_rolt_fase3_terug(self):
+        """Een fout in zetSequence valt onder de bestaande foutafhandeling: rollback en doorgeven."""
+        def kapot(cursor, table):
+            if table == 'Def_Vondst':
+                raise RuntimeError('sequence kapot')
+            return 1
+
+        log = []
+        with pytest.raises(RuntimeError, match='sequence kapot'):
+            self.draaiLoadAll(log, zet_sequence=kapot)
+        fout = log.index(('zetSequence', 'Def_Vondst'))
+        assert log[fout + 1:] == [('rollback',), ('close',)]

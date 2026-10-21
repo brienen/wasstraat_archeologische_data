@@ -423,6 +423,7 @@ Ga naar [http://localhost:8080](http://localhost:8080) en log in. Je ziet een ov
 | DAG | Beschrijving | Wanneer gebruiken |
 |-----|-------------|-------------------|
 | `Extract_Transform_Load_Full_Cycle` | Volledige pipeline | **Eerste keer — gebruik deze** |
+| `Extract_Transform_Load_Incremental` | Alleen nieuwe, gewijzigde en verwijderde bronbestanden, inclusief upsert naar PostgreSQL en bijwerken van de zoekindex ([Incrementeel laden](componenten/incrementeel-laden.md)) | Na de eerste volledige run, bij het toevoegen, corrigeren of verwijderen van opgravingen en foto's |
 | `Extract_only` | Alleen data inlezen | Testen of extractie werkt |
 | `DAG_Transform1_Harmonize_Only` | Alleen harmonisatie | Stapsgewijs debuggen |
 | `DAG_Load_Only` | Alleen naar PostgreSQL laden | Na handmatige correcties |
@@ -455,6 +456,16 @@ De volledige verwerking doorloopt deze stappen:
 
 !!! warning "Verwerkingstijd"
     Voor een kleine proefset (1–5 projectdatabases) duurt de verwerking enkele minuten. Voor de volledige Delft-dataset (1.000+ databases, ~1 TB) kan het enkele uren duren.
+
+### Daarna: alleen de wijzigingen verwerken
+
+Na een geslaagde volledige verwerking registreert de pipeline alle bronbestanden met een vingerafdruk. Voeg je daarna opgravingen toe, vervang je een projectdatabase of verwijder je foto's, draai dan **`Extract_Transform_Load_Incremental`**:
+
+1. Zet de bestanden in (of haal ze weg uit) de invoermappen.
+2. Trigger de DAG `Extract_Transform_Load_Incremental` (play-knop → **Trigger DAG**).
+3. De DAG verwerkt alleen nieuwe, gewijzigde en verwijderde bestanden, werkt de tabellen in PostgreSQL bij (bestaande sleutels blijven gelijk, bruiklenen en conserveringsgegevens blijven staan) en daarna de zoekindex.
+
+Draai toch de volledige cyclus als je de harmonisatie-Excel, `correcties.yml` of de code van de pipeline hebt aangepast. Zie [Incrementeel laden](componenten/incrementeel-laden.md#gebruik) voor de details.
 
 ### Stapsgewijs draaien (optioneel)
 

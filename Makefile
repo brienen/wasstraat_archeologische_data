@@ -45,6 +45,16 @@ define init-config
 	@if [ -f init-config.sh ]; then bash init-config.sh; fi
 endef
 
+# --- Wacht tot PostgreSQL en MongoDB verbindingen accepteren (max. 60 s per database) ---
+# Nodig direct na 'make start': de containers draaien dan al, maar de databases nog niet.
+define wacht-op-databases
+	@echo "➜ Wachten tot PostgreSQL en MongoDB klaar zijn..."
+	@for i in $$(seq 1 60); do docker exec -u postgres wasstraat_postgres pg_isready -q 2>/dev/null && break; sleep 1; done; \
+	docker exec -u postgres wasstraat_postgres pg_isready -q 2>/dev/null || { echo "✗ PostgreSQL is niet bereikbaar" >&2; exit 1; }
+	@for i in $$(seq 1 60); do docker exec wasstraat_mongo mongosh --quiet --eval 'db.adminCommand({ping: 1}).ok' >/dev/null 2>&1 && break; sleep 1; done; \
+	docker exec wasstraat_mongo mongosh --quiet --eval 'db.adminCommand({ping: 1}).ok' >/dev/null 2>&1 || { echo "✗ MongoDB is niet bereikbaar" >&2; exit 1; }
+endef
+
 # ============================================================
 # Installatie (test-omgeving)
 # ============================================================
@@ -76,7 +86,7 @@ test-quick: install ## Draai unit tests (korte output)
 .PHONY: integration
 integration: install ## Draai volledige integratietests: Extract + Transform + Load + Flask
 	@echo "➜ Test-omgeving starten (synthetische data)..."
-	$(COMPOSE_TEST) up -d mongo-test postgres-test redis-test airflow-test flask-test
+	$(COMPOSE_TEST) up -d mongo-test postgres-test redis-test elasticsearch-test airflow-test flask-test
 	@echo "➜ Stap 1: Extract + Transform + Load pipeline..."
 	$(PYTEST) tests/integration/ \
 		-v -s -m "(integration or load) and not delft" --tb=short; \
@@ -103,7 +113,7 @@ integration-keep: install ## Zelfde als integration maar laat containers draaien
 .PHONY: integration-pipeline
 integration-pipeline: install ## Draai alleen Extract + Transform (zonder Load en Flask)
 	@echo "➜ Test-omgeving starten (synthetische data)..."
-	$(COMPOSE_TEST) up -d mongo-test postgres-test airflow-test flask-test
+	$(COMPOSE_TEST) up -d mongo-test postgres-test elasticsearch-test airflow-test flask-test
 	$(PYTEST) tests/integration/ \
 		-v -s -m "integration and not delft and not load" --tb=short; \
 	EXIT=$$?; \
@@ -114,7 +124,7 @@ integration-pipeline: install ## Draai alleen Extract + Transform (zonder Load e
 .PHONY: integration-load
 integration-load: install ## Draai Extract + Transform + Load (zonder Flask)
 	@echo "➜ Test-omgeving starten (inclusief Load)..."
-	$(COMPOSE_TEST) up -d mongo-test postgres-test airflow-test flask-test
+	$(COMPOSE_TEST) up -d mongo-test postgres-test elasticsearch-test airflow-test flask-test
 	$(PYTEST) tests/integration/test_full_pipeline_synthetic_data.py \
 		-v -s -m "integration or load" --tb=short; \
 	EXIT=$$?; \
@@ -154,7 +164,7 @@ integration-delft-pipeline: install ## Draai alleen Delft Extract + Transform (z
 test-flask: install ## Draai Flask smoke tests (NB: vereist geladen PostgreSQL, gebruik 'make integration')
 	@echo "➜ Flask test-omgeving starten..."
 	@echo "⚠  Let op: Flask tests vereisen geladen data. Gebruik 'make integration' voor de volledige suite."
-	$(COMPOSE_TEST) up -d postgres-test redis-test flask-test
+	$(COMPOSE_TEST) up -d postgres-test redis-test elasticsearch-test flask-test
 	@echo "➜ Wachten tot Flask klaar is..."
 	$(PYTEST) tests/integration/ \
 		-v -s -m flask_smoke --tb=short; \
@@ -250,9 +260,10 @@ ps: ## Toon status van alle services
 # ============================================================
 
 .PHONY: backup
-backup: ## Backup Postgres + MongoDB (naar backup/)
+backup: ## Backup Postgres + MongoDB (naar data/<omgeving>/backup/)
 	@echo "Backing up met timestamp $(DT)..."
 	$(DC) stop flask airflow
+	$(wacht-op-databases)
 	docker exec -u postgres -w /backup wasstraat_postgres bash -c \
 		"pg_dump -v -F t -f postgres_$(DT).tar flask"
 	docker exec -w /backup wasstraat_mongo bash -c \
@@ -271,6 +282,7 @@ ifndef TS
 endif
 	@echo "Restoring backup van $(TS)..."
 	$(DC) stop flask airflow
+	$(wacht-op-databases)
 	docker exec -u postgres -w /backup wasstraat_postgres bash -c \
 		"pg_restore -Ft -c -v -d flask < postgres_$(TS).tar"
 	docker exec -w /backup wasstraat_mongo bash -c \
@@ -279,9 +291,10 @@ endif
 	@echo "✓ Restore gereed."
 
 .PHONY: export
-export: ## Exporteer Postgres tabellen naar CSV (backup/)
+export: ## Exporteer Postgres tabellen naar CSV (data/<omgeving>/backup/)
 	@echo "Exporting Postgres data naar CSV met timestamp $(DT)..."
 	$(DC) stop flask airflow
+	$(wacht-op-databases)
 	docker exec -u postgres -w /backup wasstraat_postgres bash -c "mkdir -p postgres_$(DT)"
 	@for table in Def_Vulling Def_Conserveringsproject Def_artefact_conservering \
 		Def_DT_Soort_Plant Def_Project Def_Put Def_Spoor Def_Vondst Def_Plaatsing \

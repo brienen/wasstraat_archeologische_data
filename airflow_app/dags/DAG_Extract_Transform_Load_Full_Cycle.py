@@ -31,6 +31,7 @@ import tasks_transform2_attributes
 import tasks_transform4_references
 import tasks_transform5_moveAndMerge
 import wasstraat.mongoUtils as mongoUtils
+import wasstraat.bronbestanden as bronbestanden
 import tasks_load_to_database_and_index
 
 
@@ -66,3 +67,13 @@ with DAG(
 
 
     Start_ETL_full_cycle >> Drop_All_Databases >> tg_import >> tg_harmonize >> tg_enhanceAttrs >> tg_keys >> tg_moveAndMerge >> tg_references >> tg_loadToDatabaseAndIndex >> End_ETL_full_cycle 
+
+    # Registreer aan het eind alle bronbestanden als verwerkt (incrementeel laden, issue 61),
+    # zodat een volgende incrementele run weet wat al verwerkt is. De registratie hangt aan de
+    # load naar PostgreSQL en niet aan de Elasticsearch-indexering: die kan los opnieuw draaien
+    # (DAG_Load_Only) zonder de bronbestanden opnieuw te verwerken.
+    Registreer_Bronbestanden = PythonOperator(
+        task_id='Registreer_Bronbestanden',
+        python_callable=bronbestanden.registreerVolledigeCyclus
+    )
+    dag.get_task(f'{tg_loadToDatabaseAndIndex.group_id}.LoadToDatabase_postgres') >> Registreer_Bronbestanden >> End_ETL_full_cycle

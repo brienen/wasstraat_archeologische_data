@@ -47,7 +47,7 @@ class TestFix7_Kolomselectie_StaticAnalysis(unittest.TestCase):
     def setUpClass(cls):
         cls.source = read_source('../airflow_app/dags/wasstraat/merge_functions.py')
         match = re.search(
-            r'(def mergeFotoinfo\(\):.*?)(?=\ndef |\Z)',
+            r'(def mergeFotoinfo\([^)]*\):.*?)(?=\ndef |\Z)',
             cls.source, re.DOTALL)
         cls.func_source = match.group(1) if match else ''
 

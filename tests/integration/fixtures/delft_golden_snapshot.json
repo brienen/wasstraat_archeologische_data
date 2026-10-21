@@ -1,11 +1,11 @@
 {
-  "beschrijving": "Golden snapshot Delft testdata (DB034) - opnieuw gegenereerd na herstel van Generate_Missing ($ne) op 2026-10-20",
+  "beschrijving": "Golden snapshot Delft testdata (DB034) - opnieuw gegenereerd op 2026-10-21 na de kopregel-fix in importMDB.sh (tabel MUNTEN EN PENNINGEN: +50 munten) en de sed-escape-fix in importMDB.sh (tabel AARDEWERK 1&2 VOORWERP met & in de naam: +96 aardewerk zonder sleutel voor DB034)",
   "testdata": "data/test/ (project DB034 Koningsveld IV)",
   "soort_counts_clean": {
     "Fotokoppel": 31469,
     "Monster_Botanie": 21381,
     "Standplaats": 8675,
-    "Artefact": 6190,
+    "Artefact": 6336,
     "Plaatsing": 5902,
     "ABR": 4838,
     "Doos": 4443,
@@ -30,7 +30,7 @@
     "Fotokoppel": 31469,
     "Monster_Botanie": 21381,
     "Standplaats": 8675,
-    "Artefact": 6190,
+    "Artefact": 6336,
     "Plaatsing": 5902,
     "ABR": 4838,
     "Doos": 4442,
@@ -52,11 +52,12 @@
     "DT_Soort_Staat": 4
   },
   "artefact_subtypes": {
-    "Aardewerk": 4821,
+    "Aardewerk": 4917,
     "Metaal": 629,
     "Hout": 294,
     "Menselijk_Bot": 273,
     "Steen": 146,
+    "Munt": 50,
     "Glas": 20,
     "Leer": 7
   },

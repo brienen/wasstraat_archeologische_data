@@ -28,6 +28,9 @@ data/test/data/*
 data/synthetic/output/*
 !data/synthetic/output/.gitkeep
 
+# Tijdelijk testproject voor incrementeel laden (kopie van SY002)
+data/synthetic/data/projecten/SY003/
+
 
 # Backups
 backup/*

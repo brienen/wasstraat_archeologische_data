@@ -1,6 +1,8 @@
 # docker-compose.test.yml
-# Standalone testomgeving: MongoDB + PostgreSQL/PostGIS + Airflow + Flask + Redis.
+# Standalone testomgeving: MongoDB + PostgreSQL/PostGIS + Elasticsearch + Airflow + Flask + Redis.
 # Alle services delen dezelfde PostgreSQL database (airflow_test).
+# Elasticsearch draait zonder hostpoort (9200 is op de host in gebruik door de echte
+# installatie); tests benaderen het via 'docker exec wasstraat_elasticsearch_test curl ...'.
 #
 # Standaard: synthetische data (SY001 + SY002).
 # Voor Delftse data: make integration-delft (gebruikt het aparte docker-compose.delft-test.yml)
@@ -54,14 +56,39 @@ services:
     tmpfs:
       - /data/postgres
 
+  elasticsearch-test:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.17.0
+    container_name: "wasstraat_elasticsearch_test"
+    environment:
+      discovery.type: single-node
+      xpack.security.enabled: "false"
+      ES_JAVA_OPTS: "-Xms512m -Xmx512m"
+      # Geen read-only indexen als de schijf van de Docker-VM vol raakt (alleen testomgeving)
+      cluster.routing.allocation.disk.threshold_enabled: "false"
+    networks:
+      testnet:
+        aliases:
+          - elasticsearch
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fs 'http://localhost:9200/_cluster/health?wait_for_status=yellow&timeout=5s' >/dev/null || exit 1"]
+      interval: 5s
+      timeout: 10s
+      retries: 30
+      start_period: 20s
+
   airflow-test:
     build:
       context: .
       dockerfile: services/airflow/Dockerfile
     container_name: "wasstraat_airflow_test"
     depends_on:
-      - mongo-test
-      - postgres-test
+      mongo-test:
+        condition: service_started
+      postgres-test:
+        condition: service_started
+      # De Index_*-taken van de volledige en de incrementele cyclus hebben Elasticsearch nodig
+      elasticsearch-test:
+        condition: service_healthy
     ports:
       - "8081:8080"
     networks:
@@ -133,13 +160,14 @@ services:
       AIRFLOW_INPUT_MONSTER: /input/monsterdatabase
       AIRFLOW_INPUT_RAPPORTEN: /input/rapporten
       AIRFLOW_OUTPUT_MEDIA: /tmp/archeomedia_test
-      ES_HOST: "http://localhost:9200"
+      ES_HOST: "http://elasticsearch:9200"
     volumes:
       - ./airflow_app/dags:/opt/airflow/dags
       - ./airflow_app/scripts:/opt/airflow/scripts
       - ./shared:/opt/airflow/dags/shared
       - ./data/synthetic/wasstraat_config:/opt/airflow/config
-      - ./data/synthetic/data/projecten:/input/projecten:ro
+      # Zonder :ro zodat tests een project kunnen toevoegen (incrementeel laden, SY003)
+      - ./data/synthetic/data/projecten:/input/projecten
       - ./data/synthetic/data/projectenlijst:/input/projectenlijst:ro
       - ./data/synthetic/data/magazijnlijst:/input/magazijnlijst:ro
       - ./data/synthetic/data/fotolijst:/input/fotolijst:ro
@@ -169,7 +197,7 @@ services:
       CACHE_REDIS_PASSWORD: ""
       REDIS_PASSWORD: ""
       CACHE_DEFAULT_TIMEOUT: "60"
-      ES_HOST: ""
+      ES_HOST: "http://elasticsearch:9200"
       SECRET_KEY: test-secret-key-voor-flask-smoke-tests
       # Moet overeenkomen met FLASK_ADMIN_PASSWORD in tests/integration/test_flask_smoke.py
       FLASK_ADMIN_PASSWORD: test-beheerder-wachtwoord

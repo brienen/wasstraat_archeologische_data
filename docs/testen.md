@@ -39,6 +39,14 @@ tests/
 │   ├── test_fix_7_kolomselectie.py           # Kolomselectie robuustheid
 │   ├── test_fix_8_dropna.py                  # dropna() edge cases
 │   ├── test_importMDB_bash.py                # Bash import-functietests
+│   ├── test_importMDB_lijstbestand.py        # importMDB.sh met lijstbestand (incrementeel laden)
+│   ├── test_importMDB_kopregel.py            # importMDB.sh: kopregel en bijzondere tekens in tabelnamen
+│   ├── test_verwerkingsrun.py                # Run-document van de incrementele cyclus
+│   ├── test_bronbestanden.py                 # Registratie bronbestanden, vingerafdruk, delta, lijstbestanden
+│   ├── test_opruimen.py                      # Opruimen oude records + delta-varianten van de extractie
+│   ├── test_delta_transform.py               # Delta-varianten van de transformaties en stabiele sleutels
+│   ├── test_load_incrementeel.py             # Upsert-load naar PostgreSQL en Elasticsearch-delta
+│   ├── nep_mongo.py                          # In-memory nabootsing van pymongo (hulpmodule, geen tests)
 │   ├── test_synthetic_data.py                # Validatie synthetische voorbeelddata
 │   ├── test_synthetic_monster_data.py        # Validatie synthetische monsterdata
 │   └── test_fix_monster_projectcds.py        # Projectcode-matching voor monsters
@@ -47,7 +55,8 @@ tests/
     ├── test_full_pipeline_synthetic_data.py   # Volledige pipeline via Airflow (synthetische data)
     ├── test_full_pipeline_delft_data.py       # Volledige pipeline via Airflow (Delftse data)
     ├── test_harmonize_pipeline.py            # Harmonisatie met echte MongoDB
-    └── test_importMDB_bash.py                # MDB-import en encoding in Docker
+    ├── test_importMDB_bash.py                # MDB-import en encoding in Docker
+    └── test_incremental_synthetic_data.py    # Incrementele cyclus via Airflow (synthetische data + SY003)
 ```
 
 ## Vereisten
@@ -92,12 +101,38 @@ Dit target gebruikt de **synthetische voorbeelddata** uit `data/synthetic/data/`
 Het target:
 
 1. Maakt de `.venv` aan als die nog niet bestaat
-2. Start MongoDB 7.0, PostgreSQL 18 met PostGIS, Redis, Airflow en Flask in Docker (databases in tmpfs voor snelheid)
+2. Start MongoDB 7.0, PostgreSQL 18 met PostGIS, Elasticsearch 8.17, Redis, Airflow en Flask in Docker (MongoDB en PostgreSQL in tmpfs voor snelheid)
 3. Mount de synthetische data als input-volumes
-4. Triggert de Airflow DAGs (Extract, Transform, Load) en valideert de resultaten
+4. Triggert de Airflow DAGs (Extract, Transform, Load en indexering) en valideert de resultaten
 5. Controleert verwachte aantallen per entiteitstype (sporen, vondsten, artefacten) in MongoDB en PostgreSQL
-6. Draait de Flask smoke tests tegen de geladen database
-7. Ruimt de containers en volumes op
+6. Draait de volledige en daarna de incrementele cyclus (`test_incremental_synthetic_data.py`, zie hieronder)
+7. Draait de Flask smoke tests tegen de geladen database
+8. Ruimt de containers en volumes op
+
+### Elasticsearch in de testomgeving
+
+`docker-compose.test.yml` heeft een eigen Elasticsearch (`elasticsearch-test`, container `wasstraat_elasticsearch_test`, image `docker.elastic.co/elasticsearch/elasticsearch:8.17.0`, zonder beveiliging, single-node, 512 MB heap). Airflow en Flask bereiken die via `ES_HOST=http://elasticsearch:9200`. Airflow start pas als Elasticsearch gezond is (healthcheck met `depends_on: condition: service_healthy`). De Index_*-taken van de volledige cyclus, van `DAG_Load_Only` en van de incrementele cyclus slagen daardoor ook in de testomgeving; `test_full_pipeline_synthetic_data.py` eist dat `DAG_Load_Only` volledig slaagt.
+
+De container heeft bewust geen hostpoort: poort 9200 op de host is van de echte installatie. Tests benaderen Elasticsearch via `docker exec wasstraat_elasticsearch_test curl -s http://localhost:9200/...`.
+
+### Incrementele cyclus
+
+`tests/integration/test_incremental_synthetic_data.py` (markers `integration` en `load`, draait in `make integration` na de andere tests) begint zelf met de volledige cyclus en controleert daarna de incrementele cyclus in vier runs:
+
+| Stap | Wijziging | Wat wordt gecontroleerd |
+|------|-----------|-------------------------|
+| a | Volledige cyclus | Aantallen per `Def_`-tabel, `key` → `primary_key` van `Def_Project`, `Def_Put`, `Def_Vondst`, `Def_Artefact`, `Def_Bestand` en de aantallen per Elasticsearch-index (gelijk aan de tabellen) worden vastgelegd |
+| b | Een partij en een bruikleen toegevoegd (SQL) | Gebruikersdata die naar een artefact en het project SY002 verwijst |
+| c | Geen | Run afgerond, alle bronbestanden ongewijzigd, niets ingevoegd, bijgewerkt of verwijderd, aantallen en sleutels gelijk, bruikleen aanwezig, Elasticsearch gelijk |
+| d | Project SY003 als kopie van SY002 (`opgravingSY003.mdb`, foto's `SY003_*`) | SY003 heeft evenveel rijen als SY002, nieuwe `primary_key`s boven het oude maximum, SY001/SY002 ongewijzigd, bruikleen en zijn artefact ongewijzigd, Elasticsearch gelijk aan de tabellen |
+| e | Database van SY003 vervangen door die van SY001, één foto verwijderd | SY003 volgt SY001 (4 vondsten), geen rij meer voor de verwijderde foto, geen achtergebleven rijen, verdwenen id's ook uit Elasticsearch |
+| f | SY003 verwijderd | Geen SY003-rijen meer in PostgreSQL en Elasticsearch, `Def_Bronbestand` op `verwijderd`, alle sleutels en aantallen gelijk aan stap a |
+
+De fixture `sy003_opruimen` verwijdert `data/synthetic/data/projecten/SY003` vóór en na de test, ook als die faalt. De test duurt ongeveer twee minuten. Los draaien (met een draaiende testomgeving):
+
+```bash
+python -m pytest tests/integration/test_incremental_synthetic_data.py -v -s
+```
 
 !!! warning "Images worden niet opnieuw gebouwd"
     `make integration` start de test-containers met de images die al op je machine staan. Wijzigingen in een Dockerfile, in `requirements.txt` of `constraints.txt`, of in `shared/` (die in de Flask-image wordt gekopieerd) zie je pas na een nieuwe build. De Flask-pakketten blijven bij een nieuwe build op de vastgelegde versies (zie [Pakketversies bijwerken](#pakketversies-bijwerken)); die van Airflow kunnen dan wel nieuwer worden. Bouw de images daarom opnieuw na zulke wijzigingen, en zonder cache als je een schone installatie wilt nabootsen:
@@ -154,14 +189,17 @@ De basisimage van Jupyter staat vast op een digest in `services/jupyter/Dockerfi
 |--------|-----------------|
 | `archutils.py` | `convertToInt` (type-conversie, force/no-force), `convertToBool` (ja/nee/true/false), `fixDatering` (eeuw-kwart notatie, Romeinse cijfers, LMEb, RT, gecombineerde dateringen) |
 | `rijksdriehoek.py` | RD→WGS84 conversie met referentiepunten (Amsterdam, Rotterdam, Maastricht, Delft), WGS84→RD inversie, roundtrip-nauwkeurigheid |
-| `harmonizer.py` | `getKolomValues` ($ifNull-ketens), `getAggrTables` (regex-matching), `loadHarmonizer` (Excel → DataFrame), pipeline-structuur ($match, $merge), overerving (Artefact→Aardewerk) |
+| `harmonizer.py` | `getKolomValues` ($ifNull-ketens), `getAggrTables` (regex-matching), `loadHarmonizer` (Excel → DataFrame), pipeline-structuur ($match, $merge), overerving (Artefact→Aardewerk), `getHarmonizeAggr` wijzigt de gecachete pipeline niet |
 | `foto_parsing.py` | Objectfoto-regex (met put/subnr/BP), tekening-types (A-E, P, T, LZW), projectfoto's (F/G), DAN/DAR rapporten, artefactsoort-detectie uit bestandspad |
 | `encoding.py` | UTF-8 conversie, CP1252-detectie, dubbele CSV-headers |
+| `importMDB_kopregel.py` | `importMDB.sh`: de kopregel van de CSV-export (zelf gequote, ook bij komma's in kolomnamen) en bijzondere tekens (`&`, `\`, komma's) in tabelnamen bij het toevoegen van `table`, `projectcd`, `bron`, `loadtime` en `mdbfile` |
 | `fixes_*.py` | Robuustheid van transformaties bij ontbrekende/ongeldige data |
 | `synthetic_data.py` | Validatie dat de synthetische MDB-bestanden de juiste tabellen en kolomstructuur bevatten |
 | `synthetic_monster_data.py` | Structuur, kolomaantallen, referentiële integriteit en projectverwijzingen van synthetische monsterdata |
 | `fix_monster_projectcds.py` | Projectcode-matching logica voor de monsterdatabase (mocking van MongoDB) |
 | `config_cache.py` | Cache-instellingen uit de echte `shared/config.py` zijn getallen en worden door cachelib geaccepteerd |
+| `verwerkingsrun.py`, `bronbestanden.py`, `opruimen.py`, `delta_transform.py` | Incrementeel laden: run-document, registratie en delta van bronbestanden, opruimen, delta-transformaties en stabiele sleutels (ook de samengestelde sleutel van artefacten) |
+| `load_incrementeel.py` | Upsert-load (`loadIncrementeel`: upsert, verwijderen, FK-mechaniek, sequence, gebruikerstabellen ongemoeid, tellingen) en de Elasticsearch-delta (`indexTableIncrementeel`) met nagebootste databases |
 
 ### Integratietests
 
@@ -172,6 +210,7 @@ De basisimage van Jupyter staat vast op een digest in `services/jupyter/Dockerfi
 | `test_full_pipeline_delft_data.py` | Zelfde pipeline maar met Delftse data en Delft-specifieke verwachte aantallen |
 | `test_harmonize_pipeline.py` | Individuele harmonisatie-pipelines (Vondst, Spoor, alle objecttypen) |
 | `test_importMDB_bash.py` | MDB-import shell-script: encoding-conversie, CSV-generatie, mongoimport |
+| `test_incremental_synthetic_data.py` | Volledige cyclus gevolgd door vier incrementele runs (geen wijziging, nieuw project, vervangen database en verwijderde foto, verwijderd project): PostgreSQL, Elasticsearch, registratie en gebruikersdata |
 
 ## Nieuwe tests toevoegen
 

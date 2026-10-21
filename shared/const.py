@@ -80,6 +80,10 @@ ARTF_TEXTIEL = "Textiel"
 
 MIGRATION_COLUMNS = ['brondata', 'herkomst', 'uuid', 'key', 'soort']
 
+# Tabellen van de pipeline zelf (geen entiteiten): niet indexeren en niet in de webapplicatie tonen.
+# Def_Bronbestand is de registratie van bronbestanden voor incrementeel laden.
+PIPELINE_TABELLEN = ['Def_Bronbestand']
+
 #Fulltext settings
 SKIP_FULLTEXT = ['_id', 'herkomst', 'key', 'brondata', 'vindplaats']
 FULLTEXT_SEARCH_FIELD = 'ft_search' 

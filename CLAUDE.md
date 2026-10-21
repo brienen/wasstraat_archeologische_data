@@ -50,6 +50,8 @@ De verwerkingsvolgorde is strikt:
 7. Transform5 Set References — Ken integer-sleutels toe voor PostgreSQL
 8. Load to Database & Index — Kopieer naar PostgreSQL + bouw Elasticsearch-index
 
+Dit is de volledige cyclus (`Extract_Transform_Load_Full_Cycle`). Daarnaast is er de **incrementele cyclus** (`Extract_Transform_Load_Incremental`, issue 61): die verwerkt alleen nieuwe, gewijzigde en verwijderde bronbestanden en leegt niets. Volgorde: `Start_Run` → `Bepaal_Delta` (vergelijkt met de registratie in `Def_Bronbestand`) → `Opruimen_Oude_Records` → Extract (delta) → Transform 1 → 2 → 3 → 5 → 4 (delta, stabiele `primary_key`s) → `Load_Upsert` (upsert naar PostgreSQL) → `Registreer_Run`, en na `Load_Upsert` parallel de `Index_<tabel>`-taken (Elasticsearch-delta). De taken lezen het run-document (`wasstraat/verwerkingsrun.py`, collectie `Verwerkingsruns`) in plaats van XCom; `Markeer_Run_Mislukt` zet de run op `mislukt` als een bewaakte taak faalt (de Index-taken zijn bewust niet bewaakt). Eerst één keer de volledige cyclus draaien (die registreert alle bronbestanden); de volledige cyclus blijft nodig na wijzigingen in de harmonisatie-Excel, `correcties.yml` of de pipelinecode. Ontwerp en keuzes: [docs/componenten/incrementeel-laden.md](docs/componenten/incrementeel-laden.md).
+
 DAG-bestanden volgen het patroon `DAG_[Naam].py`, taken `tasks_[actie]_[onderwerp].py`.
 
 ## Gemeenteprofielen
@@ -181,20 +183,24 @@ Volledige herschrijving met alleen **pymongo** + **psycopg2** + **pure Python**:
 
 ### Architectuur bewaard
 
-De 3-fase atomic swap is ongewijzigd: (1) laad naar `_new` tabellen, (2a) atomic rename swap met FK drop/restore, (2b) FK herstel met SAVEPOINTs, (3) opruimen `_old` tabellen. De publieke interface `loadAll()` is ongewijzigd — DAGs en tasks hoefden niet aangepast te worden.
+De 3-fase atomic swap is ongewijzigd: (1) laad naar `_new` tabellen, (2a) atomic rename swap met FK drop/restore, (2b) FK herstel met SAVEPOINTs, (3) opruimen `_old` tabellen. De publieke interface `loadAll()` is ongewijzigd — DAGs en tasks hoefden niet aangepast te worden. De FK-mechaniek staat in herbruikbare helpers (`leesFkConstraints`, `verwijderFkConstraints`, `herstelFkConstraints`, `valideerFkConstraints`) die ook de incrementele load gebruikt.
+
+### Incrementele load (upsert)
+
+`loadIncrementeel()` (taak `Load_Upsert` van de incrementele cyclus) werkt de bestaande tabellen bij in plaats van ze te vervangen, in één transactie: betrokken FK's verwijderen, per tabel uit `LOAD_TABELLEN` een `INSERT ... ON CONFLICT (primary_key) DO UPDATE` van alle documenten (inclusief `_id`; alleen echte wijzigingen worden geschreven), rijen verwijderen waarvan de `primary_key` niet meer in `Single_Store_Clean` staat, geometrie bijwerken, sequence van `primary_key` op max + 1 (en opnieuw aanmaken als de atomic swap hem kwijt is), FK's herstellen met `NOT VALID`, commit, valideren. `SET CONSTRAINTS ALL DEFERRED` werkt niet: niet alle FK's zijn deferrable. Gebruikerstabellen (`GEBRUIKERS_TABELLEN`: bruiklenen, partijen, conservering, `Def_artefact_abr`) en `Def_Bronbestand` blijven ongemoeid. Tellingen per tabel komen in het run-document onder `tellingen.load`. De rijen worden opgebouwd met dezelfde helpers als `transferToDB` (`leesDocumenten`, `transformRow`); artefacten zonder `key` krijgen daarbij in beide cycli de samengestelde sleutel `key_subnr|artefactsoort` in de kolom `key`.
 
 ### Aandachtspunten bij wijzigingen
 
 - `archutils.convertToBool()` retourneert `0`/`1` (integers) — wrap altijd met `bool()` voor psycopg2
 - Geometry kolom `location` wordt NIET meegegeven in de INSERT maar via een aparte UPDATE bijgewerkt
 - ENUM kolommen worden gedetecteerd via `pg_type.typtype = 'e'` — lege waarden worden `'Onbekend'`
-- De Elasticsearch indexering (onderdeel van `DAG_Load_Only`) is niet beschikbaar in de test-omgeving
+- De testomgeving heeft een eigen Elasticsearch (`elasticsearch-test`, container `wasstraat_elasticsearch_test`, zonder hostpoort want 9200 is van de echte installatie); de Index_*-taken van de volledige cyclus, `DAG_Load_Only` en de incrementele cyclus slagen daar dus ook
 
 ## Integratietests en volgorde
 
 `make integration` draait de volledige testsuite in twee stappen binnen één Docker-sessie:
 
-1. **Stap 1:** Extract → Transform → Load pipeline (marker: `integration or load`)
+1. **Stap 1:** Extract → Transform → Load pipeline (marker: `integration or load`), als laatste `test_incremental_synthetic_data.py`: volledige cyclus plus vier incrementele runs met een tijdelijk project SY003 (de fixture ruimt `data/synthetic/data/projecten/SY003` altijd op)
 2. **Stap 2:** Flask smoke tests (marker: `flask_smoke`) — vereist geladen PostgreSQL-data uit stap 1
 
 De Flask smoke tests controleren of projecten zichtbaar zijn op de kaart en hebben daarom gevulde `Def_Project` data nodig. Draai `make integration` voor de volledige suite, of `make integration-pipeline` voor alleen Extract + Transform zonder Load.

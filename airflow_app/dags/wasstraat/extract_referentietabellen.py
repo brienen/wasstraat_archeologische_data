@@ -2,6 +2,7 @@ import shared.config as config
 import pymongo
 import pandas as pd
 
+import wasstraat.verwerkingsrun as verwerkingsrun
 import logging
 logger = logging.getLogger("airflow.task")
 
@@ -36,6 +37,15 @@ def extractABR():
         myclient.close()
 
 
-def extractAllRefs():
+def extractAllRefs(incrementeel=False):
+    """Lees de referentietabellen (ABR) in.
+
+    Args:
+        incrementeel: als True alleen inlezen als het ABR-bestand in de actieve
+            verwerkingsrun nieuw of gewijzigd is
+    """
+    if incrementeel and not verwerkingsrun.isInDelta(config.FILE_ABREXCEL, 'referentietabellen'):
+        logger.info(f"Incrementeel: ABR-bestand {config.FILE_ABREXCEL} is niet nieuw of gewijzigd — overslaan.")
+        return
     extractABR()
 

@@ -167,6 +167,10 @@ Nummer `0` telt niet mee. Gegenereerde records herken je aan `brondata.table` = 
 
 De pipelines staan in `airflow_app/dags/wasstraat/meta.py` onder `MOVEANDMERGE_GENERATE_MISSING_PIPELINES`.
 
+### 8. Incrementele variant
+
+De incrementele cyclus (`Extract_Transform_Load_Incremental`) gebruikt dezelfde transformatiefuncties en taakgroepen, met `incrementeel=True`. Transform 1 harmoniseert dan alleen de staging-documenten uit nieuwe en gewijzigde bronbestanden en geeft ze het veld `delta_run`; Transform 2 en 3 werken alleen op die documenten (projectbrede stappen op de geraakte projecten). Transform 5 leegt `Single_Store_Clean` niet, maar verplaatst de delta-documenten, voegt alleen de geraakte sleutels opnieuw samen en genereert ontbrekende entiteiten opnieuw voor de geraakte projecten. Transform 4 kent stabiele sleutels toe: bestaande entiteiten houden hun `ID` (de `primary_key` in PostgreSQL), alleen nieuwe entiteiten krijgen een nieuw nummer; artefacten worden daarbij teruggevonden op `key_subnr|artefactsoort`. Zonder die parameter werken de functies precies zoals in de volledige cyclus. Zie [Incrementeel laden](incrementeel-laden.md).
+
 ## Architectuur
 
 ```

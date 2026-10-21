@@ -14,6 +14,7 @@ Draaien:
 """
 import json
 import os
+import re
 import subprocess
 import time
 
@@ -39,6 +40,9 @@ DB_FILES = "Arch_Files_Test"
 # Verwachte MINIMUM-aantallen per artefactsoort in Single_Store_Clean.
 # Gebaseerd op synthetische data: SY001 (3 aw, 2 glas) + SY002 (8 aw, 3 glas,
 # 2 bot, 2 metaal, 1 steen, 2 kleipijp, 1 leer, 1 munt).
+# Munt: de tabel MUNTEN EN PENNINGEN heeft kolomnamen met een komma; sinds
+# importMDB.sh de kopregel zelf gequote schrijft, wordt de munt correct
+# geïmporteerd en geharmoniseerd (daarvoor verschoven de velden en was dit 0).
 EXPECTED_MIN_ARTEFACT_COUNTS = {
     "Aardewerk": 11,
     "Glas": 5,
@@ -47,7 +51,7 @@ EXPECTED_MIN_ARTEFACT_COUNTS = {
     "Steen": 1,
     "Kleipijp": 2,
     "Leer": 1,
-    "Munt": 0,
+    "Munt": 1,
 }
 
 # Verwachte MINIMUM-aantallen per soort in Single_Store_Clean.
@@ -131,7 +135,15 @@ def run_dag(dag_id: str, timeout: int = 1800, poll_interval: int = 3) -> str:
         print(f"  ✓  DAG {dag_id} succesvol")
         return "success"
 
-    # Fallback: als exit code 0 maar geen state=success → waarschuw maar ga door
+    # 'airflow dags test' eindigt ook met exit code 0 als een taak faalt; de eindstatus
+    # staat in de regel 'DagRun Finished: ... state=...'. Retourneer die, zodat een test
+    # kan eisen dat alle taken slagen.
+    eindstatus = re.findall(r"DagRun Finished: .*?state=(\w+)", result.stdout + "\n" + result.stderr)
+    if eindstatus:
+        print(f"  ⏱  {dag_id} duurde {t_elapsed:.1f}s (state={eindstatus[-1]})")
+        return eindstatus[-1]
+
+    # Fallback: als exit code 0 maar geen eindstatus → waarschuw maar ga door
     print(f"  ⏱  {dag_id} duurde {t_elapsed:.1f}s (exit code 0)")
     print(f"  ✓  DAG {dag_id} voltooid")
     return "success"
@@ -288,6 +300,19 @@ def _pg_scalar(sql):
 def _pg_table_count(table):
     """Tel het aantal rijen in een PostgreSQL-tabel."""
     return _pg_scalar(f'SELECT COUNT(*) FROM "{table}"')
+
+
+def _pg_tekst(sql):
+    """Voer een SQL-query uit op de test-PostgreSQL en retourneer de eerste waarde als tekst ('' bij NULL)."""
+    cmd = [
+        "docker", "exec", "-e", "PGPASSWORD=testpass", POSTGRES_CONTAINER,
+        "psql", "-U", "testuser", "-h", "localhost", "-d", "airflow_test",
+        "-t", "-A", "-c", sql,
+    ]
+    result = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
+    if result.returncode != 0:
+        raise RuntimeError(f"psql fout: {result.stderr.strip()}")
+    return result.stdout.strip()
 
 
 # ============================================================
@@ -689,22 +714,17 @@ class TestFullPipelineSynthetic:
     # ----------------------------------------------------------
     # Stap 5: Load naar PostgreSQL
     # ----------------------------------------------------------
-    # NB: DAG_Load_Only bevat zowel LoadToDatabase_postgres als
-    # Elasticsearch indexering. De Elasticsearch stap faalt in de
-    # test-omgeving (geen ES container). De PostgreSQL load zelf slaagt.
+    # NB: DAG_Load_Only bevat zowel LoadToDatabase_postgres als de
+    # Elasticsearch-indexering (Index_*-taken). De testomgeving heeft een
+    # eigen Elasticsearch-container (elasticsearch-test), dus alle taken
+    # moeten slagen.
     # ----------------------------------------------------------
     @pytest.mark.load
     def test_19_run_load(self, airflow_ready):
-        """Trigger DAG_Load_Only DAG (MongoDB → PostgreSQL).
-
-        De DAG kan falen door Elasticsearch (niet in test-omgeving).
-        We controleren de PostgreSQL resultaten in de volgende tests.
-        """
-        try:
-            run_dag("DAG_Load_Only", timeout=1800)
-        except AssertionError:
-            # DAG faalt door Elasticsearch indexering (verwacht in test)
-            print("  ℹ  DAG gefaald (verwacht: Elasticsearch niet beschikbaar)")
+        """Trigger DAG_Load_Only DAG (MongoDB → PostgreSQL + Elasticsearch)."""
+        assert run_dag("DAG_Load_Only", timeout=1800) == "success", (
+            "DAG_Load_Only niet geslaagd; controleer LoadToDatabase_postgres en de Index_*-taken "
+            "(draait elasticsearch-test?)")
 
     @pytest.mark.load
     def test_20_verify_postgres_project_count(self, airflow_ready):
@@ -806,3 +826,24 @@ class TestFullPipelineSynthetic:
             f"Lege tabellen in PostgreSQL: {lege_tabellen}. "
             f"Data is niet correct geladen vanuit MongoDB."
         )
+
+    @pytest.mark.load
+    @pytest.mark.parametrize("table", ["Def_Project", "Def_Vondst"])
+    def test_24_verify_postgres_primary_key_sequence(self, airflow_ready, table):
+        """Na DAG_Load_Only heeft primary_key een sequence en default, en nextval > max(primary_key).
+
+        De atomic swap van loadAll dropt de oude tabel met CASCADE; daarmee verdwijnen
+        de sequence en de default van primary_key. FASE 3 herstelt ze (zetSequence),
+        anders kan de webapplicatie geen rijen aanmaken.
+        """
+        sequence = _pg_tekst(f"SELECT pg_get_serial_sequence('\"{table}\"', 'primary_key')")
+        default = _pg_tekst(
+            "SELECT column_default FROM information_schema.columns "
+            f"WHERE table_name = '{table}' AND column_name = 'primary_key'")
+        maximum = _pg_scalar(f'SELECT COALESCE(MAX(primary_key), 0) FROM "{table}"')
+        print(f"\n  {table}: sequence={sequence or '-'}, default={default or '-'}, max(primary_key)={maximum}")
+        assert sequence, f"{table}.primary_key heeft geen sequence na de volledige load"
+        assert default.startswith("nextval("), f"{table}.primary_key heeft geen default nextval(...): {default!r}"
+        volgende = _pg_scalar(f"SELECT nextval('{sequence}')")
+        print(f"  {table}: nextval={volgende}")
+        assert volgende > maximum, f"{table}: nextval {volgende} is niet groter dan max(primary_key) {maximum}"

@@ -32,7 +32,7 @@ class TestFix1_FinallyBlock(unittest.TestCase):
     def setUpClass(cls):
         cls.source = read_source('../airflow_app/dags/wasstraat/setAttributes_functions.py')
         # Extraheer alleen de enhanceAllAttributes functie
-        match = re.search(r'(def enhanceAllAttributes\(\):.*?)(?=\ndef |\Z)', cls.source, re.DOTALL)
+        match = re.search(r'(def enhanceAllAttributes\([^)]*\):.*?)(?=\ndef |\Z)', cls.source, re.DOTALL)
         cls.func_source = match.group(1) if match else ''
 
     def test_syntax_valid(self):
@@ -138,11 +138,38 @@ class TestFix1_FinallyBlock(unittest.TestCase):
 class TestFix2_AtomicTableSwap(unittest.TestCase):
     """Test dat loadAll het atomic table swap patroon gebruikt."""
 
+    # De FK-mechaniek staat sinds incrementeel laden (issue 61, fase 3) in herbruikbare
+    # helpers die loadAll aanroept; de controles hieronder gelden voor loadAll plus die helpers.
+    FK_HELPERS = ['leesFkConstraints', 'verwijderFkConstraints', 'herstelFkConstraints', 'valideerFkConstraints']
+
     @classmethod
     def setUpClass(cls):
         cls.source = read_source('../airflow_app/dags/wasstraat/loadToDatabase_functions.py')
         match = re.search(r'(def loadAll\(\):.*?)(?=\ndef |\Z)', cls.source, re.DOTALL)
-        cls.func_source = match.group(1) if match else ''
+        cls.loadall_source = match.group(1) if match else ''
+        delen = [cls.loadall_source]
+        for helper in cls.FK_HELPERS:
+            match = re.search(r'(def ' + helper + r'\(.*?)(?=\ndef |\Z)', cls.source, re.DOTALL)
+            delen.append(match.group(1) if match else '')
+        cls.func_source = '\n'.join(delen)
+
+    def test_loadall_gebruikt_fk_helpers(self):
+        """Verifieer dat loadAll de gedeelde FK-helpers aanroept."""
+        for helper in self.FK_HELPERS:
+            self.assertIn(f'{helper}(cursor', self.loadall_source,
+                f"loadAll roept {helper} niet aan")
+
+    def test_loadall_herstelt_sequences_in_fase3(self):
+        """Verifieer dat loadAll in FASE 3, na het opruimen van de _old-tabellen, zetSequence aanroept.
+
+        De sequence van primary_key hoort bij de oude tabel en verdwijnt met
+        DROP ... CASCADE, samen met de default van de nieuwe tabel.
+        """
+        fase3 = self.loadall_source.split('FASE 3', 1)[-1]
+        self.assertIn('zetSequence(cursor, table)', fase3,
+            "loadAll roept zetSequence niet aan in FASE 3")
+        self.assertLess(fase3.index('DROP TABLE IF EXISTS "{old_table}" CASCADE'), fase3.index('zetSequence(cursor, table)'),
+            "zetSequence moet na het opruimen van de _old-tabellen draaien")
 
     def test_syntax_valid(self):
         """Verifieer dat het bestand geldige Python-syntax heeft."""
@@ -562,7 +589,8 @@ class TestCrossFile(unittest.TestCase):
 
         # Check dat parseFotobestanden nog steeds de juiste structuur heeft
         source = read_source('../airflow_app/dags/wasstraat/harmonize_functions.py')
-        self.assertIn('def parseFotobestanden():', source,
+        # Optionele parameter incrementeel (incrementeel laden, issue 61) is toegestaan
+        self.assertRegex(source, r'def parseFotobestanden\((incrementeel=False)?\):',
             "parseFotobestanden functie-signature is gewijzigd (onbedoeld)")
 
         # Check dat generate_docs in fulltext.py ongewijzigd is

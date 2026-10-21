@@ -14,6 +14,8 @@ import wasstraat.harmonizer as harmonizer
 import shared.config as config
 import shared.const as const
 import wasstraat.mongoUtils as mongoUtil
+import wasstraat.verwerkingsrun as verwerkingsrun
+import wasstraat.delta_transform as delta_transform
 from wasstraat.profielen import get_profiel
 
 import logging
@@ -112,11 +114,16 @@ def fixProjectNames():
         myclient.close()
 
 
-def fixMonsterProjectcds():
+def fixMonsterProjectcds(incrementeel=False):
     """
     Method to fix the old projectnames that are being used in the Monsterdatabase. Unknown projectcodes are set to "Unknowm"
 
     Old projectnames are matched with the data from DeltIT Opgravingen, where both old and new values are found.
+
+    Args:
+        incrementeel: als True alleen de Monster-documenten met delta_run van de
+            actieve verwerkingsrun aanpassen (incrementeel laden); de projecten
+            om mee te vergelijken blijven alle Project-documenten
     """
     
     try:
@@ -125,17 +132,21 @@ def fixMonsterProjectcds():
         analyseDb = myclient[str(config.DB_ANALYSE)]
         analyseCol = analyseDb[config.COLL_ANALYSE]
 
+        monster_filter = {'soort': 'Monster'}
+        if incrementeel:
+            monster_filter[delta_transform.VELD_DELTA_RUN] = verwerkingsrun.huidigeRun()['run_id']
+
         # Early return als er geen Monster-records in de database zitten
-        monster_count = analyseCol.count_documents({'soort': 'Monster'})
+        monster_count = analyseCol.count_documents(monster_filter)
         if monster_count == 0:
             logger.info("Geen Monster-records gevonden in Single_Store — overslaan.")
             return
 
         # Fisrt set all projeccd to Unknown
-        analyseCol.update_many({'soort': 'Monster'}, { "$set": { "projectcd": None } })
+        analyseCol.update_many(monster_filter, { "$set": { "projectcd": None } })
 
         #Then get all Monsters with an old code
-        df_monsters = pd.DataFrame(list(analyseCol.find({'soort': 'Monster', 'brondata.PROJECT': {'$exists': True}}, {'projectcd':0})))
+        df_monsters = pd.DataFrame(list(analyseCol.find(dict(monster_filter, **{'brondata.PROJECT': {'$exists': True}}), {'projectcd':0})))
 
         if df_monsters.empty or 'project' not in df_monsters.columns:
             logger.info("Geen Monster-records met brondata.PROJECT gevonden — overslaan.")
@@ -178,11 +189,34 @@ def fixMonsterProjectcds():
 
 
 
-def harmonize(collection, strOrAggr):
+def harmonize(collection, strOrAggr, incrementeel=False):
+    """Harmoniseer de documenten van een staging-collectie naar Single_Store.
+
+    Args:
+        collection: staging-collectie
+        strOrAggr: naam van het object in de harmonisatie-Excel, of een lijst met één pipeline
+        incrementeel: als True alleen de documenten uit de nieuwe en gewijzigde
+            bronbestanden van de actieve verwerkingsrun harmoniseren en die
+            documenten het veld delta_run geven (incrementeel laden)
+    """
+    if incrementeel:
+        run = verwerkingsrun.huidigeRun()
+        padfilter = delta_transform.getStagingDeltaFilter(collection, run)
+        if padfilter is None:
+            logger.info(f"Incrementeel: geen nieuwe of gewijzigde bronbestanden voor collectie {collection} — overslaan.")
+            return
+
     if type(strOrAggr) == str:
         pipeline = harmonizer.getHarmonizeAggr(str(strOrAggr)) 
     else:
         pipeline = strOrAggr[0]
+
+    if incrementeel:
+        # Altijd een kopie: de pipeline uit meta.py of de harmonizer mag niet veranderen
+        pipeline = delta_transform.maakDeltaHarmonizePipeline(pipeline, padfilter, run['run_id'])
+        if pipeline is None:
+            logger.info(f"Incrementeel: pipeline voor {strOrAggr if type(strOrAggr) == str else collection} schrijft niets — overslaan.")
+            return
 
     try: 
         logger.info("Calling aggregation with pipeline: " + str(pipeline))
@@ -208,7 +242,21 @@ Parse alle filenames of imported files, and split them into:
 
 Also set projectcd, vondstnr, artefactnr and subnummer
 '''
-def parseFotobestanden():   
+def _bewaarFotodocument(analyseCol, _id, doc, delta_run=None):
+    """Schrijf een geparst Plaatjes-document naar Single_Store; bij een incrementele run met delta_run.
+
+    Args:
+        analyseCol: Single_Store-collectie
+        _id: _id van het Plaatjes-document
+        doc: document om te schrijven
+        delta_run: run-id van de verwerkingsrun, of None in de volledige cyclus
+    """
+    if delta_run:
+        doc[delta_transform.VELD_DELTA_RUN] = delta_run
+    analyseCol.replace_one({"_id": _id}, doc, upsert=True)
+
+
+def parseFotobestanden(incrementeel=False):   
     try: 
         myclient = pymongo.MongoClient(str(config.MONGO_URI))
         stagingDb = myclient[str(config.DB_STAGING)]
@@ -216,8 +264,21 @@ def parseFotobestanden():
         stagingCol = stagingDb[config.COLL_PLAATJES]
         analyseCol = analyseDb[config.COLL_ANALYSE]
 
+        # Incrementeel laden: alleen de nieuwe en gewijzigde afbeeldingen van de actieve run
+        delta_run = None
+        if incrementeel:
+            run = verwerkingsrun.huidigeRun()
+            paden = verwerkingsrun.getDeltaPaden('afbeeldingen', run=run)
+            if not paden:
+                logger.info("Incrementeel: geen nieuwe of gewijzigde afbeeldingen — overslaan.")
+                return
+            delta_run = run['run_id']
+            docs = delta_transform.zoekOpPaden(stagingCol, 'fullFileName', paden)
+        else:
+            docs = stagingCol.find()
+
         #extract projectinfo from filename
-        for doc in stagingCol.find():
+        for doc in docs:
 
             # Get projectcd from fullfilename (via gemeenteprofiel)
             profiel = get_profiel()
@@ -237,7 +298,7 @@ def parseFotobestanden():
                     doc['soort'] = 'Rapport' 
                     doc['fototype'] = 'R' 
                     doc['bestandsoort'] = const.RAPP_OVERIGE_RAPPORTAGE
-                    analyseCol.replace_one({"_id": doc['_id']}, doc, upsert=True)
+                    _bewaarFotodocument(analyseCol, doc['_id'], doc, delta_run)
                     continue
 
 
@@ -245,12 +306,12 @@ def parseFotobestanden():
                 # Probeer achtereenvolgens: foto, tekening
                 parsed = profiel.identificeer_foto(doc, projectcd)
                 if parsed is not None:
-                    analyseCol.replace_one({"_id": doc['_id']}, parsed, upsert=True)
+                    _bewaarFotodocument(analyseCol, doc['_id'], parsed, delta_run)
                     continue
 
                 parsed = profiel.identificeer_tekening(doc, projectcd)
                 if parsed is not None:
-                    analyseCol.replace_one({"_id": doc['_id']}, parsed, upsert=True)
+                    _bewaarFotodocument(analyseCol, doc['_id'], parsed, delta_run)
                     continue
 
 
@@ -274,7 +335,7 @@ def parseFotobestanden():
                             doc['bestandsoort'] = const.RAPP_ARCHEOLOGISCHE_RAPPORTAGE
                         else:
                             doc['bestandsoort'] = const.RAPP_ARCHEOLOGISCHE_NOTITIE
-                        analyseCol.replace_one({"_id": doc['_id']}, doc, upsert=True)
+                        _bewaarFotodocument(analyseCol, doc['_id'], doc, delta_run)
                         continue
 
 
@@ -288,7 +349,7 @@ def parseFotobestanden():
                     doc['fototype'] = 'T'
                     doc['tekeningcd'] = doc['fullFileName']
 
-                    analyseCol.replace_one({"_id": doc['_id']}, doc, upsert=True)
+                    _bewaarFotodocument(analyseCol, doc['_id'], doc, delta_run)
                     continue
 
 
@@ -297,7 +358,7 @@ def parseFotobestanden():
                 doc['fototype'] = 'N' 
                 doc['soort'] = 'Bestand' 
                 doc['bestandsoort'] = const.BESTAND_OVERIGE
-                analyseCol.replace_one({"_id": doc['_id']}, doc, upsert=True)
+                _bewaarFotodocument(analyseCol, doc['_id'], doc, delta_run)
 
             except Exception as err:
                 msg = f"Unknown error while collecting image {doc['fileName']} with message: " + str(err)

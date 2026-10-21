@@ -8,6 +8,8 @@ import roman
 import wasstraat.meta as meta
 import wasstraat.mongoUtils as mongoUtil
 import wasstraat.util as util
+import wasstraat.verwerkingsrun as verwerkingsrun
+import wasstraat.delta_transform as delta_transform
 import simplejson
  
 # Import app code
@@ -32,7 +34,23 @@ def createIndex(collection, index_name, uniqueValue=False):
         collection.create_index(index_name, unique=uniqueValue)
 
 
-def setReferenceKeys(pipeline, soort, col='analyse'):   
+def setReferenceKeys(pipeline, soort, col='analyse', incrementeel=False):   
+    """Bereken de sleutels (key, key_project, ...) van een soort met de pipeline uit meta.py.
+
+    Args:
+        pipeline: pipeline uit meta.getReferenceKeysPipeline
+        soort: soort
+        col: 'analyse' (Single_Store) of 'analyseclean' (Single_Store_Clean)
+        incrementeel: als True krijgt de eerste $match een filter op delta_run van
+            de actieve verwerkingsrun (incrementeel laden); voor de soorten
+            waarvan de sleutels van de vlag vondstkey_met_putnr afhangen ook op
+            de geraakte projecten (delta_transform.getDeltaOfProjectFilter). De
+            pipeline uit meta.py zelf blijft ongewijzigd
+    """
+    if incrementeel:
+        pipeline = delta_transform.voegToeAanEersteMatch(
+            pipeline, delta_transform.getDeltaOfProjectFilter(soort, verwerkingsrun.huidigeRun()))
+
     try:
         if (col == 'analyse'):
             collection = getAnalyseCollection()
@@ -63,7 +81,18 @@ def setReferenceKeys(pipeline, soort, col='analyse'):
         collection.database.client.close()
 
 
-def setPrimaryKeys(soort, col='analyse'):   
+def setPrimaryKeys(soort, col='analyse', stabiel=False):   
+    """Ken de integer-sleutels (ID, in PostgreSQL primary_key) toe aan de documenten van een soort.
+
+    Args:
+        soort: soort
+        col: 'analyse' (Single_Store) of 'analyseclean' (Single_Store_Clean)
+        stabiel: als True houden documenten hun ID, krijgen documenten zonder ID
+            hun primary_key uit PostgreSQL terug en krijgen alleen nieuwe
+            entiteiten een nieuw nummer (incrementeel laden, zie
+            delta_transform.bepaalStabieleIds). Standaard worden alle documenten
+            opnieuw genummerd, zoals in de volledige cyclus.
+    """
     try:
         if (col == 'analyse'):
             collection = getAnalyseCollection()
@@ -71,6 +100,9 @@ def setPrimaryKeys(soort, col='analyse'):
             collection = getAnalyseCleanCollection()
         else:
             raise ValueError('Error: Herkent de collectie niet met naam ' + col)
+
+        if stabiel and delta_transform.setStabielePrimaryKeys(soort, collection):
+            return
 
         df = pd.DataFrame(list(collection.find({'soort': soort})))
         df.drop(['ID', 'index', 'level_0'], inplace=True, errors='ignore')
@@ -177,7 +209,14 @@ aggr_vondstnr_not_unique = [ #{"$match" : {"soort" : "Vondst"}},
         {"$group" : {"_id" : "$projectcd"}},
         {"$replaceRoot" : {"newRoot" : {"projectcd" : "$_id"}}}]
 
-def setAndVondstUniqueInProject(col='analyse'):
+def setAndVondstUniqueInProject(col='analyse', incrementeel=False):
+    """Bepaal per project of artefactnummers uniek zijn en of vondstnummers in meerdere putten voorkomen.
+
+    Args:
+        col: 'analyse' (Single_Store) of 'analyseclean' (Single_Store_Clean)
+        incrementeel: als True alleen de geraakte projecten van de actieve
+            verwerkingsrun bekijken (incrementeel laden)
+    """
     try:        
         if (col == 'analyse'):
             collection = getAnalyseCollection()
@@ -186,7 +225,24 @@ def setAndVondstUniqueInProject(col='analyse'):
         else:
             raise ValueError('Error: Herkent de collectie niet met naam ' + col)
 
-        lst_project = list(collection.find({'soort': 'Artefact'}).distinct('projectcd'))
+        artefact_filter = {'soort': 'Artefact'}
+        aggr_vondstnr = aggr_vondstnr_not_unique
+        if incrementeel:
+            projecten = delta_transform.getGeraakteProjecten(analyseCol=collection)
+            if not projecten:
+                logger.info("Incrementeel: geen geraakte projecten — uniciteit van artefact- en vondstnummers niet opnieuw bepaald.")
+                return
+            artefact_filter['projectcd'] = {'$in': projecten}
+            aggr_vondstnr = delta_transform.maakProjectMatchPipeline(aggr_vondstnr_not_unique, projecten)
+            # De vlag opnieuw bepalen: eerst weghalen bij alle documenten van de geraakte
+            # projecten, ook die uit bronbestanden buiten de delta; hieronder komt hij terug
+            # bij de projecten die hem nog nodig hebben
+            result = collection.update_many(
+                {'projectcd': {'$in': projecten}, delta_transform.VELD_VONDSTKEY_VLAG: {'$exists': True}},
+                {'$unset': {delta_transform.VELD_VONDSTKEY_VLAG: ''}})
+            logger.info(f"Incrementeel: vlag {delta_transform.VELD_VONDSTKEY_VLAG} weggehaald bij {result.modified_count} documenten van de projecten {projecten}.")
+
+        lst_project = list(collection.find(artefact_filter).distinct('projectcd'))
         for proj in lst_project:
             try:
                 df_art = pd.DataFrame(list(collection.find({'soort': 'Artefact', 'projectcd': proj}, projection={'subnr':1}))).dropna()
@@ -200,7 +256,7 @@ def setAndVondstUniqueInProject(col='analyse'):
                 logger.error(f'Error while determining whether artefactnrs are unique for project {proj} with message: {str(exp2)} ')
 
 
-        lst_vondst_in_multi_putten = list(pd.DataFrame(list(collection.aggregate(aggr_vondstnr_not_unique)))['projectcd'])
+        lst_vondst_in_multi_putten = list(pd.DataFrame(list(collection.aggregate(aggr_vondstnr)))['projectcd'])
         if len(lst_vondst_in_multi_putten) > 0:
             try:
                 collection.update_many({'vondstnr': {"$exists": {"$Bool": 1}}, 'projectcd': {"$exists": {"$Bool": 1}}, 'projectcd': {'$in': lst_vondst_in_multi_putten}}, {'$set': {'vondstkey_met_putnr': True}})
@@ -218,7 +274,14 @@ def test(aggr):
 
 
 
-def mergeRAAPArtefacts(col='analyse'):   
+def mergeRAAPArtefacts(col='analyse', incrementeel=False):   
+    """Neem aantal, gewicht en materiaal over uit de ARTEFACT-tabellen van RAAP-databases.
+
+    Args:
+        col: 'analyse' (Single_Store) of 'analyseclean' (Single_Store_Clean)
+        incrementeel: als True alleen de geraakte projecten van de actieve
+            verwerkingsrun bewerken (incrementeel laden)
+    """
     try:
         if (col == 'analyse'):
             collection = getAnalyseCollection()
@@ -227,8 +290,16 @@ def mergeRAAPArtefacts(col='analyse'):
         else:
             raise ValueError('Error: Herkent de collectie niet met naam ' + col)
         
+        raap_match = {'brondata.table': "ARTEFACT"}
+        if incrementeel:
+            projecten = delta_transform.getGeraakteProjecten(analyseCol=collection)
+            if not projecten:
+                logger.info("Incrementeel: geen geraakte projecten — RAAP-artefacten niet opnieuw samengevoegd.")
+                return
+            raap_match['projectcd'] = {'$in': projecten}
+
         logger.info(f"Merging ARTEFACT-tables for RAAP-databases")
-        df = pd.DataFrame(list(collection.aggregate([{"$match" : {'brondata.table': "ARTEFACT"}}, {"$addFields": {'vondstnr': "$brondata.VONDST"}}])))
+        df = pd.DataFrame(list(collection.aggregate([{"$match" : raap_match}, {"$addFields": {'vondstnr': "$brondata.VONDST"}}])))
         
         if not df.empty:
             # Update soort documents 

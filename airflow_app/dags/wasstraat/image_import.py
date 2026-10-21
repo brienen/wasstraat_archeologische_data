@@ -10,6 +10,7 @@ import pandas as pd
 
 # Import app code
 import shared.image_util as image_util
+import wasstraat.verwerkingsrun as verwerkingsrun
 import logging
 
 logger = logging.getLogger("airflow.task")
@@ -124,8 +125,88 @@ def importImages(index, of):
 
 
 
-def getAndStoreImageFilenames():
-    lst_filenames = getImageNamesFromDir(config.AIRFLOW_INPUT_IMAGES) + getImageNamesFromDir(config.AIRFLOW_INPUT_RAPPORTEN) + getImageNamesFromExcelAndDir(config.AIRFLOW_INPUT_IMAGES)
+def getImageFilenames():
+    """Retourneer alle afbeeldingen en rapporten die de extractie verwerkt.
+
+    Dezelfde selectie wordt gebruikt door de volledige extractie en door de
+    registratie van bronbestanden (bronbestanden.py) voor incrementeel laden.
+
+    Returns:
+        Lijst met volledige paden (niet geschud)
+    """
+    return getImageNamesFromDir(config.AIRFLOW_INPUT_IMAGES) + getImageNamesFromDir(config.AIRFLOW_INPUT_RAPPORTEN) + getImageNamesFromExcelAndDir(config.AIRFLOW_INPUT_IMAGES)
+
+
+def maakFilenameInserts(paden, aantal_bestaand):
+    """Maak InsertOne-operaties voor nieuwe of gewijzigde afbeeldingen bij een incrementele run.
+
+    De iter-waarden worden gelijkmatig verdeeld over het bereik van de hele
+    collectie, zodat de parallelle importImages-taken (die op iter-blokken
+    splitsen) de nieuwe bestanden onderling verdelen.
+
+    Args:
+        paden: lijst met volledige paden van de toe te voegen bestanden
+        aantal_bestaand: aantal documenten dat al in Filenames staat
+
+    Returns:
+        Lijst met InsertOne-operaties
+    """
+    totaal = aantal_bestaand + len(paden)
+    return [InsertOne({'iter': (i * totaal) // len(paden), 'filename': v, 'processed': False}) for i, v in enumerate(paden)]
+
+
+def voegImageFilenamesToe(paden):
+    """Voeg bij een incrementele run alleen de opgegeven afbeeldingen toe aan Filenames.
+
+    De collectie wordt niet geleegd. Bestaande entries voor dezelfde
+    bestandsnamen worden eerst verwijderd, zodat er geen dubbelingen ontstaan.
+    De nieuwe entries krijgen processed: False, waarna importImages ze oppakt.
+
+    Args:
+        paden: lijst met volledige paden van nieuwe en gewijzigde afbeeldingen
+    """
+    paden = list(paden)
+    random.shuffle(paden) # Shuffle to make sure not all big files are at the end
+    logger.info(f'Incrementeel: {len(paden)} nieuwe of gewijzigde afbeeldingen voor verwerking...')
+
+    try:
+        myclient = pymongo.MongoClient(config.MONGO_URI)
+        filesdb = myclient[config.DB_FILES]
+        col = filesdb[config.COLL_FILENAMES]
+
+        if not paden:
+            logger.info("Geen nieuwe of gewijzigde afbeeldingen — overslaan.")
+            return
+
+        verwijderd = col.delete_many({'filename': {'$in': paden}}).deleted_count
+        if verwijderd:
+            logger.info(f"{verwijderd} bestaande Filenames-entries voor deze bestanden verwijderd.")
+
+        col.bulk_write(maakFilenameInserts(paden, col.count_documents({})))
+        col.create_index([ ("iter", 1) ])
+        col.create_index([ ("filename", 1) ])
+
+    except Exception as err:
+        msg = "Onbekende fout bij het toevoegen van de filenames: " + str(err)
+        logger.error(msg)
+        raise Exception(msg) from err
+
+    finally:
+        myclient.close()
+
+
+def getAndStoreImageFilenames(incrementeel=False):
+    """Sla de te verwerken afbeeldingen op in de collectie Filenames.
+
+    Args:
+        incrementeel: als True alleen de nieuwe en gewijzigde afbeeldingen uit de
+            actieve verwerkingsrun toevoegen (zonder de collectie te legen)
+    """
+    if incrementeel:
+        voegImageFilenamesToe(verwerkingsrun.getDeltaPaden('afbeeldingen'))
+        return
+
+    lst_filenames = getImageFilenames()
     random.shuffle(lst_filenames) # Shuffle to make sure not all big files are at the end
     logger.info(f'Found {len(lst_filenames)} unique image files for processing...')
 

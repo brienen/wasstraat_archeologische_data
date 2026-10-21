@@ -8,6 +8,8 @@ from datetime import datetime
 from wasstraat.rijksdriehoek import rd_to_wgs
 import wasstraat.archutils as ut
 import wasstraat.mongoUtils as mongoUtil
+import wasstraat.verwerkingsrun as verwerkingsrun
+import wasstraat.delta_transform as delta_transform
 
 # Import app code
 # Absolute imports for Hydrogen (Jupyter Kernel) compatibility
@@ -60,7 +62,14 @@ def setDateringFields(doc, field):
     return doc
 
 
-def enhanceAllAttributes():
+def enhanceAllAttributes(incrementeel=False):
+    """Normaliseer de attributen van de documenten in Single_Store.
+
+    Args:
+        incrementeel: als True alleen de documenten met delta_run van de actieve
+            verwerkingsrun bewerken (incrementeel laden); de projectcode-correcties
+            uit correcties.yml blijven op de hele collectie werken
+    """
     try:
         myclient = pymongo.MongoClient(str(config.MONGO_URI))
         filesdb = myclient[str(config.DB_FILES)]
@@ -88,8 +97,13 @@ def enhanceAllAttributes():
                 logger.error(f"  Ongeldige projectcode_correctie #{i}: {fix} — {e}. Overslaan.")
                 continue
 
+        # Incrementeel laden: alleen de documenten die in deze run (opnieuw) zijn geharmoniseerd
+        doc_filter = {}
+        if incrementeel:
+            doc_filter = {delta_transform.VELD_DELTA_RUN: verwerkingsrun.huidigeRun()['run_id']}
+
         #loop over all docs in Collection
-        for doc in analyseCol.find():
+        for doc in analyseCol.find(doc_filter):
             success = False
 
             try:
@@ -224,10 +238,19 @@ def enhanceAllAttributes():
         myclient.close()
         
 
-def extractImagedataFromFileNames():
+def extractImagedataFromFileNames(incrementeel=False):
+    """Vul projectcode, materiaal en fotosoort van foto's aan op basis van hun map.
+
+    Args:
+        incrementeel: als True alleen de Foto-documenten met delta_run van de
+            actieve verwerkingsrun bewerken (incrementeel laden)
+    """
     try:        
         col = getAnalyseCollection()
-        foto_docs = list(col.find({'soort': 'Foto'}, projection={'directory':1}))
+        foto_filter = {'soort': 'Foto'}
+        if incrementeel:
+            foto_filter[delta_transform.VELD_DELTA_RUN] = verwerkingsrun.huidigeRun()['run_id']
+        foto_docs = list(col.find(foto_filter, projection={'directory':1}))
         if not foto_docs:
             logger.info("Geen Foto-records gevonden — overslaan.")
             return
@@ -261,7 +284,7 @@ def extractImagedataFromFileNames():
             file_dict.update({dr: dr_dict})
           
         # Set missing values in foto's
-        lst_foto = list(col.find({'soort': 'Foto'}))
+        lst_foto = list(col.find(foto_filter))
         for foto in lst_foto:
             try:
                 dir_info = file_dict.get(foto.get('directory'))

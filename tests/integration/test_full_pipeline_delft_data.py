@@ -41,6 +41,11 @@ DB_FILES = "Arch_Files_Test"
 
 # Verwachte MINIMUM-aantallen per artefactsoort in Single_Store_Clean.
 # Gebaseerd op DB034 Koningsveld IV: groot project met diverse materialen.
+# Aardewerk: sinds de sed-escape-fix in importMDB.sh (2026-10-21) telt
+# Single_Store_Clean 4917 Aardewerk (was 4821): de 96 rijen van de codetabel
+# "AARDEWERK 1&2 VOORWERP" krijgen nu table en projectcd en vallen onder het
+# patroon .*AARDEWERK.* (net als de 46 rijen van "AARDEWERK 1 BAKSEL"), als
+# Aardewerk zonder sleutel. Het minimum (4510, de tabel AARDEWERK 1) blijft.
 EXPECTED_MIN_ARTEFACT_COUNTS = {
     "Aardewerk": 4510,
     "Glas": 20,
@@ -227,6 +232,19 @@ class TestDelftExtractTransform:
         for table, count in sorted(counts.items(), key=lambda x: -x[1]):
             print(f"    {table}: {count}")
         assert total > 100, f"Te weinig staging-documenten: {total}"
+
+        # Elk document uit importMDB.sh heeft table, projectcd en mdbfile. Tot de
+        # fix van 2026-10-21 (escape_sed_csv_value) misten de 96 rijen van de tabel
+        # "AARDEWERK 1&2 VOORWERP" deze velden: de & in de sed-vervanging betekende
+        # "de gevonden tekst", de waarde werd "AARDEWERK 12 VOORWERP" en de
+        # kopregel werd niet vervangen. Ze werden niet geharmoniseerd en de
+        # incrementele cyclus kon ze niet opruimen.
+        coll = mongo_client[DB_STAGING]["Staging_Projecten_Oud"]
+        for veld in ["table", "projectcd", "mdbfile"]:
+            zonder = coll.count_documents({veld: {"$exists": False}})
+            assert zonder == 0, f"{zonder} staging-documenten zonder '{veld}'"
+        assert counts.get("AARDEWERK 1&2 VOORWERP") == 96, \
+            f"AARDEWERK 1&2 VOORWERP: verwacht 96, gevonden {counts.get('AARDEWERK 1&2 VOORWERP')}"
 
     # ----------------------------------------------------------
     # Stap 2: Transform

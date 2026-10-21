@@ -8,6 +8,7 @@ import pytest
 import os
 import pandas as pd
 import ast
+import copy
 
 from wasstraat.harmonizer import (
     getAggrTables, getKolomValues, getAttributes, initAttributes,
@@ -179,6 +180,22 @@ class TestGetHarmonizeAggr:
             if "$addFields" in s and "artefactsoort" in s.get("$addFields", {})
         ]
         assert len(artefact_stages) > 0, "Aardewerk mist artefactsoort $addFields"
+
+    def test_twee_aanroepen_leveren_dezelfde_pipeline(self, monkeypatch):
+        """De pipeline in het (gecachete) HARMONIZER-dataframe krijgt er per aanroep geen fase bij."""
+        import wasstraat.harmonizer as harmonizer
+        bron = [{'$match': {'table': 'AARDEWERK'}}, {'$addFields': {'x': 1}},
+                {'$merge': {'into': 'Single_Store', 'on': '_id'}}]
+        df = pd.DataFrame({'Object': ['Aardewerk'], 'aggr': [copy.deepcopy(bron)]})
+        monkeypatch.setattr(harmonizer, 'loadHarmonizer', lambda: df)
+
+        eerste = harmonizer.getHarmonizeAggr('Aardewerk')
+        tweede = harmonizer.getHarmonizeAggr('Aardewerk')
+
+        assert eerste == tweede
+        assert sum(1 for fase in tweede if 'artefactsoort' in fase.get('$addFields', {})) == 1
+        assert tweede[-1] == bron[-1]
+        assert df['aggr'].values[0] == bron
 
 
 # ============================================================

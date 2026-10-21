@@ -114,3 +114,84 @@ def indexTable(table):
 
             else:
                 logger.error(f"Trying to index table {table}, but table not available in {lst_tables}")
+
+
+def getIndexenVanAlias(es, alias_name):
+    """Retourneer de namen van de indexen achter een alias (lege lijst als de alias niet bestaat)."""
+    if not es.indices.exists_alias(name=alias_name):
+        return []
+    return sorted(es.indices.get_alias(name=alias_name).keys())
+
+
+def leesIdsUitIndex(es, index):
+    """Lees alle document-id's uit een index (helpers.scan zonder _source).
+
+    Returns:
+        Set met de id's als integer (de primary_key)
+    """
+    query = {'query': {'match_all': {}}, '_source': False}
+    return {int(hit['_id']) for hit in helpers.scan(es, index=index, query=query)}
+
+
+def indexTableIncrementeel(table):
+    """Werk de Elasticsearch-index van een tabel bij na een incrementele load (issue 61, fase 3).
+
+    Bestaat er een alias voor de tabel (zoals indexTable die aanmaakt), dan
+    worden alle rijen van de tabel in de index achter de alias geïndexeerd
+    (dezelfde documenten als generate_docs, _id = primary_key; een bestaand
+    document wordt overschreven) en daarna de documenten verwijderd waarvan
+    de _id niet meer in de tabel staat. Bestaat er geen alias (of wijst die
+    naar meer dan één index), dan volgt een volledige indexering met indexTable.
+
+    Args:
+        table: tabelnaam, bijv. 'Def_Artefact'
+
+    Returns:
+        Dict met 'index', 'geindexeerd' en 'verwijderd' (of 'volledig': True)
+    """
+    logger.info(f"Starting incremental indexing of table {table}...")
+    es = Elasticsearch(config.ES_HOST)
+    alias_name = table.lower()
+
+    indexen = getIndexenVanAlias(es, alias_name)
+    if len(indexen) != 1:
+        if indexen:
+            logger.warning(f"Alias {alias_name} wijst naar {len(indexen)} indexen ({indexen}); volledige indexering.")
+        else:
+            logger.info(f"Geen alias {alias_name} gevonden; volledige indexering van {table}.")
+        indexTable(table)
+        return {'index': alias_name, 'volledig': True}
+    index = indexen[0]
+
+    engine = create_engine(config.SQLALCHEMY_DATABASE_URI)
+    ids_tabel = set()
+    try:
+        with engine.connect() as connection:
+            if not inspect(connection).has_table(table, schema='public'):
+                logger.error(f"Trying to index table {table}, but table not available")
+                return None
+            db_cols = getCols(connection, table)
+            sql_col_names = ['"' + col['name'] + '"' for col in db_cols]
+            db_col_names = [col['name'] for col in db_cols]
+            sql = f'SELECT {", ".join(sql_col_names)} FROM public."{table}"'
+            logger.info(f"Indexing existing index {index} (alias {alias_name}) with columns {db_col_names}")
+            rs = connection.execute(sql)
+
+            def docsMetIds():
+                for doc in generate_docs(rs, db_col_names, index):
+                    ids_tabel.add(doc['_id'])
+                    yield doc
+
+            geindexeerd, _ = helpers.bulk(es, docsMetIds())
+    finally:
+        engine.dispose()
+
+    weg = sorted(leesIdsUitIndex(es, index) - ids_tabel)
+    verwijderd = 0
+    if weg:
+        verwijderd, _ = helpers.bulk(es, ({'_op_type': 'delete', '_index': index, '_id': i} for i in weg))
+    es.indices.refresh(index=index)
+
+    resultaat = {'index': index, 'geindexeerd': geindexeerd, 'verwijderd': verwijderd}
+    logger.info(f"Incremental indexing of {table} finished: {resultaat}")
+    return resultaat

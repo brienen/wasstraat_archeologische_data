@@ -125,7 +125,8 @@ def getHarmonizeAggr(soort, reload=False):
         logger.error(msg) 
         raise Exception(msg)
 
-    aggr = HARMONIZER[HARMONIZER.Object == soort]['aggr'].values[0]
+    # Kopie: de lijst in het (gecachete) HARMONIZER-dataframe mag niet bij elke aanroep een fase bijkrijgen
+    aggr = copy.deepcopy(HARMONIZER[HARMONIZER.Object == soort]['aggr'].values[0])
     if soort in meta.lst_artefactsoort:
         aggr.insert(-1, { '$addFields': {"artefactsoort": soort, 'soort': 'Artefact'}})
     return aggr

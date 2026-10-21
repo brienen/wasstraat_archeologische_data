@@ -1,10 +1,15 @@
 #!/bin/bash
 
-if [ $# -ne 2 ]
+if [ $# -ne 2 ] && [ $# -ne 3 ]
 then
-    echo "Aanroepen met Dir en Collection"
+    echo "Aanroepen met Dir en Collection, optioneel gevolgd door een lijstbestand"
     exit 1
 fi
+
+# Optioneel derde argument: lijstbestand met de te verwerken MDB/ACCDB-bestanden,
+# één pad per regel (geschreven door Bepaal_Delta van de incrementele cyclus).
+# Zonder derde argument worden alle bestanden in de input-directory verwerkt.
+LIJSTBESTAND="${3:-}"
 
 WORKDIR=$AIRFLOW_TEMPDIR
 DATABASE=$DB_STAGING
@@ -161,6 +166,66 @@ if changed:
 " 2>&1
 }
 
+# Functie: exporteer een Access-tabel naar CSV met een correct gequote kopregel
+# mdb-export (1.0.0) zet de kolomnamen in de kopregel niet tussen aanhalingstekens.
+# Een kolomnaam met een komma (bijv. "FORMAAT IN MM, HORIZONTAAL") telt dan als
+# twee velden, waardoor de kopregel meer velden heeft dan de rijen en mongoimport
+# (--headerline) alle waarden verschuift, inclusief de velden die dit script
+# achteraan toevoegt (table, projectcd, bron, loadtime, mdbfile).
+# Daarom schrijven we de kopregel zelf: de kolomnamen komen tab-gescheiden uit
+# mdb-export (kolomnamen bevatten geen tabs) en worden met Python's csv.writer
+# gequote waar nodig (komma, aanhalingsteken, newline). De data volgt daaronder
+# via mdb-export -H (zonder kopregel), met de gewone quoting van mdb-export.
+# Bytes die (nog) geen geldig UTF-8 zijn blijven ongewijzigd (surrogateescape);
+# convert_to_utf8 converteert daarna het hele bestand.
+# Retourneert 0 bij succes, 1 als er geen kopregel gelezen kon worden
+# (het CSV-bestand is dan leeg en wordt verderop als lege tabel overgeslagen).
+export_table_to_csv() {
+    local MDBFILE="$1"
+    local TABLE_NAME="$2"
+    local CSV_FILE="$3"
+
+    if ! mdb-export -d $'\t' -Q "$MDBFILE" "$TABLE_NAME" 2>/dev/null | head -1 | python3 -c '
+import csv, io, sys
+
+regel = sys.stdin.buffer.read().decode("utf-8", "surrogateescape").rstrip("\r\n")
+if not regel:
+    sys.exit(1)
+uit = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="surrogateescape", newline="")
+csv.writer(uit, quoting=csv.QUOTE_MINIMAL, lineterminator="\n").writerow(regel.split("\t"))
+uit.flush()
+' > "$CSV_FILE"; then
+        : > "$CSV_FILE"
+        return 1
+    fi
+
+    mdb-export -H "$MDBFILE" "$TABLE_NAME" >> "$CSV_FILE"
+}
+
+# Functie: maak een waarde geschikt voor de vervangingstekst van sed en als CSV-veld
+# De waarden die achter elke CSV-regel worden gezet (tabelnaam, projectcode,
+# bron, tijdstempel, pad) staan letterlijk in de vervangingstekst van een
+# sed-opdracht s/$/.../. Daarin betekent & "de gevonden tekst", is \ een
+# escape-teken en is / het scheidingsteken van de opdracht. De Delftse tabel
+# "AARDEWERK 1&2 VOORWERP" werd zo "AARDEWERK 12 VOORWERP".
+# Voor de CSV: bevat de waarde een komma of aanhalingsteken, dan komt ze tussen
+# dubbele aanhalingstekens en wordt " -> "" (zoals csv.writer met QUOTE_MINIMAL),
+# zodat ze geen extra veld oplevert. Andere waarden blijven ongequote, zodat de
+# uitvoer voor gewone tabelnamen en paden byte voor byte gelijk blijft.
+# Altijd quoten kan niet: sed werkt per regel en zet de waarden ook achter elke
+# regel binnen een tekstveld met een regeleinde (bijv. OPGRAVINGEN in de Delftse
+# projectenlijst); een " daar breekt de CSV en mongoimport weigert de tabel.
+# Daarna voor sed: \ -> \\, & -> \& en / -> \/.
+# Een newline in de waarde wordt niet ondersteund (komt in tabelnamen en paden
+# niet voor).
+escape_sed_csv_value() {
+    local WAARDE="$1"
+    case "$WAARDE" in
+        *[,\"]*) WAARDE="\"$(printf '%s' "$WAARDE" | sed -e 's/"/""/g')\"" ;;
+    esac
+    printf '%s' "$WAARDE" | sed -e 's/[\/&]/\\&/g'
+}
+
 # Functie: genereer metainfo JSON op een robuuste manier
 # Vervangt de fragiele sed-pipeline door een Python-script dat altijd
 # geldige JSON produceert, zelfs bij onverwachte mdb-prop output.
@@ -227,6 +292,30 @@ print()  # newline aan het eind
 
 DB_STAGING_URI=mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@${MONGO_SERVER}
 
+if [ -n "$LIJSTBESTAND" ]; then
+    # Incrementeel: verwerk alleen de paden uit het lijstbestand
+    if [ ! -f "$LIJSTBESTAND" ]; then
+        echo "ERROR: Lijstbestand '$LIJSTBESTAND' bestaat niet." | tee -a "$ERRORLOG"
+        exit 1
+    fi
+    MDB_FILES=()
+    while IFS= read -r REGEL || [ -n "$REGEL" ]; do
+        REGEL="${REGEL%$'\r'}"
+        [ -z "$REGEL" ] && continue
+        if [ ! -f "$REGEL" ]; then
+            echo "WARNING: Bestand '$REGEL' uit lijstbestand bestaat niet, overgeslagen." | tee -a "$ERRORLOG"
+            continue
+        fi
+        MDB_FILES+=("$REGEL")
+    done < "$LIJSTBESTAND"
+
+    if [ ${#MDB_FILES[@]} -eq 0 ]; then
+        echo "INFO: Lijstbestand '$LIJSTBESTAND' bevat geen bestanden, niets te verwerken."
+    else
+        echo "INFO: ${#MDB_FILES[@]} MDB/ACCDB-bestand(en) uit lijstbestand '$LIJSTBESTAND'."
+    fi
+else
+
 # Controleer of de input-directory bestaat
 if [ ! -d "$1" ]; then
     echo "INFO: Input-directory '$1' bestaat niet, overgeslagen."
@@ -258,6 +347,8 @@ fi
 
 echo "INFO: ${#MDB_FILES[@]} MDB/ACCDB-bestand(en) gevonden in '$1'."
 
+fi
+
 for mdbfile in "${MDB_FILES[@]}"
 do
 	TOTAL_FILES=$((TOTAL_FILES + 1))
@@ -281,7 +372,10 @@ do
 		TOTAL_TABLES=$((TOTAL_TABLES + 1))
 	   	CSV="$WORKDIR"/opgraving"$PROJECT"."$TABLE".csv
 	    echo Reading "$TABLE" into "$CSV" and loading into Mongo database "$DATABASE" collection "$Collection"
-	    mdb-export "$mdbfile" "$TABLE" > "$CSV"
+		# Kopregel zelf schrijven (correct gequote), data via mdb-export -H
+		if ! export_table_to_csv "$mdbfile" "$TABLE" "$CSV"; then
+			echo "WARNING: Geen kopregel gelezen voor tabel '$TABLE' in bestand '$mdbfile', tabel overgeslagen" | tee -a "$ERRORLOG"
+		fi
 
 		# Encoding-conversie van CSV naar gevalideerd UTF-8
 		CONTEXT="tabel '$TABLE' in bestand '$mdbfile'"
@@ -303,8 +397,20 @@ do
     	fi
 
 		echo Reading data
-		sed -i s/$/,"$TABLE","$PROJECT",opgraving"$PROJECT","$timestamp","${mdbfile//\//\\/}"/ "$CSV"
-		sed -i 1s/,"$TABLE","$PROJECT",opgraving"$PROJECT","$timestamp","${mdbfile//\//\\/}"/,table,projectcd,bron,loadtime,mdbfile/ "$CSV"
+		# Voeg de kolommen table, projectcd, bron, loadtime en mdbfile toe: de waarden
+		# achter elke datarij (regel 2 en verder), de kolomnamen achter de kopregel.
+		# De waarden gaan via escape_sed_csv_value (veilig voor sed; tussen
+		# aanhalingstekens als ze een komma of aanhalingsteken bevatten). mongoimport
+		# leest gequote en ongequote waarden hetzelfde in (een getal blijft een getal,
+		# tekst blijft tekst). De kopregel-sed gebruikt de waarden niet, zodat
+		# bijzondere tekens in een tabelnaam of pad hem niet kunnen breken.
+		SED_TABLE=$(escape_sed_csv_value "$TABLE")
+		SED_PROJECT=$(escape_sed_csv_value "$PROJECT")
+		SED_BRON=$(escape_sed_csv_value "opgraving$PROJECT")
+		SED_LOADTIME=$(escape_sed_csv_value "$timestamp")
+		SED_MDBFILE=$(escape_sed_csv_value "$mdbfile")
+		sed -i "1!s/\$/,$SED_TABLE,$SED_PROJECT,$SED_BRON,$SED_LOADTIME,$SED_MDBFILE/" "$CSV"
+		sed -i "1s/\$/,table,projectcd,bron,loadtime,mdbfile/" "$CSV"
 
 		# Valideer dat CSV na sed-bewerking nog steeds geldig UTF-8 is
 		if ! iconv -f UTF-8 -t UTF-8 "$CSV" > /dev/null 2>&1; then

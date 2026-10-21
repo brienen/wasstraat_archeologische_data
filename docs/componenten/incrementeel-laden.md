@@ -1,0 +1,258 @@
+# Incrementeel laden
+
+!!! note "Status"
+    Gebouwd voor [issue 61](https://github.com/brienen/wasstraat_archeologische_data/issues/61), in drie fasen. Deze pagina is het ontwerp, bijgewerkt met de keuzes per fase.
+
+    **Fase 1:** registratie van bronbestanden (`Def_Bronbestand`), het run-document, de bepaling van de delta, het opruimen van oude records, de extractie van alleen de delta en de registratie aan het eind van de incrementele én de volledige cyclus.
+
+    **Fase 2:** de transformaties van alleen de delta (stap 4 t/m 7: Transform 1, 2, 3, 5 en 4 met stabiele sleutels).
+
+    **Fase 3:** de load als upsert naar PostgreSQL (stap 8, `Load_Upsert`), de Elasticsearch-delta (stap 9, `Index_<tabel>`), stabiele sleutels voor artefacten (`key_subnr|artefactsoort`), Elasticsearch in de testomgeving en de integratietest. De DAG `Extract_Transform_Load_Incremental` is daarmee compleet: zie [Gebruik](#gebruik).
+
+## Doel
+
+De volledige cyclus (`Extract_Transform_Load_Full_Cycle`) begint met het legen van alle databases en verwerkt daarna alle bronbestanden opnieuw. Voor het toevoegen of corrigeren van een handvol opgravingen is dat bij ~1 TB brondata onwerkbaar. De incrementele cyclus (`Extract_Transform_Load_Incremental`) verwerkt alleen bronbestanden die nieuw, gewijzigd of verwijderd zijn, en voegt het resultaat samen met de bestaande data. De volledige cyclus blijft bestaan en blijft ongewijzigd werken.
+
+## Uitgangspunten
+
+1. **Het bronbestand is de eenheid van verandering.** Elke Access-database, spreadsheet, foto en elk rapport wordt geregistreerd met een vingerafdruk. Een run vergelijkt de bestanden op schijf met de registratie en bepaalt per bestand de status: `nieuw`, `gewijzigd`, `ongewijzigd` of `verwijderd`.
+2. **PostgreSQL is de bron van waarheid** voor de registratie van bronbestanden (tabel `Def_Bronbestand`) en voor de integer-sleutels (`primary_key`) van alle entiteiten. Daar draait de webapplicatie op, en daar staan de gegevens die gebruikers zelf invoeren (bruiklenen, conservering).
+3. **MongoDB is werkgeheugen dat blijft staan.** De staging-collecties, `Single_Store` en `Single_Store_Clean` worden bij een incrementele run niet geleegd. Daardoor kan elke entiteit die door een wijziging wordt geraakt opnieuw worden samengesteld uit `Single_Store`, dat altijd volledig is. Een pre-fetch van bestaande records uit `Single_Store_Clean` is daardoor niet nodig: de merge per sleutel is deterministisch en wordt voor de geraakte sleutels gewoon opnieuw uitgevoerd.
+4. **Sleutels zijn stabiel.** De samengestelde sleutel (`key`) is al deterministisch. De integer-sleutel (`primary_key`) wordt bij een incrementele run opgezocht in PostgreSQL op basis van (soort, key); alleen nieuwe entiteiten krijgen een nieuw nummer boven het bestaande maximum. Verwijzingen vanuit de webapplicatie en van buitenaf blijven daardoor geldig.
+5. **Laden is een upsert, geen vervanging.** De `Def_`-tabellen worden bijgewerkt met `INSERT ... ON CONFLICT (primary_key) DO UPDATE`; rijen waarvan de entiteit verdwenen is worden verwijderd. Tabellen met gebruikersdata (`Def_Bruikleen`, `Def_Partij`, `Def_Conserveringsproject`, `Def_artefact_conservering`, `Def_artefact_abr`) worden niet geleegd.
+
+## Herleidbaarheid door de pipeline
+
+De pipeline bewaart al genoeg sporen om een bronbestand door alle stappen te volgen:
+
+| Laag | Collectie | Spoor naar het bronbestand |
+|------|-----------|----------------------------|
+| Staging | `Staging_Projecten_*` | veld `mdbfile` (pad in de container), gezet door `importMDB.sh` |
+| Staging | `Staging_Projecten_Projectenlijst` (extra projecten) | veld `mdbfile` met het pad van `FILE_EXTRA_PROJECTS`, gezet door `extractExtraProjects` (nieuw in fase 1) |
+| Staging | `Staging_Referentietabellen` | geen veld nodig: de hele collectie komt uit `FILE_ABREXCEL` |
+| Staging | `Plaatjes` | veld `fullFileName`; de afbeeldingen zelf staan als kopieën in `AIRFLOW_OUTPUT_MEDIA` (paden in `imageID`, `imageMiddleID`, `imageThumbID`); een oudere versie van `image_util` gebruikte GridFS (`imageUUID` e.d.) |
+| Staging | `Filenames` (in `Arch_Files`) | veld `filename` |
+| Analyse | `Single_Store` | zelfde `_id` als het staging-document (`$replaceRoot` in de harmonisatie behoudt `_id`), en altijd `brondata.mdbfile` (afbeeldingen: `fullFileName`). Let op: de harmonisatie van `Standplaats`, `Plaatsing` en `Doos` maakt wél een nieuw `_id`; die documenten zijn alleen via `brondata.mdbfile` te vinden |
+| Analyse | `Single_Store_Clean` | Move-soorten: zelfde `_id` als in `Single_Store`. Merge-soorten (Vondst, Artefact, Monster, Tekening, Rapport): de merge groepeert op de sleutel (`key`, Artefact: `key_subnr` + `artefactsoort`), maar het document neemt via `$mergeObjects` op `$$ROOT` het `_id` over van het **laatste brondocument in de groep**; samengevoegde documenten zijn herkenbaar aan het veld `brondata_count`. Foto's (`mergeFotoinfo`): zelfde `_id` als in `Plaatjes`. Gegenereerde documenten (`brondata.table` = `generated_*`): bij elke generatie een nieuw `_id` |
+
+Daar komen twee nieuwe sporen bij:
+
+- `Single_Store`-documenten die in een incrementele run (opnieuw) zijn geharmoniseerd krijgen het veld `delta_run` met het run-id. Transform 2 en 3 beperken zich tot die documenten. Ook elk document dat een incrementele run in `Single_Store_Clean` (opnieuw) schrijft heeft `delta_run` gelijk aan het run-id (verplaatst, samengevoegd, foto of gegenereerd), zodat fase 3 de gewijzigde rijen kan herkennen. De volledige cyclus zet het veld nergens.
+- Een run-document in de collectie `Verwerkingsruns` (database `Arch_Staging`) houdt bij welke bestanden, sleutels en projecten geraakt zijn. De vingerafdrukken per bestand staan in de collectie `Verwerkingsrun_Bestanden` (zie [Run-document](#run-document)).
+
+## Registratie van bronbestanden
+
+Tabel `Def_Bronbestand` in PostgreSQL, aangemaakt door de pipeline zelf (`CREATE TABLE IF NOT EXISTS`), buiten de atomic swap van de volledige load gehouden:
+
+| Kolom | Inhoud |
+|-------|--------|
+| `pad` (`TEXT PRIMARY KEY`) | Pad van het bestand zoals de Airflow-container het ziet |
+| `categorie` (`TEXT`) | Invoercategorie: `projecten`, `projectenlijst`, `magazijnlijst`, `fotolijst`, `monsterdatabase`, `rapporten` (de zes MDB-mappen), `referentietabellen` (`FILE_ABREXCEL`), `extra_projecten` (`FILE_EXTRA_PROJECTS`), `bestandenlijst` (`FILE_IMPORT_FILES_EXCEL`), `afbeeldingen` |
+| `grootte` (`BIGINT`), `mtime` (`DOUBLE PRECISION`) | Snelle vingerafdruk; bij gelijke waarden wordt de hash niet opnieuw berekend |
+| `sha256` (`CHAR(64)`) | Inhoudelijke vingerafdruk |
+| `status` (`TEXT`) | `verwerkt` of `verwijderd` (`mislukt` bestaat voor toekomstig gebruik, zie hieronder) |
+| `verwerkt_op` (`TIMESTAMP`, UTC), `run_id` (`TEXT`) | Laatste run die het bestand verwerkte (of als verwijderd registreerde) |
+| `aantal_records` (`INTEGER`) | Aantal staging-documenten uit dit bestand (0 voor afbeeldingen en de bestandenlijst) |
+
+De volledige cyclus registreert aan het eind alle bestanden, zodat een daaropvolgende incrementele run weet wat al verwerkt is.
+
+Uitwerking in fase 1:
+
+- **Selectie.** De zes MDB-mappen worden doorzocht met exact dezelfde selectie als `importMDB.sh` (`**/*.mdb` en `**/*.accdb`: recursief, hoofdlettergevoelige extensie, zonder verborgen bestanden en mappen). Afbeeldingen en rapporten gebruiken dezelfde functie als de extractie (`image_import.getImageFilenames()`: `getImageNamesFromDir` voor de afbeeldingen- en rapportenmap plus `getImageNamesFromExcelAndDir`). Valt een afbeelding door een wijziging in de bestandenlijst-Excel buiten de selectie, dan geldt hij als verwijderd.
+- **`bestandenlijst`** is een extra categorie ten opzichte van het oorspronkelijke ontwerp: `FILE_IMPORT_FILES_EXCEL` wordt geregistreerd, maar zelf niet verwerkt. Een wijziging werkt door via de selectie van de afbeeldingen.
+- **Lege Access-databases.** Een Access-database die geen enkel staging-document oplevert (leeg of onleesbaar), wordt als `verwerkt` geregistreerd met `aantal_records` 0, met per bestand een waarschuwing in het log van `Registreer_Run` (of `Registreer_Bronbestanden`). Zo wordt hij niet bij elke run opnieuw verwerkt, maar blijft een onleesbare database zichtbaar. De status `mislukt` blijft bestaan voor toekomstig gebruik: een bestand met die status geldt bij de volgende run als `gewijzigd` en wordt opnieuw verwerkt. Een geregistreerd bestand met status `verwijderd` dat weer opduikt, geldt als `nieuw`.
+- **Atomic swap en index.** `Def_Bronbestand` staat niet in de tabellenlijst van `loadAll()` en heeft geen foreign keys, dus de atomic swap laat de tabel met rust. `shared.database.getAllTables()` slaat de tabel over (constante `PIPELINE_TABELLEN` in `shared/const.py`); anders zou de Load-taakgroep er een `Index_Def_Bronbestand`-taak voor maken die faalt op het ontbrekende `primary_key`.
+- **Volledige cyclus.** De taak `Registreer_Bronbestanden` hangt aan `LoadToDatabase_postgres` en niet aan de Elasticsearch-indexering: een mislukte indexering kan los opnieuw (`DAG_Load_Only`) zonder de bronbestanden opnieuw te verwerken. De vingerafdrukken worden aan het eind van de cyclus gelezen; een bestand dat tijdens een lange volledige run wijzigt, wordt dus met de nieuwe vingerafdruk geregistreerd.
+
+## Verloop van een incrementele run
+
+| Stap | Taak | Wat gebeurt er |
+|------|------|----------------|
+| 0 | `Start_Run` | Maakt het run-document aan (`run_id`, status `actief`). Er kan maar één actieve run zijn (gecontroleerd én afgedwongen met een partiële unieke index op `status`). |
+| 1 | `Bepaal_Delta` | Scant de invoermappen, vergelijkt met `Def_Bronbestand`, schrijft per categorie de lijsten `nieuw`, `gewijzigd`, `ongewijzigd`, `verwijderd` in het run-document, de vingerafdrukken in `Verwerkingsrun_Bestanden` en per MDB-categorie een lijstbestand `delta_<categorie>.txt` in `AIRFLOW_TEMPDIR` voor `importMDB.sh` (nieuwe en gewijzigde bestanden, één pad per regel; leeg als er niets te doen is). Is de registratie leeg, dan geldt alles als nieuw; de staging (en `Single_Store`) moet dan wel leeg zijn, anders faalt de taak met een verwijzing naar de volledige cyclus. |
+| 2 | `Opruimen_Oude_Records` | Voor gewijzigde en verwijderde bestanden (en nieuwe bestanden, zie hieronder): verzamel de staging-`_id`s, zoek de bijbehorende `Single_Store`-documenten (op `_id` én op `brondata.mdbfile`/`fullFileName`) en bewaar hun `soort`, `key` en `projectcd` (Artefact ook `key_subnr`, `artefactsoort`) in het run-document (`verwijderde_keys`, `geraakte_projecten`). Verwijder daarna de documenten uit `Single_Store`, uit `Single_Store_Clean` (op dezelfde `_id`s, dus de Move-soorten) en uit de staging. Voor afbeeldingen: ook `Plaatjes`, `Filenames`, eventuele GridFS-bestanden en de kopieën in `AIRFLOW_OUTPUT_MEDIA` waarnaar geen ander `Plaatjes`-document meer verwijst. |
+| 3 | Extract (delta) | `importMDB.sh` krijgt een lijstbestand en verwerkt alleen die databases. Afbeeldingen: alleen nieuwe en gewijzigde bestanden komen in `Filenames` met `processed: False` (de collectie wordt niet geleegd). ABR en extra projecten alleen als dat bestand nieuw of gewijzigd is. |
+| 4 | Transform 1 (delta) | Harmonisatie met een extra eerste `$match` op het padveld van de staging-collectie (`mdbfile` in de nieuwe en gewijzigde bestanden van de categorie; de projectenlijst-collectie ook de extra projecten) en `$addFields {delta_run}` vlak vóór de `$merge`. Geen delta-paden voor een collectie: de taak doet niets. De ABR-referentietabellen alleen (volledig) als het ABR-bestand in de delta zit. `ParseFotobestanden` alleen voor `Plaatjes` met `fullFileName` in de delta van `afbeeldingen`. `fixProjectNames` draait zoals nu (idempotent). `fixMonsterProjectcds` alleen voor delta-documenten. Daarna voegt `Werk_Geraakte_Projecten_Bij` de projectcodes van de delta-documenten toe aan `geraakte_projecten`. |
+| 5 | Transform 2 en 3 (delta) | `enhanceAllAttributes`, `extractImagedataFromFileNames` en `setReferenceKeys` (in de eerste `$match`) krijgen een filter `{delta_run: run_id}`; de `projectcode_correcties` blijven op de hele collectie werken. `Werk_Geraakte_Projecten_Bij` draait aan het eind van Transform 2 nogmaals. Projectbrede stappen (`setAndVondstUniqueInProject`, `mergeRAAPArtefacts`) draaien alleen voor de geraakte projecten; `setAndVondstUniqueInProject` haalt daarbij eerst de vlag `vondstkey_met_putnr` weg bij alle documenten van die projecten en zet hem opnieuw waar nodig. Voor de soorten waarvan de sleutels van die vlag afhangen (Spoor, Vulling, Artefact, Monster, Vondst) berekent `setReferenceKeys` de sleutels van alle documenten van de geraakte projecten opnieuw (zie [De vlag `vondstkey_met_putnr`](#de-vlag-vondstkey_met_putnr)). `Set_Index_SingleStore` blijft. |
+| 6 | Transform 5 (delta) | Geen `Drop_SingleStoreClean`. Move per soort met filter `delta_run` (Spoor, Vulling en Artefact: ook alle documenten van de geraakte projecten); elk verplaatst document krijgt `delta_run`. Merge per soort voor de geraakte sleutels (sleutels van delta-documenten plus `verwijderde_keys`; Vondst, Artefact en Monster: ook alle sleutels van de geraakte projecten in `Single_Store` en `Single_Store_Clean`): zelfde pipeline met een `$match` op die sleutels en `$addFields {delta_run}`. Daarna worden samengevoegde documenten met een geraakte sleutel die niet opnieuw zijn geschreven verwijderd. `MergeFotoinfo` alleen voor foto's met `delta_run`, in een geraakt project of in een gewijzigde fotolijst. `Generate_Missing_*`: eerst de gegenereerde documenten van de geraakte projecten verwijderen, dan alleen voor die projecten opnieuw genereren. |
+| 7 | Transform 4 (stabiele sleutels) | `setPrimaryKeys(stabiel=True)`: een document houdt zijn `ID`; anders de `primary_key` uit PostgreSQL (op `_id`, anders op een `key` die precies één keer in de tabel staat); anders een nieuw nummer boven het maximum. `setReferences` werkt zoals nu: het vult alleen ontbrekende `<soort>ID`-velden, en vervangen documenten hebben die niet meer. |
+| 8 | `Load_Upsert` | In één transactie: de betrokken FK-constraints tijdelijk verwijderen (bestaande mechaniek), per `Def_`-tabel een upsert van alle documenten van de soort, verwijderen van rijen waarvan de `primary_key` niet meer in `Single_Store_Clean` voorkomt, geometrie bijwerken en de sequence van `primary_key` op het maximum + 1 zetten; daarna de FK's herstellen met `NOT VALID`, committen en valideren. Kan een FK niet hersteld worden, dan wordt alles teruggedraaid en faalt de taak. Gebruikerstabellen en `Def_Bronbestand` blijven ongemoeid. Zie [Uitwerking in fase 3](#uitwerking-in-fase-3). |
+| 9 | `Index_<tabel>` (delta) | Parallel na `Load_Upsert`, per tabel uit `LOAD_TABELLEN`: alle rijen opnieuw indexeren in de index achter de alias (`_id` = `primary_key`) en documenten verwijderen waarvan de id niet meer in de tabel staat. Bestaat er nog geen alias, dan een volledige indexering. Deze taken vallen buiten de bewaking van `Markeer_Run_Mislukt`. Daarna wacht `Index_Klaar` (`trigger_rule=all_done`) tot alle Index-taken klaar zijn, ook als er een mislukt. |
+| 10 | `Registreer_Run` | Werkt `Def_Bronbestand` bij (status, `run_id`, `verwerkt_op`, `aantal_records`; verwijderde bestanden krijgen status `verwijderd`; bij ongewijzigde bestanden met een nieuwe mtime alleen de vingerafdruk) en zet het run-document op `afgerond`. Hangt af van `Load_Upsert` en `Index_Klaar`: draait alleen als alle taken tot en met `Load_Upsert` slaagden, en pas als de indexering klaar is, zodat een volgende run niet kan starten terwijl de Index-taken nog lopen. Bij een fout zet de taak `Markeer_Run_Mislukt` (`trigger_rule=one_failed`) de run op `mislukt` en wordt de registratie niet bijgewerkt, zodat de volgende run dezelfde bestanden opnieuw oppakt. |
+
+Aanvullingen op het ontwerp in fase 1:
+
+- **Opruimen van nieuwe bestanden.** Stap 2 ruimt ook records op van bestanden met status `nieuw` (behalve als de registratie leeg was). Normaal zijn die er niet, maar na een mislukte run kan een nieuw bestand al (deels) in de staging staan; zonder deze stap zou de herhaalde run het dubbel inlezen (`mongoimport` voegt altijd toe).
+- **Overname uit mislukte runs.** Is een run mislukt nadat `Opruimen_Oude_Records` al `Single_Store`-documenten had verwijderd, dan staan die sleutels alleen nog in het run-document van die mislukte run. `Start_Run` neemt daarom `verwijderde_keys` en `geraakte_projecten` over van alle mislukte incrementele runs sinds de laatste geslaagde run (veld `overgenomen_van`).
+- **`Markeer_Run_Mislukt`** markeert alleen de run die door dezelfde Airflow-run is gestart (veld `airflow_run_id`, via `{{ run_id }}`). Faalt `Start_Run` omdat er al een andere run actief is, dan blijft die andere run ongemoeid. Een vastgelopen run (bijvoorbeeld na het afbreken van de scheduler) zet je handmatig op `mislukt` met `verwerkingsrun.beeindigRun('mislukt', run_id=...)`.
+- **Indexen.** `Opruimen_Oude_Records` maakt, als er iets op te ruimen is, indexen op `mdbfile` (staging-collecties), `fullFileName` (`Plaatjes`) en `brondata.mdbfile`/`fullFileName` (`Single_Store`), zodat opzoeken niet de hele collectie scant.
+
+## Uitwerking in fase 2
+
+De delta-varianten zitten in de bestaande functies, achter een optionele parameter: `incrementeel=False` (bij `setPrimaryKeys`: `stabiel=False`). Zonder die parameter werken ze precies als in de volledige cyclus. De taakgroep-factories (`getHarmonizeTaskGroup`, `getEnhanceAttributesGroup`, `getSetKeysTaskGroup`, `getMoveAndMergeTaskGroup`, `getSetReferencesTaskGroup`) krijgen `incrementeel=True` in de incrementele DAG; de callables lezen dan zelf het run-document. De hulpfuncties staan in `wasstraat/delta_transform.py`. Pipelines uit `meta.py` en de harmonizer worden altijd eerst gekopieerd (`copy.deepcopy`) voordat er fasen bij komen.
+
+Aanvullingen en afwijkingen ten opzichte van het ontwerp:
+
+- **`_id` van samengevoegde documenten.** Het ontwerp ging ervan uit dat een samengevoegd document `_id = {key}` heeft. In werkelijkheid neemt het via `$mergeObjects` op `$$ROOT` het `_id` van het laatste brondocument in de groep over. Een gewijzigde groep (een brondocument vervangen of verdwenen) levert daardoor een nieuw document op in plaats van het oude te vervangen. Daarom verwijdert de delta-merge na het samenvoegen elk samengevoegd document (herkenbaar aan `brondata_count`) met een geraakte sleutel dat in deze run niet opnieuw is geschreven (`delta_run` is niet het run-id). Dat dekt ook het geval uit het ontwerp (geen brondocument meer met die sleutel) en een artefactsoort die bij een `key_subnr` verdwijnt. Verplaatste, gegenereerde en foto-documenten hebben geen `brondata_count` en blijven staan.
+- **`delta_run` in `Single_Store_Clean`.** Elk document dat de run in `Single_Store_Clean` schrijft krijgt `delta_run` (zie [Herleidbaarheid](#herleidbaarheid-door-de-pipeline)).
+- **Geraakte projecten** zijn de projectcodes uit het run-document (van verwijderde en vervangen documenten, zie fase 1) plus die van de delta-documenten. De taak `Werk_Geraakte_Projecten_Bij` schrijft ze aan het eind van Transform 1 én van Transform 2 in het run-document, omdat Transform 2 projectcodes kan aanpassen (gemeenteprofiel, map van een foto). De functies in Transform 3 en 5 bepalen ze zelf opnieuw (run-document plus delta-documenten). Dezelfde taak maakt een (sparse) index op `delta_run` in `Single_Store`.
+- **Een foto kan een ander project raken.** Een foto `SY002_F099.jpg` in de map van SY003 krijgt projectcode SY002; SY002 wordt dan een geraakt project. Alle foto's van SY002 worden opnieuw samengevoegd (`MergeFotoinfo`) en de gegenereerde putten en vlakken van SY002 opnieuw gegenereerd; dankzij de stabiele sleutels houden ze hun `ID`.
+- **De vlag `vondstkey_met_putnr`** geldt per project en verandert de sleutels van documenten uit andere bronbestanden dan de delta; zie [De vlag `vondstkey_met_putnr`](#de-vlag-vondstkey_met_putnr).
+- **`MergeFotoinfo`** neemt naast de foto's met `delta_run` en in een geraakt project ook de foto's mee waarvan de bestandsnaam voorkomt in een `Fotokoppel`-document met `delta_run` (gewijzigde fotolijst).
+- **Gegenereerde documenten** (`brondata.table` begint met `generated_`) van de geraakte projecten worden verwijderd en opnieuw gegenereerd met een `$match` op `projectcd` vooraan in de pipeline. Ze krijgen bij elke generatie een nieuw `_id`; hun `ID` komt via de `key` uit PostgreSQL terug.
+- **Documenten zonder sleutel** (`key`, bij Artefact `key_subnr`, leeg) worden niet opnieuw samengevoegd, net zoals Opruimen ze niet in `verwijderde_keys` zet.
+- **Stabiele sleutels.** Een `primary_key` die al bij een ander document hoort (een document dat zijn `ID` hield, of eerder in dezelfde toewijzing), wordt niet nog eens uitgedeeld: eerst worden alle documenten op `_id` gekoppeld, daarna op `key`, daarna krijgen de overige documenten nieuwe nummers in een vaste volgorde (op `key`, dan `_id`). Alleen het veld `ID` wordt geschreven (de volledige cyclus herschrijft het hele document via pandas). Soorten zonder tabel (Fotobeschrijving, Fotokoppel) slaan de stap via PostgreSQL over. Bestaat de tabel niet en heeft nog geen enkel document een `ID` (eerste run in een lege database), dan kent `setPrimaryKeys` de sleutels toe zoals de volledige cyclus; heeft een deel van de documenten al een `ID`, dan houden die hun `ID` en krijgen de andere nummers daarboven.
+- **De volledige cyclus nummert de sleutels opnieuw** (bestaand gedrag): `setPrimaryKeys` geeft alle documenten een volgnummer vanaf 0 in de volgorde van `Single_Store_Clean`. Na een volledige cyclus kunnen `primary_key`s dus verschuiven; de stabiliteit geldt tussen incrementele runs (en van een volledige cyclus naar de incrementele runs daarna).
+- **Grenzen van de stabiliteit.** `Def_Artefact` heeft geen kolom `key_subnr` en `key` was bij artefacten meestal leeg, zodat een artefact uit een opnieuw ingelezen database een nieuwe `primary_key` kreeg. Opgelost in fase 3: de load vult `key` bij een artefact zonder key met de samengestelde sleutel `key_subnr|artefactsoort` en `setStabielePrimaryKeys` vergelijkt artefacten op diezelfde sleutel (zie [Uitwerking in fase 3](#uitwerking-in-fase-3)). Een document met een `key` die meer dan één keer in de tabel staat (bijv. foto's `PSY001S1`: sfeer- en opgravingsfoto met hetzelfde nummer, of twee artefacten met dezelfde `key_subnr` en artefactsoort) krijgt nog steeds een nieuwe `primary_key` als zijn `_id` verandert.
+- **Tellingen** per run in `tellingen.transform`: `delta_documenten`, `merge.<soort>` (`sleutels`, `verwijderd`), `gegenereerd.<soort>` (`verwijderd`, `toegevoegd`) en `primary_keys.<soort>` (`behouden`, `op_id`, `op_key`, `nieuw`, `verdwenen`, `tabel`).
+
+### De vlag `vondstkey_met_putnr`
+
+`setAndVondstUniqueInProject` zet de vlag `vondstkey_met_putnr` op alle documenten (met een `vondstnr`) van een project waarin hetzelfde vondstnummer in meer dan één put voorkomt. De vlag bepaalt of het putnummer in de sleutel van een vondst staat (`aggr_key_vondst` in `meta.py`): de `key` van Vondst en de `key_vondst` van Spoor, Vulling, Artefact en Monster (`delta_transform.SOORTEN_MET_VONDSTKEY_VLAG`; een unit test controleert dat de lijst bij `meta.py` past). De `key_vondst` van foto's, tekeningen en fotobeschrijvingen hangt niet van de vlag af.
+
+Bij een incrementele run kan de vlag voor een geraakt project veranderen, bijvoorbeeld als een vervangen database een vondstnummer niet meer in twee putten heeft. Alleen de vlag zetten voor de projecten die hem nodig hebben is dan niet genoeg: documenten uit bronbestanden buiten de delta (bijv. de fotolijst of de monsterdatabase) zouden de oude vlag en de oude sleutels houden. Daarom:
+
+1. **Transform 3, `Set_Artefactnr_Unique`:** haalt de vlag eerst weg (`$unset`) bij alle documenten van de geraakte projecten en zet hem daarna, zoals in de volledige cyclus, op `True` voor de projecten die hem nodig hebben.
+2. **Transform 3, `Set_ReferenceKeys_<soort>`:** voor de soorten uit `SOORTEN_MET_VONDSTKEY_VLAG` is het filter `delta_run` van deze run **of** `projectcd` in de geraakte projecten (`delta_transform.getDeltaOfProjectFilter`), zodat ook de sleutels van niet opnieuw ingelezen documenten opnieuw worden berekend.
+3. **Transform 5, `Move_<soort>`:** voor Spoor, Vulling en Artefact hetzelfde filter; elk verplaatst document krijgt `delta_run`. Het document in `Single_Store_Clean` wordt vervangen en verliest zo zijn `ID` en verwijzingen (`vondstID` enz.), die Transform 4 opnieuw toekent (de `primary_key` komt via `_id` uit PostgreSQL terug).
+4. **Transform 5, `Merge_<soort>`:** voor Vondst, Artefact en Monster tellen ook de sleutels van alle documenten van de geraakte projecten in `Single_Store` (de nieuwe sleutels) en van de samengevoegde documenten in `Single_Store_Clean` (de oude sleutels) als geraakt; een vervallen sleutel wordt zo opgeruimd.
+
+Niet aangepast: `MergeFotoinfo` neemt de foto's van de geraakte projecten al mee (en daarmee de nieuwe waarde van de vlag), `Generate_Missing_Vondst` leidt de vlag af uit `Single_Store` (`$max`) en draait al voor de geraakte projecten, en Tekening en Rapport hangen niet van de vlag af. De volledige cyclus verandert niet. Een geraakt project wordt hierdoor voor deze vijf soorten in Transform 3 en 5 helemaal opnieuw verwerkt; zonder wijziging van de vlag levert dat inhoudelijk dezelfde documenten op en houden ze hun `primary_key`. Wel kan de volgorde van de lijst `brondata` van een samengevoegd document verschillen (`$addToSet` garandeert geen volgorde), zodat de load zo'n rij soms als `bijgewerkt` telt (in de testomgeving: één monster van SY002 na het toevoegen van een foto).
+
+Bij het testen gevonden bestaande problemen (ook in de volledige cyclus, niet opgelost in fase 2):
+
+- `enhanceAllAttributes` geeft voor elke foto de fout `identificeer_foto() missing 1 required positional argument: 'projectcd'` (het gemeenteprofiel stuurt soort Foto door naar `identificeer_foto(doc)` zonder projectcode); die documenten worden in Transform 2 niet bijgewerkt.
+- De parallelle taken `Set_Reference_ABR_Materiaal` en `Set_Reference_ABR_SubMateriaal` schrijven allebei het hulpveld `key_abr`; welke waarde overblijft hangt van de volgorde af. Het veld wordt niet naar PostgreSQL geladen.
+
+### Voor fase 3 (upsert-load)
+
+De aandachtspunten die fase 2 meegaf, en hoe fase 3 ze heeft opgelost:
+
+- **Gewijzigde rijen:** documenten in `Single_Store_Clean` met `delta_run` gelijk aan het run-id. Fase 3 upsert alle documenten van een soort (zoals in het ontwerp) en neemt `_id` mee in de `DO UPDATE`.
+- **Verdwenen rijen per tabel:** `delta_transform.bepaalVerdwenenPrimaryKeys(leesPgSleutels(tabel), ids)`; fase 3 gebruikt precies die functie (met de cursor van de load).
+- **Verwijzingen:** opgevangen met de FK-mechaniek (`NOT VALID`, daarna valideren); een verwijzing naar een verdwenen rij blijft staan en de constraint blijft dan `NOT VALID` (zie hieronder).
+
+## Uitwerking in fase 3
+
+### Load_Upsert (`loadToDatabase_functions.loadIncrementeel`)
+
+Per tabel uit `LOAD_TABELLEN` (soort = tabelnaam zonder `Def_`; `Def_Bestand` is soort `Bestand`) bouwt `werkTabelBij` de rijen precies zoals de volledige load (`leesDocumenten`, `getFields`, `transformRow`) en doet dan:
+
+1. `INSERT ... ON CONFLICT (primary_key) DO UPDATE SET kolom = EXCLUDED.kolom` voor alle kolommen, inclusief `_id` (via `psycopg2.extras.execute_values`). Een bestaande rij wordt alleen herschreven als een waarde echt verschilt (`WHERE ROW(oud::text, ...) IS DISTINCT FROM ROW(nieuw::text, ...)`); zo levert een run zonder wijzigingen geen schrijfacties op en zijn de tellingen `ingevoegd` en `bijgewerkt` zinvol.
+2. Rijen verwijderen waarvan de `primary_key` niet meer als `ID` in `Single_Store_Clean` voorkomt (`bepaalVerdwenenPrimaryKeys`).
+3. De geometrie `location` bijwerken met dezelfde voorwaarde als de volledige load (`longitude` en `latitude` gevuld, `longitude > 1`); alleen rijen waarvan de geometrie verandert, en een rij die niet meer aan de voorwaarde voldoet krijgt `NULL` (zoals bij een volledige load).
+4. De sequence van `primary_key` op `max(primary_key) + 1` zetten (`pg_get_serial_sequence` + `setval`), zodat rijen die de webapplicatie zelf aanmaakt niet botsen.
+
+Keuzes:
+
+- **FK-mechaniek in plaats van `SET CONSTRAINTS ALL DEFERRED`.** Niet alle FK's zijn deferrable: in de testomgeving o.a. `Def_Bestand.artefactID`, `Def_Bestand.projectID`, `Def_Doos.projectID`, `Def_Doos.stellingID`, `Def_Vlak.projectID` en de koppeltabellen `Def_artefact_abr` en `Def_artefact_conservering`. Daarom gebruikt de upsert de mechaniek van `loadAll`, nu als herbruikbare helpers: `leesFkConstraints`, `verwijderFkConstraints`, `herstelFkConstraints` (`NOT VALID`, een `SAVEPOINT` per constraint) en `valideerFkConstraints` (een `SAVEPOINT` per constraint). `loadAll` roept dezelfde helpers aan en werkt ongewijzigd.
+- **Alleen de betrokken FK's** (`getBetrokkenFkConstraints`): constraints op of naar een tabel uit `LOAD_TABELLEN`. Verwijzingen tussen gebruikerstabellen onderling (bijv. `Def_Bruikleen.partijID`) blijven staan.
+- **Eén transactie.** Verwijderen van FK's, upsert, verwijderen, geometrie, sequences en het herstel met `NOT VALID` gebeuren in één transactie: de webapplicatie ziet het oude of het nieuwe geheel, nooit een mengvorm, en bij een fout wordt alles teruggedraaid (de run wordt `mislukt`, de volgende run pakt dezelfde bestanden opnieuw op). Dat geldt ook als een FK-constraint niet hersteld kan worden (`herstelFkConstraints` slaagt per constraint in een `SAVEPOINT`): na een commit zou die constraint definitief ontbreken, dus de load gooit dan een fout met de namen (`tabel.constraint`) en draait alles terug. `loadAll` (volledige cyclus) logt in dat geval alleen een waarschuwing, zoals voorheen. Het valideren gebeurt daarna in een eigen transactie. `lock_timeout` is 30 seconden (`LOCK_TIMEOUT_INCREMENTEEL`): `ALTER TABLE ... DROP CONSTRAINT` vraagt een `ACCESS EXCLUSIVE`-lock, dus houdt de webapplicatie langer een transactie open, dan faalt de load in plaats van eindeloos te wachten.
+- **Upsert van alle documenten, niet alleen die met `delta_run`.** Daardoor herstelt de load zichzelf: na een mislukte run, of als `Single_Store_Clean` om een andere reden afwijkt van PostgreSQL, brengt de volgende run alles weer gelijk. Dankzij de `IS DISTINCT FROM`-voorwaarde kost een ongewijzigde rij alleen het lezen en vergelijken.
+- **Kolommen.** Dezelfde kolommen als de volledige load (velden van de documenten die de tabel kent, zonder `location`), aangevuld met de velden uit `getFields` die de tabel kent maar die geen document (meer) heeft: die worden leeggemaakt, zoals bij een volledige load. Kolommen die de pipeline niet kent, zoals `ft_search` en de velden die de webapplicatie zelf berekent (`aantal_fotos`, `aantal_artefacten`, `datering_vanaf` enz.), blijven buiten de upsert.
+- **Ontbrekende sequence.** De atomic swap van de volledige cyclus verliest de sequence én de default van `primary_key` (de sequence hoort bij de oude tabel en verdwijnt met `DROP TABLE ... CASCADE`). Na een volledige cyclus kan de webapplicatie in de `Def_`-tabellen van de pipeline dus geen rijen aanmaken. De upsert maakt de sequence (`<tabel>_primary_key_seq`, `OWNED BY` de kolom) en de default opnieuw aan als hij ontbreekt. `loadAll` doet dat inmiddels ook zelf, in FASE 3 (`zetSequence` per tabel na het opruimen van de `_old`-tabellen).
+- **Vangnetten.** Bevat `Single_Store_Clean` geen enkel document van de te laden soorten, dan stopt de load (anders zou hij alle `Def_`-tabellen leegmaken). Een document zonder `ID` of een dubbel `ID` geeft een fout en een rollback (de volledige load faalt daar ook op).
+- **Verwijzingen naar verdwenen rijen.** Verwijst een rij in een gebruikerstabel (bijv. een bruikleen) of in een andere `Def_`-tabel naar een rij die verdwijnt, dan blijft die verwijzing staan. De constraint wordt hersteld met `NOT VALID` en kan daarna niet gevalideerd worden: hij blijft `NOT VALID` (nieuwe en gewijzigde rijen worden wel gecontroleerd). De namen staan in `tellingen.load.fk_niet_gevalideerd` en in het log.
+
+Tellingen in het run-document onder `tellingen.load`: per tabel `upsert` (aangeboden rijen), `ingevoegd`, `bijgewerkt` (alleen echte wijzigingen) en `verwijderd`; verder `totaal`, `fk_niet_hersteld` (na een geslaagde load altijd 0, want anders faalt de load) en `fk_niet_gevalideerd`.
+
+### Stabiele sleutels voor artefacten
+
+`delta_transform.getArtefactKey(doc)` geeft de `key` van een artefact, of anders de samengestelde sleutel `key_subnr|artefactsoort` (de sleutel waarop de merge artefacten samenvoegt). De load vult daarmee de kolom `key` van `Def_Artefact` (`vulArtefactKey` in `leesDocumenten`), in de volledige én de incrementele cyclus; de kolom was leeg en werd nergens gebruikt (en `key` staat in `SKIP_FULLTEXT`). `setStabielePrimaryKeys` vergelijkt artefacten op dezelfde sleutel. Een artefact uit een opnieuw ingelezen database (nieuw `_id`) houdt zo zijn `primary_key`, zolang de combinatie uniek is in `Def_Artefact`.
+
+Overgang: in een database die nog is geladen vóór fase 3 is `key` van de artefacten leeg. De eerste incrementele run vult de kolom (alle artefacten tellen dan als `bijgewerkt`); pas in de runs daarna werkt het terugvinden op de samengestelde sleutel. Begin daarom met een volledige cyclus (zie [Gebruik](#gebruik)).
+
+### Elasticsearch-delta (`fulltext.indexTableIncrementeel`)
+
+Per tabel uit `LOAD_TABELLEN` een taak `Index_<tabel>`, parallel na `Load_Upsert`. Bestaat de alias van de tabel (aangemaakt door `indexTable`), dan worden alle rijen in de index achter de alias geïndexeerd met dezelfde documenten als `generate_docs` (`_id` = `primary_key`, een bestaand document wordt overschreven) en daarna de documenten verwijderd waarvan de `_id` niet meer in de tabel staat (id's uit Elasticsearch met `helpers.scan` zonder `_source`, verschil bepalen, bulk delete). Zonder alias, of als de alias naar meer dan één index wijst, volgt een volledige indexering met `indexTable`. Alleen `LOAD_TABELLEN` worden geïndexeerd: de gebruikerstabellen verandert de incrementele cyclus niet.
+
+De Index-taken staan **niet** in de lijst `bewaakt` van `Markeer_Run_Mislukt`. Een haperende Elasticsearch maakt de run niet ongeldig: de data in PostgreSQL klopt dan al. `Registreer_Run` wacht via `Index_Klaar` (`trigger_rule=all_done`) tot alle Index-taken klaar zijn, geslaagd of niet, en zet de run daarna op `afgerond`; zo kan een volgende run niet starten terwijl de indexering nog loopt. Faalt `Load_Upsert`, dan slaagt `Index_Klaar` wel (all_done), maar draait `Registreer_Run` niet en zet `Markeer_Run_Mislukt` de run op `mislukt`. Bij een mislukte Index-taak is de Airflow-run wel rood (`End_ETL_incremental` hangt ook direct aan de Index-taken). Herstel: wis de mislukte Index-taak in Airflow zodat hij opnieuw draait, of wacht op de volgende incrementele run (die indexeert alle rijen opnieuw). Dit volgt dezelfde gedachte als de volledige cyclus, waar `Registreer_Bronbestanden` aan `LoadToDatabase_postgres` hangt en niet aan de indexering.
+
+### Testomgeving
+
+`docker-compose.test.yml` heeft een eigen Elasticsearch (`elasticsearch-test`, zonder hostpoort) en Airflow wacht op een gezonde Elasticsearch. De Index_*-taken van de volledige cyclus en van `DAG_Load_Only` slagen daardoor nu ook in de testomgeving. Zie [Testen](../testen.md#elasticsearch-in-de-testomgeving).
+
+## Run-document
+
+Elke run (ook de registratie aan het eind van de volledige cyclus) krijgt een document in `Arch_Staging.Verwerkingsruns`. De taken lezen het met `verwerkingsrun.huidigeRun()` in plaats van via XCom, zodat `airflow dags test` en handmatige aanroepen hetzelfde werken.
+
+| Veld | Inhoud |
+|------|--------|
+| `_id`, `run_id` | Tijdstempel van de start in UTC, bijv. `20261021T143005` (bij twee starts in dezelfde seconde met volgnummer `_2`) |
+| `soort` | `incrementeel` of `volledig` |
+| `status` | `actief`, `afgerond` of `mislukt` |
+| `airflow_run_id` | `run_id` van de Airflow-DagRun die de run startte |
+| `gestart_op`, `beeindigd_op` | Tijdstippen (UTC) |
+| `registratie_leeg` | `True` als `Def_Bronbestand` leeg was |
+| `nieuw`, `gewijzigd`, `ongewijzigd`, `verwijderd` | Per categorie een gesorteerde lijst met paden, bijv. `{"projecten": ["/input/projecten/SY003/C Database/opgravingSY002.mdb"], "afbeeldingen": [...]}` |
+| `ongewijzigd_weggelaten` | `True` als de lijst `ongewijzigd` is weggelaten omdat het document anders te groot wordt (MongoDB: max. 16 MB; de grens ligt op 12 MB aan padlijsten) |
+| `verwijderde_keys` | Per soort een lijst `{key, projectcd}`; voor Artefact ook `key_subnr` en `artefactsoort`. Artefacten hebben in `Single_Store` vaak `key: null` en worden samengevoegd op `key_subnr`; ze tellen mee zodra `key_subnr` gevuld is. Documenten zonder sleutel (bijv. `Fotobeschrijving`) leveren geen entry op |
+| `geraakte_projecten` | Gesorteerde lijst met projectcodes van verwijderde of vervangen `Single_Store`-documenten. Dat kunnen ook andere projecten zijn dan het project van het bestand: een foto `SY002_F001.jpg` in de map van SY003 krijgt projectcode `SY002` uit de bestandsnaam |
+| `tellingen` | `delta` (per categorie en status, plus `totaal`), `hash_berekend`, `opruimen` (per categorie: verwijderde documenten per collectie, `filenames`, `media`, `gridfs`), `transform` (fase 2: `delta_documenten`, `merge`, `gegenereerd`, `primary_keys` per soort, zie [Uitwerking in fase 2](#uitwerking-in-fase-2)), `load` (fase 3: per tabel `upsert`, `ingevoegd`, `bijgewerkt`, `verwijderd`, plus `totaal`, `fk_niet_hersteld`, `fk_niet_gevalideerd`), `registratie` (`verwerkt`, `mislukt`, `verwijderd`, `vingerafdruk_bijgewerkt`) |
+| `overgenomen_van` | `run_id`s van mislukte runs waarvan sleutels zijn overgenomen |
+| `melding` | Toelichting bij een mislukte run |
+
+De vingerafdrukken per bestand (`pad`, `categorie`, `status`, `grootte`, `mtime`, `sha256`, `vingerafdruk_bijgewerkt`) staan niet in het run-document maar in `Arch_Staging.Verwerkingsrun_Bestanden`, één document per bestand per run: bij ~100.000 foto's zouden ze de documentlimiet overschrijden. `Start_Run` verwijdert de records van eerdere runs. Let op: de volledige cyclus leegt `Arch_Staging` aan het begin, dus ook de geschiedenis van runs.
+
+## Modules en taken
+
+| Onderdeel | Inhoud |
+|-----------|--------|
+| `airflow_app/dags/DAG_Extract_Transform_Load_Incremental.py` | DAG `Extract_Transform_Load_Incremental`: `Start_Run` → `Bepaal_Delta` → `Opruimen_Oude_Records` → `Extract_Group` (delta) → Transform 1 → 2 → 3 → 5 → 4 (delta) → `Load_Upsert` → `Index_<tabel>` (parallel) → `Index_Klaar` (all_done) → `Registreer_Run` (hangt af van `Load_Upsert` en `Index_Klaar`) → einde, plus `Markeer_Run_Mislukt` (bewaakt alle taken tot en met `Registreer_Run`, niet de Index-taken). |
+| `airflow_app/dags/wasstraat/verwerkingsrun.py` | `startRun(soort, airflow_run_id)`, `huidigeRun()`, `werkRunBij(velden)`, `beeindigRun(status)`, `markeerRunMislukt(airflow_run_id)`, `getDeltaPaden(categorie, statussen)`, `isInDelta(pad, categorie)` |
+| `airflow_app/dags/wasstraat/bronbestanden.py` | `scanBronbestanden()`, `bepaalStatussen()`, `bepaalDelta()` (taak), `registreerBronbestanden()` (taak), `registreerVolledigeCyclus()` (taak in de volledige cyclus), `getLijstbestandPad(categorie)`, `telStagingRecords()` |
+| `airflow_app/dags/wasstraat/opruimen.py` | `verwijderOudeRecords()` (taak), `getStagingBronnen(categorie)` |
+| `airflow_app/scripts/importMDB.sh` | Optioneel derde argument: lijstbestand. Zonder derde argument ongewijzigd; met een lege lijst niets doen, wel het rapport, exit 0; een ontbrekend lijstbestand geeft exit 1 |
+| `tasks_extract.getExtractTaskGroup(incrementeel=False)` | Bij `True` gebruiken de BashOperators de lijstbestanden en lezen `getAndStoreImageFilenames`, `extractAllRefs` en `extractExtraProjects` de delta uit het run-document |
+| `airflow_app/dags/wasstraat/delta_transform.py` (fase 2) | Delta-pipelines (`maakDeltaHarmonizePipeline`, `maakDeltaMergePipeline`, `maakProjectMatchPipeline`, `voegToeAanEersteMatch`), `getStagingDeltaFilter`, `getGeraakteProjecten`, `werkGeraakteProjectenBij()` (taak), `bepaalGeraakteSleutels`, `getVondstkeyProjecten`, `getDeltaOfProjectFilter`, `verwijderVerdwenenSleutels`, `verwijderGegenereerdeDocumenten`, `getFotoDeltaFilter`, en voor de stabiele sleutels `getTabelVoorSoort`, `leesPgSleutels`, `bepaalStabieleIds`, `setStabielePrimaryKeys`, `bepaalVerdwenenPrimaryKeys` |
+| Transformatiefuncties (fase 2) | Optionele parameter `incrementeel` bij `harmonize`, `parseFotobestanden`, `fixMonsterProjectcds`, `enhanceAllAttributes`, `extractImagedataFromFileNames`, `setReferenceKeys`, `setAndVondstUniqueInProject`, `mergeRAAPArtefacts`, `moveSoort`, `mergeSoort`, `mergeFotoinfo`, `mergeMissing`; `stabiel` bij `setPrimaryKeys` |
+| Taakgroepen T1–T5 (fase 2) | `getHarmonizeTaskGroup`, `getEnhanceAttributesGroup`, `getSetKeysTaskGroup`, `getMoveAndMergeTaskGroup`, `getSetReferencesTaskGroup` met `incrementeel=False`; bij `True` de delta-varianten, extra taken `Werk_Geraakte_Projecten_Bij` (T1 en T2) en geen `Drop_SingleStoreClean` (T5) |
+| `loadToDatabase_functions.LOAD_TABELLEN` | De `Def_`-tabellen die `loadAll()` en `loadIncrementeel()` laden (voorheen een lokale lijst in `loadAll`); gebruikt voor de tabel per soort en de Index-taken van de incrementele cyclus |
+| `loadToDatabase_functions` (fase 3) | `loadIncrementeel()` (taak `Load_Upsert`), `werkTabelBij`, `bereidTabelVoor`, `upsertRijen`, `verwijderRijen`, `werkGeometrieBij`, `zetSequence`, `bepaalUpsertKolommen`, `getBetrokkenFkConstraints`; gedeeld met `loadAll`: `leesDocumenten` (met `vulArtefactKey`), `getDocumentKolommen`, `leesFkConstraints`, `verwijderFkConstraints`, `herstelFkConstraints`, `valideerFkConstraints`; constanten `GEBRUIKERS_TABELLEN`, `LOCK_TIMEOUT_INCREMENTEEL` |
+| `delta_transform` (fase 3) | `getArtefactKey` (samengestelde sleutel van artefacten), `leesPgSleutels(tabel, cursor=None)` (met de cursor van de load) |
+| `shared/fulltext.py` (fase 3) | `indexTableIncrementeel(table)` (taken `Index_<tabel>`), `getIndexenVanAlias`, `leesIdsUitIndex` |
+| `DAG_Extract_Transform_Load_Full_Cycle.py` | Extra taak `Registreer_Bronbestanden` na `LoadToDatabase_postgres` |
+
+## Gebruik
+
+**Ingebruikname.** Draai na het installeren van deze versie eerst één keer de volledige cyclus (`Extract_Transform_Load_Full_Cycle`). Die leegt de databases, verwerkt alles en registreert aan het eind alle bronbestanden in `Def_Bronbestand` (taak `Registreer_Bronbestanden`). Daarbij wordt van elk bestand de sha256 berekend: bij ~1 TB brondata duurt dat even (orde van grootte een uur, afhankelijk van de schijf). Daarna gebruikt elke run eerst grootte en wijzigingstijd en berekent alleen bij een afwijking de hash opnieuw. Die eerste volledige cyclus vult ook de kolom `key` van `Def_Artefact`, zodat artefacten vanaf de eerste incrementele run hun `primary_key` houden. Let op: de volledige cyclus leegt de bruiklenen en de conserveringsgegevens (`Def_Bruikleen`, `Def_Conserveringsproject`, `Def_artefact_conservering`, `Def_artefact_abr`); maak vooraf een backup (`make backup`) of exporteer ze als ze er al zijn.
+
+**Daarna: de incrementele cyclus.** Zet nieuwe of gewijzigde bestanden in de invoermappen (of haal ze weg) en trigger `Extract_Transform_Load_Incremental`. De run verwerkt alleen de delta, werkt PostgreSQL bij met stabiele `primary_key`s, laat bruiklenen en conservering staan en werkt daarna de zoekindex bij. Het verloop staat in het run-document (`Arch_Staging.Verwerkingsruns`, zie [Run-document](#run-document)) en in de logs van de taken. Er kan maar één run tegelijk actief zijn; een vastgelopen run zet je op `mislukt` met `verwerkingsrun.beeindigRun('mislukt', run_id=...)`. Een mislukte run kun je gewoon opnieuw starten: de registratie is dan niet bijgewerkt, dus dezelfde bestanden worden opnieuw opgepakt.
+
+**Wanneer toch de volledige cyclus?**
+
+- na een wijziging in de harmonisatie-Excel (`Wasstraat_Config_HarmonizeV3.xlsx`), `correcties.yml`, het gemeenteprofiel of de code van de pipeline: de incrementele cyclus herkent zulke wijzigingen niet;
+- als `Single_Store` of `Single_Store_Clean` beschadigd of leeg is (de load weigert dan), of als de staging-collecties niet meer bij de registratie passen;
+- bij een upgrade van de pipeline die dat in de release notes vraagt.
+
+Bedenk dat de volledige cyclus de `primary_key`s opnieuw nummert (verwijzingen van buitenaf naar die nummers vervallen dan) en de gebruikerstabellen leegt.
+
+## Wat de incrementele cyclus niet doet
+
+- Geen wijzigingen aan de harmonisatie-Excel of `correcties.yml` detecteren. Verandert de configuratie, draai dan de volledige cyclus.
+- Geen afgeleide velden van de webapplicatie herberekenen. `init.init()` in de webapplicatie vult `aantal_fotos`, `aantal_artefacten` en de dateringen (`datering_vanaf` enz.) alleen bij het starten van de webapplicatie en alleen als nog geen enkel artefact een `aantal_fotos` heeft. Na een incrementele run houden bestaande rijen hun oude waarden en zijn ze bij nieuwe rijen leeg.
+- Geen korte lock: de upsert houdt tijdens de hele transactie `ACCESS EXCLUSIVE`-locks op de `Def_`-tabellen met betrokken FK's, en de webapplicatie wacht zolang. In de testomgeving duurt dat ongeveer een seconde voor ruim 5.000 rijen; de tijd groeit met het aantal rijen (alle documenten worden gelezen en vergeleken), bij de Delftse data naar schatting enkele minuten. Draai de incrementele cyclus daarom bij voorkeur buiten kantooruren.
+- Geen verwijzingen naar verdwenen rijen opruimen: een bruikleen van een artefact dat uit de brondata verdwijnt blijft staan, met een verwijzing naar een niet-bestaand artefact (FK blijft `NOT VALID`, zie [Uitwerking in fase 3](#uitwerking-in-fase-3)).
+- Geen rijen in `Def_`-tabellen van de pipeline beschermen die een gebruiker in de webapplicatie heeft aangepast of aangemaakt: de pipeline is leidend voor die tabellen, net als bij de volledige cyclus. Een aangepaste kolom die de pipeline vult wordt overschreven; een rij die niet in `Single_Store_Clean` voorkomt wordt verwijderd.
+- Geen opruiming van de metadata in `Kolominformatie`: `importMDB.sh` geeft die documenten geen `mdbfile`, dus bij een gewijzigde database komt er een tweede set bij. De collectie wordt verder nergens gebruikt.
+- Geen opruiming van extra-projectdocumenten die zijn ingelezen vóór fase 1 (zonder veld `mdbfile`). Draai na het invoeren van fase 1 eerst één keer de volledige cyclus.
+- (Opgelost) Staging-documenten zonder `mdbfile` door een komma in een kolomnaam komen niet meer voor: `importMDB.sh` schrijft de kopregel nu zelf tussen aanhalingstekens en voegt ook tabelnamen met `&`, `\` of komma's veilig toe.
+
+## Testen
+
+Unit tests (fase 1): `test_verwerkingsrun.py`, `test_bronbestanden.py` (selectie, vingerafdruk, statusbepaling, lijstbestanden, registratie), `test_opruimen.py` (filters en de volledige opruimstap met een nagebootste MongoDB uit `tests/unit/nep_mongo.py`, plus de delta-varianten van de extractie) en `test_importMDB_lijstbestand.py`. In de testomgeving is de mount van `data/synthetic/data/projecten` schrijfbaar, zodat een test een project `SY003` kan toevoegen (genegeerd door git).
+
+Unit tests (fase 2): `test_delta_transform.py` — opbouw van de delta-pipelines (positie van de extra `$match` en van `$addFields {delta_run}`, geen mutatie van de pipelines uit `meta.py` en de harmonizer), het filter per staging-collectie, de geraakte sleutels (met `verwijderde_keys` en het Artefact-geval) en projecten, het verwijderen van verdwenen sleutels en gegenereerde documenten, en de stabiele sleutels met een nagebootste PostgreSQL-mapping (behouden, op `_id`, op unieke `key`, dubbele keys, nieuwe nummers, `primary_key` al in gebruik).
+
+Unit tests (fase 3): `test_delta_transform.py` (klasse `TestArtefactSleutel`: samengestelde sleutel, terugvinden van een opnieuw ingelezen artefact, dubbele sleutels, `leesPgSleutels` met cursor) en `test_load_incrementeel.py` — de SQL van de upsert, de kolomkeuze, de betrokken FK's, de sequence (ook een ontbrekende), de geometrie, de key van artefacten in de volledige en de incrementele load, en `loadIncrementeel` met een nagebootste PostgreSQL (upsert, verwijderen, tellingen in het run-document, gebruikerstabellen ongemoeid, volgorde van de FK-mechaniek, vangnetten, tweede run zonder wijzigingen), plus `indexTableIncrementeel` met een nagebootste Elasticsearch. `test_fixes_1_to_4.py` controleert de FK-mechaniek nu in `loadAll` plus de gedeelde helpers. Na de codereview: `test_load_incrementeel.py` controleert dat een FK-constraint die niet hersteld kan worden de hele load terugdraait, `test_delta_transform.py` (klasse `TestVondstkeyVlag`) het opnieuw bepalen van de vlag `vondstkey_met_putnr` en de filters van Transform 3 en 5, `test_bronbestanden.py` de registratie van een lege Access-database en `test_harmonizer.py` dat `getHarmonizeAggr` de gecachete pipeline niet wijzigt.
+
+Handmatige controle van fase 2 in de testomgeving (synthetische data, `airflow dags test`): na de volledige cyclus verandert een incrementele run zonder wijzigingen niets; een nieuw project SY003 (kopie van SY002) komt erbij met nieuwe `ID`'s boven het oude maximum terwijl alle `ID`'s en `primary_key`s van SY001 en SY002 gelijk blijven; een vervangen database en een verwijderde foto worden correct verwerkt; na het verwijderen van SY003 is `Single_Store_Clean` (aantallen, sleutels, `ID`'s en verwijzingen) gelijk aan die na de volledige cyclus. Het resultaat van een incrementele run is inhoudelijk gelijk aan dat van een volledige cyclus op dezelfde data.
+
+De integratietest `tests/integration/test_incremental_synthetic_data.py` (fase 3, markers `integration` en `load`, onderdeel van `make integration`) draait eerst de volledige cyclus op SY001 en SY002, legt de aantallen, de sleutels (`key` → `primary_key`) en de aantallen per Elasticsearch-index vast en voegt een partij en een bruikleen toe. Daarna vier incrementele runs:
+
+1. zonder wijzigingen: alle bronbestanden ongewijzigd, niets ingevoegd, bijgewerkt of verwijderd, alle aantallen en sleutels gelijk, bruikleen aanwezig, Elasticsearch gelijk;
+2. een nieuw project SY003 (kopie van SY002): SY003 krijgt evenveel rijen als SY002 met `primary_key`s boven het oude maximum, SY001/SY002 ongewijzigd, bruikleen en zijn artefact ongewijzigd, Elasticsearch gelijk aan de tabellen;
+3. de database van SY003 vervangen door die van SY001 en een foto verwijderd: SY003 volgt SY001 (4 vondsten), geen rij meer voor de verwijderde foto, geen achtergebleven rijen, verdwenen id's ook uit Elasticsearch;
+4. SY003 verwijderd: geen SY003-rijen meer in PostgreSQL en Elasticsearch, `Def_Bronbestand` op `verwijderd`, alle aantallen en sleutels gelijk aan die na de volledige cyclus.
+
+Op de synthetische data duurt de volledige cyclus ongeveer 25 seconden en een incrementele run 11 tot 14 seconden; de hele test ongeveer twee minuten.

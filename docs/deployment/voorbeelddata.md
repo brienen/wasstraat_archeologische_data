@@ -7,11 +7,11 @@ De repository bevat **synthetische voorbeelddata** in `data/synthetic/data/` —
 | Project | Beschrijving | Putten | Vlakken | Sporen | Vondsten | Artefacten | Datering |
 |---------|-------------|--------|---------|--------|----------|------------|----------|
 | **SY001** | Klein project (Marktstraat 10, Voorburg) | 2 | 2 | 3 | 4 | 5 (aardewerk, glas) | 1600-1750 |
-| **SY002** | Groot project (Kerkplein, Leiden) | 4 | 8 | 8 | 12 | 19 (20 bronregels, 8 materiaalsoorten) | 1200-1800 |
+| **SY002** | Groot project (Kerkplein, Leiden) | 4 | 8 | 8 | 12 | 20 (8 materiaalsoorten) | 1200-1800 |
 
-De aantallen zijn wat na een volledige run in PostgreSQL staat. De projectdatabases hebben geen PUT- of VLAK-tabel: de pipeline leidt putten en vlakken af uit de put- en vlaknummers van sporen, vondsten, tekeningen en foto's (zie [Transformatie](../componenten/transformatie.md#7-ontbrekende-entiteiten-aanvullen)).
+De aantallen zijn wat na een volledige run in PostgreSQL staat; in totaal zijn dat 25 artefacten (ook in `Single_Store_Clean`). De projectdatabases hebben geen PUT- of VLAK-tabel: de pipeline leidt putten en vlakken af uit de put- en vlaknummers van sporen, vondsten, tekeningen en foto's (zie [Transformatie](../componenten/transformatie.md#7-ontbrekende-entiteiten-aanvullen)).
 
-SY002 bevat een breed scala aan materiaalsoorten: aardewerk, glas, been, metaal, leer, steen, kleipijp en munten. De munt en een aardewerkscherf uit vondst 11 hebben hetzelfde artefactnummer; de pipeline voegt ze samen tot één artefact, zodat 20 bronregels 19 artefacten opleveren. Beide projecten bevatten ook depot- en fotometadata.
+SY002 bevat een breed scala aan materiaalsoorten: aardewerk, glas, been, metaal, leer, steen, kleipijp en munten. De munt en een aardewerkscherf uit vondst 11 hebben hetzelfde artefactnummer, maar worden niet samengevoegd: de munt komt uit een artefactsoort-specifieke tabel (`MUNTEN EN PENNINGEN`) en wordt direct verplaatst, zodat 20 bronregels 20 artefacten opleveren. Beide projecten bevatten ook depot- en fotometadata.
 
 Daarnaast bevat de synthetische data een **monsterdatabase** met 6 grondmonsters (3× SY001, 2× SY002 en 1 met de foute projectcode `SYNTFOUT`, die `correcties.yml` naar SY001 vertaalt), 8 botanische determinaties, 4 schelpdeterminaties en bijbehorende referentietabellen (plantensoorten, schelpsoorten, deeltypen, conserveringstoestanden).
 
