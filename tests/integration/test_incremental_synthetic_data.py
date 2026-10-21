@@ -23,7 +23,11 @@ incrementele cyclus (Extract_Transform_Load_Incremental) via
 
 Na elke run worden PostgreSQL (via ``docker exec psql``), MongoDB (run-document)
 en Elasticsearch (via ``docker exec curl`` in de Elasticsearch-container; die
-heeft geen hostpoort) gecontroleerd. De fixture ``sy003_opruimen`` verwijdert
+heeft geen hostpoort) gecontroleerd. Ook de afgeleide velden (issue 72:
+aantal_fotos, aantal_artefacten en de dateringen) worden na de volledige
+cyclus en na elke incrementele run gecontroleerd, zonder Flask te herstarten;
+na stap a en d ook door ze leeg te maken en init.init() van de webapplicatie
+ze in de Flask-container opnieuw te laten berekenen (moet hetzelfde opleveren). De fixture ``sy003_opruimen`` verwijdert
 data/synthetic/data/projecten/SY003 vóór en na de test, ook als de test faalt.
 
 Draaien:
@@ -51,6 +55,7 @@ MONGO_TEST_URI = os.getenv("MONGO_TEST_URI", "mongodb://testroot:testpass@localh
 AIRFLOW_CONTAINER = os.getenv("AIRFLOW_CONTAINER", "wasstraat_airflow_test")
 POSTGRES_CONTAINER = os.getenv("POSTGRES_CONTAINER", "wasstraat_postgres_test")
 ES_CONTAINER = os.getenv("ES_CONTAINER", "wasstraat_elasticsearch_test")
+FLASK_CONTAINER = os.getenv("FLASK_CONTAINER", "wasstraat_flask_test")
 DB_STAGING = "Arch_Staging_Test"
 DB_FILES = "Arch_Files_Test"
 
@@ -71,6 +76,10 @@ SLEUTEL_TABELLEN = ["Def_Project", "Def_Put", "Def_Vondst", "Def_Artefact", "Def
 PROJECT_TABELLEN = ["Def_Put", "Def_Vlak", "Def_Spoor", "Def_Vondst", "Def_Vulling", "Def_Artefact", "Def_Bestand"]
 
 TESTPARTIJ = "Testpartij incrementeel laden"
+
+# Afgeleide velden van Def_Artefact (issue 72); Def_Project heeft aantal_artefacten
+AFGELEIDE_KOLOMMEN = ["aantal_fotos", "vondstdatering_vanaf", "vondstdatering_tot", "spoordatering_vanaf",
+                      "spoordatering_tot", "datering_vanaf", "datering_tot"]
 
 # Toestand die de genummerde tests met elkaar delen
 TOESTAND = {}
@@ -212,6 +221,7 @@ def controleerRun(mongo_client):
     assert run is not None, "Geen run-document van een incrementele run gevonden"
     assert run["status"] == "afgerond", f"Run {run['run_id']} heeft status {run['status']}: {run.get('melding')}"
     assert "load" in run.get("tellingen", {}), "tellingen.load ontbreekt in het run-document"
+    assert "afgeleide_velden" in run["tellingen"], "tellingen.afgeleide_velden ontbreekt in het run-document"
     afbeeldingen = run["tellingen"].get("afbeeldingen")
     assert afbeeldingen is not None, "tellingen.afbeeldingen ontbreekt in het run-document"
     assert afbeeldingen["mislukt"] == 0 and afbeeldingen["onverwerkt"] == 0, afbeeldingen
@@ -265,6 +275,128 @@ def maakSY003AlsKopieVanSY002():
                 continue
             nieuwe_naam = "opgravingSY003.mdb" if naam == "opgravingSY002.mdb" else naam.replace("SY002", "SY003")
             shutil.copyfile(os.path.join(bron_map, naam), os.path.join(doel_map, nieuwe_naam))
+
+
+def tekst(kolom):
+    """SQL-expressie die een kolom als tekst geeft, met 'NULL' voor een lege waarde (psql -A laat lege velden
+    aan het eind van de uitvoer anders wegvallen)."""
+    return f"COALESCE({kolom}::text, 'NULL')"
+
+
+def afgeleideVelden():
+    """De afgeleide velden (issue 72) per primary_key: artefacten (AFGELEIDE_KOLOMMEN) en projecten."""
+    kolommen = ", ".join(tekst(f'"{k}"') for k in AFGELEIDE_KOLOMMEN)
+    return {
+        "Def_Artefact": {int(r[0]): tuple(r[1:]) for r in pgRijen(f'SELECT primary_key, {kolommen} FROM "Def_Artefact"')},
+        "Def_Project": {int(r[0]): r[1] for r in pgRijen(
+            f'SELECT primary_key, {tekst("aantal_artefacten")} FROM "Def_Project"')},
+    }
+
+
+def controleerAfgeleideVelden():
+    """De afgeleide velden kloppen met een onafhankelijke telling en met de voorrangsregels van de dateringen.
+
+    aantal_fotos: aantal objectfoto's per artefact in Def_Bestand; aantal_artefacten:
+    aantal artefacten per project; vondst- en spoordatering: die van de vondst en
+    zijn spoor; datering_vanaf: artefact, anders vondst, anders spoor; datering_tot:
+    artefact, anders vondst ('anders' = leeg of 0, zoals de observers van models.py
+    in init.init()).
+
+    Returns:
+        Dict met het aantal artefacten met foto's en met een datering (ter controle van de dekking)
+    """
+    fout_fotos = pgWaarde('''SELECT COUNT(*) FROM "Def_Artefact" a WHERE a.aantal_fotos IS DISTINCT FROM
+        (SELECT COUNT(*) FROM "Def_Bestand" b WHERE b."artefactID" = a.primary_key AND b.bestandsoort::text = 'Objectfoto')''')
+    assert fout_fotos == 0, f"{fout_fotos} artefacten met een verkeerd aantal_fotos"
+    fout_projecten = pgWaarde('''SELECT COUNT(*) FROM "Def_Project" p WHERE p.aantal_artefacten IS DISTINCT FROM
+        (SELECT COUNT(*) FROM "Def_Artefact" a WHERE a."projectID" = p.primary_key)''')
+    assert fout_projecten == 0, f"{fout_projecten} projecten met een verkeerd aantal_artefacten"
+
+    rijen = pgRijen('''SELECT a.primary_key, ''' + ", ".join(tekst(k) for k in [
+        "a.artefactdatering_vanaf", "a.artefactdatering_tot", "v.vondstdatering_vanaf", "v.vondstdatering_tot",
+        "s.spoordatering_vanaf", "s.spoordatering_tot", "a.vondstdatering_vanaf", "a.vondstdatering_tot",
+        "a.spoordatering_vanaf", "a.spoordatering_tot", "a.datering_vanaf", "a.datering_tot"]) + '''
+        FROM "Def_Artefact" a
+        LEFT JOIN "Def_Vondst" v ON v.primary_key = a."vondstID"
+        LEFT JOIN "Def_Spoor" s ON s.primary_key = v."spoorID"''')
+    fouten = []
+    for rij in rijen:
+        art_van, art_tot, vnd_van, vnd_tot, spr_van, spr_tot = [None if w == "NULL" else int(w) for w in rij[1:7]]
+        opgeslagen = [None if w == "NULL" else int(w) for w in rij[7:]]
+        verwacht = [vnd_van, vnd_tot, spr_van, spr_tot,
+                    art_van if art_van else (vnd_van if vnd_van else spr_van),
+                    art_tot if art_tot else vnd_tot]
+        if opgeslagen != verwacht:
+            fouten.append(f"artefact {rij[0]}: {opgeslagen} in plaats van {verwacht}")
+    assert not fouten, f"{len(fouten)} artefacten met verkeerde dateringen: {fouten[:5]}"
+
+    dekking = {
+        "met_fotos": pgWaarde('SELECT COUNT(*) FROM "Def_Artefact" WHERE aantal_fotos > 0'),
+        "met_datering": pgWaarde('SELECT COUNT(*) FROM "Def_Artefact" WHERE datering_vanaf IS NOT NULL'),
+        "artefacten": len(rijen),
+    }
+    print(f"  Afgeleide velden kloppen: {dekking}")
+    return dekking
+
+
+def vergelijkMetFlaskInit():
+    """De afgeleide velden van de pipeline zijn gelijk aan die van init.init() in de webapplicatie.
+
+    Legt de velden vast, maakt ze leeg en laat init.init() (ORM, models.py met de
+    observers) ze in de Flask-container opnieuw berekenen. init.init() vangt zijn
+    eigen fouten af; een mislukte berekening laat de velden leeg en valt zo op.
+    """
+    pipeline = afgeleideVelden()
+    pgRijen('UPDATE "Def_Artefact" SET ' + ", ".join(f'"{k}" = NULL' for k in AFGELEIDE_KOLOMMEN))
+    pgRijen('UPDATE "Def_Project" SET aantal_artefacten = NULL')
+    script = "import logging; logging.basicConfig(level=logging.INFO); import init; init.init()"
+    resultaat = subprocess.run(["docker", "exec", FLASK_CONTAINER, "python", "-c", script],
+                               capture_output=True, text=True, timeout=600)
+    assert resultaat.returncode == 0 and "Error while Initializing" not in resultaat.stderr, \
+        f"init.init() in {FLASK_CONTAINER} mislukt: {resultaat.stderr[-2000:]}"
+    flask = afgeleideVelden()
+    verschillen = [(pk, waarden, flask["Def_Artefact"].get(pk)) for pk, waarden in pipeline["Def_Artefact"].items()
+                   if flask["Def_Artefact"].get(pk) != waarden]
+    assert not verschillen, (f"{len(verschillen)} artefacten wijken af van init.init() "
+                             f"(primary_key, pipeline, init): {verschillen[:5]}")
+    assert flask == pipeline
+    print(f"  Gelijk aan init.init() van de webapplicatie: {len(pipeline['Def_Artefact'])} artefacten, "
+          f"{len(pipeline['Def_Project'])} projecten")
+
+
+def controleerAantalFotosInElasticsearch():
+    """aantal_fotos in de index van Def_Artefact is gelijk aan PostgreSQL, als de kolom geïndexeerd wordt.
+
+    shared/fulltext.getCols indexeert alleen primary_key en tekstkolommen; de
+    afgeleide velden zijn getallen en staan dan niet in de index.
+    """
+    mapping = esJson("def_artefact/_mapping")
+    velden = set()
+    for index in mapping.values():
+        velden.update(index.get("mappings", {}).get("properties", {}))
+    if "aantal_fotos" not in velden:
+        print("  aantal_fotos staat niet in de index van Def_Artefact (alleen tekstkolommen worden geïndexeerd)")
+        return
+    antwoord = esJson("def_artefact/_search?size=10000&_source=aantal_fotos&filter_path=hits.hits._id,hits.hits._source")
+    in_es = {int(h["_id"]): h["_source"].get("aantal_fotos") for h in antwoord.get("hits", {}).get("hits", [])}
+    in_pg = {int(r[0]): r[1] for r in pgRijen('SELECT primary_key, COALESCE(aantal_fotos::text, \'\') FROM "Def_Artefact"')}
+    assert in_es == in_pg, "aantal_fotos in Elasticsearch wijkt af van PostgreSQL"
+
+
+def afgeleideVeldenPerKey(projectcd, ander_projectcd):
+    """Gesorteerde lijst (key met ander_projectcd in plaats van projectcd, afgeleide velden) van de artefacten van een project.
+
+    Keys zijn niet altijd uniek, daarom een gesorteerde lijst in plaats van een dict.
+    """
+    kolommen = ", ".join(tekst(f'"{k}"') for k in AFGELEIDE_KOLOMMEN)
+    rijen = pgRijen(f'SELECT replace(key, \'P{projectcd}\', \'P{ander_projectcd}\'), {kolommen} '
+                    f'FROM "Def_Artefact" WHERE {filterProject(projectcd)}')
+    return sorted(tuple(r) for r in rijen)
+
+
+def alleTellingenNul(afgeleid):
+    """True als de herberekening in tellingen.afgeleide_velden niets heeft gewijzigd."""
+    return all(aantal == 0 for tabel in afgeleid.values() for aantal in tabel.values())
 
 
 # ============================================================
@@ -342,6 +474,17 @@ class TestIncrementeelSynthetic:
         assert set(statussen) == {"verwerkt"} and statussen["verwerkt"] > 0, statussen
         TOESTAND["bronbestanden"] = statussen["verwerkt"]
 
+    def test_02b_afgeleide_velden_na_volledige_cyclus(self):
+        """Issue 72: de volledige cyclus vult de afgeleide velden zelf, zonder Flask te herstarten,
+        met dezelfde uitkomst als init.init() van de webapplicatie."""
+        dekking = controleerAfgeleideVelden()
+        assert dekking["met_fotos"] > 0, "Geen artefact met objectfoto's: de test dekt aantal_fotos niet"
+        assert dekking["met_datering"] > 0, "Geen artefact met een datering: de test dekt de dateringen niet"
+        assert pgWaarde('SELECT COUNT(*) FROM "Def_Project" WHERE aantal_artefacten > 0') == 2
+        vergelijkMetFlaskInit()
+        controleerAantalFotosInElasticsearch()
+        TOESTAND["afgeleid"] = afgeleideVelden()
+
     # ----------------------------------------------------------
     # b. Gebruikersdata: partij en bruikleen
     # ----------------------------------------------------------
@@ -380,6 +523,10 @@ class TestIncrementeelSynthetic:
         controleerBruikleen()
         assert esAantallen() == TOESTAND["es"]
 
+        # Afgeleide velden: niets herschreven, gelijk aan stap a
+        assert alleTellingenNul(run["tellingen"]["afgeleide_velden"]), run["tellingen"]["afgeleide_velden"]
+        assert afgeleideVelden() == TOESTAND["afgeleid"]
+
     # ----------------------------------------------------------
     # d. Nieuw project SY003 (kopie van SY002)
     # ----------------------------------------------------------
@@ -407,6 +554,24 @@ class TestIncrementeelSynthetic:
         controleerSY001SY002Ongewijzigd()
         controleerBruikleen()
         controleerElasticsearchGelijkAanTabellen()
+
+        # Afgeleide velden (issue 72): de nieuwe artefacten zijn bijgewerkt (leeg → waarde), de bestaande
+        # rijen niet; SY003 heeft dezelfde waarden als SY002, waarvan het een kopie is. SY003 staat niet in
+        # de projectenlijst en krijgt dus geen rij in Def_Project (aantal ongewijzigd, zie hierboven); de
+        # aantallen artefacten van SY001 en SY002 veranderen niet.
+        afgeleid = run["tellingen"]["afgeleide_velden"]
+        print(f"  Afgeleide velden: {afgeleid}")
+        nieuwe_artefacten = len(TOESTAND["sy003_ids"]["Def_Artefact"])
+        assert afgeleid["Def_Artefact"]["aantal_fotos"] == nieuwe_artefacten
+        assert afgeleid["Def_Artefact"]["rijen"] == nieuwe_artefacten
+        assert afgeleid["Def_Project"] == {"aantal_artefacten": 0, "rijen": 0}
+        controleerAfgeleideVelden()
+        assert afgeleideVeldenPerKey("SY003", "SY002") == afgeleideVeldenPerKey("SY002", "SY002")
+        nu = afgeleideVelden()
+        for tabel, rijen in TOESTAND["afgeleid"].items():
+            assert {pk: nu[tabel][pk] for pk in rijen} == rijen, f"{tabel}: afgeleide velden van SY001/SY002 gewijzigd"
+        vergelijkMetFlaskInit()
+        controleerAantalFotosInElasticsearch()
 
     # ----------------------------------------------------------
     # e. Database van SY003 vervangen door die van SY001, één foto verwijderd
@@ -447,6 +612,10 @@ class TestIncrementeelSynthetic:
             verdwenen = TOESTAND["sy003_ids"][tabel] - primaryKeys(tabel)
             assert not (verdwenen & esIds(tabel)), f"{tabel}: verdwenen id's staan nog in Elasticsearch"
 
+        # Afgeleide velden (issue 72) volgen de nieuwe inhoud van SY003
+        print(f"  Afgeleide velden: {run['tellingen']['afgeleide_velden']}")
+        controleerAfgeleideVelden()
+
     # ----------------------------------------------------------
     # f. SY003 verwijderd
     # ----------------------------------------------------------
@@ -468,6 +637,10 @@ class TestIncrementeelSynthetic:
         # Elasticsearch: geen SY003 meer, gelijk aan stap a
         assert controleerElasticsearchGelijkAanTabellen() == TOESTAND["es"]
         assert esJson('def_bestand/_count?q=projectcd:SY003')["count"] == 0
+
+        # Afgeleide velden (issue 72): de overgebleven rijen veranderen niet en zijn gelijk aan stap a
+        assert alleTellingenNul(run["tellingen"]["afgeleide_velden"]), run["tellingen"]["afgeleide_velden"]
+        assert afgeleideVelden() == TOESTAND["afgeleid"]
 
         # Registratie: alle bestanden van SY003 staan op verwijderd
         statussen = bronbestandStatussen(f"pad LIKE '{PAD_SY003_IN_CONTAINER}%'")
@@ -528,4 +701,5 @@ class TestIncrementeelSynthetic:
             assert sleutels(tabel) == TOESTAND["sleutels"][tabel], f"{tabel}: sleutels niet gelijk aan stap a"
         controleerBruikleen()
         assert controleerElasticsearchGelijkAanTabellen() == TOESTAND["es"]
+        assert afgeleideVelden() == TOESTAND["afgeleid"]
         print(f"\n  Looptijden: { {k: round(v, 1) for k, v in TOESTAND['duur'].items()} }")

@@ -203,6 +203,10 @@ De 3-fase atomic swap is ongewijzigd: (1) laad naar `_new` tabellen, (2a) atomic
 
 `loadIncrementeel()` (taak `Load_Upsert` van de incrementele cyclus) werkt de bestaande tabellen bij in plaats van ze te vervangen, in één transactie: betrokken FK's verwijderen, per tabel uit `LOAD_TABELLEN` een `INSERT ... ON CONFLICT (primary_key) DO UPDATE` van alle documenten (inclusief `_id`; alleen echte wijzigingen worden geschreven), rijen verwijderen waarvan de `primary_key` niet meer in `Single_Store_Clean` staat, geometrie bijwerken, sequence van `primary_key` op max + 1 (en opnieuw aanmaken als de atomic swap hem kwijt is), FK's herstellen met `NOT VALID`, commit, valideren. `SET CONSTRAINTS ALL DEFERRED` werkt niet: niet alle FK's zijn deferrable. Gebruikerstabellen (`GEBRUIKERS_TABELLEN`: bruiklenen, partijen, conservering, `Def_artefact_abr`) en `Def_Bronbestand` blijven ongemoeid. Tellingen per tabel komen in het run-document onder `tellingen.load`. De rijen worden opgebouwd met dezelfde helpers als `transferToDB` (`leesDocumenten`, `transformRow`); artefacten zonder `key` krijgen daarbij in beide cycli de samengestelde sleutel `key_subnr|artefactsoort` in de kolom `key`.
 
+### Afgeleide velden
+
+`herberekenAfgeleideVelden(cursor)` zet na elke load met set-based SQL de velden die de webapplicatie afleidt (`AFGELEIDE_VELDEN`: `Def_Artefact.aantal_fotos`, de vondst-, spoor- en gecombineerde dateringen van artefacten, `Def_Project.aantal_artefacten`), alleen voor rijen waarvan een waarde verandert. In `loadAll` is dat FASE 4 in een eigen transactie, in `loadIncrementeel` gebeurt het binnen de upsert-transactie vóór het FK-herstel; de tellingen komen in het run-document onder `tellingen.afgeleide_velden`. `app/app/init.py` (`initIfNotInit`) blijft alleen als vangnet bij het opstarten van Flask. `tests/unit/test_afgeleide_velden.py` eist dat de SQL dezelfde uitkomst geeft als `init.init()` met de observers uit `models.py`.
+
 ### Aandachtspunten bij wijzigingen
 
 - `archutils.convertToBool()` retourneert `0`/`1` (integers) — wrap altijd met `bool()` voor psycopg2

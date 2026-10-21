@@ -16,6 +16,10 @@ transformRow):
 Beide gebruiken dezelfde FK-mechaniek: constraints lezen
 (leesFkConstraints), verwijderen (verwijderFkConstraints), herstellen met NOT
 VALID (herstelFkConstraints) en daarna valideren (valideerFkConstraints).
+
+Beide herberekenen na het laden de afgeleide velden die de webapplicatie
+toont (aantal_fotos, aantal_artefacten en de dateringen van artefacten) met
+herberekenAfgeleideVelden (issue 72).
 """
 import pymongo
 import psycopg2
@@ -630,6 +634,117 @@ def valideerFkConstraints(cursor, fk_constraints):
 
 
 # ============================================================
+# Afgeleide velden (issue 72, gedeeld door loadAll en loadIncrementeel)
+# ============================================================
+
+# Kolommen die de webapplicatie toont maar die niet uit de brondata komen, per tabel met
+# een query die per primary_key de nieuwe waarden geeft. De uitkomst is dezelfde als die van
+# init.init() in de webapplicatie (app/app/init.py), die deze velden voorheen alleen bij het
+# starten van Flask vulde:
+#
+# - aantal_fotos: het aantal objectfoto's (Def_Bestand met bestandsoort Objectfoto, het model
+#   Objectfoto) met een artefactID naar het artefact; 0 zonder foto's.
+# - vondstdatering_vanaf/_tot: de datering van de vondst (vondstID); NULL zonder vondst.
+# - spoordatering_vanaf/_tot: de datering van het spoor (spoorID) van die vondst; NULL zonder.
+# - datering_vanaf: de artefactdatering, anders de vondstdatering, anders de spoordatering.
+# - datering_tot: de artefactdatering, anders de vondstdatering (zonder spoordatering).
+# - aantal_artefacten: het aantal artefacten met een projectID naar het project; 0 zonder.
+#
+# 'Anders' betekent leeg of 0: init.init() zet zelf alleen datering_vanaf/_tot uit de
+# artefactdatering, maar elke flush van een gewijzigd artefact roept de observers van
+# models.py aan (@observes van sqlalchemy_utils), die 'if not ...' gebruiken en zo de
+# vondst- en spoordatering invullen. Voor datering_tot ontbreekt de spoordatering, omdat in
+# models.py de tweede methode spoor_observer (voor spoordatering_vanaf) de eerste (voor
+# spoordatering_tot) overschrijft; de pipeline volgt init.init() daarin.
+AFGELEIDE_VELDEN = {
+    'Def_Artefact': {
+        'kolommen': ['aantal_fotos', 'vondstdatering_vanaf', 'vondstdatering_tot', 'spoordatering_vanaf',
+                     'spoordatering_tot', 'datering_vanaf', 'datering_tot'],
+        'bron': f'''
+            SELECT a.primary_key,
+                   COALESCE(f.aantal, 0) AS aantal_fotos,
+                   v.vondstdatering_vanaf, v.vondstdatering_tot,
+                   s.spoordatering_vanaf, s.spoordatering_tot,
+                   CASE WHEN COALESCE(a.artefactdatering_vanaf, 0) <> 0 THEN a.artefactdatering_vanaf
+                        WHEN COALESCE(v.vondstdatering_vanaf, 0) <> 0 THEN v.vondstdatering_vanaf
+                        ELSE s.spoordatering_vanaf END AS datering_vanaf,
+                   CASE WHEN COALESCE(a.artefactdatering_tot, 0) <> 0 THEN a.artefactdatering_tot
+                        ELSE v.vondstdatering_tot END AS datering_tot
+            FROM "Def_Artefact" a
+            LEFT JOIN (SELECT b."artefactID", COUNT(*) AS aantal
+                       FROM "Def_Bestand" b
+                       WHERE CAST(b.bestandsoort AS TEXT) = '{const.FOTO_OBJECTFOTO}'
+                       GROUP BY b."artefactID") f ON f."artefactID" = a.primary_key
+            LEFT JOIN "Def_Vondst" v ON v.primary_key = a."vondstID"
+            LEFT JOIN "Def_Spoor" s ON s.primary_key = v."spoorID"''',
+    },
+    'Def_Project': {
+        'kolommen': ['aantal_artefacten'],
+        'bron': '''
+            SELECT p.primary_key, COUNT(a.primary_key) AS aantal_artefacten
+            FROM "Def_Project" p
+            LEFT JOIN "Def_Artefact" a ON a."projectID" = p.primary_key
+            GROUP BY p.primary_key''',
+    },
+}
+
+
+def werkAfgeleideKolommenBij(cursor, tabel, kolommen, bron_sql):
+    """Werk kolommen van een tabel bij met de waarden uit een query, alleen waar ze veranderen.
+
+    Telt eerst per kolom hoeveel rijen een andere waarde krijgen en werkt dan in
+    één UPDATE ... FROM alle rijen bij waarin minstens één kolom verandert (IS
+    DISTINCT FROM, dus ook NULL tegenover een waarde). Een rij zonder wijziging
+    wordt niet herschreven.
+
+    Args:
+        cursor: psycopg2 cursor
+        tabel: tabelnaam
+        kolommen: de bij te werken kolommen; bron_sql levert ze onder dezelfde naam
+        bron_sql: SELECT met primary_key en de kolommen
+
+    Returns:
+        Dict met per kolom het aantal rijen met een nieuwe waarde, plus 'rijen'
+        (het aantal herschreven rijen)
+    """
+    verschillen = [f't."{k}" IS DISTINCT FROM n."{k}"' for k in kolommen]
+    tellers = ', '.join(f'COUNT(*) FILTER (WHERE {v})' for v in verschillen)
+    cursor.execute(f'SELECT {tellers} FROM "{tabel}" AS t '
+                   f'JOIN ({bron_sql}) AS n ON n.primary_key = t.primary_key')
+    tellingen = {k: int(aantal) for k, aantal in zip(kolommen, cursor.fetchone())}
+
+    set_str = ', '.join(f'"{k}" = n."{k}"' for k in kolommen)
+    cursor.execute(f'UPDATE "{tabel}" AS t SET {set_str} FROM ({bron_sql}) AS n '
+                   f'WHERE n.primary_key = t.primary_key AND ({" OR ".join(verschillen)})')
+    tellingen['rijen'] = cursor.rowcount
+    return tellingen
+
+
+def herberekenAfgeleideVelden(cursor):
+    """Herbereken de afgeleide velden van de webapplicatie met set-based SQL (issue 72).
+
+    Zet aantal_fotos en de dateringen van Def_Artefact en aantal_artefacten van
+    Def_Project voor alle rijen, met dezelfde uitkomst als init.init() in de
+    webapplicatie (zie AFGELEIDE_VELDEN). Alleen rijen waarvan een waarde
+    verandert worden herschreven; een tweede aanroep schrijft dus niets.
+    loadAll roept dit aan na de swap (eigen transactie), loadIncrementeel in de
+    transactie van de upsert, vóór het herstel van de FK-constraints.
+
+    Args:
+        cursor: psycopg2 cursor; de aanroeper doet commit of rollback
+
+    Returns:
+        Dict per tabel met per kolom het aantal rijen met een nieuwe waarde en 'rijen'
+    """
+    tellingen = {}
+    for tabel, afgeleid in AFGELEIDE_VELDEN.items():
+        tellingen[tabel] = werkAfgeleideKolommenBij(cursor, tabel, afgeleid['kolommen'], afgeleid['bron'])
+        logger.info(f"Afgeleide velden van {tabel} herberekend (rijen met een nieuwe waarde per veld): "
+                    f"{tellingen[tabel]}")
+    return tellingen
+
+
+# ============================================================
 # Hoofdfunctie: 3-fase atomic swap
 # ============================================================
 
@@ -641,6 +756,9 @@ def loadAll():
     Fase 2b: Herstel FK constraints met NOT VALID + SAVEPOINTs
     Fase 3: Opruimen _old tabellen, herstel de sequences van primary_key
             (zetSequence) en valideer FK constraints
+    Fase 4: Herbereken de afgeleide velden van de webapplicatie
+            (herberekenAfgeleideVelden, issue 72), zodat ze na een volledige
+            cyclus gevuld zijn zonder Flask te herstarten
     """
     logger.info("Starting Loading data to relational database...")
 
@@ -772,6 +890,15 @@ def loadAll():
         # Valideer de FK constraints alsnog
         valideerFkConstraints(cursor, fk_constraints)
 
+        conn.commit()
+
+        # ============================================================
+        # FASE 4: Afgeleide velden van de webapplicatie (issue 72), in een
+        # eigen transactie. De nieuwe tabellen hebben ze leeg; voorheen vulde
+        # alleen init.init() van Flask ze, en alleen bij het (her)starten.
+        # ============================================================
+        logger.info("FASE 4: Afgeleide velden herberekenen...")
+        herberekenAfgeleideVelden(cursor)
         conn.commit()
         logger.info("Laden naar database succesvol afgerond.")
 
@@ -1060,6 +1187,10 @@ def loadIncrementeel():
     3. de geometrie (location) bijwerken;
     4. de sequence van primary_key op max + 1 zetten.
 
+    Daarna worden de afgeleide velden van de webapplicatie (aantal_fotos,
+    aantal_artefacten, dateringen) voor alle rijen herberekend
+    (herberekenAfgeleideVelden, issue 72).
+
     Alles gebeurt in één transactie, binnen de FK-mechaniek van loadAll: de
     betrokken FK-constraints worden eerst verwijderd, na het bijwerken
     hersteld met NOT VALID en na de commit gevalideerd. SET CONSTRAINTS ALL
@@ -1073,10 +1204,11 @@ def loadIncrementeel():
 
     Tabellen met gebruikersdata (GEBRUIKERS_TABELLEN) en Def_Bronbestand
     worden niet geleegd en niet bijgewerkt. De tellingen per tabel komen in het
-    run-document onder tellingen.load.
+    run-document onder tellingen.load, die van de afgeleide velden onder
+    tellingen.afgeleide_velden.
 
     Returns:
-        Dict met de tellingen per tabel
+        Dict met de tellingen per tabel, plus 'afgeleide_velden'
     """
     logger.info("Starten met de incrementele load (upsert) naar PostgreSQL...")
     tabellen = [t for t in LOAD_TABELLEN if t not in GEBRUIKERS_TABELLEN and t not in const.PIPELINE_TABELLEN]
@@ -1111,6 +1243,12 @@ def _upsertAlleTabellen(col, tabellen):
             if telling is not None:
                 tellingen[table] = telling
 
+        # Afgeleide velden (issue 72) in dezelfde transactie, zodat de webapplicatie ze nooit
+        # verouderd ziet, en vóór het herstel van de FK's: na een ADD CONSTRAINT ... NOT VALID
+        # controleert PostgreSQL bij een UPDATE van een rij die deze transactie heeft ingevoegd
+        # alle FK's van die rij opnieuw, ook als de verwijzende kolommen niet veranderen.
+        afgeleid = herberekenAfgeleideVelden(cursor)
+
         niet_hersteld = []
         fk_restored, fk_failed = herstelFkConstraints(cursor, fk_constraints, niet_hersteld)
         logger.info(f"FK constraints hersteld: {fk_restored} OK, {fk_failed} mislukt.")
@@ -1131,9 +1269,10 @@ def _upsertAlleTabellen(col, tabellen):
         resultaat = dict(tellingen, totaal=totaal, fk_niet_hersteld=fk_failed, fk_niet_gevalideerd=niet_gevalideerd)
         run = verwerkingsrun.huidigeRun(verplicht=False)
         if run is not None:
-            verwerkingsrun.werkRunBij({'tellingen.load': resultaat}, run_id=run['run_id'])
+            verwerkingsrun.werkRunBij({'tellingen.load': resultaat, 'tellingen.afgeleide_velden': afgeleid},
+                                      run_id=run['run_id'])
         logger.info(f"Incrementele load afgerond: {totaal}; niet gevalideerde FK's: {niet_gevalideerd}.")
-        return resultaat
+        return dict(resultaat, afgeleide_velden=afgeleid)
 
     except Exception:
         try:

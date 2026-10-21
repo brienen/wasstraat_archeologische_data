@@ -86,7 +86,7 @@ Elke transformatiestap werkt op de MongoDB staging-collecties:
 
 5. **Set References** (`tasks_transform4_references.py`): Converteert tekstuele verwijzingen naar integer-PKs voor de relationele database.
 
-6. **Load to Database & Index** (`tasks_load_to_database_and_index.py`): Kopieert de getransformeerde data naar PostgreSQL-tabellen en bouwt de Elasticsearch-zoekindex op.
+6. **Load to Database & Index** (`tasks_load_to_database_and_index.py`): Kopieert de getransformeerde data naar PostgreSQL-tabellen, berekent de afgeleide velden die de webapplicatie toont (aantal foto's per artefact, aantal artefacten per project, dateringen; `herberekenAfgeleideVelden`) en bouwt de Elasticsearch-zoekindex op.
 
 ### Kernmodule: `wasstraat/`
 
@@ -98,7 +98,7 @@ De gedeelde verwerkingslogica zit in `airflow_app/dags/wasstraat/`:
 - `setAttributes_functions.py` — Waarde-opschoning en -conversie
 - `merge_functions.py` — Deduplicatie en samenvoeglogica
 - `references_functions.py` — Referentie-resolutie
-- `loadToDatabase_functions.py` — PostgreSQL-laden via psycopg2: atomic swap (`loadAll`, volledige cyclus) en upsert (`loadIncrementeel`, incrementele cyclus)
+- `loadToDatabase_functions.py` — PostgreSQL-laden via psycopg2: atomic swap (`loadAll`, volledige cyclus) en upsert (`loadIncrementeel`, incrementele cyclus), beide gevolgd door de herberekening van de afgeleide velden (`herberekenAfgeleideVelden`)
 - `image_import.py` — Parallelle foto-import (8 processen)
 - `verwerkingsrun.py` — Run-document van de incrementele cyclus (`Verwerkingsruns`)
 - `bronbestanden.py` — Registratie van bronbestanden (`Def_Bronbestand`) en bepaling van de delta
@@ -124,7 +124,7 @@ app/
 │   ├── api.py          # REST API-endpoints
 │   ├── search.py       # Elasticsearch fulltext-zoekfunctie
 │   ├── route.py        # Custom routes (bestandsupload, redirects)
-│   ├── init.py         # Database-initialisatie en vulling
+│   ├── init.py         # Database-initialisatie; vangnet voor de afgeleide velden (normaal gevuld door de load)
 │   ├── caching.py      # Redis cache-configuratie
 │   ├── models.py       # ~62KB aan ORM-modellen
 │   ├── views.py        # ~47KB aan view-definities

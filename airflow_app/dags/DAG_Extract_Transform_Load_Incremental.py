@@ -98,7 +98,8 @@ with DAG(
     tg_moveAndMerge = tasks_transform5_moveAndMerge.getMoveAndMergeTaskGroup(incrementeel=True)
     tg_references = tasks_transform4_references.getSetReferencesTaskGroup(incrementeel=True)
 
-    # Stap 8: upsert van Single_Store_Clean naar de Def_-tabellen in PostgreSQL
+    # Stap 8: upsert van Single_Store_Clean naar de Def_-tabellen in PostgreSQL, in dezelfde
+    # transactie gevolgd door de herberekening van de afgeleide velden (issue 72)
     Load_Upsert = PythonOperator(
         task_id='Load_Upsert',
         python_callable=loadToDatabase.loadIncrementeel

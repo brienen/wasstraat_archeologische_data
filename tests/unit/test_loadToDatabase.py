@@ -390,7 +390,7 @@ class TestLoadAllSequences:
     """
 
     @staticmethod
-    def draaiLoadAll(log, zet_sequence=None):
+    def draaiLoadAll(log, zet_sequence=None, afgeleid_fout=None):
         """Draai loadAll met een nagebootste verbinding; statements en aanroepen komen in log."""
         import wasstraat.loadToDatabase_functions as load
 
@@ -419,13 +419,20 @@ class TestLoadAllSequences:
             log.append(('valideerFkConstraints',))
             return []
 
+        def nepAfgeleid(cursor):
+            log.append(('herberekenAfgeleideVelden',))
+            if afgeleid_fout:
+                raise afgeleid_fout
+            return {}
+
         with patch.object(load, 'getPgConnection', return_value=Conn()), \
                 patch.object(load, 'transferToDB'), \
                 patch.object(load, 'leesFkConstraints', return_value=[]), \
                 patch.object(load, 'verwijderFkConstraints'), \
                 patch.object(load, 'herstelFkConstraints', return_value=(0, 0)), \
                 patch.object(load, 'valideerFkConstraints', side_effect=nepValideer), \
-                patch.object(load, 'zetSequence', side_effect=logZetSequence):
+                patch.object(load, 'zetSequence', side_effect=logZetSequence), \
+                patch.object(load, 'herberekenAfgeleideVelden', side_effect=nepAfgeleid):
             load.loadAll()
 
     def test_zetSequence_voor_elke_tabel(self):
@@ -465,3 +472,17 @@ class TestLoadAllSequences:
             self.draaiLoadAll(log, zet_sequence=kapot)
         fout = log.index(('zetSequence', 'Def_Vondst'))
         assert log[fout + 1:] == [('rollback',), ('close',)]
+
+    def test_afgeleide_velden_na_fase3_in_eigen_transactie(self):
+        """Issue 72: FASE 4 herberekent de afgeleide velden na de commit van FASE 3 en commit zelf."""
+        log = []
+        self.draaiLoadAll(log)
+        assert log[-5:] == [('valideerFkConstraints',), ('commit',), ('herberekenAfgeleideVelden',),
+                            ('commit',), ('close',)]
+
+    def test_fout_in_afgeleide_velden_rolt_alleen_fase4_terug(self):
+        log = []
+        with pytest.raises(RuntimeError, match='afgeleid kapot'):
+            self.draaiLoadAll(log, afgeleid_fout=RuntimeError('afgeleid kapot'))
+        assert log[-5:] == [('valideerFkConstraints',), ('commit',), ('herberekenAfgeleideVelden',),
+                            ('rollback',), ('close',)]

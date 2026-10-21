@@ -124,6 +124,9 @@ class NepPgCursor:
         elif 'setval' in sql:
             tabel = re.search(r'FROM "(\w+)"', sql).group(1)
             self.resultaat = [(max(db.tabellen[tabel]['rijen'], default=0) + 1,)]
+        elif sql.startswith('SELECT COUNT(*) FILTER'):
+            # Telling van de afgeleide velden (herberekenAfgeleideVelden): niets verandert
+            self.resultaat = [tuple(0 for _ in range(sql.count('COUNT(*) FILTER')))]
 
     def fetchall(self):
         return self.resultaat
@@ -438,6 +441,35 @@ class TestLoadIncrementeel:
         # De andere constraint is nog wel geprobeerd; gevalideerd wordt er niets meer
         assert any('ADD CONSTRAINT "Def_Artefact_projectID_fkey"' in s for s in pg.log)
         assert not any('VALIDATE CONSTRAINT' in s for s in pg.log)
+        assert 'load' not in (verwerkingsrun.huidigeRun().get('tellingen') or {})
+
+    def test_afgeleide_velden_in_transactie_voor_fk_herstel(self, omgeving):
+        """Issue 72: na de upsert en vóór het herstel van de FK's, zonder commit ertussen."""
+        load.loadIncrementeel()
+        log = omgeving.pg.log
+        updates = [i for i, s in enumerate(log) if isinstance(s, str) and s.startswith('UPDATE "Def_')]
+        assert [log[i].split(' AS t ')[0] for i in updates] == ['UPDATE "Def_Artefact"', 'UPDATE "Def_Project"']
+        laatste_delete = max(i for i, s in enumerate(log) if s.startswith('DELETE FROM'))
+        eerste_add = min(i for i, s in enumerate(log) if 'ADD CONSTRAINT' in s)
+        assert laatste_delete < min(updates) and max(updates) < eerste_add
+        assert 'COMMIT' not in log[:eerste_add]
+
+    def test_afgeleide_velden_in_run_document(self, omgeving, monkeypatch):
+        tellingen = {'Def_Artefact': {'aantal_fotos': 2, 'rijen': 2}, 'Def_Project': {'aantal_artefacten': 1, 'rijen': 1}}
+        monkeypatch.setattr(load, 'herberekenAfgeleideVelden', lambda cursor: tellingen)
+        resultaat = load.loadIncrementeel()
+        run = verwerkingsrun.huidigeRun()
+        assert run['tellingen']['afgeleide_velden'] == tellingen
+        assert 'afgeleide_velden' not in run['tellingen']['load']
+        assert resultaat['afgeleide_velden'] == tellingen
+
+    def test_fout_in_afgeleide_velden_rolt_alles_terug(self, omgeving, monkeypatch):
+        def kapot(cursor):
+            raise RuntimeError('afgeleide velden kapot')
+        monkeypatch.setattr(load, 'herberekenAfgeleideVelden', kapot)
+        with pytest.raises(RuntimeError, match='afgeleide velden kapot'):
+            load.loadIncrementeel()
+        assert omgeving.pg.commits == 0 and omgeving.pg.rollbacks == 1
         assert 'load' not in (verwerkingsrun.huidigeRun().get('tellingen') or {})
 
     def test_herstel_fk_geeft_namen_van_mislukte_constraints(self):
