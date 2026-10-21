@@ -59,7 +59,12 @@ def indexTable(table):
             lst_tables = [x for x in list(dict_tables) if x.startswith('Def_')]
             logger.info("Indexing all string fields for " + str(lst_tables))
 
-            if table in lst_tables:
+            if table in lst_tables and 'primary_key' not in metadata.tables[table].columns:
+                # Koppeltabellen (Def_artefact_abr, Def_artefact_conservering) hebben geen primary_key
+                # en zijn geen entiteit om te doorzoeken. Tot issue 71 leegde de volledige cyclus ze,
+                # waardoor dit nooit opviel; nu blijven hun rijen staan.
+                logger.info(f"Tabel {table} heeft geen kolom primary_key (koppeltabel); niet geïndexeerd.")
+            elif table in lst_tables:
                 db_cols = getCols(connection, table)
                 sql_col_names = ['"'+col['name']+ '"' for col in db_cols]
                 db_col_names = [col['name'] for col in db_cols]

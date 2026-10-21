@@ -468,7 +468,7 @@ Na een geslaagde volledige verwerking registreert de pipeline alle bronbestanden
 2. Trigger de DAG `Extract_Transform_Load_Incremental` (play-knop → **Trigger DAG**).
 3. De DAG verwerkt alleen nieuwe, gewijzigde en verwijderde bestanden, werkt de tabellen in PostgreSQL bij (bestaande sleutels blijven gelijk, bruiklenen en conserveringsgegevens blijven staan) en daarna de zoekindex. Verdwijnt een artefact uit de brondata, dan blijft zijn bruikleen bestaan zonder artefact; de lijst Bruiklenen toont dan welk artefact het was en sinds wanneer het weg is (zie [Gebruikersdata bij verdwenen rijen](componenten/incrementeel-laden.md#gebruikersdata-bij-verdwenen-rijen-issue-73)).
 
-Draai toch de volledige cyclus als je de harmonisatie-Excel, `correcties.yml` of de code van de pipeline hebt aangepast. Zie [Incrementeel laden](componenten/incrementeel-laden.md#gebruik) voor de details.
+Draai toch de volledige cyclus als je de harmonisatie-Excel, `correcties.yml` of de code van de pipeline hebt aangepast. Ook de volledige cyclus houdt de bestaande sleutels en laat bruiklenen, partijen en conserveringsgegevens staan (zie [Volledige cyclus](componenten/incrementeel-laden.md#volledige-cyclus-gebruikersdata-en-stabiele-sleutels-issue-71)). Zie [Incrementeel laden](componenten/incrementeel-laden.md#gebruik) voor de details.
 
 ### Stapsgewijs draaien (optioneel)
 

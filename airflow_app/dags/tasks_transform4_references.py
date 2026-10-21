@@ -7,15 +7,17 @@ import wasstraat.references_functions as references_functions
 import wasstraat.meta as meta
 
 
-def getSetReferencesTaskGroup(incrementeel=False):
+def getSetReferencesTaskGroup():
     """Maak de taakgroep voor Transform 4 (integer-sleutels en referenties).
 
-    Args:
-        incrementeel: als True kennen de Set_PrimaryKey-taken stabiele sleutels
-            toe: documenten houden hun ID of krijgen hun primary_key uit
-            PostgreSQL terug; alleen nieuwe entiteiten krijgen een nieuw nummer
-            (incrementele cyclus). De Set_Reference-taken werken altijd hetzelfde:
-            ze vullen alleen ontbrekende <soort>ID-velden.
+    De Set_PrimaryKey-taken kennen in elke DAG stabiele sleutels toe
+    (stabiel=True): documenten houden hun ID of krijgen hun primary_key uit
+    PostgreSQL terug; alleen nieuwe entiteiten krijgen een nieuw nummer boven
+    het bestaande maximum. Tot issue 71 deed alleen de incrementele cyclus dat
+    en nummerde de volledige cyclus alles opnieuw, waardoor sleutels
+    verschoven en de gebruikerstabellen geleegd moesten worden. De
+    Set_Reference-taken werken altijd hetzelfde: ze vullen alleen ontbrekende
+    <soort>ID-velden.
     """
     tg1 = TaskGroup(group_id='Transform4_Set_References_Group')
     with tg1:
@@ -28,7 +30,7 @@ def getSetReferencesTaskGroup(incrementeel=False):
             tsk = PythonOperator(
                 task_id=f'Set_PrimaryKey_{obj_type}',
                 python_callable=references_functions.setPrimaryKeys,
-                op_kwargs=dict({'soort': obj_type, 'col': 'analyseclean'}, **({'stabiel': True} if incrementeel else {}))
+                op_kwargs={'soort': obj_type, 'col': 'analyseclean', 'stabiel': True}
             )
             first >> tsk >> middle
 

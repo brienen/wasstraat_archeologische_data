@@ -282,16 +282,19 @@ class TestFix2_AtomicTableSwap(unittest.TestCase):
         self.assertIn('FASE 2b', self.func_source,
             "FASE 2b ontbreekt: FK-restore moet in een aparte transactie")
 
-    def test_truncate_uses_cascade(self):
-        """Verifieer dat TRUNCATE CASCADE wordt gebruikt voor extra tabellen.
+    def test_geen_truncate_van_gebruikerstabellen(self):
+        """Verifieer dat loadAll de gebruikerstabellen niet meer leegt (issue 71).
 
-        Tabellen als Def_Bruikleen kunnen FKs hebben naar tabellen buiten
-        de hoofdlijst (bijv. Def_Partij). CASCADE voorkomt FK-conflicten.
+        Tot issue 71 leegde loadAll Def_Bruikleen, Def_artefact_abr,
+        Def_artefact_conservering en Def_Conserveringsproject met TRUNCATE ...
+        CASCADE, omdat de volledige cyclus de sleutels opnieuw nummerde. Nu
+        blijven ze staan en werkt loadAll alleen hun verwijzingen bij.
         """
-        # Zoek de TRUNCATE-regel voor extra tabellen
-        self.assertRegex(self.func_source, r'TRUNCATE.*CASCADE',
-            "TRUNCATE zonder CASCADE. Extra tabellen kunnen FK-referenties "
-            "hebben naar tabellen buiten de lijst (bijv. Def_Partij).")
+        self.assertNotIn('TRUNCATE', self.loadall_source.upper(),
+            "loadAll leegt nog tabellen met TRUNCATE; de gebruikerstabellen moeten blijven staan.")
+        for helper in ('bepaalVervallenSleutels(cursor', 'bepaalVerwijzingen(cursor',
+                       'koppelGebruikersdataLos(cursor', 'werkGebruikersdataBijNaSwap(cursor'):
+            self.assertIn(helper, self.loadall_source, f"loadAll roept {helper.split('(')[0]} niet aan")
 
     def test_enum_detection_excludes_geometry(self):
         """Verifieer dat ENUM-detectie geen geometry-kolommen meeneemt.

@@ -124,7 +124,7 @@ De Flask smoke tests (`tests/integration/test_flask_smoke.py`, marker `flask_smo
 
 ### Incrementele cyclus
 
-`tests/integration/test_incremental_synthetic_data.py` (markers `integration` en `load`, draait in `make integration` na de andere tests) begint zelf met de volledige cyclus en controleert daarna de incrementele cyclus in zeven runs (c tot en met h; g en h gaan over onleesbare foto's, issue 70, zie [Incrementeel laden](componenten/incrementeel-laden.md#testen)):
+`tests/integration/test_incremental_synthetic_data.py` (markers `integration` en `load`, draait in `make integration` na de andere tests) begint zelf met de volledige cyclus, controleert daarna de incrementele cyclus in zeven runs (c tot en met h; g en h gaan over onleesbare foto's, issue 70, zie [Incrementeel laden](componenten/incrementeel-laden.md#testen)) en draait tot slot opnieuw de volledige cyclus (i, issue 71):
 
 | Stap | Wijziging | Wat wordt gecontroleerd |
 |------|-----------|-------------------------|
@@ -135,8 +135,9 @@ De Flask smoke tests (`tests/integration/test_flask_smoke.py`, marker `flask_smo
 | e | Database van SY003 vervangen door die van SY001, één foto verwijderd | SY003 volgt SY001 (4 vondsten, plus de put en vondst die Transform 5 aanmaakt voor de objectfoto `SY003_P4_H11_1_1.jpg`), geen rij meer voor de verwijderde foto, geen achtergebleven rijen, verdwenen id's ook uit Elasticsearch; de bruikleen van het verdwenen artefact bestaat nog met `artefactID` leeg, de key in `artefact_verdwenen_key` en een tijdstip binnen de run in `artefact_verdwenen_op` (issue 73), de bruikleen uit stap b is ongemoeid en geen enkele FK is `NOT VALID` (`pg_constraint.convalidated`) |
 | e2 | Database van SY003 weer die van SY002 | Het artefact keert terug met dezelfde key (nieuwe `primary_key`); de bruikleen is er weer aan gekoppeld en de markering is leeg (`tellingen.gebruikersdata`: één teruggekoppeld), FK's geldig |
 | f | SY003 verwijderd | Geen SY003-rijen meer in PostgreSQL en Elasticsearch, `Def_Bronbestand` op `verwijderd`, alle sleutels en aantallen gelijk aan stap a; de bruikleen van het SY003-artefact is weer losgekoppeld en bestaat nog, FK's geldig |
+| i | Opnieuw de volledige cyclus, na een conserveringsproject met een regel en een extra ABR-materiaal (SQL) voor het artefact van de bruikleen | De inhoud van alle gebruikerstabellen is ongewijzigd (ook de losgekoppelde bruikleen van SY003), de bruikleen hangt aan hetzelfde artefact; aantallen, sleutels, Elasticsearch-aantallen en afgeleide velden gelijk aan stap a; geen melding van hernummerde sleutels, geen FK `NOT VALID`, elke sequence boven het maximum |
 
-De fixture `sy003_opruimen` verwijdert `data/synthetic/data/projecten/SY003` vóór en na de test, ook als die faalt. De test duurt ongeveer twee minuten. Los draaien (met een draaiende testomgeving):
+De fixture `sy003_opruimen` verwijdert `data/synthetic/data/projecten/SY003` vóór en na de test, ook als die faalt, en ruimt achteraf de testgebruikersdata op (partij, bruiklenen, conserveringsproject en het extra ABR-materiaal). De test duurt ongeveer twee minuten. Los draaien (met een draaiende testomgeving):
 
 ```bash
 python -m pytest tests/integration/test_incremental_synthetic_data.py -v -s
@@ -217,6 +218,7 @@ De basisimage van Jupyter staat vast op een digest in `services/jupyter/Dockerfi
 | `pakketversies.py` | `services/*/constraints.txt` bevatten alleen exacte versies; de Airflow-constraints leggen Airflow zelf niet vast, de Airflow-build houdt de pakketten van de basisimage op hun versie, installeert met constraints, draait `pip check` en controleert de versies; `apt-get` met retries in de Dockerfiles; `make constraints` kent Airflow en raakt geen draaiende containers |
 | `verwerkingsrun.py`, `bronbestanden.py`, `opruimen.py`, `delta_transform.py` | Incrementeel laden: run-document, registratie en delta van bronbestanden, opruimen, delta-transformaties en stabiele sleutels (ook de samengestelde sleutel van artefacten) |
 | `load_incrementeel.py` | Upsert-load (`loadIncrementeel`: upsert, verwijderen, FK-mechaniek, sequence, gebruikerstabellen ongemoeid, tellingen) en de Elasticsearch-delta (`indexTableIncrementeel`) met nagebootste databases |
+| `load_volledig.py` | Volledige load (`loadAll`) met gebruikersdata (issue 71): vervallen en hernummerde rijen, loskoppelen vóór en terugkoppelen na de rename, koppelrijen, eerste run, met een nagebootste PostgreSQL inclusief de atomic swap; `indexTable` slaat koppeltabellen zonder `primary_key` over |
 
 ### Integratietests
 
@@ -227,7 +229,7 @@ De basisimage van Jupyter staat vast op een digest in `services/jupyter/Dockerfi
 | `test_full_pipeline_delft_data.py` | Zelfde pipeline maar met Delftse data en Delft-specifieke verwachte aantallen; objectfoto's met projectcode `DB034`, integers en een `artefactID`; het aantal staging-records met een regeleinde in een tekstveld per tabel, zonder de extra kolommen midden in een veld (issue 74) |
 | `test_harmonize_pipeline.py` | Individuele harmonisatie-pipelines (Vondst, Spoor, alle objecttypen) |
 | `test_importMDB_bash.py` | MDB-import shell-script: encoding-conversie, CSV-generatie, mongoimport |
-| `test_incremental_synthetic_data.py` | Volledige cyclus gevolgd door vier incrementele runs (geen wijziging, nieuw project, vervangen database en verwijderde foto, verwijderd project): PostgreSQL, Elasticsearch, registratie en gebruikersdata |
+| `test_incremental_synthetic_data.py` | Volledige cyclus gevolgd door zeven incrementele runs (geen wijziging, nieuw project, vervangen database en verwijderde foto, teruggekeerd artefact, verwijderd project, onleesbare foto en herstel) en opnieuw de volledige cyclus (gebruikerstabellen en sleutels blijven, issue 71): PostgreSQL, Elasticsearch, registratie en gebruikersdata |
 
 ## Nieuwe tests toevoegen
 

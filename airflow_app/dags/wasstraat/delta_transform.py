@@ -18,8 +18,10 @@ functies uit deze module om zich te beperken tot de delta:
   verwijdert samengevoegde documenten waarvan de sleutel is verdwenen en
   genereert ontbrekende entiteiten opnieuw voor de geraakte projecten.
 - Transform 4 kent stabiele sleutels toe: een document houdt zijn ID, krijgt
-  anders de primary_key uit PostgreSQL (op _id, of op een unieke key) en pas
-  als laatste een nieuw nummer boven het bestaande maximum.
+  anders de primary_key uit de bron (ABR) of uit PostgreSQL (op _id, op een
+  unieke bestandsidentiteit of op een unieke key) en pas als laatste een nieuw
+  nummer boven het bestaande maximum. Sinds issue 71 doet de volledige cyclus
+  dat ook (setStabielePrimaryKeys); daar is het _id altijd nieuw.
 
 Alle documenten die een incrementele run in Single_Store_Clean (opnieuw)
 schrijft, hebben ``delta_run`` gelijk aan het run-id van die run.
@@ -53,6 +55,9 @@ SCHEIDING_ARTEFACT_KEY = '|'
 VELD_VONDSTKEY_VLAG = 'vondstkey_met_putnr'
 # Soorten waarvan een sleutel in meta.py (key of key_vondst via aggr_key_vondst) van die vlag afhangt
 SOORTEN_MET_VONDSTKEY_VLAG = ['Spoor', 'Vulling', 'Artefact', 'Monster', 'Vondst']
+# Velden (en kolommen van Def_Bestand) waarmee een bestand wordt herkend, los van zijn key: de map en de
+# bestandsnaam. Foto's hebben vaak dezelfde key (sfeer- en opgravingsfoto met hetzelfde nummer, issue 71).
+BESTAND_IDENTITEIT = ('directory', 'fileName')
 
 
 # ============================================================
@@ -566,7 +571,7 @@ def getTabelVoorSoort(soort):
 
 
 def leesPgSleutels(tabel, cursor=None):
-    """Lees de bestaande toewijzing (_id, key) → primary_key uit een PostgreSQL-tabel.
+    """Lees de bestaande toewijzing (_id, key, bestandsidentiteit) → primary_key uit een PostgreSQL-tabel.
 
     Args:
         tabel: tabelnaam, bijv. 'Def_Vondst'
@@ -576,8 +581,10 @@ def leesPgSleutels(tabel, cursor=None):
             eigen verbinding geopend en gesloten.
 
     Returns:
-        Lijst met dicts {'primary_key', '_id', 'key'} (kolommen die ontbreken
-        worden weggelaten), of None als de tabel (of de kolom primary_key) niet bestaat
+        Lijst met dicts {'primary_key', '_id', 'key'} plus de kolommen van
+        BESTAND_IDENTITEIT als de tabel die heeft (Def_Bestand); kolommen die
+        ontbreken worden weggelaten. None als de tabel (of de kolom
+        primary_key) niet bestaat
     """
     if cursor is not None:
         return _leesPgSleutelsMetCursor(cursor, tabel)
@@ -600,7 +607,7 @@ def _leesPgSleutelsMetCursor(cursor, tabel):
     kolommen = {rij[0] for rij in cursor.fetchall()}
     if 'primary_key' not in kolommen:
         return None
-    velden = ['primary_key'] + [k for k in ('_id', 'key') if k in kolommen]
+    velden = ['primary_key'] + [k for k in ('_id', 'key') + BESTAND_IDENTITEIT if k in kolommen]
     kolomlijst = ', '.join(f'"{veld}"' for veld in velden)
     cursor.execute(f'SELECT {kolomlijst} FROM "{tabel}"')
     return [dict(zip(velden, rij)) for rij in cursor.fetchall()]
@@ -617,33 +624,123 @@ def heeftId(doc):
         return False
 
 
+def getBestandIdentiteit(doc):
+    """Retourneer de identiteit van een bestand (map/bestandsnaam), of None als een van beide ontbreekt.
+
+    Werkt op een document uit Single_Store_Clean en op een rij uit
+    leesPgSleutels (kolommen directory en fileName van Def_Bestand).
+
+    Args:
+        doc: document of rij met de velden uit BESTAND_IDENTITEIT
+
+    Returns:
+        Tekst '<directory>/<fileName>' of None
+    """
+    directory, naam = (doc.get(veld) for veld in BESTAND_IDENTITEIT)
+    if isLeeg(directory) or isLeeg(naam):
+        return None
+    return f"{str(directory).rstrip('/')}/{naam}"
+
+
+def getBronPrimaryKey(doc):
+    """Retourneer het veld primary_key uit de brondata als geheel getal, of None.
+
+    Alleen de ABR-thesaurus levert een eigen primary_key (de harmonisatie neemt
+    de kolom over); parentID en de webapplicatie verwijzen naar die nummers.
+
+    Args:
+        doc: document uit Single_Store_Clean
+
+    Returns:
+        Geheel getal of None (ontbrekend, leeg of geen geheel getal)
+    """
+    waarde = doc.get('primary_key')
+    if waarde is None or isinstance(waarde, bool):
+        return None
+    try:
+        getal = float(waarde)
+    except (TypeError, ValueError):
+        return None
+    if math.isnan(getal) or getal != int(getal):
+        return None
+    return int(getal)
+
+
+def _koppelOpUniekeWaarde(zonder_id, toewijzing, in_gebruik, waarde_van, pg_rijen):
+    """Ken documenten zonder toewijzing de primary_key toe van de enige rij in PostgreSQL met dezelfde waarde.
+
+    Een waarde die meer dan één keer in de tabel voorkomt wordt niet gebruikt;
+    een primary_key die al in gebruik is wordt niet nog eens uitgedeeld.
+
+    Args:
+        zonder_id: documenten zonder ID
+        toewijzing: dict index -> primary_key (wordt aangevuld)
+        in_gebruik: set met uitgedeelde primary_keys (wordt aangevuld)
+        waarde_van: functie die van een document en van een rij de waarde geeft (of None)
+        pg_rijen: rijen uit leesPgSleutels
+
+    Returns:
+        Aantal toegekende primary_keys
+    """
+    per_waarde = {}
+    aantal = Counter()
+    for rij in pg_rijen or []:
+        waarde = waarde_van(rij)
+        if rij.get('primary_key') is None or waarde is None:
+            continue
+        aantal[waarde] += 1
+        per_waarde[waarde] = int(rij['primary_key'])
+    gekoppeld = 0
+    for i, doc in enumerate(zonder_id):
+        if i in toewijzing:
+            continue
+        waarde = waarde_van(doc)
+        if waarde is None or aantal.get(waarde) != 1:
+            continue
+        pk = per_waarde[waarde]
+        if pk not in in_gebruik:
+            toewijzing[i] = pk
+            in_gebruik.add(pk)
+            gekoppeld += 1
+    return gekoppeld
+
+
 def bepaalStabieleIds(docs, pg_rijen=None):
     """Bepaal stabiele ID's voor de documenten van een soort zonder ID.
 
     Volgorde per document zonder ID:
 
-    1. de primary_key van de rij in PostgreSQL met dezelfde ``_id`` (tekst van
+    1. de primary_key uit de bron (veld ``primary_key``, alleen bij de
+       ABR-thesaurus; getBronPrimaryKey), zoals de oude nummering van de
+       volledige cyclus;
+    2. de primary_key van de rij in PostgreSQL met dezelfde ``_id`` (tekst van
        het ``_id``). Verplaatste documenten houden het ``_id`` van hun
        staging-document; een samengevoegd document krijgt het ``_id`` van het
        laatste brondocument in zijn groep, dat gelijk blijft zolang de groep
-       niet verandert;
-    2. anders de primary_key van de rij met dezelfde ``key``, maar alleen als
+       niet verandert. In de volledige cyclus is het ``_id`` altijd nieuw;
+    3. bij bestanden de primary_key van de rij met dezelfde map en
+       bestandsnaam (getBestandIdentiteit), als die combinatie precies één
+       keer in de tabel voorkomt: foto's hebben vaak dezelfde key;
+    4. anders de primary_key van de rij met dezelfde ``key``, maar alleen als
        die key precies één keer in de tabel voorkomt (Move-soorten zoals
        Standplaats hebben dubbele keys);
-    3. anders een nieuw nummer, oplopend vanaf het maximum van de primary_keys
+    5. anders een nieuw nummer, oplopend vanaf het maximum van de primary_keys
        in PostgreSQL en de ID's in Single_Store_Clean, plus één.
 
     Een primary_key die al bij een ander document hoort (een document dat zijn
     ID heeft behouden, of eerder in deze toewijzing) wordt niet nog eens
-    uitgedeeld. Documenten met een ID houden dat ID.
+    uitgedeeld. Documenten met een ID houden dat ID. Twee documenten met
+    dezelfde (in PostgreSQL unieke) key: het eerste krijgt de bestaande
+    primary_key, het tweede een nieuw nummer.
 
     Args:
-        docs: documenten van de soort uit Single_Store_Clean (met _id, key en eventueel ID)
+        docs: documenten van de soort uit Single_Store_Clean (met _id, key en eventueel ID,
+            primary_key, directory en fileName)
         pg_rijen: rijen uit leesPgSleutels, of None als de soort geen tabel heeft
 
     Returns:
         Tuple (lijst met (_id, ID) voor de documenten zonder ID, dict met tellingen
-        'behouden', 'op_id', 'op_key' en 'nieuw')
+        'behouden', 'uit_bron', 'op_id', 'op_bestand', 'op_key' en 'nieuw')
     """
     in_gebruik = set()
     maximum = -1
@@ -655,8 +752,6 @@ def bepaalStabieleIds(docs, pg_rijen=None):
     zonder_id = [doc for doc in docs if not heeftId(doc)]
 
     per_id = {}
-    per_key = {}
-    aantal_per_key = Counter()
     for rij in pg_rijen or []:
         if rij.get('primary_key') is None:
             continue
@@ -664,35 +759,35 @@ def bepaalStabieleIds(docs, pg_rijen=None):
         maximum = max(maximum, pk)
         if rij.get('_id') is not None:
             per_id[str(rij['_id'])] = pk
-        if rij.get('key') is not None:
-            aantal_per_key[rij['key']] += 1
-            per_key[rij['key']] = pk
 
-    tellingen = {'behouden': len(docs) - len(zonder_id), 'op_id': 0, 'op_key': 0, 'nieuw': 0}
+    tellingen = {'behouden': len(docs) - len(zonder_id), 'uit_bron': 0, 'op_id': 0, 'op_bestand': 0,
+                 'op_key': 0, 'nieuw': 0}
     toewijzing = {}
 
-    # 1. Op _id
+    # 1. Uit de bron (ABR)
     for i, doc in enumerate(zonder_id):
+        pk = getBronPrimaryKey(doc)
+        if pk is not None and pk not in in_gebruik:
+            toewijzing[i] = pk
+            in_gebruik.add(pk)
+            maximum = max(maximum, pk)
+            tellingen['uit_bron'] += 1
+
+    # 2. Op _id
+    for i, doc in enumerate(zonder_id):
+        if i in toewijzing:
+            continue
         pk = per_id.get(str(doc['_id']))
         if pk is not None and pk not in in_gebruik:
             toewijzing[i] = pk
             in_gebruik.add(pk)
             tellingen['op_id'] += 1
 
-    # 2. Op een unieke key
-    for i, doc in enumerate(zonder_id):
-        if i in toewijzing:
-            continue
-        key = doc.get('key')
-        if key is None or aantal_per_key.get(key) != 1:
-            continue
-        pk = per_key[key]
-        if pk not in in_gebruik:
-            toewijzing[i] = pk
-            in_gebruik.add(pk)
-            tellingen['op_key'] += 1
+    # 3. Op een unieke bestandsidentiteit, 4. op een unieke key
+    tellingen['op_bestand'] = _koppelOpUniekeWaarde(zonder_id, toewijzing, in_gebruik, getBestandIdentiteit, pg_rijen)
+    tellingen['op_key'] = _koppelOpUniekeWaarde(zonder_id, toewijzing, in_gebruik, lambda d: d.get('key'), pg_rijen)
 
-    # 3. Nieuwe nummers, in een vaste volgorde
+    # 5. Nieuwe nummers, in een vaste volgorde
     volgende = maximum + 1
     resterend = sorted((i for i in range(len(zonder_id)) if i not in toewijzing),
                        key=lambda i: (str(zonder_id[i].get('key')), str(zonder_id[i]['_id'])))
@@ -724,12 +819,14 @@ def bepaalVerdwenenPrimaryKeys(pg_rijen, ids):
 def setStabielePrimaryKeys(soort, collection):
     """Ken stabiele ID's toe aan de documenten van een soort in Single_Store_Clean (zie bepaalStabieleIds).
 
-    Alleen documenten zonder ID worden bijgewerkt (alleen het veld ID). Voor
+    Draait in de incrementele én (sinds issue 71) de volledige cyclus. Alleen
+    documenten zonder ID worden bijgewerkt (alleen het veld ID). Voor
     Artefact wordt op ``getArtefactKey`` vergeleken (key, of anders
     ``key_subnr|artefactsoort``), net als de kolom key in Def_Artefact. Bestaat
     de tabel in PostgreSQL niet en heeft nog geen enkel document een ID (eerste
     run in een lege database), dan retourneert de functie False: de aanroeper
-    kent de sleutels dan toe zoals de volledige cyclus.
+    kent de sleutels dan toe zoals vóór issue 71 (volgnummers vanaf 0).
+    Een lege tabel geeft ook nummers vanaf 0 (op volgorde van key en _id).
 
     Args:
         soort: soort uit SET_KEYS_PIPELINES
@@ -738,7 +835,8 @@ def setStabielePrimaryKeys(soort, collection):
     Returns:
         True als de sleutels zijn toegekend, False als de aanroeper het oude gedrag moet volgen
     """
-    projectie = {'_id': 1, 'key': 1, 'ID': 1}
+    projectie = {'_id': 1, 'key': 1, 'ID': 1, 'primary_key': 1}
+    projectie.update({veld: 1 for veld in BESTAND_IDENTITEIT})
     if soort == 'Artefact':
         projectie.update({'key_subnr': 1, 'artefactsoort': 1})
     docs = list(collection.find({'soort': soort}, projectie))

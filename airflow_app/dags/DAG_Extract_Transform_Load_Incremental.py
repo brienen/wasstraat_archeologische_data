@@ -96,7 +96,8 @@ with DAG(
     tg_enhanceAttrs = tasks_transform2_attributes.getEnhanceAttributesGroup(incrementeel=True)
     tg_keys = tasks_transform3_keys.getSetKeysTaskGroup(incrementeel=True)
     tg_moveAndMerge = tasks_transform5_moveAndMerge.getMoveAndMergeTaskGroup(incrementeel=True)
-    tg_references = tasks_transform4_references.getSetReferencesTaskGroup(incrementeel=True)
+    # Transform 4 kent in elke DAG stabiele sleutels toe (issue 71); geen delta-variant nodig
+    tg_references = tasks_transform4_references.getSetReferencesTaskGroup()
 
     # Stap 8: upsert van Single_Store_Clean naar de Def_-tabellen in PostgreSQL, in dezelfde
     # transactie gevolgd door de herberekening van de afgeleide velden (issue 72)

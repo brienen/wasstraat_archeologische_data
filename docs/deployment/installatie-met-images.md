@@ -175,7 +175,7 @@ Komen er later opgravingen bij, of vervang of verwijder je bestanden, draai dan 
 make incrementeel
 ```
 
-Draai de volledige cyclus opnieuw na wijzigingen in de harmonisatie-Excel, in `correcties.yml` of na het bijwerken naar een versie met een gewijzigde pipeline (zie het volgende hoofdstuk). De volledige cyclus leegt de tussenopslag en de definitieve tabellen en bouwt alles opnieuw op; bruiklenen, partijen en conserveringsgegevens die in de webapplicatie zijn ingevoerd blijven staan. Zie [Incrementeel laden](../componenten/incrementeel-laden.md) voor de details.
+Draai de volledige cyclus opnieuw na wijzigingen in de harmonisatie-Excel, in `correcties.yml` of na het bijwerken naar een versie met een gewijzigde pipeline (zie het volgende hoofdstuk). De volledige cyclus leegt de tussenopslag en bouwt de definitieve tabellen opnieuw op, met dezelfde sleutels (`primary_key`) als ervoor; bruiklenen, partijen en conserveringsgegevens die in de webapplicatie zijn ingevoerd blijven staan en blijven gekoppeld. Verdwijnt een artefact of project uit de brondata, dan blijft de bruikleen bestaan met een markering. Zie [Incrementeel laden](../componenten/incrementeel-laden.md) voor de details.
 
 ## 8. Bijwerken naar een nieuwe versie
 

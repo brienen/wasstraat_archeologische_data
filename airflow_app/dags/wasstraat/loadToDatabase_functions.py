@@ -8,6 +8,11 @@ transformRow):
 
 - loadAll(): de volledige cyclus. Laadt alles in {tabel}_new-tabellen en
   wisselt die in een 3-fase atomic swap om met de bestaande tabellen.
+  Tabellen met gebruikersdata blijven staan (issue 71): Transform 4 kent ook in
+  de volledige cyclus stabiele sleutels toe, en verwijzingen naar rijen die
+  bij de swap hun primary_key verliezen worden losgekoppeld (bruikleen,
+  conservering) of verwijderd (koppelrijen) en waar mogelijk op key weer
+  gekoppeld.
 - loadIncrementeel(): de incrementele cyclus (issue 61, fase 3). Werkt de
   bestaande tabellen bij met een upsert op primary_key en verwijdert rijen
   waarvan de entiteit uit Single_Store_Clean is verdwenen. Tabellen met
@@ -22,10 +27,11 @@ toont (aantal_fotos, aantal_artefacten en de dateringen van artefacten) met
 herberekenAfgeleideVelden (issue 72).
 
 Beide beginnen met de schemamigratie van de gebruikerstabellen
-(migreerSchemaGebruikersdata, issue 73), in een eigen transactie. De
-incrementele load koppelt verwijzingen vanuit gebruikerstabellen naar
-verdwenen rijen los (bruikleen, conservering) of verwijdert ze (pure
-koppelrijen), volgens shared/gebruikersdata.VERWIJZINGEN.
+(migreerSchemaGebruikersdata, issue 73), in een eigen transactie. Beide
+koppelen verwijzingen vanuit gebruikerstabellen naar verdwenen rijen los
+(bruikleen, conservering) of verwijderen ze (pure koppelrijen), volgens
+shared/gebruikersdata.VERWIJZINGEN, met dezelfde helpers
+(koppelVerwijzingenLos, ruimVerwijzingenOp, koppelVerwijzingenTerug).
 """
 import pymongo
 import psycopg2
@@ -56,14 +62,19 @@ LOAD_TABELLEN = [
     'Def_DT_Soort_Deel', 'Def_DT_Soort_Staat',
 ]
 
-# Tabellen met gebruikersdata (ingevoerd in de webapplicatie). De incrementele cyclus
-# laadt ze niet; hij werkt alleen verwijzingen naar verdwenen rijen bij volgens
-# shared/gebruikersdata.VERWIJZINGEN (issue 73). De volledige cyclus leegt alle behalve
-# Def_Partij (zie loadAll).
+# Tabellen met gebruikersdata (ingevoerd in de webapplicatie). Geen van beide cycli laadt of
+# leegt ze; ze werken alleen verwijzingen naar verdwenen rijen bij volgens
+# shared/gebruikersdata.VERWIJZINGEN (issue 73, in de volledige cyclus sinds issue 71).
 GEBRUIKERS_TABELLEN = [
     'Def_artefact_abr', 'Def_Bruikleen',
     'Def_artefact_conservering', 'Def_Conserveringsproject', 'Def_Partij',
 ]
+
+# Tabellen waarvan de primary_key uit de bron komt (de ABR-thesaurus, zie
+# delta_transform.getBronPrimaryKey). Daar is de primary_key zelf de identiteit: een andere
+# key bij dezelfde primary_key (bijv. een gewijzigde uri in een nieuwe ABR-versie) is geen
+# hernummering (issue 71, bepaalVervallenSleutels).
+TABELLEN_MET_BRON_PRIMARY_KEY = ['Def_ABR']
 
 # Maximale wachttijd op locks bij de incrementele load. ALTER TABLE ... DROP CONSTRAINT
 # vraagt een ACCESS EXCLUSIVE-lock; zonder timeout wacht de load eindeloos als de
@@ -785,14 +796,155 @@ def migreerSchemaGebruikersdata(conn, lock_timeout=LOCK_TIMEOUT_INCREMENTEEL):
 
 
 # ============================================================
+# Volledige cyclus: gebruikersdata bij de atomic swap (issue 71)
+# ============================================================
+
+def bepaalVervallenRijen(cursor, tabel, nieuwe_tabel, vergelijk_key=True):
+    """Bepaal welke rijen van een Def_-tabel bij de atomic swap hun primary_key verliezen.
+
+    Vergelijkt de huidige tabel met de nieuw geladen tabel op primary_key:
+
+    - verdwenen: de primary_key komt in de nieuwe tabel niet meer voor (de
+      entiteit is weg, of heeft een nieuw nummer gekregen omdat zijn key niet
+      uniek is);
+    - hernummerd (alleen met vergelijk_key): de primary_key komt wel voor, maar
+      bij een rij met een andere key. Dan zijn de sleutels in
+      Single_Store_Clean niet stabiel toegekend (bijv. DAG_Load_Only op
+      MongoDB-data uit een andere backup dan PostgreSQL) en wijst hetzelfde
+      nummer naar een andere entiteit. Een rij zonder key in de huidige tabel
+      telt niet als hernummerd.
+
+    Args:
+        cursor: psycopg2 cursor
+        tabel: de huidige tabel (bijv. 'Def_Artefact')
+        nieuwe_tabel: de nieuw geladen tabel (bijv. 'Def_Artefact_new')
+        vergelijk_key: False voor tabellen waarin de key niet de identiteit is
+            (zie getTabellenMetKeyControle); dan alleen verdwenen rijen
+
+    Returns:
+        Dict met gesorteerde lijsten 'verdwenen' en 'hernummerd'
+    """
+    kolommen = {c['name'] for c in getColumnMetadata(cursor, tabel)}
+    vervallen = {'verdwenen': [], 'hernummerd': []}
+    if 'primary_key' not in kolommen:
+        return vervallen
+    andere_key = ('o.key IS NOT NULL AND o.key IS DISTINCT FROM n.key'
+                  if vergelijk_key and 'key' in kolommen else 'FALSE')
+    cursor.execute(f'SELECT o.primary_key, n.primary_key IS NULL FROM "{tabel}" AS o '
+                   f'LEFT JOIN "{nieuwe_tabel}" AS n ON n.primary_key = o.primary_key '
+                   f'WHERE n.primary_key IS NULL OR ({andere_key})')
+    for primary_key, verdwenen in cursor.fetchall():
+        vervallen['verdwenen' if verdwenen else 'hernummerd'].append(int(primary_key))
+    vervallen['verdwenen'].sort()
+    vervallen['hernummerd'].sort()
+    return vervallen
+
+
+def getTabellenMetKeyControle():
+    """Retourneer de tabellen waarin bepaalVervallenSleutels ook op hernummerde rijen controleert.
+
+    Dat zijn de tabellen waarnaar gebruikersdata verwijst (shared/gebruikersdata.VERWIJZINGEN:
+    Def_Artefact en Def_Project) en waarin de key de identiteit is: Transform 4
+    koppelt daar in de volledige cyclus alleen op een unieke key, dus bij
+    stabiele sleutels hoort bij dezelfde primary_key altijd dezelfde key. Niet
+    in TABELLEN_MET_BRON_PRIMARY_KEY (Def_ABR) en niet in andere tabellen: daar
+    kan een entiteit zijn primary_key houden terwijl zijn key verandert (een
+    bestand op map en bestandsnaam), en geen gebruikersdata verwijst ernaar.
+
+    Returns:
+        Gesorteerde lijst met tabelnamen
+    """
+    return sorted({v['doel'] for v in gebruikersdata.VERWIJZINGEN} - set(TABELLEN_MET_BRON_PRIMARY_KEY))
+
+
+def bepaalVervallenSleutels(cursor, tabellen):
+    """Bepaal per tabel de vervallen primary_keys (bepaalVervallenRijen) en meld ze in het log.
+
+    Op hernummerde rijen wordt alleen gecontroleerd in de tabellen van
+    getTabellenMetKeyControle. Een waarschuwing volgt als er rijen hernummerd
+    zijn: dan zijn de sleutels in Single_Store_Clean niet stabiel en worden
+    verwijzingen vanuit gebruikerstabellen naar die rijen losgekoppeld (en waar
+    de key uniek is weer gekoppeld) of verwijderd (koppelrijen).
+
+    Args:
+        cursor: psycopg2 cursor
+        tabellen: lijst met (tabel, nieuwe_tabel)
+
+    Returns:
+        Dict per tabel met de lijsten 'verdwenen' en 'hernummerd'
+    """
+    met_key_controle = set(getTabellenMetKeyControle())
+    vervallen = {}
+    for tabel, nieuwe_tabel in tabellen:
+        vervallen[tabel] = bepaalVervallenRijen(cursor, tabel, nieuwe_tabel, tabel in met_key_controle)
+    aantallen = {t: {k: len(v) for k, v in rijen.items()} for t, rijen in vervallen.items()
+                 if rijen['verdwenen'] or rijen['hernummerd']}
+    logger.info(f"Rijen die bij de swap hun primary_key verliezen (verdwenen, of met een nieuw nummer omdat hun "
+                f"key niet uniek is): {aantallen or 'geen'}")
+    hernummerd = {t: a['hernummerd'] for t, a in aantallen.items() if a['hernummerd']}
+    if hernummerd:
+        logger.warning(f"Sleutels niet stabiel: bij {hernummerd} rijen hoort dezelfde primary_key na het laden bij "
+                       f"een andere key. Single_Store_Clean heeft geen stabiele sleutels gekregen (bijv. "
+                       f"DAG_Load_Only op MongoDB-data die niet bij deze PostgreSQL-database hoort, zoals na een "
+                       f"restore van een andere backup). Gebruikersdata die naar die rijen "
+                       f"verwijst wordt losgekoppeld (met markering) en alleen bij een unieke key weer gekoppeld; "
+                       f"koppelrijen worden verwijderd. Draai de volledige cyclus om dit te voorkomen.")
+    return vervallen
+
+
+def koppelGebruikersdataLos(cursor, vervallen, verwijzingen, tellingen):
+    """Koppel gebruikersdata los van rijen die bij de swap hun primary_key verliezen (vóór de rename).
+
+    Moet vóór de rename draaien: koppelVerwijzingenLos haalt de key voor de
+    markering uit de huidige (oude) tabel. Per doeltabel van een verwijzing:
+    verwijzingen met beleid LOSKOPPELEN worden losgekoppeld met markering,
+    koppelrijen (VERWIJDEREN) worden verwijderd. Verdwenen en hernummerde rijen
+    worden gelijk behandeld.
+
+    Args:
+        cursor: psycopg2 cursor, binnen de swap-transactie (FK-constraints verwijderd)
+        vervallen: dict uit bepaalVervallenSleutels
+        verwijzingen: lijst uit bepaalVerwijzingen
+        tellingen: dict uit bepaalVerwijzingen, wordt bijgewerkt
+    """
+    for doel in sorted({v['doel'] for v in verwijzingen}):
+        rijen = vervallen.get(doel, {})
+        primary_keys = sorted(set(rijen.get('verdwenen', [])) | set(rijen.get('hernummerd', [])))
+        koppelVerwijzingenLos(cursor, doel, primary_keys, verwijzingen, tellingen)
+        verwijderKoppelrijen(cursor, doel, primary_keys, verwijzingen, tellingen)
+
+
+def werkGebruikersdataBijNaSwap(cursor, verwijzingen, tellingen):
+    """Ruim na de rename verwijzingen zonder doel op en koppel losgekoppelde rijen terug op key.
+
+    ruimVerwijzingenOp is het vangnet voor verwijzingen naar een rij die niet
+    (meer) bestaat, bijvoorbeeld van vóór issue 73; koppelVerwijzingenTerug
+    koppelt losgekoppelde rijen (ook uit eerdere runs) aan de rij met dezelfde,
+    unieke key in de nieuwe tabel.
+
+    Args:
+        cursor: psycopg2 cursor, binnen de swap-transactie (na de rename)
+        verwijzingen: lijst uit bepaalVerwijzingen
+        tellingen: dict uit bepaalVerwijzingen, wordt bijgewerkt
+    """
+    for doel in sorted({v['doel'] for v in verwijzingen}):
+        ruimVerwijzingenOp(cursor, doel, verwijzingen, tellingen)
+    koppelVerwijzingenTerug(cursor, verwijzingen, tellingen)
+    logger.info(f"Verwijzingen vanuit gebruikerstabellen bijgewerkt: {tellingen}")
+
+
+# ============================================================
 # Hoofdfunctie: 3-fase atomic swap
 # ============================================================
 
 def loadAll():
     """Laad alle data uit MongoDB naar PostgreSQL via een 3-fase atomic swap.
 
-    Fase 1: Laad data in tijdelijke {tabel}_new tabellen
-    Fase 2a: Atomic rename swap (drop FK → rename → truncate extra)
+    Fase 1: Laad data in tijdelijke {tabel}_new tabellen en bepaal per tabel
+            welke rijen hun primary_key verliezen (bepaalVervallenSleutels)
+    Fase 2a: Atomic rename swap: drop FK → gebruikersdata loskoppelen van
+            vervallen rijen (koppelGebruikersdataLos) → rename → verwijzingen
+            opruimen en op key terugkoppelen (werkGebruikersdataBijNaSwap)
     Fase 2b: Herstel FK constraints met NOT VALID + SAVEPOINTs
     Fase 3: Opruimen _old tabellen, herstel de sequences van primary_key
             (zetSequence) en valideer FK constraints
@@ -802,6 +954,18 @@ def loadAll():
 
     Vooraf, in een eigen transactie: de schemamigratie van de
     gebruikerstabellen (migreerSchemaGebruikersdata, issue 73).
+
+    De tabellen met gebruikersdata (GEBRUIKERS_TABELLEN) worden niet geladen,
+    niet geswapt en niet geleegd (issue 71). Transform 4 kent stabiele
+    sleutels toe, dus een entiteit houdt zijn primary_key; verwijzingen naar
+    rijen die toch hun primary_key verliezen worden volgens
+    shared/gebruikersdata.VERWIJZINGEN losgekoppeld of verwijderd, zodat de
+    FK-constraints valideren. De sequences van de gebruikerstabellen blijven
+    ongemoeid.
+
+    Returns:
+        Dict met 'vervallen' (per tabel het aantal verdwenen en hernummerde
+        rijen) en 'gebruikersdata' (tellingen per gebruikerstabel en kolom)
     """
     logger.info("Starting Loading data to relational database...")
 
@@ -809,12 +973,6 @@ def loadAll():
     conn = getPgConnection()
 
     lst_tables = list(LOAD_TABELLEN)
-
-    # Extra tabellen die ook getruncated worden (niet in de hoofdlijst)
-    extra_truncate_tables = [
-        'Def_artefact_abr', 'Def_Bruikleen',
-        'Def_artefact_conservering', 'Def_Conserveringsproject',
-    ]
 
     temp_tables_created = []
 
@@ -862,6 +1020,10 @@ def loadAll():
                     transferToDB(soort, temp_table, cursor)
                     logger.info(f"Geladen: {soort} -> {temp_table}")
 
+            # Welke rijen verliezen bij de swap hun primary_key (issue 71)? Hier, buiten de
+            # swap-transactie: de vergelijking leest alleen en houdt geen exclusieve locks.
+            vervallen = bepaalVervallenSleutels(cursor, temp_tables_created)
+
             conn.commit()
 
         except Exception as err:
@@ -878,7 +1040,9 @@ def loadAll():
 
         # ============================================================
         # FASE 2a: Snelle swap in een aparte, korte transactie.
-        # FK constraints worden hier gedropt en de tabellen hernoemd.
+        # FK constraints worden hier gedropt en de tabellen hernoemd. De
+        # gebruikerstabellen blijven staan (issue 71); hun verwijzingen naar
+        # vervallen rijen worden in dezelfde transactie bijgewerkt.
         # ============================================================
         logger.info("FASE 2a: Atomic swap van tabellen...")
 
@@ -891,6 +1055,11 @@ def loadAll():
         logger.info(f"Gevonden: {len(fk_constraints)} FK constraints om tijdelijk te verwijderen")
         verwijderFkConstraints(cursor, fk_constraints)
 
+        # Gebruikersdata loskoppelen van rijen die hun primary_key verliezen, vóór de rename
+        # (de key voor de markering komt uit de huidige tabel)
+        verwijzingen, gebruikers = bepaalVerwijzingen(cursor, lst_tables)
+        koppelGebruikersdataLos(cursor, vervallen, verwijzingen, gebruikers)
+
         # Rename is instant (PostgreSQL past alleen de systeemcatalogus aan)
         for orig, temp in temp_tables_created:
             old_table = f"{orig}_old"
@@ -898,9 +1067,8 @@ def loadAll():
             cursor.execute(f'ALTER TABLE "{orig}" RENAME TO "{old_table}"')
             cursor.execute(f'ALTER TABLE "{temp}" RENAME TO "{orig}"')
 
-        # Truncate de extra tabellen (CASCADE voorkomt FK-conflicten)
-        lst_extra = ', '.join(f'"{t}"' for t in extra_truncate_tables)
-        cursor.execute(f'TRUNCATE {lst_extra} CASCADE')
+        # Verwijzingen zonder doel opruimen en losgekoppelde rijen op key terugkoppelen
+        werkGebruikersdataBijNaSwap(cursor, verwijzingen, gebruikers)
 
         conn.commit()
         logger.info("Swap voltooid.")
@@ -947,6 +1115,10 @@ def loadAll():
         herberekenAfgeleideVelden(cursor)
         conn.commit()
         logger.info("Laden naar database succesvol afgerond.")
+        return {
+            'vervallen': {t: {k: len(v) for k, v in rijen.items()} for t, rijen in vervallen.items()},
+            'gebruikersdata': gebruikers,
+        }
 
     except Exception:
         try:
@@ -1149,6 +1321,43 @@ def koppelVerwijzingenLos(cursor, doel, primary_keys, verwijzingen, tellingen):
             totaal += len(keys)
             logger.info(f"{len(keys)} rij(en) in {tabel} losgekoppeld van verdwenen rijen in {doel} "
                         f"({kolom} leeg, key in {key_kolom}): {sorted(str(k) for k in keys)[:20]}")
+    return totaal
+
+
+def verwijderKoppelrijen(cursor, doel, primary_keys, verwijzingen, tellingen):
+    """Verwijder koppelrijen (beleid VERWIJDEREN) die verwijzen naar rijen van doel die hun primary_key verliezen.
+
+    Voor de volledige cyclus (issue 71): een koppelrij naar een rij die in de
+    nieuwe tabel niet meer bestaat ruimt ruimVerwijzingenOp na de swap ook op,
+    maar een rij waarvan de primary_key bij een andere entiteit terechtkomt
+    (hernummerd) niet. Deze functie verwijdert beide vóór de swap.
+
+    Args:
+        cursor: psycopg2 cursor
+        doel: Def_-tabel waarvan rijen hun primary_key verliezen
+        primary_keys: de primary_keys die vervallen
+        verwijzingen: lijst uit bepaalVerwijzingen
+        tellingen: dict uit bepaalVerwijzingen; 'verwijderd' wordt opgehoogd
+
+    Returns:
+        Aantal verwijderde koppelrijen
+    """
+    totaal = 0
+    if not primary_keys:
+        return totaal
+    for verwijzing in verwijzingen:
+        if verwijzing['doel'] != doel or verwijzing['beleid'] != gebruikersdata.VERWIJDEREN:
+            continue
+        tabel, kolom = verwijzing['tabel'], verwijzing['kolom']
+        aantal = 0
+        for batch in delta_transform.inBatches(primary_keys):
+            cursor.execute(f'DELETE FROM "{tabel}" AS g WHERE g."{kolom}" = ANY(%s)', (list(batch),))
+            aantal += cursor.rowcount
+        if aantal:
+            tellingen[tabel][kolom]['verwijderd'] += aantal
+            totaal += aantal
+            logger.info(f"{aantal} koppelrij(en) in {tabel} verwijderd: {kolom} verwees naar een rij in {doel} "
+                        f"die bij de volledige load zijn primary_key verliest.")
     return totaal
 
 

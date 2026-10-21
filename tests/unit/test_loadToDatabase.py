@@ -431,16 +431,26 @@ class TestLoadAllSequences:
                 raise migratie_fout
             return []
 
+        def logAanroep(naam, resultaat=None):
+            def aanroep(*args, **kwargs):
+                log.append((naam,))
+                return resultaat
+            return aanroep
+
         with patch.object(load, 'getPgConnection', return_value=Conn()), \
                 patch.object(load, 'migreerSchemaGebruikersdata', side_effect=nepMigratie), \
                 patch.object(load, 'transferToDB'), \
+                patch.object(load, 'bepaalVervallenSleutels', side_effect=logAanroep('bepaalVervallenSleutels', {})), \
                 patch.object(load, 'leesFkConstraints', return_value=[]), \
-                patch.object(load, 'verwijderFkConstraints'), \
+                patch.object(load, 'verwijderFkConstraints', side_effect=logAanroep('verwijderFkConstraints')), \
+                patch.object(load, 'bepaalVerwijzingen', side_effect=logAanroep('bepaalVerwijzingen', ([], {}))), \
+                patch.object(load, 'koppelGebruikersdataLos', side_effect=logAanroep('koppelGebruikersdataLos')), \
+                patch.object(load, 'werkGebruikersdataBijNaSwap', side_effect=logAanroep('werkGebruikersdataBijNaSwap')), \
                 patch.object(load, 'herstelFkConstraints', return_value=(0, 0)), \
                 patch.object(load, 'valideerFkConstraints', side_effect=nepValideer), \
                 patch.object(load, 'zetSequence', side_effect=logZetSequence), \
                 patch.object(load, 'herberekenAfgeleideVelden', side_effect=nepAfgeleid):
-            load.loadAll()
+            return load.loadAll()
 
     def test_zetSequence_voor_elke_tabel(self):
         from wasstraat.loadToDatabase_functions import LOAD_TABELLEN
@@ -507,3 +517,34 @@ class TestLoadAllSequences:
             self.draaiLoadAll(log, afgeleid_fout=RuntimeError('afgeleid kapot'))
         assert log[-5:] == [('valideerFkConstraints',), ('commit',), ('herberekenAfgeleideVelden',),
                             ('rollback',), ('close',)]
+
+    def test_gebruikerstabellen_niet_geleegd_of_geswapt(self):
+        """Issue 71: geen TRUNCATE meer en geen enkel statement op een gebruikerstabel (die blijven staan)."""
+        from wasstraat.loadToDatabase_functions import GEBRUIKERS_TABELLEN
+        log = []
+        self.draaiLoadAll(log)
+        statements = [regel[1] for regel in log if regel[0] == 'sql']
+        assert not [s for s in statements if 'TRUNCATE' in s.upper()]
+        for tabel in GEBRUIKERS_TABELLEN:
+            assert not [s for s in statements if f'"{tabel}' in s], f"{tabel} wordt door loadAll aangeraakt"
+
+    def test_gebruikersdata_rond_de_rename_in_de_swaptransactie(self):
+        """Issue 71: loskoppelen na het verwijderen van de FK's en vóór de rename, terugkoppelen na de
+        laatste rename, alles in de transactie van de swap; de vervallen sleutels vóór de commit van FASE 1."""
+        log = []
+        self.draaiLoadAll(log)
+        positie = {regel[0]: i for i, regel in enumerate(log) if len(regel) == 1}
+        renames = [i for i, regel in enumerate(log) if regel[0] == 'sql' and 'RENAME TO' in regel[1]]
+        creates = [i for i, regel in enumerate(log) if regel[0] == 'sql' and regel[1].startswith('CREATE TABLE')]
+        commits = [i for i, regel in enumerate(log) if regel[0] == 'commit']
+        assert max(creates) < positie['bepaalVervallenSleutels'] < min(c for c in commits if c > max(creates))
+        assert positie['verwijderFkConstraints'] < positie['bepaalVerwijzingen'] < positie['koppelGebruikersdataLos']
+        assert positie['koppelGebruikersdataLos'] < min(renames)
+        assert max(renames) < positie['werkGebruikersdataBijNaSwap']
+        # Geen commit tussen het loskoppelen en het terugkoppelen (één transactie met de swap)
+        assert not [c for c in commits if positie['koppelGebruikersdataLos'] < c < positie['werkGebruikersdataBijNaSwap']]
+
+    def test_resultaat_met_tellingen(self):
+        log = []
+        resultaat = self.draaiLoadAll(log)
+        assert resultaat == {'vervallen': {}, 'gebruikersdata': {}}

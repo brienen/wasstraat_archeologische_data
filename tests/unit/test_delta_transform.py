@@ -501,7 +501,7 @@ class TestStabieleSleutels:
         ]
         toewijzing, tellingen = delta_transform.bepaalStabieleIds(docs, pg)
         assert dict(toewijzing) == {OID_B: 4, OID_C: 7, OID_D: 10}
-        assert tellingen == {'behouden': 1, 'op_id': 1, 'op_key': 1, 'nieuw': 1}
+        assert tellingen == {'behouden': 1, 'uit_bron': 0, 'op_id': 1, 'op_bestand': 0, 'op_key': 1, 'nieuw': 1}
 
     def test_dubbele_key_in_tabel_wordt_niet_gebruikt(self):
         """Move-soorten zoals Standplaats hebben dubbele keys; die zijn geen betrouwbare sleutel."""
@@ -530,7 +530,7 @@ class TestStabieleSleutels:
         toewijzing, tellingen = delta_transform.bepaalStabieleIds(docs, pg)
         # Nieuwe nummers in volgorde van key: PSY002S1 vóór PSY002S99
         assert dict(toewijzing) == {OID_A: 3, OID_D: 6, OID_B: 7}
-        assert tellingen == {'behouden': 1, 'op_id': 1, 'op_key': 0, 'nieuw': 2}
+        assert tellingen == {'behouden': 1, 'uit_bron': 0, 'op_id': 1, 'op_bestand': 0, 'op_key': 0, 'nieuw': 2}
 
     def test_soort_zonder_tabel(self):
         docs = [{'_id': OID_A, 'ID': 2}, {'_id': OID_B}, {'_id': OID_C, 'ID': float('nan')}]
@@ -573,7 +573,8 @@ class TestStabieleSleutels:
         assert docs[OID_B] == {'_id': OID_B, 'soort': 'Vondst', 'key': 'PSY002P1V1', 'projectcd': 'SY002', 'ID': 1}
         assert docs[OID_C]['ID'] == 3
         telling = verwerkingsrun.huidigeRun()['tellingen']['transform']['primary_keys']['Vondst']
-        assert telling == {'behouden': 1, 'op_id': 0, 'op_key': 1, 'nieuw': 1, 'verdwenen': 1, 'tabel': 'Def_Vondst'}
+        assert telling == {'behouden': 1, 'uit_bron': 0, 'op_id': 0, 'op_bestand': 0, 'op_key': 1, 'nieuw': 1,
+                           'verdwenen': 1, 'tabel': 'Def_Vondst'}
 
     def test_lege_database_volgt_oude_gedrag(self, client, monkeypatch):
         col = clean(client)
@@ -629,7 +630,8 @@ class TestArtefactSleutel:
         # Alleen het veld ID is geschreven, niet de (samengestelde) key
         assert all('key' not in d for d in col.find({}))
         telling = verwerkingsrun.huidigeRun()['tellingen']['transform']['primary_keys']['Artefact']
-        assert telling == {'behouden': 1, 'op_id': 0, 'op_key': 2, 'nieuw': 1, 'verdwenen': 1, 'tabel': 'Def_Artefact'}
+        assert telling == {'behouden': 1, 'uit_bron': 0, 'op_id': 0, 'op_bestand': 0, 'op_key': 2, 'nieuw': 1,
+                           'verdwenen': 1, 'tabel': 'Def_Artefact'}
 
     def test_dubbele_samengestelde_sleutel_wordt_niet_gebruikt(self, client, monkeypatch):
         col = clean(client)
@@ -661,6 +663,214 @@ class TestArtefactSleutel:
         rijen = delta_transform.leesPgSleutels('Def_Vondst', cursor=cursor)
         assert rijen == [{'primary_key': 1, '_id': 'a', 'key': 'PSY001'}, {'primary_key': 2, '_id': 'b', 'key': None}]
         assert cursor.sql[-1] == 'SELECT "primary_key", "_id", "key" FROM "Def_Vondst"'
+
+
+# ============================================================
+# Klasse 5b: stabiele sleutels in de volledige cyclus (issue 71)
+# ============================================================
+
+class _NepOperator:
+    """Nabootsing van een Airflow-operator: legt task_id en op_kwargs vast en ondersteunt >>."""
+
+    def __init__(self, task_id, python_callable=None, op_kwargs=None, **kwargs):
+        self.task_id = task_id
+        self.python_callable = python_callable
+        self.op_kwargs = op_kwargs or {}
+        _NepOperator.aangemaakt.append(self)
+
+    def __rshift__(self, ander):
+        return ander
+
+
+class _NepTaskGroup:
+    def __init__(self, group_id):
+        self.group_id = group_id
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args):
+        return False
+
+
+def laadTransform4Taakgroep(monkeypatch):
+    """Importeer tasks_transform4_references met een nagebootst Airflow (niet geïnstalleerd in de testomgeving)."""
+    _NepOperator.aangemaakt = []
+    modules = {
+        'airflow': types.ModuleType('airflow'),
+        'airflow.utils': types.ModuleType('airflow.utils'),
+        'airflow.utils.task_group': types.SimpleNamespace(TaskGroup=_NepTaskGroup),
+        'airflow.operators': types.ModuleType('airflow.operators'),
+        'airflow.operators.bash': types.SimpleNamespace(BashOperator=_NepOperator),
+        'airflow.operators.dummy': types.SimpleNamespace(DummyOperator=_NepOperator),
+        'airflow.operators.python': types.SimpleNamespace(PythonOperator=_NepOperator),
+    }
+    for naam, module in modules.items():
+        monkeypatch.setitem(sys.modules, naam, module)
+    monkeypatch.delitem(sys.modules, 'tasks_transform4_references', raising=False)
+    import tasks_transform4_references
+    return tasks_transform4_references
+
+
+@pytest.mark.unit
+class TestStabieleSleutelsVolledigeCyclus:
+    """Transform 4 kent ook in de volledige cyclus stabiele sleutels toe (issue 71).
+
+    In de volledige cyclus is MongoDB geleegd: geen document heeft een ID en elk
+    _id is nieuw. De primary_key komt dan uit de bron (ABR), via de map en
+    bestandsnaam (bestanden) of via een unieke key uit PostgreSQL.
+    """
+
+    def test_taakgroep_geeft_altijd_stabiel(self, monkeypatch):
+        module = laadTransform4Taakgroep(monkeypatch)
+        module.getSetReferencesTaskGroup()
+        sleuteltaken = [t for t in _NepOperator.aangemaakt if t.task_id.startswith('Set_PrimaryKey_')]
+        assert sleuteltaken, "Geen Set_PrimaryKey-taken aangemaakt"
+        assert {t.task_id for t in sleuteltaken} == {f'Set_PrimaryKey_{s}' for s in meta.getKeys(meta.SET_KEYS_PIPELINES)}
+        for taak in sleuteltaken:
+            assert taak.python_callable is references_functions.setPrimaryKeys
+            assert taak.op_kwargs['stabiel'] is True, taak.task_id
+
+    def test_nieuwe_id_s_terug_op_key_en_nieuwe_nummers_boven_maximum(self):
+        """Na een nieuwe extractie: elk document zonder ID en met een nieuw _id."""
+        docs = [
+            {'_id': OID_A, 'key': 'PSY001P1'},      # unieke key: oude primary_key
+            {'_id': OID_B, 'key': 'PSY001P2'},      # unieke key: oude primary_key
+            {'_id': OID_C, 'key': 'PSY001P3'},      # nieuwe put
+        ]
+        pg = [
+            {'primary_key': 0, '_id': 'oud_a', 'key': 'PSY001P1'},
+            {'primary_key': 5, '_id': 'oud_b', 'key': 'PSY001P2'},
+            {'primary_key': 8, '_id': 'oud_c', 'key': 'PSY001P9'},   # verdwenen put
+        ]
+        toewijzing, tellingen = delta_transform.bepaalStabieleIds(docs, pg)
+        assert dict(toewijzing) == {OID_A: 0, OID_B: 5, OID_C: 9}
+        assert tellingen == {'behouden': 0, 'uit_bron': 0, 'op_id': 0, 'op_bestand': 0, 'op_key': 2, 'nieuw': 1}
+
+    def test_zelfde_key_twee_documenten(self):
+        """Twee documenten met dezelfde (in PostgreSQL unieke) key: het eerste krijgt de oude primary_key."""
+        docs = [{'_id': OID_A, 'key': 'PSY001P1'}, {'_id': OID_B, 'key': 'PSY001P1'}]
+        toewijzing, tellingen = delta_transform.bepaalStabieleIds(docs, [{'primary_key': 3, '_id': 'x', 'key': 'PSY001P1'}])
+        assert dict(toewijzing) == {OID_A: 3, OID_B: 4}
+        assert tellingen['op_key'] == 1 and tellingen['nieuw'] == 1
+
+    def test_primary_key_uit_de_bron(self):
+        """ABR: de primary_key uit de thesaurus wordt het ID (parentID verwijst ernaar), ook als de key dubbel is."""
+        docs = [
+            {'_id': OID_A, 'key': 'Ahttp://abr/1', 'primary_key': 31},
+            {'_id': OID_B, 'key': 'Ahttp://abr/1', 'primary_key': 32.0},
+            {'_id': OID_C, 'key': 'Ahttp://abr/2', 'primary_key': float('nan')},
+        ]
+        pg = [{'primary_key': 31, '_id': 'x', 'key': 'Ahttp://abr/1'}, {'primary_key': 32, '_id': 'y', 'key': 'Ahttp://abr/1'},
+              {'primary_key': 7, '_id': 'z', 'key': 'Ahttp://abr/2'}]
+        toewijzing, tellingen = delta_transform.bepaalStabieleIds(docs, pg)
+        assert dict(toewijzing) == {OID_A: 31, OID_B: 32, OID_C: 7}
+        assert tellingen['uit_bron'] == 2 and tellingen['op_key'] == 1
+
+    def test_primary_key_uit_de_bron_telt_mee_voor_het_maximum(self):
+        docs = [{'_id': OID_A, 'key': 'a', 'primary_key': 40}, {'_id': OID_B, 'key': 'b'}]
+        toewijzing, _ = delta_transform.bepaalStabieleIds(docs, [{'primary_key': 3, '_id': 'x', 'key': 'z'}])
+        assert dict(toewijzing) == {OID_A: 40, OID_B: 41}
+
+    @pytest.mark.parametrize('waarde, verwacht', [
+        (5, 5), (5.0, 5), ('7', 7), (None, None), (float('nan'), None), (2.5, None), ('x', None), (True, None)])
+    def test_bron_primary_key(self, waarde, verwacht):
+        assert delta_transform.getBronPrimaryKey({'primary_key': waarde}) == verwacht
+
+    def test_bestanden_op_map_en_bestandsnaam(self):
+        """Foto's met dezelfde key (sfeer- en opgravingsfoto) houden hun primary_key via map en bestandsnaam."""
+        map_ = '/input/projecten/SY001/L Fotos'
+        docs = [
+            {'_id': OID_A, 'key': 'PSY001S1', 'directory': map_, 'fileName': 'SY001_F001.jpg'},
+            {'_id': OID_B, 'key': 'PSY001S1', 'directory': map_ + '/', 'fileName': 'SY001_G001.jpg'},
+            {'_id': OID_C, 'key': 'PSY001T1'},                       # tekening zonder bestand: op key
+        ]
+        pg = [
+            {'primary_key': 4, '_id': 'x', 'key': 'PSY001S1', 'directory': map_, 'fileName': 'SY001_G001.jpg'},
+            {'primary_key': 6, '_id': 'y', 'key': 'PSY001S1', 'directory': map_, 'fileName': 'SY001_F001.jpg'},
+            {'primary_key': 9, '_id': 'z', 'key': 'PSY001T1', 'directory': None, 'fileName': None},
+        ]
+        toewijzing, tellingen = delta_transform.bepaalStabieleIds(docs, pg)
+        assert dict(toewijzing) == {OID_A: 6, OID_B: 4, OID_C: 9}
+        assert tellingen['op_bestand'] == 2 and tellingen['op_key'] == 1 and tellingen['nieuw'] == 0
+
+    def test_dubbel_bestand_in_tabel_wordt_niet_gebruikt(self):
+        map_ = '/input/projecten/SY001/L Fotos'
+        docs = [{'_id': OID_A, 'key': 'PSY001S1', 'directory': map_, 'fileName': 'SY001_F001.jpg'}]
+        pg = [{'primary_key': 4, '_id': 'x', 'key': 'PSY001S1', 'directory': map_, 'fileName': 'SY001_F001.jpg'},
+              {'primary_key': 6, '_id': 'y', 'key': 'PSY001S1', 'directory': map_, 'fileName': 'SY001_F001.jpg'}]
+        toewijzing, tellingen = delta_transform.bepaalStabieleIds(docs, pg)
+        assert toewijzing == [(OID_A, 7)] and tellingen['nieuw'] == 1
+
+    def test_bestand_identiteit(self):
+        assert delta_transform.getBestandIdentiteit({'directory': '/a/b/', 'fileName': 'c.jpg'}) == '/a/b/c.jpg'
+        assert delta_transform.getBestandIdentiteit({'directory': '/a/b', 'fileName': 'c.jpg'}) == '/a/b/c.jpg'
+        assert delta_transform.getBestandIdentiteit({'directory': '', 'fileName': 'c.jpg'}) is None
+        assert delta_transform.getBestandIdentiteit({'fileName': 'c.jpg'}) is None
+
+    def test_lees_pg_sleutels_leest_bestandsidentiteit(self):
+        class NepCursor:
+            def __init__(self):
+                self.sql = []
+
+            def execute(self, sql, params=None):
+                self.sql.append(sql)
+
+            def fetchall(self):
+                if len(self.sql) == 1:
+                    return [('primary_key',), ('_id',), ('key',), ('directory',), ('fileName',), ('fileSize',)]
+                return [(1, 'a', 'PSY001S1', '/m', 'f.jpg')]
+
+        cursor = NepCursor()
+        rijen = delta_transform.leesPgSleutels('Def_Bestand', cursor=cursor)
+        assert cursor.sql[-1] == 'SELECT "primary_key", "_id", "key", "directory", "fileName" FROM "Def_Bestand"'
+        assert rijen == [{'primary_key': 1, '_id': 'a', 'key': 'PSY001S1', 'directory': '/m', 'fileName': 'f.jpg'}]
+
+    def _cleanVoorSetPrimaryKeys(self, client, monkeypatch, docs):
+        col = clean(client)
+        col.insert_many(docs)
+        col.database = types.SimpleNamespace(client=types.SimpleNamespace(close=lambda: None))
+        monkeypatch.setattr(references_functions, 'getAnalyseCleanCollection', lambda: col)
+        return col
+
+    def test_set_primary_keys_volledige_cyclus_houdt_sleutels(self, client, monkeypatch):
+        """setPrimaryKeys(stabiel=True) na een volledige extractie: zelfde primary_keys, alleen ID geschreven."""
+        col = self._cleanVoorSetPrimaryKeys(client, monkeypatch, [
+            {'_id': OID_A, 'soort': 'Vondst', 'key': 'PSY002P1V1', 'projectcd': 'SY002'},
+            {'_id': OID_B, 'soort': 'Vondst', 'key': 'PSY001P1V1', 'projectcd': 'SY001'},
+            {'_id': OID_C, 'soort': 'Vondst', 'key': 'PSY003P1V1', 'projectcd': 'SY003'},
+        ])
+        monkeypatch.setattr(delta_transform, 'leesPgSleutels', lambda tabel: [
+            {'primary_key': 0, '_id': 'oud_1', 'key': 'PSY001P1V1'},
+            {'primary_key': 1, '_id': 'oud_2', 'key': 'PSY002P1V1'}])
+        references_functions.setPrimaryKeys('Vondst', col='analyseclean', stabiel=True)
+        docs = {d['_id']: d for d in col.find({})}
+        assert {k: d['ID'] for k, d in docs.items()} == {OID_A: 1, OID_B: 0, OID_C: 2}
+        assert docs[OID_A] == {'_id': OID_A, 'soort': 'Vondst', 'key': 'PSY002P1V1', 'projectcd': 'SY002', 'ID': 1}
+
+    def test_set_primary_keys_eerste_run_in_lege_tabel(self, client, monkeypatch):
+        """Een lege tabel (eerste run, tabellen door de webapplicatie aangemaakt): nummers vanaf 0."""
+        col = self._cleanVoorSetPrimaryKeys(client, monkeypatch, [
+            {'_id': OID_A, 'soort': 'Vondst', 'key': 'b'}, {'_id': OID_B, 'soort': 'Vondst', 'key': 'a'}])
+        monkeypatch.setattr(delta_transform, 'leesPgSleutels', lambda tabel: [])
+        references_functions.setPrimaryKeys('Vondst', col='analyseclean', stabiel=True)
+        assert {d['_id']: d['ID'] for d in col.find({})} == {OID_A: 1, OID_B: 0}
+
+    def test_set_primary_keys_zonder_tabel_nummert_zoals_voorheen(self, client, monkeypatch):
+        """Geen tabel en geen ID's: volgnummers vanaf 0 in de volgorde van de collectie (oude gedrag)."""
+        col = self._cleanVoorSetPrimaryKeys(client, monkeypatch, [
+            {'_id': OID_A, 'soort': 'Vondst', 'key': 'b'}, {'_id': OID_B, 'soort': 'Vondst', 'key': 'a'}])
+        monkeypatch.setattr(delta_transform, 'leesPgSleutels', lambda tabel: None)
+        references_functions.setPrimaryKeys('Vondst', col='analyseclean', stabiel=True)
+        assert {d['_id']: d['ID'] for d in col.find({})} == {OID_A: 0, OID_B: 1}
+
+    def test_set_primary_keys_abr_houdt_bron_primary_key(self, client, monkeypatch):
+        col = self._cleanVoorSetPrimaryKeys(client, monkeypatch, [
+            {'_id': OID_A, 'soort': 'ABR', 'key': 'Ahttp://abr/1', 'primary_key': 31},
+            {'_id': OID_B, 'soort': 'ABR', 'key': 'Ahttp://abr/1', 'primary_key': 0}])
+        monkeypatch.setattr(delta_transform, 'leesPgSleutels', lambda tabel: [])
+        references_functions.setPrimaryKeys('ABR', col='analyseclean', stabiel=True)
+        assert {d['_id']: d['ID'] for d in col.find({})} == {OID_A: 31, OID_B: 0}
 
 
 # ============================================================

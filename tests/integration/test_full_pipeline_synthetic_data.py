@@ -25,6 +25,8 @@ import pytest
 
 pymongo = pytest.importorskip("pymongo")
 
+from wasstraat.loadToDatabase_functions import LOAD_TABELLEN
+
 # ============================================================
 # Configuratie
 # ============================================================
@@ -1120,13 +1122,14 @@ class TestFullPipelineSynthetic:
         )
 
     @pytest.mark.load
-    @pytest.mark.parametrize("table", ["Def_Project", "Def_Vondst"])
+    @pytest.mark.parametrize("table", LOAD_TABELLEN)
     def test_24_verify_postgres_primary_key_sequence(self, airflow_ready, table):
         """Na DAG_Load_Only heeft primary_key een sequence en default, en nextval > max(primary_key).
 
         De atomic swap van loadAll dropt de oude tabel met CASCADE; daarmee verdwijnen
         de sequence en de default van primary_key. FASE 3 herstelt ze (zetSequence),
-        anders kan de webapplicatie geen rijen aanmaken.
+        anders kan de webapplicatie geen rijen aanmaken. Geldt voor elke tabel van de
+        load, ook bij de eerste load in een lege database met stabiele sleutels (issue 71).
         """
         sequence = _pg_tekst(f"SELECT pg_get_serial_sequence('\"{table}\"', 'primary_key')")
         default = _pg_tekst(

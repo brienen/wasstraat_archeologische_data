@@ -89,9 +89,12 @@ def setPrimaryKeys(soort, col='analyse', stabiel=False):
         col: 'analyse' (Single_Store) of 'analyseclean' (Single_Store_Clean)
         stabiel: als True houden documenten hun ID, krijgen documenten zonder ID
             hun primary_key uit PostgreSQL terug en krijgen alleen nieuwe
-            entiteiten een nieuw nummer (incrementeel laden, zie
-            delta_transform.bepaalStabieleIds). Standaard worden alle documenten
-            opnieuw genummerd, zoals in de volledige cyclus.
+            entiteiten een nieuw nummer (zie delta_transform.bepaalStabieleIds).
+            Transform 4 doet dat in alle DAG's, ook in de volledige cyclus
+            (issue 71). Zonder stabiel, of als de tabel nog niet bestaat en geen
+            document een ID heeft, worden alle documenten opnieuw genummerd
+            vanaf 0 in de volgorde van de collectie (documenten met een veld
+            primary_key uit de bron houden dat nummer).
     """
     try:
         if (col == 'analyse'):

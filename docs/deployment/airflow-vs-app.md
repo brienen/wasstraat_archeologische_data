@@ -98,12 +98,12 @@ De gedeelde verwerkingslogica zit in `airflow_app/dags/wasstraat/`:
 - `setAttributes_functions.py` — Waarde-opschoning en -conversie
 - `merge_functions.py` — Deduplicatie en samenvoeglogica
 - `references_functions.py` — Referentie-resolutie
-- `loadToDatabase_functions.py` — PostgreSQL-laden via psycopg2: atomic swap (`loadAll`, volledige cyclus) en upsert (`loadIncrementeel`, incrementele cyclus), beide gevolgd door de herberekening van de afgeleide velden (`herberekenAfgeleideVelden`)
+- `loadToDatabase_functions.py` — PostgreSQL-laden via psycopg2: atomic swap (`loadAll`, volledige cyclus) en upsert (`loadIncrementeel`, incrementele cyclus), beide gevolgd door de herberekening van de afgeleide velden (`herberekenAfgeleideVelden`); de gebruikerstabellen (bruiklenen, partijen, conservering) blijven in beide staan
 - `image_import.py` — Parallelle foto-import (8 processen)
 - `verwerkingsrun.py` — Run-document van de incrementele cyclus (`Verwerkingsruns`)
 - `bronbestanden.py` — Registratie van bronbestanden (`Def_Bronbestand`) en bepaling van de delta
 - `opruimen.py` — Opruimen van records van gewijzigde en verwijderde bronbestanden
-- `delta_transform.py` — Delta-varianten van de transformaties en stabiele sleutels (incrementele cyclus)
+- `delta_transform.py` — Delta-varianten van de transformaties (incrementele cyclus) en stabiele sleutels (beide cycli)
 
 Naast de volledige cyclus is er een **incrementele cyclus** (`Extract_Transform_Load_Incremental`) die alleen nieuwe, gewijzigde en verwijderde bronbestanden verwerkt, de tabellen in PostgreSQL bijwerkt met een upsert en daarna de Elasticsearch-indexen bijwerkt (`shared/fulltext.py`, `indexTableIncrementeel`). Zie [Incrementeel laden](../componenten/incrementeel-laden.md).
 

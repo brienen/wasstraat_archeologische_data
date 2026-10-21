@@ -25,7 +25,12 @@ incrementele cyclus (Extract_Transform_Load_Incremental) via
      Controleer_Afbeeldingen faalt, Markeer_Run_Mislukt zet de run op
      'mislukt' en PostgreSQL blijft ongewijzigd;
   h. de onleesbare foto weggehaald: de volgende run slaagt, de openstaande
-     entry in Filenames is opgeruimd en alles is weer gelijk aan a.
+     entry in Filenames is opgeruimd en alles is weer gelijk aan a;
+  i. opnieuw de volledige cyclus, na een conserveringsproject en een extra
+     ABR-materiaal voor het artefact van de bruikleen (issue 71): de
+     gebruikerstabellen zijn ongewijzigd (ook de losgekoppelde bruikleen van
+     SY003), de bruikleen hangt aan hetzelfde artefact, alle sleutels en
+     aantallen zijn gelijk aan a en alle FK's en sequences kloppen.
 
 Na elke run worden PostgreSQL (via ``docker exec psql``), MongoDB (run-document)
 en Elasticsearch (via ``docker exec curl`` in de Elasticsearch-container; die
@@ -50,7 +55,7 @@ import pytest
 
 pymongo = pytest.importorskip("pymongo")
 
-from wasstraat.loadToDatabase_functions import LOAD_TABELLEN
+from wasstraat.loadToDatabase_functions import GEBRUIKERS_TABELLEN, LOAD_TABELLEN
 
 
 # ============================================================
@@ -83,6 +88,7 @@ SLEUTEL_TABELLEN = ["Def_Project", "Def_Put", "Def_Vondst", "Def_Artefact", "Def
 PROJECT_TABELLEN = ["Def_Put", "Def_Vlak", "Def_Spoor", "Def_Vondst", "Def_Vulling", "Def_Artefact", "Def_Bestand"]
 
 TESTPARTIJ = "Testpartij incrementeel laden"
+TESTCONSERVERING = "Testconservering volledige cyclus"
 
 # Afgeleide velden van Def_Artefact (issue 72); Def_Project heeft aantal_artefacten
 AFGELEIDE_KOLOMMEN = ["aantal_fotos", "vondstdatering_vanaf", "vondstdatering_tot", "spoordatering_vanaf",
@@ -451,6 +457,21 @@ def alleTellingenNul(afgeleid):
     return all(aantal == 0 for tabel in afgeleid.values() for aantal in tabel.values())
 
 
+def gebruikersTabellen():
+    """De volledige inhoud van de gebruikerstabellen: per tabel een gesorteerde lijst met rijen als tekst."""
+    return {t: sorted(r[0] for r in pgRijen(f'SELECT t::text FROM "{t}" AS t')) for t in GEBRUIKERS_TABELLEN}
+
+
+def controleerSequences(tabellen):
+    """Elke tabel heeft een sequence op primary_key met nextval boven max(primary_key) (zonder nextval aan te roepen)."""
+    for tabel in tabellen:
+        sequence = pgRijen(f"SELECT COALESCE(pg_get_serial_sequence('\"{tabel}\"', 'primary_key'), '')")[0][0]
+        assert sequence, f"{tabel}.primary_key heeft geen sequence"
+        maximum = pgWaarde(f'SELECT COALESCE(MAX(primary_key), -1) FROM "{tabel}"')
+        volgende = pgWaarde(f"SELECT CASE WHEN is_called THEN last_value + 1 ELSE last_value END FROM {sequence}")
+        assert volgende > maximum, f"{tabel}: volgende primary_key {volgende} niet boven max(primary_key) {maximum}"
+
+
 # ============================================================
 # Fixtures
 # ============================================================
@@ -468,15 +489,20 @@ def mongo_client():
 
 @pytest.fixture(scope="module", autouse=True)
 def sy003_opruimen():
-    """Verwijder het testproject SY003 vóór en na de test (ook bij falen), en de testbruikleen achteraf."""
+    """Verwijder het testproject SY003 vóór en na de test (ook bij falen), en de testgebruikersdata achteraf."""
     shutil.rmtree(SY003_DIR, ignore_errors=True)
     try:
         yield
     finally:
         shutil.rmtree(SY003_DIR, ignore_errors=True)
         try:
-            pgRijen(f'DELETE FROM "Def_Bruikleen" WHERE "partijID" IN '
-                    f'(SELECT primary_key FROM "Def_Partij" WHERE naam = \'{TESTPARTIJ}\')')
+            testpartij = f'(SELECT primary_key FROM "Def_Partij" WHERE naam = \'{TESTPARTIJ}\')'
+            pgRijen(f'DELETE FROM "Def_artefact_conservering" WHERE conservering_id IN '
+                    f'(SELECT primary_key FROM "Def_Conserveringsproject" WHERE "uitvoerderID" IN {testpartij})')
+            pgRijen(f'DELETE FROM "Def_Conserveringsproject" WHERE "uitvoerderID" IN {testpartij}')
+            if "abr_koppeling" in TOESTAND:
+                pgRijen(f'DELETE FROM "Def_artefact_abr" WHERE id = {TOESTAND["abr_koppeling"]}')
+            pgRijen(f'DELETE FROM "Def_Bruikleen" WHERE "partijID" IN {testpartij}')
             pgRijen(f'DELETE FROM "Def_Partij" WHERE naam = \'{TESTPARTIJ}\'')
         except Exception as err:
             print(f"  (testbruikleen niet opgeruimd: {err})")
@@ -489,7 +515,7 @@ def sy003_opruimen():
 @pytest.mark.integration
 @pytest.mark.load
 class TestIncrementeelSynthetic:
-    """Volledige cyclus gevolgd door zeven incrementele runs op SY001, SY002 en een tijdelijk project SY003."""
+    """Volledige cyclus, zeven incrementele runs op SY001, SY002 en een tijdelijk project SY003, en opnieuw de volledige cyclus."""
 
     # ----------------------------------------------------------
     # a. Volledige cyclus
@@ -823,3 +849,51 @@ class TestIncrementeelSynthetic:
         assert controleerElasticsearchGelijkAanTabellen() == TOESTAND["es"]
         assert afgeleideVelden() == TOESTAND["afgeleid"]
         print(f"\n  Looptijden: { {k: round(v, 1) for k, v in TOESTAND['duur'].items()} }")
+
+    # ----------------------------------------------------------
+    # i. Opnieuw de volledige cyclus (issue 71)
+    # ----------------------------------------------------------
+    def test_10_volledige_cyclus_bewaart_gebruikersdata(self):
+        """De volledige cyclus leegt de gebruikerstabellen niet en houdt de sleutels stabiel (issue 71).
+
+        Vooraf komen er een conserveringsproject met een koppeling naar het artefact van de bruikleen
+        en een extra ABR-materiaal voor dat artefact bij, zodat alle gebruikerstabellen rijen hebben.
+        De bruikleen van het SY003-artefact staat sinds stap f losgekoppeld met een markering.
+        """
+        b = TOESTAND["bruikleen"]
+        conservering_pk = pgWaarde(
+            f'INSERT INTO "Def_Conserveringsproject" (korte_omschrijving, begindatum, "uitvoerderID") '
+            f'VALUES (\'{TESTCONSERVERING}\', DATE \'2026-10-20\', {b["partij_pk"]}) RETURNING primary_key')
+        pgRijen(f'INSERT INTO "Def_artefact_conservering" (conservering_id, artefact_id) '
+                f'VALUES ({conservering_pk}, {b["artefact_pk"]})')
+        abr_pk = pgWaarde('SELECT MIN(primary_key) FROM "Def_ABR"')
+        TOESTAND["abr_koppeling"] = pgWaarde(
+            f'INSERT INTO "Def_artefact_abr" (abr_materiaal_id, artefact_id) VALUES ({abr_pk}, {b["artefact_pk"]}) '
+            f'RETURNING id')
+        voor = gebruikersTabellen()
+        for tabel in GEBRUIKERS_TABELLEN:
+            assert voor[tabel], f"{tabel} heeft geen rijen: de test dekt die tabel niet"
+        print(f"\n  Gebruikerstabellen vóór de volledige cyclus: { {t: len(r) for t, r in voor.items()} }")
+
+        TOESTAND["duur"]["i"], uitvoer = draaiDag("Extract_Transform_Load_Full_Cycle")
+        assert "Sleutels niet stabiel" not in uitvoer, "loadAll meldt hernummerde sleutels na een volledige cyclus"
+
+        # Gebruikerstabellen ongewijzigd, ook de markering van de losgekoppelde SY003-bruikleen
+        assert gebruikersTabellen() == voor
+        controleerBruikleen()
+        artefact, _, key, _ = bruikleenSY003()
+        assert artefact == "NULL" and key == TOESTAND["bruikleen_sy003"]["artefact_key"]
+
+        # Sleutels, aantallen, Elasticsearch en afgeleide velden gelijk aan stap a
+        assert telTabellen() == TOESTAND["aantallen"]
+        for tabel in SLEUTEL_TABELLEN:
+            assert sleutels(tabel) == TOESTAND["sleutels"][tabel], f"{tabel}: sleutels of primary_keys gewijzigd"
+        assert controleerElasticsearchGelijkAanTabellen() == TOESTAND["es"]
+        assert afgeleideVelden() == TOESTAND["afgeleid"]
+
+        # Alle FK's geldig (ook die van de gebruikerstabellen) en de sequences kloppen
+        ongeldig = pgRijen("SELECT conrelid::regclass::text, conname FROM pg_constraint "
+                           "WHERE contype = 'f' AND NOT convalidated")
+        assert ongeldig == [], f"FK-constraints die NOT VALID zijn: {ongeldig}"
+        controleerSequences(LOAD_TABELLEN + ["Def_Bruikleen", "Def_Partij", "Def_Conserveringsproject"])
+        print(f"  Looptijden: { {k: round(v, 1) for k, v in TOESTAND['duur'].items()} }")
