@@ -101,6 +101,17 @@ EXPECTED_OBJECTFOTO_KOPPELING = {
 }
 
 
+# Beschrijving (memo-veld) van spoor 4 van SY002, met een regeleinde (issue 74). In de MDB
+# staat CR LF; mongoimport leest een CR LF binnen een gequote veld in als LF.
+SPOOR4_BESCHRIJVING = "Gemetselde beerput, vierkant\nBinnenwerk met tonvormige bodem"
+
+# Staging-collecties die importMDB.sh vult (met de kolommen table, projectcd, bron, loadtime en mdbfile)
+STAGING_MDB_COLLECTIES = [
+    "Staging_Projecten_Oud", "Staging_Projecten_Projectenlijst", "Staging_Projecten_Magazijnlijst",
+    "Staging_Projecten_Fotolijst", "Staging_Projecten_Monster", "Staging_Rapporten",
+]
+EXTRA_KOLOMMEN = ["table", "projectcd", "bron", "loadtime", "mdbfile"]
+
 # Controletaak van de extractie van afbeeldingen (issue 70) per DAG die afbeeldingen importeert
 CONTROLETAAK_PER_DAG = {
     "Extract_only": "Extract_Group.Controleer_Afbeeldingen",
@@ -296,6 +307,35 @@ def mongo_artefact_counts(db_name, client):
     return {d["_id"]: d["count"] for d in coll.aggregate(pipeline)}
 
 
+def controleerToegevoegdeKolommen(client, db_name):
+    """Controleer de kolommen die importMDB.sh aan elk staging-document toevoegt (issue 74).
+
+    Elk document in de staging-collecties van importMDB.sh heeft een gevuld
+    mdbfile (ook de extra projecten uit Excel), en geen ander tekstveld bevat
+    de waarde van mdbfile of de kolomnamen ",table,projectcd,": dat gebeurde
+    toen sed de kolommen per regel toevoegde en een tekstveld een regeleinde had.
+
+    Returns:
+        Lijst met beschrijvingen van de gevonden fouten (leeg als alles klopt)
+    """
+    db = client[db_name]
+    fouten = []
+    for naam in STAGING_MDB_COLLECTIES:
+        if naam not in db.list_collection_names():
+            continue
+        for doc in db[naam].find({}):
+            mdbfile = doc.get("mdbfile")
+            if not isinstance(mdbfile, str) or not mdbfile:
+                fouten.append(f"{naam} {doc['_id']}: mdbfile leeg of ontbreekt (table={doc.get('table')!r})")
+                continue
+            for veld, waarde in doc.items():
+                if veld in EXTRA_KOLOMMEN or not isinstance(waarde, str):
+                    continue
+                if mdbfile in waarde or ",table,projectcd," in waarde:
+                    fouten.append(f"{naam} {doc['_id']} ({doc.get('table')}): veld {veld!r} bevat de extra kolommen")
+    return fouten
+
+
 def print_all_collections(client, db_name, label=""):
     """Print alle collecties en hun doc-counts in een database."""
     db = client[db_name]
@@ -464,6 +504,35 @@ class TestFullPipelineSynthetic:
             print(f"    {table}: {count}")
         assert total > 10, f"Te weinig staging-documenten: {total}"
 
+    def test_02a_verify_tekstveld_met_regeleinde(self, mongo_client):
+        """Een tekstveld met een regeleinde komt als één veld in de staging, met de extra kolommen erachter (issue 74).
+
+        Spoor 4 van SY002 heeft een beschrijving (memo-veld) met een regeleinde
+        (CR LF); de CSV-export beslaat voor dat record twee regels. Tot issue 74
+        zette sed de waarden van table, projectcd, bron, loadtime en mdbfile
+        achter elke regel, dus ook midden in de beschrijving.
+        """
+        coll = mongo_client[DB_STAGING]["Staging_Projecten_Oud"]
+        docs = list(coll.find({"table": "SPOREN", "projectcd": "SY002", "SPOORNO": 4}))
+        assert len(docs) == 1, f"Verwacht één staging-document voor spoor 4 van SY002, gevonden {len(docs)}"
+        doc = docs[0]
+        beschrijving = doc.get("BESCHRIJVING")
+        print(f"\n  BESCHRIJVING spoor 4 SY002: {beschrijving!r}")
+        assert isinstance(beschrijving, str) and "\n" in beschrijving, \
+            f"BESCHRIJVING bevat geen regeleinde: {beschrijving!r}"
+        assert beschrijving.replace("\r\n", "\n") == SPOOR4_BESCHRIJVING
+        # De extra kolommen staan op hun plek en de rest van de rij is niet verschoven
+        assert doc["table"] == "SPOREN"
+        assert doc["projectcd"] == "SY002"
+        assert doc["CODENAAM"] == "SY002"
+        assert doc["bron"] == "opgravingSY002"
+        assert doc["mdbfile"].endswith("/SY002/C Database/opgravingSY002.mdb")
+        assert doc.get("INTERPRETATIE") == "Beerput"
+        assert doc.get("DATUM") == "05-06-2024"
+
+        fouten = controleerToegevoegdeKolommen(mongo_client, DB_STAGING)
+        assert not fouten, f"Staging-documenten met ontbrekende of verplaatste extra kolommen: {fouten[:10]}"
+
     # ----------------------------------------------------------
     # Stap 2: Transform (harmonize + enhance + keys + move/merge + refs)
     # ----------------------------------------------------------
@@ -551,6 +620,15 @@ class TestFullPipelineSynthetic:
         expected = EXPECTED_MIN_SOORT_COUNTS["Spoor"]
         print(f"\n  Sporen: {actual} (verwacht >= {expected})")
         assert actual >= expected
+
+    def test_08_1_verify_spoorbeschrijving_met_regeleinde(self, mongo_client):
+        """De beschrijving met een regeleinde van spoor 4 (SY002) komt ongeschonden in Single_Store_Clean (issue 74)."""
+        coll = mongo_client[DB_ANALYSE]["Single_Store_Clean"]
+        sporen = list(coll.find({"soort": "Spoor", "projectcd": "SY002", "spoornr": 4}))
+        assert len(sporen) == 1, f"Verwacht één spoor 4 van SY002, gevonden {len(sporen)}"
+        beschrijving = sporen[0].get("beschrijving")
+        assert isinstance(beschrijving, str) and beschrijving.replace("\r\n", "\n") == SPOOR4_BESCHRIJVING, \
+            f"beschrijving van spoor 4: {beschrijving!r}"
 
     def test_08a_verify_putten_per_project(self, mongo_client):
         """Elk project heeft precies de putten die in de brondata voorkomen."""

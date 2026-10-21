@@ -73,6 +73,7 @@ def maakMdbBestand(pad):
 # Mapping van SQL-types naar Jackcess DataType enum waarden
 TYPE_MAP = {
     "VARCHAR": "TEXT",
+    "MEMO": "MEMO",
     "INTEGER": "LONG",
     "DOUBLE": "DOUBLE",
     "COUNTER": "LONG",
@@ -83,7 +84,7 @@ def jackcessDataType(sql_type):
     """Vertaal een SQL-type string naar een Jackcess DataType enum waarde.
 
     Args:
-        sql_type: SQL type string zoals 'VARCHAR(50)', 'INTEGER', 'DOUBLE'
+        sql_type: SQL type string zoals 'VARCHAR(50)', 'MEMO', 'INTEGER', 'DOUBLE'
 
     Returns:
         Jackcess DataType enum waarde
@@ -203,7 +204,8 @@ KOLOMMEN_SPOREN = [
     ("VERBANDEN (muur)", "VARCHAR(100)"),
     ("FOTONUMMER(S)", "VARCHAR(50)"),
     ("PROFIEL", "VARCHAR(50)"),
-    ("BESCHRIJVING", "VARCHAR(255)"),
+    # Memo-veld (lange tekst), zoals in de echte databases; kan regeleinden bevatten
+    ("BESCHRIJVING", "MEMO"),
     ("INTERPRETATIE", "VARCHAR(200)"),
     ("PER", "VARCHAR(20)"),
     ("FASE", "VARCHAR(20)"),
@@ -211,6 +213,9 @@ KOLOMMEN_SPOREN = [
     ("DATUM", "VARCHAR(20)"),
     ("DETERM", "VARCHAR(100)"),
 ]
+
+# Beschrijving van spoor 4 van SY002 (memo-veld met een regeleinde)
+BESCHRIJVING_MET_REGELEINDE = "Gemetselde beerput, vierkant\r\nBinnenwerk met tonvormige bodem"
 
 KOLOMMEN_VULLINGEN = [
     ("CODENAAM", "VARCHAR(20)"),
@@ -887,7 +892,9 @@ def dataGrootProject():
         (code, 1, 1, 1, "Kuil", "DGr", "", "", "", "", "", "Ovaal", "", "", "", "", "", "", "", "", "", "Donkergrijze kuil met hk-inclusies", "Afvalkuil", "", "", "1200-1400", "01-06-2024", ""),
         (code, 1, 1, 2, "Laag", "LBr", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "Ophogingslaag met puin", "Ophogingslaag", "", "", "1400-1600", "01-06-2024", ""),
         (code, 1, 2, 3, "Muur", "", "", "", "", "", "", "Lineair", "24x11x5", "O-W", "", "", "", "", "S4", "", "", "Bakstenen muur, kruisverband", "Buitenmuur", "", "", "1400-1600", "03-06-2024", ""),
-        (code, 2, 1, 4, "Beerput", "DGr-Zw", "", "", "", "", "", "Vierkant", "24x11x5", "", "", "", "", "", "", "", "", "Gemetselde beerput, vierkant", "Beerput", "", "", "1500-1700", "05-06-2024", ""),
+        # Beschrijving met een regeleinde (Access: CR LF), zoals memo-velden in de echte databases.
+        # De CSV-export beslaat voor dit record twee regels; issue 74.
+        (code, 2, 1, 4, "Beerput", "DGr-Zw", "", "", "", "", "", "Vierkant", "24x11x5", "", "", "", "", "", "", "", "", BESCHRIJVING_MET_REGELEINDE, "Beerput", "", "", "1500-1700", "05-06-2024", ""),
         (code, 2, 2, 5, "Kuil", "Br", "", "", "", "", "", "Rond", "", "", "S4", "", "", "", "", "", "", "Bruine kuil naast beerput", "Afvalkuil", "", "", "1650-1750", "07-06-2024", ""),
         (code, 3, 1, 6, "Greppel", "LGr", "", "", "", "", "", "Lineair", "", "N-Z", "", "", "", "", "", "", "", "Ondiepe greppel", "Perceelsgreppel", "", "", "1300-1500", "10-06-2024", ""),
         (code, 3, 2, 7, "Kuil", "DGr-Br", "", "", "", "", "", "Ovaal", "", "", "", "S6", "", "", "", "", "", "Grote kuil onder greppel", "Extractiekuil", "", "", "1200-1350", "11-06-2024", ""),

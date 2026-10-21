@@ -37,6 +37,7 @@ from generate_synthetic_data import (
     KOLOMMEN_OPGRAVINGEN,
     KOLOMMEN_MAGAZIJNLIJST,
     KOLOMMEN_DIGIFOTOS,
+    BESCHRIJVING_MET_REGELEINDE,
 )
 
 
@@ -161,6 +162,16 @@ class TestGrootProjectStructuur:
     def test_meer_artefacttypen_dan_sy001(self, groot_project, klein_project):
         """SY002 moet meer artefacttypen bevatten dan SY001."""
         assert len(groot_project) > len(klein_project)
+
+    def test_memo_veld_met_regeleinde(self, groot_project):
+        """Spoor 4 van SY002 heeft een beschrijving (memo-veld) met een regeleinde (issue 74)."""
+        assert dict(KOLOMMEN_SPOREN)["BESCHRIJVING"] == "MEMO"
+        kolommen, records = groot_project["SPOREN"]
+        spoor4 = [r for r in records if r[kolommen.index("SPOORNO")] == 4]
+        assert len(spoor4) == 1
+        beschrijving = spoor4[0][kolommen.index("BESCHRIJVING")]
+        assert beschrijving == BESCHRIJVING_MET_REGELEINDE
+        assert "\r\n" in beschrijving
 
 
 @pytest.mark.unit

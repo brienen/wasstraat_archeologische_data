@@ -83,6 +83,30 @@ EXPECTED_MIN_OBJECTFOTOS_GEKOPPELD = 22
 EXPECTED_MAX_MISLUKTE_BESTANDEN = 1
 CONTROLETAAK_AFBEELDINGEN = "Extract_Group.Controleer_Afbeeldingen"
 
+# Staging-collecties die importMDB.sh vult (met de kolommen table, projectcd, bron, loadtime en mdbfile)
+STAGING_MDB_COLLECTIES = [
+    "Staging_Projecten_Oud", "Staging_Projecten_Projectenlijst", "Staging_Projecten_Magazijnlijst",
+    "Staging_Projecten_Fotolijst", "Staging_Projecten_Monster", "Staging_Rapporten",
+]
+EXTRA_KOLOMMEN = ["table", "projectcd", "bron", "loadtime", "mdbfile"]
+# Records met een tekstveld (memo) met een regeleinde per (collectie, tabel) in de Delftse
+# testdata. In de CSV-export beslaan ze meer regels; tot issue 74 zette sed de waarden van de
+# extra kolommen daardoor ook midden in die tekstvelden (de tellingen veranderden niet, de
+# inhoud van de velden wel). De opgravingsdatabase van DB034 heeft zulke velden niet.
+EXPECTED_RECORDS_MET_REGELEINDE = {
+    ("Staging_Projecten_Projectenlijst", "AARDEWERK2TOTAAL"): 1,
+    ("Staging_Projecten_Projectenlijst", "backup STEENTOTAAL"): 1,
+    ("Staging_Projecten_Projectenlijst", "GLASTOTAAL"): 1,
+    ("Staging_Projecten_Projectenlijst", "OPGRAVINGEN"): 1,
+    ("Staging_Projecten_Projectenlijst", "VINDPLAATSEN"): 7,
+    ("Staging_Projecten_Monster", "Monster_gegevens"): 2,
+    ("Staging_Projecten_Monster", "Monster_schelp_determinatie"): 5,
+    ("Staging_Projecten_Monster", "R_SCHELP"): 3,
+    ("Staging_Projecten_Monster", "residu PPG"): 1,
+    ("Staging_Rapporten", "DANlijst"): 14,
+    ("Staging_Rapporten", "DARlijst"): 6,
+}
+
 
 # Uitvoer van de laatste 'airflow dags test' per DAG (voor controles op afzonderlijke taken)
 DAG_UITVOER = {}
@@ -175,6 +199,44 @@ def mongo_artefact_counts(db_name, client):
         {"$sort": {"count": -1}},
     ]
     return {d["_id"]: d["count"] for d in coll.aggregate(pipeline)}
+
+
+def controleerToegevoegdeKolommen(client, db_name):
+    """Controleer de kolommen die importMDB.sh aan elk staging-document toevoegt (issue 74).
+
+    Elk document in de staging-collecties van importMDB.sh heeft een gevuld
+    mdbfile (ook de extra projecten uit Excel), en geen ander tekstveld bevat
+    de waarde van mdbfile of de kolomnamen ",table,projectcd,": dat gebeurde
+    toen sed de kolommen per regel toevoegde en een tekstveld een regeleinde had.
+
+    Returns:
+        Tuple (fouten, records_met_regeleinde): lijst met beschrijvingen van de
+        gevonden fouten en het aantal documenten met een regeleinde in een
+        tekstveld per (collectie, tabel)
+    """
+    db = client[db_name]
+    fouten = []
+    met_regeleinde = {}
+    for naam in STAGING_MDB_COLLECTIES:
+        if naam not in db.list_collection_names():
+            continue
+        for doc in db[naam].find({}):
+            mdbfile = doc.get("mdbfile")
+            if not isinstance(mdbfile, str) or not mdbfile:
+                fouten.append(f"{naam} {doc['_id']}: mdbfile leeg of ontbreekt (table={doc.get('table')!r})")
+                continue
+            regeleinde = False
+            for veld, waarde in doc.items():
+                if veld in EXTRA_KOLOMMEN or not isinstance(waarde, str):
+                    continue
+                if mdbfile in waarde or ",table,projectcd," in waarde:
+                    fouten.append(f"{naam} {doc['_id']} ({doc.get('table')}): veld {veld!r} bevat de extra kolommen")
+                if "\n" in waarde or "\r" in waarde:
+                    regeleinde = True
+            if regeleinde:
+                sleutel = (naam, doc.get("table"))
+                met_regeleinde[sleutel] = met_regeleinde.get(sleutel, 0) + 1
+    return fouten, met_regeleinde
 
 
 def print_all_collections(client, db_name, label=""):
@@ -292,6 +354,29 @@ class TestDelftExtractTransform:
             assert zonder == 0, f"{zonder} staging-documenten zonder '{veld}'"
         assert counts.get("AARDEWERK 1&2 VOORWERP") == 96, \
             f"AARDEWERK 1&2 VOORWERP: verwacht 96, gevonden {counts.get('AARDEWERK 1&2 VOORWERP')}"
+
+    def test_02a_verify_tekstvelden_met_regeleinde(self, mongo_client):
+        """Tekstvelden met een regeleinde blijven één veld, met de extra kolommen erachter (issue 74).
+
+        Memo-velden met een regeleinde beslaan in de CSV-export meer regels.
+        Sinds issue 74 zet importMDB.sh (csv_kolommen.py) de kolommen table,
+        projectcd, bron, loadtime en mdbfile alleen aan het einde van het record;
+        sed zette ze per regel, dus ook midden in het tekstveld.
+        """
+        fouten, met_regeleinde = controleerToegevoegdeKolommen(mongo_client, DB_STAGING)
+        print(f"\n  Records met een regeleinde in een tekstveld ({sum(met_regeleinde.values())}):")
+        for (collectie, tabel), aantal in sorted(met_regeleinde.items()):
+            print(f"    {collectie} / {tabel}: {aantal}")
+        assert not fouten, f"{len(fouten)} staging-documenten met ontbrekende of verplaatste extra kolommen: {fouten[:10]}"
+        assert met_regeleinde == EXPECTED_RECORDS_MET_REGELEINDE
+
+        # Voorbeeld: KAARTBLAD van één opgraving in de projectenlijst is '37E', vijf regeleinden, '37E'
+        coll = mongo_client[DB_STAGING]["Staging_Projecten_Projectenlijst"]
+        docs = list(coll.find({"table": "OPGRAVINGEN", "KAARTBLAD": {"$regex": "\n"}}))
+        assert len(docs) == 1
+        assert docs[0]["KAARTBLAD"].replace("\r\n", "\n") == "37E\n\n\n\n\n37E"
+        assert docs[0]["mdbfile"] == "/input/projectenlijst/DELF-IT.mdb"
+        assert docs[0]["projectcd"] == "DELF"
 
     # ----------------------------------------------------------
     # Stap 2: Transform

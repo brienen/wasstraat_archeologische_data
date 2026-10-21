@@ -11,6 +11,9 @@ fi
 # Zonder derde argument worden alle bestanden in de input-directory verwerkt.
 LIJSTBESTAND="${3:-}"
 
+# Map van dit script: csv_kolommen.py staat ernaast
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 WORKDIR=$AIRFLOW_TEMPDIR
 DATABASE=$DB_STAGING
 
@@ -202,30 +205,6 @@ uit.flush()
     mdb-export -H "$MDBFILE" "$TABLE_NAME" >> "$CSV_FILE"
 }
 
-# Functie: maak een waarde geschikt voor de vervangingstekst van sed en als CSV-veld
-# De waarden die achter elke CSV-regel worden gezet (tabelnaam, projectcode,
-# bron, tijdstempel, pad) staan letterlijk in de vervangingstekst van een
-# sed-opdracht s/$/.../. Daarin betekent & "de gevonden tekst", is \ een
-# escape-teken en is / het scheidingsteken van de opdracht. De Delftse tabel
-# "AARDEWERK 1&2 VOORWERP" werd zo "AARDEWERK 12 VOORWERP".
-# Voor de CSV: bevat de waarde een komma of aanhalingsteken, dan komt ze tussen
-# dubbele aanhalingstekens en wordt " -> "" (zoals csv.writer met QUOTE_MINIMAL),
-# zodat ze geen extra veld oplevert. Andere waarden blijven ongequote, zodat de
-# uitvoer voor gewone tabelnamen en paden byte voor byte gelijk blijft.
-# Altijd quoten kan niet: sed werkt per regel en zet de waarden ook achter elke
-# regel binnen een tekstveld met een regeleinde (bijv. OPGRAVINGEN in de Delftse
-# projectenlijst); een " daar breekt de CSV en mongoimport weigert de tabel.
-# Daarna voor sed: \ -> \\, & -> \& en / -> \/.
-# Een newline in de waarde wordt niet ondersteund (komt in tabelnamen en paden
-# niet voor).
-escape_sed_csv_value() {
-    local WAARDE="$1"
-    case "$WAARDE" in
-        *[,\"]*) WAARDE="\"$(printf '%s' "$WAARDE" | sed -e 's/"/""/g')\"" ;;
-    esac
-    printf '%s' "$WAARDE" | sed -e 's/[\/&]/\\&/g'
-}
-
 # Functie: genereer metainfo JSON op een robuuste manier
 # Vervangt de fragiele sed-pipeline door een Python-script dat altijd
 # geldige JSON produceert, zelfs bij onverwachte mdb-prop output.
@@ -388,33 +367,31 @@ do
 			TOTAL_TABLES_ENCODING_FAILED=$((TOTAL_TABLES_ENCODING_FAILED + 1))
 		fi
 
-		LENGTE=`wc -l < $CSV`
-		let LENGTE=$LENGTE-1 # To correct for the header
+		echo Reading data
+		# Voeg de kolommen table, projectcd, bron, loadtime en mdbfile toe: de
+		# kolomnamen achter de kopregel, de waarden achter elk datarecord.
+		# csv_kolommen.py leest de export met de csv-module, zodat een record met een
+		# tekstveld (memo) met een regeleinde, dat in de CSV meer regels beslaat, de
+		# waarden aan het einde van het record krijgt en niet midden in het tekstveld
+		# (issue 74; sed deed dit per regel). De tekst van de records blijft verder
+		# ongewijzigd. Het script schrijft het aantal datarecords naar stdout; dat is
+		# LENGTE (ook de teller in de metainfo). Waarden met een komma of
+		# aanhalingsteken komen tussen aanhalingstekens; mongoimport leest gequote en
+		# ongequote waarden hetzelfde in (een getal blijft een getal, tekst blijft tekst).
+		if ! LENGTE=$(python3 "$SCRIPT_DIR/csv_kolommen.py" "$CSV" "$TABLE" "$PROJECT" "opgraving$PROJECT" "$timestamp" "$mdbfile"); then
+			echo "ERROR: Kolommen toevoegen gefaald voor $CONTEXT, tabel overgeslagen" | tee -a "$ERRORLOG"
+			rm -f "$CSV"
+			continue
+		fi
 		echo Length of tabel $CSV in file $mdbfile is: $LENGTE
-		if [ $LENGTE -lt 1 ]; then # on empty CSV stop loop and continue to next cycle
+		if [ "$LENGTE" -lt 1 ]; then # on empty CSV stop loop and continue to next cycle
 			rm "$CSV"
 			continue
-    	fi
+		fi
 
-		echo Reading data
-		# Voeg de kolommen table, projectcd, bron, loadtime en mdbfile toe: de waarden
-		# achter elke datarij (regel 2 en verder), de kolomnamen achter de kopregel.
-		# De waarden gaan via escape_sed_csv_value (veilig voor sed; tussen
-		# aanhalingstekens als ze een komma of aanhalingsteken bevatten). mongoimport
-		# leest gequote en ongequote waarden hetzelfde in (een getal blijft een getal,
-		# tekst blijft tekst). De kopregel-sed gebruikt de waarden niet, zodat
-		# bijzondere tekens in een tabelnaam of pad hem niet kunnen breken.
-		SED_TABLE=$(escape_sed_csv_value "$TABLE")
-		SED_PROJECT=$(escape_sed_csv_value "$PROJECT")
-		SED_BRON=$(escape_sed_csv_value "opgraving$PROJECT")
-		SED_LOADTIME=$(escape_sed_csv_value "$timestamp")
-		SED_MDBFILE=$(escape_sed_csv_value "$mdbfile")
-		sed -i "1!s/\$/,$SED_TABLE,$SED_PROJECT,$SED_BRON,$SED_LOADTIME,$SED_MDBFILE/" "$CSV"
-		sed -i "1s/\$/,table,projectcd,bron,loadtime,mdbfile/" "$CSV"
-
-		# Valideer dat CSV na sed-bewerking nog steeds geldig UTF-8 is
+		# Valideer dat de CSV na het toevoegen van de kolommen nog steeds geldig UTF-8 is
 		if ! iconv -f UTF-8 -t UTF-8 "$CSV" > /dev/null 2>&1; then
-			echo "WARNING: CSV is na sed-bewerking geen geldig UTF-8 meer voor $CONTEXT" | tee -a "$ERRORLOG"
+			echo "WARNING: CSV is na het toevoegen van de kolommen geen geldig UTF-8 meer voor $CONTEXT" | tee -a "$ERRORLOG"
 			# Forceer UTF-8 met TRANSLIT als noodmaatregel
 			iconv -f UTF-8 -t UTF-8//IGNORE < "$CSV" > "${CSV}.clean" 2>/dev/null && mv "${CSV}.clean" "$CSV"
 		fi

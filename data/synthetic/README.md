@@ -18,6 +18,7 @@ Gemeenten die hun eigen data willen verwerken, kunnen deze voorbeeldstructuur al
 - 4 vullingen, 10 foto's
 - 2 monsters (uit beerput en greppel, met botanische en schelpdeterminaties)
 - Materiaalsoorten: aardewerk, glas, been, metaal, leer, steen, kleipijp, munten
+- De beschrijving van spoor 4 (een memo-veld, zoals in de echte databases) bevat een regeleinde — test voor tekstvelden die in de CSV-export meer regels beslaan
 - Datering: 1200-1800
 
 ## Structuur

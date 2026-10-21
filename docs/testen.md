@@ -40,7 +40,8 @@ tests/
 │   ├── test_fix_8_dropna.py                  # dropna() edge cases
 │   ├── test_importMDB_bash.py                # Bash import-functietests
 │   ├── test_importMDB_lijstbestand.py        # importMDB.sh met lijstbestand (incrementeel laden)
-│   ├── test_importMDB_kopregel.py            # importMDB.sh: kopregel en bijzondere tekens in tabelnamen
+│   ├── test_importMDB_kopregel.py            # importMDB.sh: kopregel van de CSV-export
+│   ├── test_csv_kolommen.py                  # importMDB.sh: extra kolommen per record (csv_kolommen.py)
 │   ├── test_verwerkingsrun.py                # Run-document van de incrementele cyclus
 │   ├── test_bronbestanden.py                 # Registratie bronbestanden, vingerafdruk, delta, lijstbestanden
 │   ├── test_opruimen.py                      # Opruimen oude records + delta-varianten van de extractie
@@ -202,7 +203,8 @@ De basisimage van Jupyter staat vast op een digest in `services/jupyter/Dockerfi
 | `harmonizer.py` | `getKolomValues` ($ifNull-ketens), `getAggrTables` (regex-matching), `loadHarmonizer` (Excel → DataFrame), pipeline-structuur ($match, $merge), overerving (Artefact→Aardewerk), `getHarmonizeAggr` wijzigt de gecachete pipeline niet |
 | `foto_parsing.py` | Objectfoto-regex (met put/subnr/BP), tekening-types (A-E, P, T, LZW), projectfoto's (F/G), DAN/DAR rapporten, artefactsoort-detectie uit bestandspad |
 | `encoding.py` | UTF-8 conversie, CP1252-detectie, dubbele CSV-headers |
-| `importMDB_kopregel.py` | `importMDB.sh`: de kopregel van de CSV-export (zelf gequote, ook bij komma's in kolomnamen) en bijzondere tekens (`&`, `\`, komma's) in tabelnamen bij het toevoegen van `table`, `projectcd`, `bron`, `loadtime` en `mdbfile` |
+| `importMDB_kopregel.py` | `importMDB.sh`: de kopregel van de CSV-export (zelf gequote, ook bij komma's in kolomnamen) |
+| `csv_kolommen.py` | `airflow_app/scripts/csv_kolommen.py` en de aanroep in `importMDB.sh` (issue 74): `table`, `projectcd`, `bron`, `loadtime` en `mdbfile` achter elk record, ook bij een tekstveld met een regeleinde; gewone rijen, lege velden, komma's en aanhalingstekens, bijzondere tekens (`&`, `\`) in tabelnamen en paden, lege tabel, niet-UTF-8-bytes, grote tabel; byte voor byte gelijk aan de vroegere `sed`-regels zolang er geen regeleinde in een veld staat; `importMDB.sh` als geheel met nagebootste mdbtools en mongoimport (aantal records als teller) |
 | `fixes_*.py` | Robuustheid van transformaties bij ontbrekende/ongeldige data |
 | `synthetic_data.py` | Validatie dat de synthetische MDB-bestanden de juiste tabellen en kolomstructuur bevatten |
 | `synthetic_monster_data.py` | Structuur, kolomaantallen, referentiële integriteit en projectverwijzingen van synthetische monsterdata |
@@ -219,8 +221,8 @@ De basisimage van Jupyter staat vast op een digest in `services/jupyter/Dockerfi
 | Test | Wat wordt getest |
 |------|-----------------|
 | `test_full_pipeline.py` | Volledige harmonisatie-pipeline met directe MongoDB-seeding: harmonisatie, enhance, keys, move & merge, references |
-| `test_full_pipeline_synthetic_data.py` | Volledige ETL via Airflow DAGs met synthetische MDB-data: extract, transform, verwachte aantallen per soort (inclusief monsters, botanische/schelpdeterminaties en referentietabellen), objectfoto's gekoppeld aan hun artefact en vondst (`artefactID`/`vondstID` in Single_Store_Clean en `Def_Bestand`), geen Transform 2-fouten voor foto's |
-| `test_full_pipeline_delft_data.py` | Zelfde pipeline maar met Delftse data en Delft-specifieke verwachte aantallen; objectfoto's met projectcode `DB034`, integers en een `artefactID` |
+| `test_full_pipeline_synthetic_data.py` | Volledige ETL via Airflow DAGs met synthetische MDB-data: extract, transform, verwachte aantallen per soort (inclusief monsters, botanische/schelpdeterminaties en referentietabellen), objectfoto's gekoppeld aan hun artefact en vondst (`artefactID`/`vondstID` in Single_Store_Clean en `Def_Bestand`), geen Transform 2-fouten voor foto's; een memo-veld met een regeleinde (spoor 4 van SY002) komt als één veld in de staging en in Single_Store_Clean, en geen staging-document heeft de extra kolommen van `importMDB.sh` midden in een ander veld (issue 74) |
+| `test_full_pipeline_delft_data.py` | Zelfde pipeline maar met Delftse data en Delft-specifieke verwachte aantallen; objectfoto's met projectcode `DB034`, integers en een `artefactID`; het aantal staging-records met een regeleinde in een tekstveld per tabel, zonder de extra kolommen midden in een veld (issue 74) |
 | `test_harmonize_pipeline.py` | Individuele harmonisatie-pipelines (Vondst, Spoor, alle objecttypen) |
 | `test_importMDB_bash.py` | MDB-import shell-script: encoding-conversie, CSV-generatie, mongoimport |
 | `test_incremental_synthetic_data.py` | Volledige cyclus gevolgd door vier incrementele runs (geen wijziging, nieuw project, vervangen database en verwijderde foto, verwijderd project): PostgreSQL, Elasticsearch, registratie en gebruikersdata |
