@@ -104,7 +104,7 @@ def maakDatabase():
 VERWACHT_ARTEFACT = {
     0: (2, 1400, 1500, 1200, 1300, 1450, 1475),        # artefactdatering gaat voor
     1: (1, 1400, 1500, 1200, 1300, 1400, 1500),        # vondstdatering
-    2: (0, None, None, 1200, 1300, 1200, None),        # vanaf uit het spoor; tot niet (zoals init.init())
+    2: (0, None, None, 1200, 1300, 1200, 1300),        # vanaf en tot uit het spoor
     3: (0, 0, 1450, None, 1350, None, 1450),           # 0 telt als leeg: vanaf via vondst (0) naar spoor (leeg)
     4: (0, 1600, None, None, None, 1600, 1700),        # vondst zonder spoor
     5: (0, None, None, None, None, 1800, None),        # artefact zonder vondst
@@ -148,7 +148,8 @@ class TestAfgeleideVeldenSql:
                 'WHEN COALESCE(v.vondstdatering_vanaf, 0) <> 0 THEN v.vondstdatering_vanaf '
                 'ELSE s.spoordatering_vanaf END AS datering_vanaf') in bron
         assert ('CASE WHEN COALESCE(a.artefactdatering_tot, 0) <> 0 THEN a.artefactdatering_tot '
-                'ELSE v.vondstdatering_tot END AS datering_tot') in bron
+                'WHEN COALESCE(v.vondstdatering_tot, 0) <> 0 THEN v.vondstdatering_tot '
+                'ELSE s.spoordatering_tot END AS datering_tot') in bron
 
     def test_bron_project(self):
         bron = ' '.join(load.AFGELEIDE_VELDEN['Def_Project']['bron'].split())
@@ -208,7 +209,7 @@ class TestAfgeleideVeldenUitkomst:
             'spoordatering_vanaf': 3,    # artefact 0, 1 en 2
             'spoordatering_tot': 4,      # artefact 0, 1, 2 en 3
             'datering_vanaf': 5,         # artefact 0, 1, 2, 4 en 5
-            'datering_tot': 4,           # artefact 0, 1, 3 en 4
+            'datering_tot': 5,           # artefact 0, 1, 2 (spoor), 3 en 4
             'rijen': 8,
         }
         assert tellingen['Def_Project'] == {'aantal_artefacten': 2, 'rijen': 2}

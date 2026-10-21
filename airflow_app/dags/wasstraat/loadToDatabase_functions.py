@@ -647,15 +647,16 @@ def valideerFkConstraints(cursor, fk_constraints):
 # - vondstdatering_vanaf/_tot: de datering van de vondst (vondstID); NULL zonder vondst.
 # - spoordatering_vanaf/_tot: de datering van het spoor (spoorID) van die vondst; NULL zonder.
 # - datering_vanaf: de artefactdatering, anders de vondstdatering, anders de spoordatering.
-# - datering_tot: de artefactdatering, anders de vondstdatering (zonder spoordatering).
+# - datering_tot: de artefactdatering, anders de vondstdatering, anders de spoordatering.
 # - aantal_artefacten: het aantal artefacten met een projectID naar het project; 0 zonder.
 #
 # 'Anders' betekent leeg of 0: init.init() zet zelf alleen datering_vanaf/_tot uit de
 # artefactdatering, maar elke flush van een gewijzigd artefact roept de observers van
 # models.py aan (@observes van sqlalchemy_utils), die 'if not ...' gebruiken en zo de
-# vondst- en spoordatering invullen. Voor datering_tot ontbreekt de spoordatering, omdat in
-# models.py de tweede methode spoor_observer (voor spoordatering_vanaf) de eerste (voor
-# spoordatering_tot) overschrijft; de pipeline volgt init.init() daarin.
+# vondst- en spoordatering invullen. Tot oktober 2026 viel datering_tot niet terug op de
+# spoordatering, omdat in models.py twee observers dezelfde naam spoor_observer hadden en de
+# tweede (spoordatering_vanaf) de eerste (spoordatering_tot) overschreef; dat is hersteld en
+# de pipeline en init.init() geven nu voor vanaf en tot dezelfde voorrang.
 AFGELEIDE_VELDEN = {
     'Def_Artefact': {
         'kolommen': ['aantal_fotos', 'vondstdatering_vanaf', 'vondstdatering_tot', 'spoordatering_vanaf',
@@ -669,7 +670,8 @@ AFGELEIDE_VELDEN = {
                         WHEN COALESCE(v.vondstdatering_vanaf, 0) <> 0 THEN v.vondstdatering_vanaf
                         ELSE s.spoordatering_vanaf END AS datering_vanaf,
                    CASE WHEN COALESCE(a.artefactdatering_tot, 0) <> 0 THEN a.artefactdatering_tot
-                        ELSE v.vondstdatering_tot END AS datering_tot
+                        WHEN COALESCE(v.vondstdatering_tot, 0) <> 0 THEN v.vondstdatering_tot
+                        ELSE s.spoordatering_tot END AS datering_tot
             FROM "Def_Artefact" a
             LEFT JOIN (SELECT b."artefactID", COUNT(*) AS aantal
                        FROM "Def_Bestand" b

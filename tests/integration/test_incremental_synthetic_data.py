@@ -298,9 +298,8 @@ def controleerAfgeleideVelden():
 
     aantal_fotos: aantal objectfoto's per artefact in Def_Bestand; aantal_artefacten:
     aantal artefacten per project; vondst- en spoordatering: die van de vondst en
-    zijn spoor; datering_vanaf: artefact, anders vondst, anders spoor; datering_tot:
-    artefact, anders vondst ('anders' = leeg of 0, zoals de observers van models.py
-    in init.init()).
+    zijn spoor; datering_vanaf en datering_tot: artefact, anders vondst, anders spoor
+    ('anders' = leeg of 0, zoals de observers van models.py in init.init()).
 
     Returns:
         Dict met het aantal artefacten met foto's en met een datering (ter controle van de dekking)
@@ -325,7 +324,7 @@ def controleerAfgeleideVelden():
         opgeslagen = [None if w == "NULL" else int(w) for w in rij[7:]]
         verwacht = [vnd_van, vnd_tot, spr_van, spr_tot,
                     art_van if art_van else (vnd_van if vnd_van else spr_van),
-                    art_tot if art_tot else vnd_tot]
+                    art_tot if art_tot else (vnd_tot if vnd_tot else spr_tot)]
         if opgeslagen != verwacht:
             fouten.append(f"artefact {rij[0]}: {opgeslagen} in plaats van {verwacht}")
     assert not fouten, f"{len(fouten)} artefacten met verkeerde dateringen: {fouten[:5]}"

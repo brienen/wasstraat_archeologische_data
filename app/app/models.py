@@ -544,7 +544,7 @@ class Artefact(WasstraatModel):
 
     spoordatering_tot = Column(Integer, default=None, index=True)
     @observes('vondst.spoor.spoordatering_tot')  # Works only for update events, inserts and deletes via modelevents.py 
-    def spoor_observer(self, spoordatering_tot):
+    def spoordattot_observer(self, spoordatering_tot):
         self.spoordatering_tot = spoordatering_tot
         if not self.vondstdatering_tot and not self.artefactdatering_tot:
             self.datering_tot = self.spoordatering_tot
@@ -552,7 +552,7 @@ class Artefact(WasstraatModel):
 
     spoordatering_vanaf = Column(Integer, default=None, index=True)
     @observes('vondst.spoor.spoordatering_vanaf')  # Works only for update events, inserts and deletes via modelevents.py 
-    def spoor_observer(self, spoordatering_vanaf):
+    def spoordatvanaf_observer(self, spoordatering_vanaf):
         self.spoordatering_vanaf = spoordatering_vanaf
         if not self.vondstdatering_vanaf and not self.artefactdatering_vanaf:
             self.datering_vanaf = self.spoordatering_vanaf
