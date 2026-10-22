@@ -68,3 +68,6 @@ deploy/data/output/*
 !deploy/data/output/.gitkeep
 deploy/data/backup/*/*
 !deploy/data/backup/*/.gitkeep
+
+# Uitvoer van de graphify-kennisgraaf (gegenereerd, niet in de repo)
+graphify-out/
