@@ -79,8 +79,14 @@ EXPECTED_MIN_OBJECTFOTOS_GEKOPPELD = 22
 # vangnet in de test. Gemeten 2026-10-21: 540 verwerkt, 0 overgeslagen, 1 mislukt: de lijst
 # "rapporten/DAR/Lijst met Delftse Archeologische Rapporten.doc" heeft geen projectcode en geen
 # DAN/DAR in de bestandsnaam (image_util weigert hem). Dat is het ene bestand dat vóór issue 70
-# stil op processed=False bleef staan.
+# stil op processed=False bleef staan. Het is ook het enige Word-document in de testdata; sinds
+# issue 82 krijgen Word-documenten het documenticoon uit shared/afbeeldingen, maar deze lijst
+# blijft mislukt tot de opdrachtgever beslist (overslaan of als rapport verwerken).
 EXPECTED_MAX_MISLUKTE_BESTANDEN = 1
+# Bestanden die mogen mislukken, met een tekst die in de foutmelding moet staan
+EXPECTED_MISLUKTE_BESTANDEN = {
+    "Lijst met Delftse Archeologische Rapporten.doc": "geen projectcode en geen rapportnummer",
+}
 CONTROLETAAK_AFBEELDINGEN = "Extract_Group.Controleer_Afbeeldingen"
 
 # Staging-collecties die importMDB.sh vult (met de kolommen table, projectcd, bron, loadtime en mdbfile)
@@ -499,6 +505,10 @@ class TestDelftExtractTransform:
             f"{CONTROLETAAK_AFBEELDINGEN}; een vol mediavolume ('No space left on device') laat de "
             f"import-taken direct falen.")
         assert verwerkt + overgeslagen + len(mislukt) == totaal
+        for m in mislukt:
+            naam = os.path.basename(m["filename"])
+            assert naam in EXPECTED_MISLUKTE_BESTANDEN, f"Onverwacht mislukt: {m['filename']}: {m['fout'][:300]}"
+            assert EXPECTED_MISLUKTE_BESTANDEN[naam] in m["fout"], f"Onduidelijke foutmelding voor {naam}: {m['fout'][:300]}"
 
         uitvoer = DAG_UITVOER.get("Extract_only", "")
         assert re.search(rf"Marking task as SUCCESS\. dag_id=Extract_only, task_id={re.escape(CONTROLETAAK_AFBEELDINGEN)},",

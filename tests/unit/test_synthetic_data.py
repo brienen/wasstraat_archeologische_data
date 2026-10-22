@@ -38,6 +38,10 @@ from generate_synthetic_data import (
     KOLOMMEN_MAGAZIJNLIJST,
     KOLOMMEN_DIGIFOTOS,
     BESCHRIJVING_MET_REGELEINDE,
+    OUTPUT_DIR,
+    RGBA_PNG,
+    WORD_DOCUMENT,
+    bijzondereBestanden,
 )
 
 
@@ -325,3 +329,42 @@ class TestDigifotos:
         assert len(kolommen) == verwacht
         for record in records:
             assert len(record) == verwacht
+
+
+# ============================================================
+# Tests: bijzondere bestanden voor de extractie (issue 82)
+# ============================================================
+
+@pytest.mark.unit
+class TestBijzondereBestanden:
+    """Een png met alfakanaal en een Word-document in SY001, gelijk aan wat de generator maakt."""
+
+    def test_bestanden_in_repo_gelijk_aan_generator(self):
+        for pad, inhoud in bijzondereBestanden().items():
+            volledig = os.path.join(OUTPUT_DIR, "projecten", pad)
+            assert os.path.isfile(volledig), f"{pad} ontbreekt; draai make synthetic"
+            with open(volledig, "rb") as f:
+                assert f.read() == inhoud, f"{pad} wijkt af van de generator"
+
+    def test_generator_is_deterministisch(self):
+        assert bijzondereBestanden() == bijzondereBestanden()
+
+    def test_png_heeft_alfakanaal(self):
+        image_module = pytest.importorskip("PIL.Image")
+        with image_module.open(os.path.join(OUTPUT_DIR, "projecten", RGBA_PNG)) as image:
+            image.load()
+            assert image.mode == "RGBA"
+            assert image.getpixel((0, 0))[3] == 255
+            assert image.getpixel((image.size[0] - 1, 0))[3] == 0
+
+    def test_png_is_opgravingsfoto_van_sy001(self):
+        """Het Delftse profiel herkent SY001_G<nr> als opgravingsfoto; de map L Fotos valt in de selectie."""
+        assert RGBA_PNG.startswith(os.path.join("SY001", "L Fotos")) and os.path.basename(RGBA_PNG).startswith("SY001_G")
+
+    def test_docx_is_een_geldig_word_document(self):
+        import zipfile
+        with zipfile.ZipFile(os.path.join(OUTPUT_DIR, "projecten", WORD_DOCUMENT)) as docx:
+            assert docx.testzip() is None
+            assert {"[Content_Types].xml", "_rels/.rels", "word/document.xml"} <= set(docx.namelist())
+        # De extractie selecteert bestanden in mappen met 'velddocument' in de naam
+        assert "velddocument" in WORD_DOCUMENT.lower()

@@ -93,7 +93,6 @@ try:
 
    AIRFLOW_OUTPUT_MEDIA = os.getenv("AIRFLOW_OUTPUT_MEDIA") if os.getenv("AIRFLOW_OUTPUT_MEDIA") else "/output/archeomedia"
 
-   FILE_WORD_ICON = os.getenv("FILE_WORD_ICON") if os.getenv("FILE_WORD_ICON") else '/input/fotolijst/microsoft-word-logo.jpg'
    FILE_ABREXCEL = os.getenv("FILE_ABREXCEL") if os.getenv("FILE_ABREXCEL") else '/input/referentietabellen/abr_versie_01122018.xlsx'
    FILE_EXTRA_PROJECTS = os.getenv("FILE_EXTRA_PROJECTS") if os.getenv("FILE_EXTRA_PROJECTS") else '/input/projectenlijst/Extra_projecten_tabel_OPGRAVINGEN.xlsx'
    FILE_IMPORT_FILES_EXCEL = os.getenv("FILE_IMPORT_FILES_EXCEL") if os.getenv("FILE_IMPORT_FILES_EXCEL") else '/input/referentietabellen/Alle Bestanden Archeologisch Depot.xlsx'
@@ -106,6 +105,12 @@ except KeyError:
 # Default: 'delft' voor backwards compatibility.
 # Buiten try/except zodat het altijd beschikbaar is, ook in testomgeving.
 WASSTRAAT_GEMEENTE = os.getenv("WASSTRAAT_GEMEENTE") if os.getenv("WASSTRAAT_GEMEENTE") else "delft"
+
+# Voorbeeldafbeelding (documenticoon) voor Word-documenten. Het icoon hoort bij de code,
+# niet bij de brondata: standaard shared/afbeeldingen/document.png naast dit bestand, dus
+# /opt/airflow/dags/shared/... in de Airflow-image en /app/app/shared/... in de Flask-image.
+# De omgevingsvariabele FILE_WORD_ICON overschrijft het pad.
+FILE_WORD_ICON = os.getenv("FILE_WORD_ICON") if os.getenv("FILE_WORD_ICON") else os.path.join(basedir, "afbeeldingen", "document.png")
 
 
 CSRF_ENABLED = True

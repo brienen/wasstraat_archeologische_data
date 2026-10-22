@@ -15,8 +15,12 @@ Gebruik:
   python data/synthetic/generate_synthetic_data.py
 """
 
+import io
 import os
+import struct
 import sys
+import zipfile
+import zlib
 import msaccessdb
 
 # JPype wordt pas geïmporteerd in startJvm() zodat tests zonder Java kunnen draaien
@@ -910,7 +914,7 @@ def dataGrootProject():
         (code, 3, 6, 1, "Zand", "Lichtgrijs", "Fijn", "7, 8"),
     ])
 
-    # Aardewerk: 8 stuks
+    # Aardewerk: 11 stuks (waarvan twee zonder subnummer en één met een dubbel subnummer, issue 81)
     kol = [k[0] for k in KOLOMMEN_AARDEWERK]
     tabellen["AARDEWERK 1"] = (kol, [
         (code, 1, 1, 1, "Grijsbakkend", "", "Rand", "Kogelpot", "", "", 16, None, "", None, "", "", "", "", "", "", "", "", "", "", "", "", "1200", "1350", "", "", "", "", "D003", "", "", "", "", "", "", "", ""),
@@ -921,6 +925,14 @@ def dataGrootProject():
         (code, 3, 7, 1, "Proto-steengoed", "", "Wand", "Kan", "", "", None, None, "", None, "", "", "", "", "", "", "", "", "", "", "", "", "1200", "1300", "", "", "", "", "D005", "", "", "", "", "", "", "", ""),
         (code, 3, 9, 1, "Grijsbakkend", "", "Bodem", "Kogelpot", "", "", None, 12, "", None, "", "", "", "", "", "", "", "", "", "", "", "", "1200", "1350", "", "", "", "", "D005", "", "", "", "", "", "", "", ""),
         (code, 4, 11, 1, "Roodbakkend", "", "Oor", "Kan", "", "", None, None, "", None, "Loodglazuur", "", "", "", "", "", "", "", "", "", "", "", "1550", "1700", "", "", "", "", "D006", "", "", "", "", "", "", "", ""),
+        # Issue 81: twee scherven zonder subnummer, zoals in de Delftse determinatietabellen. Ze
+        # hebben geen natuurlijke key en krijgen een hulpsleutel uit hun bronrij (tabel en ID).
+        (code, 3, 7, None, "Grijsbakkend", "", "Wand", "Kogelpot", "", "", None, None, "", None, "", "", "", "", "", "", "", "", "", "", "", "", "1200", "1350", "", "", "", "", "D005", "", "", "", "", "", "", "", ""),
+        (code, 4, 12, None, "Roodbakkend", "", "Wand", "Grape", "", "", None, None, "", None, "Loodglazuur", "", "", "", "", "", "", "", "", "", "", "", "1500", "1650", "", "", "", "", "D006", "", "", "", "", "", "", "", ""),
+        # Issue 81: hetzelfde subnummer als de tweede rij (put 1, vondst 1, subnr 2). De merge voegt
+        # beide rijen samen en de eerste wordt ook verplaatst, zodat de key van het artefact
+        # (PSY002P1V1A2|Aardewerk) twee keer voorkomt, zoals bij 6.949 Delftse artefacten.
+        (code, 1, 1, 2, "Grijsbakkend", "", "Wand", "Kogelpot", "", "", None, None, "", None, "", "", "", "", "Radstempel", "", "", "", "", "", "", "", "1250", "1400", "", "", "", "", "D003", "", "", "", "", "", "", "", ""),
     ])
 
     # Glas: 3 stuks
@@ -1389,6 +1401,91 @@ def genereerFotos():
     print(f"  {count} synthetische fotobestanden aangemaakt")
 
 
+# Bestanden die de extractie apart moet behandelen (issue 82), relatief aan data/projecten:
+# een png met alfakanaal (moet op een witte achtergrond als jpg) en een Word-document
+# (krijgt het documenticoon uit shared/afbeeldingen als voorbeeld).
+RGBA_PNG = os.path.join("SY001", "L Fotos", "SY001_G003.png")
+WORD_DOCUMENT = os.path.join("SY001", "D Velddocumenten", "Dagrapport SY001.docx")
+
+
+def maakRgbaPng(breedte=40, hoogte=20):
+    """Maak een klein png met alfakanaal (RGBA), zonder Pillow.
+
+    De linkerhelft is dekkend roodbruin, de rechterhelft volledig doorzichtig.
+
+    Returns:
+        De inhoud van het png-bestand (bytes)
+    """
+    dekkend = bytes((180, 60, 40, 255)) * (breedte // 2)
+    doorzichtig = bytes((0, 0, 0, 0)) * (breedte - breedte // 2)
+    pixels = b"".join(b"\x00" + dekkend + doorzichtig for _ in range(hoogte))
+
+    def blok(soort, data):
+        return struct.pack(">I", len(data)) + soort + data + struct.pack(">I", zlib.crc32(soort + data) & 0xFFFFFFFF)
+
+    kop = struct.pack(">IIBBBBB", breedte, hoogte, 8, 6, 0, 0, 0)  # 8 bits per kanaal, kleurtype 6 = RGBA
+    return b"\x89PNG\r\n\x1a\n" + blok(b"IHDR", kop) + blok(b"IDAT", zlib.compress(pixels, 9)) + blok(b"IEND", b"")
+
+
+def maakDocx(tekst):
+    """Maak een minimaal Word-document (.docx) met één alinea, zonder extra pakketten.
+
+    De tijdstempels in het zip-bestand liggen vast, zodat opnieuw genereren hetzelfde bestand geeft.
+
+    Returns:
+        De inhoud van het docx-bestand (bytes)
+    """
+    onderdelen = [
+        ("[Content_Types].xml",
+         '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n'
+         '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'
+         '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>'
+         '<Default Extension="xml" ContentType="application/xml"/>'
+         '<Override PartName="/word/document.xml" '
+         'ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>'
+         '</Types>'),
+        ("_rels/.rels",
+         '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n'
+         '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+         '<Relationship Id="rId1" '
+         'Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" '
+         'Target="word/document.xml"/></Relationships>'),
+        ("word/document.xml",
+         '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n'
+         '<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">'
+         f'<w:body><w:p><w:r><w:t>{tekst}</w:t></w:r></w:p></w:body></w:document>'),
+    ]
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, "w") as docx:
+        for naam, inhoud in onderdelen:
+            info = zipfile.ZipInfo(naam, date_time=(1980, 1, 1, 0, 0, 0))
+            info.compress_type = zipfile.ZIP_DEFLATED
+            docx.writestr(info, inhoud)
+    return buffer.getvalue()
+
+
+def bijzondereBestanden():
+    """Inhoud van de bestanden die de extractie apart moet behandelen (issue 82).
+
+    Returns:
+        Dict met pad (relatief aan data/projecten) -> inhoud (bytes)
+    """
+    return {
+        RGBA_PNG: maakRgbaPng(),
+        WORD_DOCUMENT: maakDocx("Dagrapport SY001: synthetisch Word-document voor de Wasstraat."),
+    }
+
+
+def genereerBijzondereBestanden():
+    """Schrijf een png met alfakanaal en een Word-document in project SY001."""
+    for pad, inhoud in bijzondereBestanden().items():
+        volledig = os.path.join(OUTPUT_DIR, "projecten", pad)
+        os.makedirs(os.path.dirname(volledig), exist_ok=True)
+        with open(volledig, "wb") as f:
+            f.write(inhoud)
+    print(f"  {len(bijzondereBestanden())} bijzondere bestanden aangemaakt (png met alfakanaal, Word-document)")
+
+
 def genereerAlles():
     """Genereer alle synthetische MDB-bestanden en fotobestanden."""
     print("=" * 60)
@@ -1461,6 +1558,7 @@ def genereerAlles():
     # Foto's
     print("\n[7/7] Synthetische fotobestanden")
     genereerFotos()
+    genereerBijzondereBestanden()
 
     print("\n" + "=" * 60)
     print("Klaar! Bestanden gegenereerd in:")

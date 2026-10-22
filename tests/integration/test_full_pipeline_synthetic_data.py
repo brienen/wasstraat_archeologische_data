@@ -11,6 +11,8 @@ Afbeeldingen: na Extract_only heeft geen enkel bestand in Filenames de status
 mislukt of onverwerkt en is de controletaak Controleer_Afbeeldingen geslaagd
 (issue 70); de synthetische objectfoto's van SY002 moeten na Transform 4
 aan hun artefact en vondst gekoppeld zijn (artefactID, vondstID), ook in Def_Bestand.
+De png met alfakanaal en het Word-document van SY001 (issue 82) worden verwerkt:
+drie formaten in de mediamap, het png als RGB-jpg op een witte achtergrond.
 
 Draaien:
   make integration
@@ -113,6 +115,15 @@ STAGING_MDB_COLLECTIES = [
     "Staging_Projecten_Fotolijst", "Staging_Projecten_Monster", "Staging_Rapporten",
 ]
 EXTRA_KOLOMMEN = ["table", "projectcd", "bron", "loadtime", "mdbfile"]
+
+# Bestanden die de extractie apart behandelt (issue 82): bestandsnaam -> (fileType, mime_type).
+# Het png heeft een alfakanaal ('cannot write mode RGBA as JPEG'), het Word-document krijgt het
+# documenticoon uit shared/afbeeldingen als voorbeeld (het icoon ontbrak in de invoermap).
+BIJZONDERE_BESTANDEN = {
+    "SY001_G003.png": (".png", "image/jpeg"),
+    "Dagrapport SY001.docx": (".docx", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"),
+}
+MEDIA_IN_CONTAINER = "/tmp/archeomedia_test"
 
 # Controletaak van de extractie van afbeeldingen (issue 70) per DAG die afbeeldingen importeert
 CONTROLETAAK_PER_DAG = {
@@ -495,6 +506,51 @@ class TestFullPipelineSynthetic:
                 f"{dag_id}: de transformatie hangt niet af van de controle van de afbeeldingen")
         assert "Markeer_Run_Mislukt" in structuur["Extract_Transform_Load_Incremental"]["downstream"], (
             "Markeer_Run_Mislukt bewaakt Controleer_Afbeeldingen niet in de incrementele cyclus")
+
+    def test_01c_verify_bijzondere_bestanden(self, mongo_client):
+        """Het png met alfakanaal en het Word-document van SY001 zijn verwerkt, met drie formaten (issue 82)."""
+        filenames = mongo_client[DB_FILES]["Filenames"]
+        plaatjes = mongo_client[DB_STAGING]["Plaatjes"]
+        controle = {}
+        for naam, (filetype, mime_type) in BIJZONDERE_BESTANDEN.items():
+            entry = filenames.find_one({"filename": {"$regex": re.escape("/" + naam) + "$"}})
+            assert entry is not None, f"{naam} ontbreekt in Filenames"
+            assert entry["processed"] is True and "overgeslagen" not in entry and not entry.get("fout"), (
+                f"{naam} niet verwerkt: {entry}")
+            plaatje = plaatjes.find_one({"fileName": naam})
+            assert plaatje is not None, f"{naam} ontbreekt in Plaatjes"
+            assert plaatje["projectcd"] == "SY001"
+            assert plaatje["fileType"] == filetype and plaatje["mime_type"] == mime_type, plaatje
+            controle[naam] = [plaatje["imageThumbID"], plaatje["imageMiddleID"], plaatje["imageID"]]
+        assert controle["Dagrapport SY001.docx"][2].endswith("/Dagrapport SY001.docx"), "Groot formaat is het document zelf"
+        assert controle["SY001_G003.png"][2].endswith("/SY001_G003.jpg")
+
+        # De formaten in de mediamap van airflow-test: bestaan ze, en is het png een RGB-jpg met wit
+        # waar het bron-png doorzichtig was (rechterhelft)?
+        script = (
+            "import json, os\n"
+            "from PIL import Image\n"
+            f"media = {MEDIA_IN_CONTAINER!r}\n"
+            f"controle = {controle!r}\n"
+            "uit = {}\n"
+            "for naam, paden in controle.items():\n"
+            "    uit[naam] = [os.path.isfile(os.path.join(media, p.lstrip('/'))) for p in paden]\n"
+            "groot = Image.open(os.path.join(media, controle['SY001_G003.png'][2].lstrip('/')))\n"
+            "uit['png_modus'] = groot.mode\n"
+            "uit['png_rechts'] = groot.convert('RGB').getpixel((groot.size[0] - 2, groot.size[1] // 2))\n"
+            "print('RESULTAAT:' + json.dumps(uit))\n"
+        )
+        result = subprocess.run(["docker", "exec", AIRFLOW_CONTAINER, "python", "-c", script],
+                                capture_output=True, text=True, timeout=120)
+        regels = [r for r in result.stdout.split("\n") if r.startswith("RESULTAAT:")]
+        assert result.returncode == 0 and regels, f"Mediamap niet gelezen: {result.stderr[-2000:]}"
+        uitkomst = json.loads(regels[-1][len("RESULTAAT:"):])
+        print(f"\n  Bijzondere bestanden: {uitkomst}")
+        for naam in BIJZONDERE_BESTANDEN:
+            assert uitkomst[naam] == [True, True, True], f"{naam}: niet alle drie formaten in de mediamap"
+        assert uitkomst["png_modus"] == "RGB"
+        assert all(kanaal >= 245 for kanaal in uitkomst["png_rechts"]), (
+            f"Doorzichtig deel van het png is niet wit: {uitkomst['png_rechts']}")
 
     def test_02_verify_staging(self, mongo_client):
         """Staging-collectie bevat geëxtraheerde tabellen uit de MDB."""

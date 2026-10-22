@@ -11,6 +11,7 @@ Gemeenten die hun eigen data willen verwerken, kunnen deze voorbeeldstructuur al
 - 2 vullingen, 7 tekeningen, 3 foto's
 - 3 monsters (2 met botanische determinaties, 1 zoölogisch)
 - 1 monster met opzettelijk foute projectcode (SYNTFOUT) — test voor correctiemechanisme
+- 1 foto als png met alfakanaal (`L Fotos/SY001_G003.png`) en 1 Word-document (`D Velddocumenten/Dagrapport SY001.docx`) — test voor de extractie: het png komt op een witte achtergrond als jpg in de mediamap, het Word-document krijgt het documenticoon uit `shared/afbeeldingen/document.png` als voorbeeld
 - Datering: 1600-1750
 
 ### SY002 — Groot project (Kerkplein, Leiden)
@@ -29,7 +30,8 @@ data/synthetic/
 │   ├── projecten/                                     # Opgravingsdatabases + foto's
 │   │   ├── SY001/
 │   │   │   ├── C Database/opgravingSY001.mdb          #   Projectdatabase (putten, sporen, vondsten, artefacten)
-│   │   │   └── L Fotos/                               #   Foto's (sfeer-, opgravinqs- en objectfoto's)
+│   │   │   ├── D Velddocumenten/                      #   Word-document (dagrapport)
+│   │   │   └── L Fotos/                               #   Foto's (sfeer-, opgravings- en objectfoto's, één png met alfakanaal)
 │   │   └── SY002/
 │   │       ├── C Database/opgravingSY002.mdb
 │   │       └── L Fotos/
