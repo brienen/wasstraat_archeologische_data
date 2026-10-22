@@ -128,6 +128,10 @@ Bij de eerste start maakt de Flask App een beheerder aan met gebruikersnaam `adm
 !!! tip "Nog geen data?"
     Bij een verse installatie is de Flask App nog leeg. Dat klopt — je moet eerst data verwerken via Airflow (stap 5–7 van deze handleiding).
 
+Een project kun je ook zonder locatie aanmaken of bewerken: laat Latitude en Longitude leeg. Het project staat dan niet op de kaart van de homepage.
+
+**Foto's kantelen.** Staat een foto, tekening of pdf verkeerd om, gebruik dan **Kantelen Linksom** of **Kantelen Rechtsom**: als knop op de detailpagina van het bestand, of in de lijst via **Actions** voor alle aangevinkte bestanden. De webapplicatie draait het grote formaat in de uitvoermap (`data/<omgeving>/output/archeomedia`) en maakt het middelste formaat en de thumbnail opnieuw; van een pdf draaien alle pagina's. Een melding bovenaan de pagina zegt hoeveel bestanden gekanteld zijn en welke niet (een Word-document of een bestand dat in de uitvoermap ontbreekt). Flask heeft daarvoor schrijfrechten op de uitvoermap nodig; alle compose-bestanden koppelen die map schrijfbaar in de Flask-container. Het kantelen geldt alleen voor de verwerkte bestanden, niet voor de bronbestanden: een volledige cyclus maakt alle formaten opnieuw uit de bron en draait het kantelen dus terug, de incrementele cyclus alleen voor bronbestanden die gewijzigd zijn.
+
 ### Jupyter Lab — Data analyseren
 
 ```

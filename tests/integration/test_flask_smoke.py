@@ -10,11 +10,13 @@ Draait tegen echte Docker services (PostgreSQL + Redis + Flask + Apache).
 Gebruik: make test-flask (zonder data), of make integration voor de volledige suite
 """
 import pytest
+import io
 import re
 import subprocess
 import time
 import urllib.parse
 import requests
+from PIL import Image
 
 
 # De voordeur: apache-test. Alles behalve /archeomedia komt bij flask-test terecht.
@@ -27,6 +29,10 @@ POSTGRES_CONTAINER = "wasstraat_postgres_test"
 # airflow-test schrijft de media in AIRFLOW_OUTPUT_MEDIA; apache-test serveert dezelfde map
 AIRFLOW_CONTAINER = "wasstraat_airflow_test"
 AIRFLOW_OUTPUT_MEDIA = "/tmp/archeomedia_test"
+# flask-test heeft hetzelfde volume schrijfbaar op zijn standaardpad (Kantelen, issue 34)
+FLASK_CONTAINER = "wasstraat_flask_test"
+FLASK_OUTPUT_MEDIA = "/output/archeomedia"
+REDIS_CONTAINER = "wasstraat_redis_test"
 
 
 def logIn(gebruikersnaam, wachtwoord, sessie=None):
@@ -77,6 +83,35 @@ def airflowShell(script):
 def mediaUrl(pad):
     """Bouw de URL van een mediabestand zoals de webapplicatie dat doet: /archeomedia + imageID."""
     return f"{BASE_URL}/archeomedia{urllib.parse.quote(pad)}"
+
+
+def ingelogdeSessie():
+    """Geef een requests.Session die als beheerder is ingelogd."""
+    sessie = requests.Session()
+    resp = logIn("admin", FLASK_ADMIN_PASSWORD, sessie)
+    assert resp.status_code == 302 and "/login" not in resp.headers.get("Location", ""), "Inloggen mislukt"
+    return sessie
+
+
+def csrfToken(html):
+    """Haal het CSRF-token uit een formulier van Flask-AppBuilder."""
+    match = re.search(r'name="csrf_token"[^>]*value="([^"]+)"', html)
+    assert match, "Geen csrf_token in het formulier"
+    return match.group(1)
+
+
+def meldingen(html):
+    """Geef de meldingen (flash) op een pagina als lijst van (soort, tekst), bijvoorbeeld ('success', '...')."""
+    gevonden = re.findall(r'<div class="alert alert-(\w+)[^"]*"[^>]*>(.*?)</div>', html, re.S)
+    return [(soort, " ".join(re.sub(r"<[^>]+>|&times;|×", " ", tekst).split())) for soort, tekst in gevonden]
+
+
+def flaskPython(script):
+    """Voer een Python-script uit in de Flask-testcontainer, met de code van de webapplicatie op het pad."""
+    return subprocess.run(
+        ["docker", "exec", "-i", "-w", "/app/app", FLASK_CONTAINER, "python", "-"],
+        input=script, capture_output=True, text=True, timeout=120,
+    )
 
 
 @pytest.fixture(scope="module", autouse=True)
@@ -354,3 +389,258 @@ class TestFlaskStaticAssets:
         resp = requests.get(f"{BASE_URL}/static/js/main.js", timeout=10)
         # 200 of 304 (cached) zijn beide acceptabel
         assert resp.status_code in (200, 304), f"main.js niet gevonden: {resp.status_code}"
+
+
+@pytest.mark.flask_smoke
+class TestProjectZonderLocatie:
+    """Issue 27: een project zonder locatie aanmaken, en bij bewerken de locatie leegmaken.
+
+    Via de formulieren van de webapplicatie, zoals een gebruiker dat doet (inloggen,
+    CSRF-token uit het formulier). Flask-AppBuilder stuurt na opslaan ook bij een databasefout
+    door (302), dus de tests kijken in PostgreSQL. De testprojecten worden achteraf verwijderd.
+    """
+
+    PREFIX = "ZS27"
+
+    @pytest.fixture
+    def sessie(self):
+        return ingelogdeSessie()
+
+    @pytest.fixture(autouse=True)
+    def opruimen(self):
+        yield
+        pgTekst(f"DELETE FROM \"Def_Project\" WHERE projectcd LIKE '{self.PREFIX}%'")
+
+    def aanmaken(self, sessie, projectcd, velden):
+        """Vul het formulier voor een nieuw project in en geef de primary_key ('' als het niet is opgeslagen)."""
+        resp = sessie.get(f"{BASE_URL}/archprojectview/add", timeout=30)
+        assert resp.status_code == 200, f"Formulier nieuw project gaf {resp.status_code}"
+        data = {"csrf_token": csrfToken(resp.text), "projectcd": projectcd,
+                "projectnaam": f"Smoke test {projectcd}", "jaar": "2026", **velden}
+        resp = sessie.post(f"{BASE_URL}/archprojectview/add", data=data, timeout=30, allow_redirects=False)
+        assert resp.status_code == 302, f"Opslaan nieuw project gaf {resp.status_code}: {resp.text[:500]}"
+        return pgTekst(f"SELECT primary_key FROM \"Def_Project\" WHERE projectcd = '{projectcd}'")
+
+    def locatie(self, pk):
+        return pgTekst(f"SELECT COALESCE(ST_AsText(location), 'LEEG') FROM \"Def_Project\" WHERE primary_key = {pk}")
+
+    def geenFouten(self, sessie):
+        """De meldingen na opslaan verschijnen op de volgende pagina; daar mag geen foutmelding tussen zitten."""
+        resp = sessie.get(f"{BASE_URL}/archprojectview/list/", timeout=30)
+        assert resp.status_code == 200, f"Lijst projecten gaf {resp.status_code}"
+        fouten = [tekst for soort, tekst in meldingen(resp.text) if soort == "danger"]
+        assert not fouten, fouten
+        return resp
+
+    def test_aanmaken_met_lege_locatie(self, sessie):
+        pk = self.aanmaken(sessie, f"{self.PREFIX}1", {"location_lat": "", "location_lon": ""})
+        assert pk, "Project zonder locatie is niet opgeslagen"
+        assert self.locatie(pk) == "LEEG"
+        assert f"{self.PREFIX}1" in self.geenFouten(sessie).text
+
+    def test_aanmaken_zonder_locatievelden(self, sessie):
+        """Ook zonder de velden location_lat en location_lon in het verzoek."""
+        pk = self.aanmaken(sessie, f"{self.PREFIX}2", {})
+        assert pk, "Project zonder locatievelden is niet opgeslagen"
+        assert self.locatie(pk) == "LEEG"
+        self.geenFouten(sessie)
+
+    def test_detail_en_bewerkformulier_zonder_locatie(self, sessie):
+        pk = self.aanmaken(sessie, f"{self.PREFIX}3", {"location_lat": "", "location_lon": ""})
+        assert pk
+        resp = sessie.get(f"{BASE_URL}/archprojectview/show/{pk}", timeout=30)
+        assert resp.status_code == 200, f"Detail project gaf {resp.status_code}"
+        # De kaart op de detailpagina krijgt geen coördinaten en zet dan geen marker
+        assert 'createROPointMap("fieldname_map", null, null)' in resp.text
+        resp = sessie.get(f"{BASE_URL}/archprojectview/edit/{pk}", timeout=30)
+        assert resp.status_code == 200, f"Bewerkformulier project gaf {resp.status_code}"
+        veld = re.search(r'<input[^>]*name="location_lat"[^>]*>', resp.text)
+        assert veld and "value=" not in veld.group(0), veld.group(0) if veld else "geen veld location_lat"
+
+    def test_locatie_leegmaken_bij_bewerken(self, sessie):
+        pk = self.aanmaken(sessie, f"{self.PREFIX}4", {"location_lat": "52.0116", "location_lon": "4.3571"})
+        assert pk and self.locatie(pk) == "POINT(4.3571 52.0116)"
+        resp = sessie.get(f"{BASE_URL}/archprojectview/edit/{pk}", timeout=30)
+        assert 'value="52.0116"' in resp.text, "Bewerkformulier toont de locatie niet"
+        data = {"csrf_token": csrfToken(resp.text), "projectcd": f"{self.PREFIX}4",
+                "projectnaam": "Smoke test locatie leeggemaakt", "jaar": "2026",
+                "location_lat": "", "location_lon": ""}
+        resp = sessie.post(f"{BASE_URL}/archprojectview/edit/{pk}", data=data, timeout=30, allow_redirects=False)
+        assert resp.status_code == 302, f"Opslaan bewerkt project gaf {resp.status_code}: {resp.text[:500]}"
+        assert self.locatie(pk) == "LEEG"
+        assert pgTekst(f'SELECT projectnaam FROM "Def_Project" WHERE primary_key = {pk}') == \
+            "Smoke test locatie leeggemaakt"
+        self.geenFouten(sessie)
+
+    def test_kaart_met_project_zonder_locatie(self, sessie):
+        """De startpagina (kaart) slaat projecten zonder locatie over; de cache wordt eerst geleegd."""
+        assert self.aanmaken(sessie, f"{self.PREFIX}5", {"location_lat": "", "location_lon": ""})
+        leeg = subprocess.run(["docker", "exec", REDIS_CONTAINER, "redis-cli", "FLUSHALL"],
+                              capture_output=True, text=True, timeout=30)
+        assert leeg.returncode == 0, leeg.stderr
+        resp = requests.get(f"{BASE_URL}/", timeout=30)
+        assert resp.status_code == 200, f"Startpagina gaf {resp.status_code}"
+        assert "SY001" in resp.text and "SY002" in resp.text
+        assert f"{self.PREFIX}5" not in resp.text
+
+
+@pytest.mark.flask_smoke
+class TestFotoKantelen:
+    """Issue 34: de acties Kantelen Linksom en Kantelen Rechtsom op foto's en pdf's.
+
+    Maakt in de Flask-container een liggende foto en een liggende pdf (rood blok linksboven)
+    met hun voorbeelden, zoals de extractie dat doet, en registreert ze met SQL in Def_Bestand.
+    De afmetingen en de inhoud van de drie formaten worden gemeten via Apache, zoals de
+    browser ze ophaalt. Alles wordt achteraf opgeruimd.
+    """
+
+    MAP = "/Smoke kantelen"
+    FOTO = "/Smoke kantelen/kantelfoto.jpg"
+    PDF = "/Smoke kantelen/kantelrapport.pdf"
+
+    @pytest.fixture
+    def sessie(self):
+        return ingelogdeSessie()
+
+    @pytest.fixture
+    def bestanden(self):
+        """Foto, pdf en Word-document in Def_Bestand; de foto en de pdf ook in de mediamap."""
+        controle = subprocess.run(["docker", "exec", FLASK_CONTAINER, "test", "-w", FLASK_OUTPUT_MEDIA],
+                                  capture_output=True, text=True, timeout=30)
+        if controle.returncode != 0:
+            pytest.skip(f"{FLASK_CONTAINER} heeft geen schrijfbaar mediavolume op {FLASK_OUTPUT_MEDIA}")
+        script = f"""
+import os
+from PIL import Image
+import pdf2image
+import shared.image_util as image_util
+map_ = '{FLASK_OUTPUT_MEDIA}{self.MAP}'
+os.makedirs(map_, exist_ok=True)
+foto = Image.new('RGB', (400, 200), 'white')
+foto.paste((255, 0, 0), (0, 0, 100, 50))
+print(image_util.putImageInGrid(foto, map_ + '/kantelfoto.tif', None, '{self.MAP}', ''))
+pagina = Image.new('RGB', (842, 595), 'white')
+pagina.paste((255, 0, 0), (0, 0, 200, 100))
+pagina.save(map_ + '/kantelrapport.pdf')
+eerste = pdf2image.convert_from_path(map_ + '/kantelrapport.pdf')[0]
+print(image_util.putImageInGrid(eerste, map_ + '/kantelrapport.pdf', None, '{self.MAP}', '', filetype='.pdf'))
+"""
+        gemaakt = flaskPython(script)
+        assert gemaakt.returncode == 0, gemaakt.stderr[-2000:]
+
+        def rij(soort, naam, type_, mime, groot):
+            basis = f"{self.MAP}/{naam.rsplit('.', 1)[0]}"
+            return pgTekst(
+                'INSERT INTO "Def_Bestand" (bestandsoort, "fileName", "fileType", directory, "imageID", '
+                f'"imageMiddleID", "imageThumbID", mime_type, "projectID") VALUES (\'{soort}\', \'{naam}\', '
+                f"'{type_}', '{self.MAP}', '{groot}', '{basis}-med.jpg', '{basis}-sml.jpg', '{mime}', "
+                '(SELECT MIN(primary_key) FROM "Def_Project")) RETURNING primary_key').splitlines()[0]
+
+        try:
+            yield {
+                "foto": rij("Opgravingsfoto", "kantelfoto.tif", ".tif", "image/jpeg", self.FOTO),
+                "pdf": rij("Archeologische_Rapportage", "kantelrapport.pdf", ".pdf", "application/pdf", self.PDF),
+                "word": rij("Overige_Rapportage", "kantelnotitie.docx", ".docx", "application/msword",
+                            f"{self.MAP}/kantelnotitie.docx"),
+            }
+        finally:
+            pgTekst(f"DELETE FROM \"Def_Bestand\" WHERE directory = '{self.MAP}'")
+            subprocess.run(["docker", "exec", FLASK_CONTAINER, "rm", "-rf", f"{FLASK_OUTPUT_MEDIA}{self.MAP}"],
+                           capture_output=True, text=True, timeout=30)
+
+    def afbeelding(self, pad):
+        """Haal een afbeelding via Apache op; geef de afbeelding en het antwoord."""
+        resp = requests.get(mediaUrl(pad), timeout=30)
+        assert resp.status_code == 200, f"{mediaUrl(pad)} gaf {resp.status_code}"
+        return Image.open(io.BytesIO(resp.content)).convert("RGB"), resp
+
+    def inhoud(self, pad):
+        """Omhullende van alles wat niet wit is; briefkaart en thumbnail hebben een witte rand."""
+        image, _ = self.afbeelding(pad)
+        return image.convert("L").point(lambda waarde: 255 if waarde < 245 else 0).getbbox()
+
+    def staand(self, pad):
+        links, boven, rechts, onder = self.inhoud(pad)
+        return (onder - boven) > (rechts - links)
+
+    def isRood(self, image, punt):
+        rood, groen, blauw = image.getpixel(punt)
+        return rood > 200 and groen < 80 and blauw < 80
+
+    def voorbeelden(self, pad):
+        basis = pad.rsplit(".", 1)[0]
+        return f"{basis}-med.jpg", f"{basis}-sml.jpg"
+
+    def actieOpDetailpagina(self, sessie, pk, actie):
+        """Voer een actie uit zoals de knop op de detailpagina dat doet; geef de pagina na de redirect."""
+        resp = sessie.get(f"{BASE_URL}/archbestandview/show/{pk}", timeout=30)
+        assert resp.status_code == 200, f"Detail bestand {pk} gaf {resp.status_code}"
+        url = re.search(rf'action="([^"]*/action/{actie}/{pk})"', resp.text)
+        assert url, f"Geen knop voor {actie} op de detailpagina van bestand {pk}"
+        resp = sessie.post(f"{BASE_URL}{url.group(1)}", data={"action": ""}, timeout=60, allow_redirects=False)
+        assert resp.status_code == 302, f"Actie {actie} gaf {resp.status_code}: {resp.text[:500]}"
+        assert resp.headers["Location"].endswith(f"/show/{pk}"), \
+            f"Na de actie terug naar de detailpagina verwacht, kreeg {resp.headers['Location']}"
+        return sessie.get(urllib.parse.urljoin(BASE_URL, resp.headers["Location"]), timeout=30)
+
+    def test_detailpagina_toont_kantelknoppen(self, sessie, bestanden):
+        resp = sessie.get(f"{BASE_URL}/archbestandview/show/{bestanden['foto']}", timeout=30)
+        assert resp.status_code == 200
+        assert "Kantelen Linksom" in resp.text and "Kantelen Rechtsom" in resp.text
+
+    def test_linksom_op_detailpagina(self, sessie, bestanden):
+        middel, thumb = self.voorbeelden(self.FOTO)
+        groot, antwoordVoor = self.afbeelding(self.FOTO)
+        assert groot.size == (400, 200)
+        assert not self.staand(middel) and not self.staand(thumb)
+
+        pagina = self.actieOpDetailpagina(sessie, bestanden["foto"], "5linkskantelen")
+        assert pagina.status_code == 200
+        assert ("success", "1 bestand linksom gekanteld") in meldingen(pagina.text), meldingen(pagina.text)
+
+        groot, antwoordNa = self.afbeelding(self.FOTO)
+        assert groot.size == (200, 400)
+        # Linksom: het rode blok linksboven staat nu linksonder
+        assert self.isRood(groot, (10, 390)) and not self.isRood(groot, (10, 10))
+        assert self.afbeelding(middel)[0].size == (1500, 1000) and self.staand(middel)
+        assert self.afbeelding(thumb)[0].size == (300, 200) and self.staand(thumb)
+        # De browser haalt de nieuwe versie op: Apache laat afbeeldingen direct verlopen en de ETag verandert
+        assert antwoordNa.headers.get("Expires", "").endswith("2000 00:00:00 GMT")
+        assert antwoordNa.headers.get("ETag") != antwoordVoor.headers.get("ETag")
+
+    def test_rechtsom_selectie_in_lijst(self, sessie, bestanden):
+        sessie.get(f"{BASE_URL}/archopgravingfotoview/list/", timeout=30)
+        resp = sessie.post(f"{BASE_URL}/archopgravingfotoview/action_post",
+                           data={"action": "6rechtskantelen", "rowid": [bestanden["foto"]]},
+                           timeout=60, allow_redirects=False)
+        assert resp.status_code == 302, f"Actie op de selectie gaf {resp.status_code}: {resp.text[:500]}"
+        assert "/archopgravingfotoview/list/" in resp.headers["Location"], resp.headers["Location"]
+        pagina = sessie.get(urllib.parse.urljoin(BASE_URL, resp.headers["Location"]), timeout=30)
+        assert ("success", "1 bestand rechtsom gekanteld") in meldingen(pagina.text), meldingen(pagina.text)
+
+        groot, _ = self.afbeelding(self.FOTO)
+        assert groot.size == (200, 400)
+        # Rechtsom: het rode blok linksboven staat nu rechtsboven
+        assert self.isRood(groot, (190, 10)) and not self.isRood(groot, (10, 390))
+        middel, thumb = self.voorbeelden(self.FOTO)
+        assert self.staand(middel) and self.staand(thumb)
+
+    def test_pdf_linksom(self, sessie, bestanden):
+        middel, thumb = self.voorbeelden(self.PDF)
+        assert not self.staand(middel) and not self.staand(thumb)
+        assert not re.search(rb"/Rotate\s+[1-9]", requests.get(mediaUrl(self.PDF), timeout=30).content)
+
+        pagina = self.actieOpDetailpagina(sessie, bestanden["pdf"], "5linkskantelen")
+        assert ("success", "1 bestand linksom gekanteld") in meldingen(pagina.text), meldingen(pagina.text)
+
+        # PyPDF2 draait met de klok mee: linksom is /Rotate 270
+        pdf = requests.get(mediaUrl(self.PDF), timeout=30)
+        assert pdf.status_code == 200 and pdf.content.startswith(b"%PDF")
+        assert re.findall(rb"/Rotate\s+(\d+)", pdf.content) == [b"270"]
+        assert self.staand(middel) and self.staand(thumb)
+
+    def test_word_document_geeft_melding(self, sessie, bestanden):
+        pagina = self.actieOpDetailpagina(sessie, bestanden["word"], "6rechtskantelen")
+        assert pagina.status_code == 200
+        assert ("danger", "Niet gekanteld: kantelnotitie.docx: een Word-document kan niet gekanteld worden") \
+            in meldingen(pagina.text), meldingen(pagina.text)

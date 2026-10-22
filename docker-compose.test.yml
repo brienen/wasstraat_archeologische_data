@@ -236,6 +236,10 @@ services:
       COLL_ANALYSE_STELLING: Def_Stelling
       COLL_ANALYSE_PLAATSING: Def_Plaatsing
       COLL_ANALYSE_VINDPLAATS: Def_Vindplaats
+    volumes:
+      # Dezelfde media als airflow-test, schrijfbaar op de standaardplek van Flask
+      # (AIRFLOW_OUTPUT_MEDIA): Kantelen Linksom/Rechtsom schrijft de gedraaide bestanden terug
+      - archeomedia-test:/output/archeomedia
 
   apache-test:
     build:
@@ -259,7 +263,8 @@ networks:
     driver: bridge
 
 volumes:
-  # Uitvoermap voor media, gedeeld door airflow-test (schrijft) en apache-test (serveert).
+  # Uitvoermap voor media, gedeeld door airflow-test (schrijft), flask-test (kantelt foto's)
+  # en apache-test (serveert).
   # In het geheugen, met de uid van de airflow-gebruiker zodat die erin kan schrijven.
   archeomedia-test:
     driver: local
