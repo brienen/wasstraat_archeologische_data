@@ -1,7 +1,7 @@
 """
 Integratietest: incrementeel laden met synthetische data (issue 61, fase 3).
 
-Draait eerst de volledige cyclus op SY001 en SY002 en daarna zeven keer de
+Draait eerst de volledige cyclus op SY001 en SY002 en daarna acht keer de
 incrementele cyclus (Extract_Transform_Load_Incremental) via
 ``airflow dags test``:
 
@@ -10,6 +10,10 @@ incrementele cyclus (Extract_Transform_Load_Incremental) via
   b. een partij en een bruikleen toevoegen (gebruikersdata) die verwijzen naar
      een artefact en het project SY002;
   c. incrementele run zonder wijzigingen: niets verandert;
+  c2. de database van SY002 opnieuw verwerkt zonder inhoudelijke wijziging
+     (issue 81): alle rijen krijgen een nieuw _id, maar elke rij van elke tabel
+     houdt zijn primary_key, ook artefacten zonder subnr, artefacten met een
+     dubbele key, monsters en plaatsingen;
   d. project SY003 als kopie van SY002 (database opgravingSY003.mdb, foto's
      SY003_*): SY003 komt erbij met nieuwe primary_keys, SY001/SY002 blijven gelijk;
      daarna een tweede bruikleen voor een artefact van SY003 dat in stap e verdwijnt;
@@ -30,7 +34,9 @@ incrementele cyclus (Extract_Transform_Load_Incremental) via
      ABR-materiaal voor het artefact van de bruikleen (issue 71): de
      gebruikerstabellen zijn ongewijzigd (ook de losgekoppelde bruikleen van
      SY003), de bruikleen hangt aan hetzelfde artefact, alle sleutels en
-     aantallen zijn gelijk aan a en alle FK's en sequences kloppen.
+     aantallen zijn gelijk aan a en alle FK's en sequences kloppen. Elke rij
+     van elke tabel uit LOAD_TABELLEN heeft dezelfde primary_key als na de
+     eerste volledige cyclus (issue 81).
 
 Na elke run worden PostgreSQL (via ``docker exec psql``), MongoDB (run-document)
 en Elasticsearch (via ``docker exec curl`` in de Elasticsearch-container; die
@@ -55,6 +61,7 @@ import pytest
 
 pymongo = pytest.importorskip("pymongo")
 
+import wasstraat.delta_transform as delta_transform
 from wasstraat.loadToDatabase_functions import GEBRUIKERS_TABELLEN, LOAD_TABELLEN
 
 
@@ -169,6 +176,40 @@ def sleutels(tabel, filter_sql="TRUE"):
 
 def primaryKeys(tabel, filter_sql="TRUE"):
     return {int(r[0]) for r in pgRijen(f'SELECT primary_key FROM "{tabel}" WHERE {filter_sql}')}
+
+
+def rijIdentiteiten(tabel):
+    """Set met (primary_key, key, bronsleutel, map/bestandsnaam) van alle rijen van een tabel (issue 81).
+
+    De bronsleutel wordt uit de kolom brondata afgeleid, zoals Transform 4 dat doet; samen met de
+    key en (bij Def_Bestand) map en bestandsnaam identificeert hij een rij ook als de key vaker
+    voorkomt. Zo is te zien of een rij na een nieuwe extractie dezelfde primary_key heeft.
+    """
+    bestand = ', "directory", "fileName"' if tabel == "Def_Bestand" else ""
+    rijen = pgRijen(f'SELECT primary_key, {tekst("key")}, {tekst("brondata")}{bestand} FROM "{tabel}"')
+    identiteiten = set()
+    for rij in rijen:
+        brondata = None if rij[2] == "NULL" else delta_transform.leesBrondataTekst(rij[2])
+        identiteiten.add((int(rij[0]), None if rij[1] == "NULL" else rij[1],
+                          delta_transform.getBronsleutel(brondata), "/".join(rij[3:]) or None))
+    return identiteiten
+
+
+def alleRijIdentiteiten():
+    """rijIdentiteiten van alle tabellen uit LOAD_TABELLEN."""
+    return {t: rijIdentiteiten(t) for t in LOAD_TABELLEN}
+
+
+def vergelijkRijIdentiteiten(verwacht):
+    """Eis dat elke rij van elke tabel dezelfde primary_key heeft als in verwacht (issue 81)."""
+    nu = alleRijIdentiteiten()
+    fouten = {}
+    for tabel in LOAD_TABELLEN:
+        weg, erbij = verwacht[tabel] - nu[tabel], nu[tabel] - verwacht[tabel]
+        if weg or erbij:
+            fouten[tabel] = {"weg": sorted(weg, key=str)[:3], "erbij": sorted(erbij, key=str)[:3],
+                             "aantal": (len(weg), len(erbij))}
+    assert not fouten, f"Rijen met een andere primary_key, key of bronsleutel: {fouten}"
 
 
 def filterProject(projectcd):
@@ -444,10 +485,12 @@ def controleerAantalFotosInElasticsearch():
 def afgeleideVeldenPerKey(projectcd, ander_projectcd):
     """Gesorteerde lijst (key met ander_projectcd in plaats van projectcd, afgeleide velden) van de artefacten van een project.
 
-    Keys zijn niet altijd uniek, daarom een gesorteerde lijst in plaats van een dict.
+    Keys zijn niet altijd uniek, daarom een gesorteerde lijst in plaats van een dict. De projectcode
+    wordt overal in de key vervangen, ook in het pad van de hulpsleutel van artefacten zonder subnr
+    (bron:projecten/SY003/C Database/opgravingSY003.mdb:...).
     """
     kolommen = ", ".join(tekst(f'"{k}"') for k in AFGELEIDE_KOLOMMEN)
-    rijen = pgRijen(f'SELECT replace(key, \'P{projectcd}\', \'P{ander_projectcd}\'), {kolommen} '
+    rijen = pgRijen(f'SELECT replace(key, \'{projectcd}\', \'{ander_projectcd}\'), {kolommen} '
                     f'FROM "Def_Artefact" WHERE {filterProject(projectcd)}')
     return sorted(tuple(r) for r in rijen)
 
@@ -515,7 +558,7 @@ def sy003_opruimen():
 @pytest.mark.integration
 @pytest.mark.load
 class TestIncrementeelSynthetic:
-    """Volledige cyclus, zeven incrementele runs op SY001, SY002 en een tijdelijk project SY003, en opnieuw de volledige cyclus."""
+    """Volledige cyclus, acht incrementele runs op SY001, SY002 en een tijdelijk project SY003, en opnieuw de volledige cyclus."""
 
     # ----------------------------------------------------------
     # a. Volledige cyclus
@@ -543,6 +586,25 @@ class TestIncrementeelSynthetic:
         # Artefacten hebben een key: key_subnr|artefactsoort (fase 3)
         assert pgWaarde('SELECT COUNT(*) FROM "Def_Artefact" WHERE key IS NULL') == 0
         assert pgWaarde('SELECT COUNT(*) FROM "Def_Artefact" WHERE key LIKE \'%|%\'') > 0
+
+        # Issue 81: de synthetische data heeft artefacten zonder subnr (hulpsleutel uit de bronrij) en
+        # een artefact-key die twee keer voorkomt; monsters en plaatsingen hebben een key
+        zonder_subnr = pgRijen('SELECT key FROM "Def_Artefact" WHERE key LIKE \'PSY002%|bron:%\' ORDER BY key')
+        assert len(zonder_subnr) == 2, f"Verwacht twee artefacten zonder subnr in SY002: {zonder_subnr}"
+        assert zonder_subnr[0][0].startswith("PSY002P3V7|Aardewerk|bron:projecten/SY002/C Database/opgravingSY002.mdb:AARDEWERK 1:")
+        assert pgWaarde('SELECT COUNT(*) FROM "Def_Artefact" WHERE key = \'PSY002P1V1A2|Aardewerk\'') == 2
+        for tabel in ["Def_Artefact", "Def_Plaatsing", "Def_Monster_Botanie", "Def_Monster_Schelp", "Def_Monster"]:
+            assert pgWaarde(f'SELECT COUNT(*) FROM "{tabel}"') > 0, f"{tabel} heeft geen rijen: de test dekt die tabel niet"
+            assert pgWaarde(f'SELECT COUNT(*) FROM "{tabel}" WHERE key IS NULL') == 0, f"{tabel} heeft rijen zonder key"
+        assert pgWaarde('SELECT COUNT(*) FROM "Def_Plaatsing" WHERE key NOT LIKE \'bron:magazijnlijst/%\'') == 0
+        assert pgWaarde('SELECT COUNT(*) FROM "Def_Monster_Botanie" WHERE key !~ \'^M.+ID[0-9]+$\'') == 0
+        assert pgWaarde('SELECT COUNT(*) FROM "Def_Monster_Schelp" WHERE key !~ \'^M.+ID[0-9]+$\'') == 0
+        TOESTAND["identiteiten"] = alleRijIdentiteiten()
+        for tabel, identiteiten in TOESTAND["identiteiten"].items():
+            if tabel == "Def_ABR":
+                continue  # de ABR wordt op de primary_key uit de bron teruggevonden
+            zonder_pk = [i[1:] for i in identiteiten]
+            assert len(set(zonder_pk)) == len(zonder_pk), f"{tabel}: rijen die niet van elkaar te onderscheiden zijn"
 
         # De Index-taken van de volledige cyclus zijn geslaagd: Elasticsearch gelijk aan PostgreSQL
         TOESTAND["es"] = controleerElasticsearchGelijkAanTabellen()
@@ -604,6 +666,46 @@ class TestIncrementeelSynthetic:
         # Afgeleide velden: niets herschreven, gelijk aan stap a
         assert alleTellingenNul(run["tellingen"]["afgeleide_velden"]), run["tellingen"]["afgeleide_velden"]
         assert afgeleideVelden() == TOESTAND["afgeleid"]
+        vergelijkRijIdentiteiten(TOESTAND["identiteiten"])
+
+    # ----------------------------------------------------------
+    # c2. SY002 opnieuw verwerkt zonder inhoudelijke wijziging (issue 81)
+    # ----------------------------------------------------------
+    def test_04b_ongewijzigde_database_opnieuw_verwerkt(self, mongo_client):
+        """Een opnieuw ingelezen database met dezelfde inhoud verandert geen enkele primary_key.
+
+        De registratie van opgravingSY002.mdb krijgt een andere vingerafdruk, zodat de incrementele run
+        de database als gewijzigd opnieuw verwerkt: alle documenten van SY002 krijgen een nieuw _id. Elke
+        rij houdt zijn primary_key: op de unieke key, en anders (artefacten zonder subnr, de dubbele key
+        PSY002P1V1A2|Aardewerk) op de bronsleutel.
+        """
+        pad = "/input/projecten/SY002/C Database/opgravingSY002.mdb"
+        assert pgWaarde(f"SELECT COUNT(*) FROM \"Def_Bronbestand\" WHERE pad = '{pad}'") == 1
+        pgRijen(f"UPDATE \"Def_Bronbestand\" SET sha256 = repeat('0', 64), mtime = 0 WHERE pad = '{pad}'")
+        TOESTAND["duur"]["c2"], _ = draaiDag("Extract_Transform_Load_Incremental")
+        run = controleerRun(mongo_client)
+        delta = run["tellingen"]["delta"]["totaal"]
+        assert delta["gewijzigd"] == 1 and delta["nieuw"] == 0 and delta["verwijderd"] == 0, delta
+        load = run["tellingen"]["load"]["totaal"]
+        assert load["ingevoegd"] == 0 and load["verwijderd"] == 0, load
+
+        sleutels_t4 = run["tellingen"]["transform"]["primary_keys"]
+        print(f"\n  Transform 4 Artefact: {sleutels_t4['Artefact']}")
+        # Soorten zonder tabel (Fotobeschrijving, Fotokoppel) worden niet geladen en krijgen altijd nieuwe ID's
+        nieuw = {soort: telling["nieuw"] for soort, telling in sleutels_t4.items()
+                 if telling.get("tabel") and telling.get("nieuw")}
+        assert not nieuw, f"Transform 4 deelde nieuwe nummers uit: {nieuw}"
+        assert sleutels_t4["Artefact"]["op_bronsleutel"] >= 1, "Geen artefact op de bronsleutel teruggevonden"
+
+        assert telTabellen() == TOESTAND["aantallen"]
+        vergelijkRijIdentiteiten(TOESTAND["identiteiten"])
+        controleerBruikleen()
+        telling = run["tellingen"]["gebruikersdata"]["Def_Bruikleen"]["artefactID"]
+        assert telling["losgekoppeld"] == 0, telling
+        assert esAantallen() == TOESTAND["es"]
+        assert afgeleideVelden() == TOESTAND["afgeleid"]
+        statussen = bronbestandStatussen(f"pad NOT LIKE '{PAD_SY003_IN_CONTAINER}%'")
+        assert statussen == {"verwerkt": TOESTAND["bronbestanden"]}, statussen
 
     # ----------------------------------------------------------
     # d. Nieuw project SY003 (kopie van SY002)
@@ -660,8 +762,13 @@ class TestIncrementeelSynthetic:
         """
         keys_na_e = {r[0] for r in pgRijen(f"SELECT replace(key, 'PSY001', 'PSY003') FROM \"Def_Artefact\" "
                                             f"WHERE {filterProject('SY001')}")}
-        kandidaten = [r for r in pgRijen(f'SELECT primary_key, key FROM "Def_Artefact" WHERE {filterProject("SY003")} '
-                                         f'ORDER BY primary_key') if r[1] not in keys_na_e]
+        rijen_sy003 = pgRijen(f'SELECT primary_key, key FROM "Def_Artefact" WHERE {filterProject("SY003")} '
+                              f'ORDER BY primary_key')
+        aantal_per_key = {}
+        for _, key in rijen_sy003:
+            aantal_per_key[key] = aantal_per_key.get(key, 0) + 1
+        # Een key die vaker voorkomt (PSY003P1V1A2|Aardewerk, issue 81) is niet terug te koppelen
+        kandidaten = [r for r in rijen_sy003 if r[1] not in keys_na_e and aantal_per_key[r[1]] == 1]
         assert kandidaten, "Geen artefact van SY003 dat in stap e verdwijnt"
         artefact_pk, artefact_key = int(kandidaten[0][0]), kandidaten[0][1]
         assert pgWaarde(f"SELECT COUNT(*) FROM \"Def_Artefact\" WHERE key = '{artefact_key}'") == 1
@@ -890,6 +997,10 @@ class TestIncrementeelSynthetic:
             assert sleutels(tabel) == TOESTAND["sleutels"][tabel], f"{tabel}: sleutels of primary_keys gewijzigd"
         assert controleerElasticsearchGelijkAanTabellen() == TOESTAND["es"]
         assert afgeleideVelden() == TOESTAND["afgeleid"]
+
+        # Issue 81: elke rij van elke tabel heeft dezelfde primary_key als na de eerste volledige cyclus,
+        # ook artefacten zonder subnr, artefacten met een dubbele key, monsters, plaatsingen en standplaatsen
+        vergelijkRijIdentiteiten(TOESTAND["identiteiten"])
 
         # Alle FK's geldig (ook die van de gebruikerstabellen) en de sequences kloppen
         ongeldig = pgRijen("SELECT conrelid::regclass::text, conname FROM pg_constraint "

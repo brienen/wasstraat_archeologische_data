@@ -274,23 +274,31 @@ def getFields(col, soort):
     return result
 
 
-def vulArtefactKey(doc):
-    """Vul bij een artefact zonder key de samengestelde sleutel in (key_subnr|artefactsoort).
+def vulLaadKey(soort, doc):
+    """Vul bij een document zonder key de key in waarmee het in PostgreSQL wordt teruggevonden.
 
-    De kolom key van Def_Artefact was leeg, omdat artefacten zelden een
-    artefactnr (en dus een key) hebben. Met de samengestelde sleutel vindt de
-    incrementele cyclus een opnieuw ingelezen artefact terug (zie
-    delta_transform.getArtefactKey en setStabielePrimaryKeys).
+    Artefacten zonder key krijgen de samengestelde sleutel key_subnr|artefactsoort
+    (de kolom key van Def_Artefact was leeg, omdat artefacten zelden een
+    artefactnr hebben). Documenten zonder natuurlijke key, zoals artefacten
+    zonder subnr, monsters, plaatsingen en vindplaatsen, krijgen de hulpsleutel
+    uit hun bronrij (issue 81). Zie delta_transform.getLaadKey; Transform 4
+    (setStabielePrimaryKeys) vergelijkt op dezelfde key.
 
     Args:
-        doc: artefact-document (wordt aangepast)
+        soort: soort van het document
+        doc: document uit Single_Store_Clean (wordt aangepast)
 
     Returns:
         Het document
     """
     if isNanOrEmpty(doc.get('key')):
-        doc['key'] = delta_transform.getArtefactKey(doc)
+        doc['key'] = delta_transform.getLaadKey(soort, doc)
     return doc
+
+
+def vulArtefactKey(doc):
+    """Vul bij een artefact zonder key de key in (vulLaadKey voor soort Artefact)."""
+    return vulLaadKey('Artefact', doc)
 
 
 def leesDocumenten(col, soort, extra_velden=None):
@@ -301,8 +309,8 @@ def leesDocumenten(col, soort, extra_velden=None):
     steekproef van tien documenten; een veld dat pas later in de pipeline
     wordt gezet (zoals artefactID op foto's, door setReferences) en dat in die
     tien documenten ontbreekt, zou anders voor de hele tabel niet gelezen
-    worden. Artefacten krijgen zo nodig de samengestelde sleutel in key
-    (vulArtefactKey).
+    worden. Documenten zonder key krijgen zo nodig de samengestelde sleutel
+    (artefacten) of de hulpsleutel uit hun bronrij (vulLaadKey, issue 81).
 
     Args:
         col: MongoDB collectie (Single_Store_Clean)
@@ -318,12 +326,14 @@ def leesDocumenten(col, soort, extra_velden=None):
         projection[veld] = 1
     projection['_id'] = 1
     projection['ID'] = 1
+    projection['key'] = 1
+    if soort not in delta_transform.SOORTEN_ZONDER_BRONSLEUTEL:
+        projection['brondata'] = 1
     if soort == 'Artefact':
-        projection.update({'key': 1, 'key_subnr': 1, 'artefactsoort': 1})
+        projection.update({'key_subnr': 1, 'artefactsoort': 1, 'projectcd': 1, 'putnr': 1, 'vondstnr': 1})
     documents = list(col.find({'soort': soort}, projection=projection))
-    if soort == 'Artefact':
-        for doc in documents:
-            vulArtefactKey(doc)
+    for doc in documents:
+        vulLaadKey(soort, doc)
     return fields, documents
 
 

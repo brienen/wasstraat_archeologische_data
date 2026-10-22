@@ -24,6 +24,11 @@ aggr_key_vondst = {'$concat': [ "P", {'$toString': '$projectcd'},
                     {'$concat': ["V", {'$toString': "$vondstnr" }]}]}
 
 
+# Autonummer van de bronrij (Delft: kolom Id, synthetische data: ID). De harmonisatie neemt het
+# niet over als veld, dus zonder terugval op brondata was de key van Monster_Botanie en
+# Monster_Schelp altijd leeg (issue 81).
+aggr_bron_id = {'$ifNull': ["$Id", "$brondata.Id", "$brondata.ID"]}
+
 wasstraat_model = {
   "Put": {
         STAGING_COLLECTION: config.COLL_STAGING_OUD,
@@ -195,7 +200,7 @@ wasstraat_model = {
         MOVEANDMERGE_MOVE: True,
         SET_KEYS_PIPELINES: [[ 
             { '$match': { 'soort': "Monster_Schelp" } },
-            { '$addFields': {'key': { '$concat': [ "M", {'$toString': "$monstercd"}, "ID", {'$toString': "$Id"}] }}},
+            { '$addFields': {'key': { '$concat': [ "M", {'$toString': "$monstercd"}, "ID", {'$toString': aggr_bron_id}] }}},
             { '$addFields': {'key_monster': { '$concat': [ "M", {'$toString': "$monstercd"}]}}},
             { '$addFields': {'key_dt_soort_schelp': { '$concat': [ "SCH", "$soort_schelp"]}}}, 
     ]]
@@ -206,7 +211,7 @@ wasstraat_model = {
         MOVEANDMERGE_MOVE: True,
         SET_KEYS_PIPELINES: [[ 
             { '$match': { 'soort': "Monster_Botanie" } },
-            { '$addFields': {'key': { '$concat': [ "M", {'$toString': "$monstercd"}, "ID", {'$toString': "$Id"}] }}},
+            { '$addFields': {'key': { '$concat': [ "M", {'$toString': "$monstercd"}, "ID", {'$toString': aggr_bron_id}] }}},
             { '$addFields': {'key_monster': { '$concat': [ "M", {'$toString': "$monstercd"}]}}},
             { '$addFields': {'key_dt_soort_plant': { '$concat': [ "PL", "$soort_botanie"]}}}, 
             { '$addFields': {'key_dt_soort_deel': { '$concat': [ "DL", "$deel"]}}}, 

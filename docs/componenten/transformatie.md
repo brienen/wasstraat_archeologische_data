@@ -171,6 +171,25 @@ De pipelines staan in `airflow_app/dags/wasstraat/meta.py` onder `MOVEANDMERGE_G
 
 De incrementele cyclus (`Extract_Transform_Load_Incremental`) gebruikt dezelfde transformatiefuncties en taakgroepen, met `incrementeel=True`. Transform 1 harmoniseert dan alleen de staging-documenten uit nieuwe en gewijzigde bronbestanden en geeft ze het veld `delta_run`; Transform 2 en 3 werken alleen op die documenten (projectbrede stappen op de geraakte projecten). Transform 5 leegt `Single_Store_Clean` niet, maar verplaatst de delta-documenten, voegt alleen de geraakte sleutels opnieuw samen en genereert ontbrekende entiteiten opnieuw voor de geraakte projecten. Transform 4 kent stabiele sleutels toe: bestaande entiteiten houden hun `ID` (de `primary_key` in PostgreSQL), alleen nieuwe entiteiten krijgen een nieuw nummer; artefacten worden daarbij teruggevonden op `key_subnr|artefactsoort`. Sinds issue 71 doet Transform 4 dat in elke DAG, ook in de volledige cyclus (daar via de `primary_key` uit de bron, map en bestandsnaam of een unieke `key`, omdat het `_id` na een nieuwe extractie altijd nieuw is). Zonder die parameter werken de functies precies zoals in de volledige cyclus. Zie [Incrementeel laden](incrementeel-laden.md).
 
+### 9. Sleutels
+
+Elke entiteit krijgt in Transform 3 (`setReferenceKeys`, pipelines `SET_KEYS_PIPELINES` in `airflow_app/dags/wasstraat/meta.py`) een samengestelde sleutel `key` uit zijn identificerende velden, bijvoorbeeld `PDB034P10V460` voor vondst 460 in put 10 van project DB034, en sleutels naar de entiteiten waarnaar hij verwijst (`key_vondst`, `key_put`, `key_monster`, ...). Transform 4 koppelt op die sleutels (`setReferences`) en kent de integer-sleutels toe (`setPrimaryKeys`, in PostgreSQL `primary_key`).
+
+| Soort | key | Bijzonderheden |
+|-------|-----|----------------|
+| Project | `P<projectcd>` | |
+| Put, Vlak, Spoor, Vulling | `P<project>P<put>[V<vlak>][S<spoor>]...` | Een spoor kan in meer tabellen of databases van een project staan; de key komt dan vaker voor |
+| Vondst | `P<project>[P<put>]V<vondst>` | Het putnummer staat erin als het vondstnummer in het project in meer putten voorkomt (vlag `vondstkey_met_putnr`) |
+| Artefact | `P<project>[P<put>]V<vondst>A<artefactnr>[S<splitid>]`, samengevoegd op `key_subnr` (zelfde opbouw met het subnummer) en artefactsoort | `key` is meestal leeg (geen artefactnr); in PostgreSQL staat `key_subnr|artefactsoort` in de kolom `key`. Ongeveer twee derde van de Delftse artefacten heeft geen subnummer (determinatietabellen) en dus geen natuurlijke key |
+| Monster | `M<monstercd>` | |
+| Monster_Botanie, Monster_Schelp | `M<monstercd>ID<Id>` | `Id` is het autonummer van de bronrij; de harmonisatie neemt het niet over, daarom valt Transform 3 terug op `brondata.Id` (Delft) of `brondata.ID` (synthetische data) (issue 81; daarvoor was deze key altijd leeg) |
+| Standplaats | `S<stelling>V<vak>L<letter>` | Eén document per regel van de magazijnlijst, dus dozen op dezelfde plek hebben dezelfde key |
+| Doos | `P<project>D<doos>` | |
+| Plaatsing, Vindplaats | geen | |
+| Foto, Tekening, Rapport (Bestand) | o.a. `P<project>...S<fotonr>`, `R<rapportnr>` | In PostgreSQL herkend op map en bestandsnaam |
+
+**Hulpsleutel uit de bronrij (issue 81).** Rijen zonder key of met een key die vaker voorkomt, worden teruggevonden op de identiteit van hun bronrij: `<pad>:<tabel>:<autonummer>` (bijv. `projecten/DB034_Koningsveld IV/C Database/opgravingDB34.mdb:AW1DeterminatiesJohan:4`), of een hash van de inhoud als de Access-tabel geen autonummer heeft, en voor een samengevoegd document de lijst van al zijn bronrijen (`delta_transform.getBronsleutel`). Die hulpsleutel wordt afgeleid uit `brondata`, in MongoDB en uit de kolom `brondata` in PostgreSQL. Rijen zonder natuurlijke key krijgen in PostgreSQL een leesbare key met de hulpsleutel (`P<project>[P<put>][V<vondst>]|<artefactsoort>|bron:<hulpsleutel>` voor artefacten, `bron:<hulpsleutel>` voor andere soorten); het veld `key` in MongoDB blijft de natuurlijke key, omdat de verwijzingen daarop koppelen. De natuurlijke key heeft bij het toekennen van de `primary_key` voorrang; de hulpsleutel beslist alleen waar die key ontbreekt of niet uniek is. Zie [Incrementeel laden: hulpsleutel uit de bronrij](incrementeel-laden.md#hulpsleutel-uit-de-bronrij-issue-81) voor de analyse, de dekking en de eerste cyclus op een bestaande installatie.
+
 ## Architectuur
 
 ```

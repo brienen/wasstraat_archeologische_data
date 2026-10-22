@@ -15,7 +15,8 @@ Gemeenten die hun eigen data willen verwerken, kunnen deze voorbeeldstructuur al
 - Datering: 1600-1750
 
 ### SY002 — Groot project (Kerkplein, Leiden)
-- 4 putten, 8 sporen, 12 vondsten, 20 artefacten (8 materiaalsoorten)
+- 4 putten, 8 sporen, 12 vondsten, 23 artefactregels (8 materiaalsoorten)
+- In AARDEWERK 1 twee scherven zonder subnummer en een tweede regel met hetzelfde subnummer als een bestaande (put 1, vondst 1, subnr 2) — test voor de hulpsleutel uit de bronrij (issue 81): rijen zonder natuurlijke key of met een dubbele key houden hun `primary_key`
 - 4 vullingen, 10 foto's
 - 2 monsters (uit beerput en greppel, met botanische en schelpdeterminaties)
 - Materiaalsoorten: aardewerk, glas, been, metaal, leer, steen, kleipijp, munten
