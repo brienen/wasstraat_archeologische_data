@@ -235,6 +235,30 @@ def filterNietProject(projectcd):
     return f"COALESCE(key, '') NOT LIKE 'P{projectcd}%'"
 
 
+def verwijderSy003():
+    """Verwijder de map van SY003 op de host en wacht tot de Airflow-container haar niet meer ziet.
+
+    Docker Desktop (macOS) houdt de inhoud van een eerder gelezen map in een
+    cache: na een ``os.walk`` door de pipeline blijft een op de host verwijderde
+    map voor ``test -e`` in de container meer dan 45 s bestaan, tot de map
+    opnieuw wordt gelezen. Daarom leest elke poging eerst de projectenmap
+    opnieuw (``ls -R``) en wacht de test tot de map echt weg is; anders zou een
+    openstaande Filenames-entry van een eerder mislukte foto blijven staan en
+    als mislukt tellen.
+    """
+    shutil.rmtree(SY003_DIR)
+    einde = time.time() + 30
+    while time.time() < einde:
+        resultaat = subprocess.run(
+            ["docker", "exec", AIRFLOW_CONTAINER, "sh", "-c",
+             f"ls -R /input/projecten >/dev/null 2>&1; test -e '{PAD_SY003_IN_CONTAINER}'"],
+            capture_output=True)
+        if resultaat.returncode != 0:
+            return
+        time.sleep(0.5)
+    raise AssertionError(f"{PAD_SY003_IN_CONTAINER} is na 30 s nog zichtbaar in {AIRFLOW_CONTAINER}")
+
+
 def telBestanden(map_):
     """Aantal (niet-verborgen) bestanden in een map en submappen."""
     return sum(1 for _, _, namen in os.walk(map_) for naam in namen if not naam.startswith("."))
@@ -975,7 +999,7 @@ class TestIncrementeelSynthetic:
     # ----------------------------------------------------------
     def test_07_sy003_verwijderd(self, mongo_client):
         aantal_bestanden = telBestanden(SY003_DIR)
-        shutil.rmtree(SY003_DIR)
+        verwijderSy003()
         van = pgTijd()
         TOESTAND["duur"]["f"], _ = draaiDag("Extract_Transform_Load_Incremental")
         tot = pgTijd()
@@ -1068,7 +1092,7 @@ class TestIncrementeelSynthetic:
     # ----------------------------------------------------------
     def test_09_herstel_na_mislukte_controle(self, mongo_client):
         """Na het weghalen van de foto slaagt de volgende run en is de openstaande entry opgeruimd."""
-        shutil.rmtree(SY003_DIR)
+        verwijderSy003()
         TOESTAND["duur"]["h"], _ = draaiDag("Extract_Transform_Load_Incremental")
         run = controleerRun(mongo_client)
         assert run["tellingen"]["afbeeldingen"]["totaal"] == 0

@@ -544,6 +544,35 @@ def maakFilenameInserts(paden, aantal_bestaand):
     return [InsertOne({'iter': (i * totaal) // len(paden), 'filename': v, 'processed': False}) for i, v in enumerate(paden)]
 
 
+def bestandBestaat(pad, mapinhoud=None):
+    """Controleer of een bestand bestaat door de map opnieuw te lezen.
+
+    Een losse ``os.path.exists`` kan in een container een verouderd antwoord
+    geven: Docker Desktop (macOS) houdt de inhoud van een eerder gelezen map
+    in een cache, waardoor een bestand dat op de host is verwijderd nog
+    tientallen seconden lijkt te bestaan. Een nieuwe lezing van de map
+    (``os.listdir``) haalt de werkelijke inhoud op. Op Linux-servers maakt het
+    geen verschil.
+
+    Args:
+        pad: volledig pad van het bestand
+        mapinhoud: optioneel dict map -> set met bestandsnamen, als cache
+            binnen één aanroep (wordt gevuld)
+
+    Returns:
+        True als het bestand in zijn map voorkomt
+    """
+    map_, naam = os.path.split(pad)
+    if mapinhoud is None:
+        mapinhoud = {}
+    if map_ not in mapinhoud:
+        try:
+            mapinhoud[map_] = set(os.listdir(map_))
+        except OSError:
+            mapinhoud[map_] = set()
+    return naam in mapinhoud[map_]
+
+
 def voegImageFilenamesToe(paden):
     """Voeg bij een incrementele run alleen de opgegeven afbeeldingen toe aan Filenames.
 
@@ -570,8 +599,10 @@ def voegImageFilenamesToe(paden):
         filesdb = myclient[config.DB_FILES]
         col = filesdb[config.COLL_FILENAMES]
 
+        # Via de mapinhoud en niet via os.path.exists: zie bestandBestaat
+        mapinhoud = {}
         verdwenen = [d['filename'] for d in col.find({'processed': False}, {'filename': 1})
-                     if not os.path.exists(d['filename'])]
+                     if not bestandBestaat(d['filename'], mapinhoud)]
         if verdwenen:
             col.delete_many({'filename': {'$in': verdwenen}})
             logger.warning(f"{len(verdwenen)} openstaande Filenames-entries verwijderd van bestanden die niet meer "
