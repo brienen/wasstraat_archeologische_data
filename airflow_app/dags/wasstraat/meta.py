@@ -389,6 +389,9 @@ wasstraat_model = {
   "Fotokoppel": {
         STAGING_COLLECTION: config.COLL_STAGING_FOTOLIJST,
         HARMONIZE_PIPELINES: 'Fotokoppel',
+        # Geen sleutels; de lege pipeline geeft wel de taken van Transform 4 (ID's en referenties).
+        # setReferenceKeys slaat een lege pipeline over: zonder $match las en schreef hij de hele
+        # Single_Store en overschreef zo de keys van de parallelle taken (issue 88).
         SET_KEYS_PIPELINES: [[]] 
   },
   "Tekening": {

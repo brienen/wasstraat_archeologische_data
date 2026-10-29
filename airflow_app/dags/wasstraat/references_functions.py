@@ -1,4 +1,5 @@
 # Import the os module, for the os.walk function
+import math
 import pymongo
 from pymongo import UpdateOne, WriteConcern
 import re
@@ -35,8 +36,89 @@ def createIndex(collection, index_name, uniqueValue=False):
         collection.create_index(index_name, unique=uniqueValue)
 
 
-def setReferenceKeys(pipeline, soort, col='analyse', incrementeel=False):   
+# Fasen van een sleutelpipeline (meta.SET_KEYS_PIPELINES) waarvan setReferenceKeys de berekende
+# velden kent; bij andere fasen schrijft hij het hele document terug (issue 88)
+FASEN_MET_VELDEN = ('$addFields', '$set')
+# Velden die setReferenceKeys ook schrijft als de pipeline er geen waarde voor geeft (dan None),
+# zoals voorheen met util.safe_row_to_dict(keep_fields=['_id', 'key', 'soort'])
+VELDEN_OOK_LEEG = ('key', 'soort')
+
+
+def getPipelineVelden(pipeline):
+    """Retourneer de velden die een sleutelpipeline berekent: de velden van zijn $addFields- en $set-fasen.
+
+    Args:
+        pipeline: sleutelpipeline uit meta.getReferenceKeysPipeline
+
+    Returns:
+        Lijst met veldnamen (in volgorde van voorkomen), of None als de pipeline
+        andere fasen heeft dan $match, $addFields en $set: dan is niet vast te
+        stellen welke velden hij verandert
+    """
+    velden = []
+    for fase in pipeline:
+        naam = next(iter(fase), None)
+        if naam == '$match':
+            continue
+        if naam not in FASEN_MET_VELDEN:
+            return None
+        for veld in fase[naam]:
+            if veld not in velden:
+                velden.append(veld)
+    return velden
+
+
+def _waardeOpPad(doc, pad):
+    """Waarde van een (geneste) veldnaam met punten, of None als het veld ontbreekt."""
+    for deel in pad.split('.'):
+        if not isinstance(doc, dict) or deel not in doc:
+            return None
+        doc = doc[deel]
+    return doc
+
+
+def maakSleutelUpdate(doc, velden):
+    """Bouw de $set voor één uitkomst van een sleutelpipeline: alleen de gegeven velden.
+
+    Een veld zonder waarde (None of NaN) wordt niet geschreven, behalve key en
+    soort (VELDEN_OOK_LEEG): die worden None. Dat is hetzelfde als de
+    terugschrijving van vóór issue 88 (safe_row_to_dict), maar dan alleen voor
+    de velden die de pipeline berekent.
+
+    Args:
+        doc: document uit de aggregatie
+        velden: veldnamen die geschreven mogen worden
+
+    Returns:
+        Dict voor $set (kan leeg zijn)
+    """
+    update = {}
+    for veld in velden:
+        if veld == '_id':
+            continue
+        waarde = _waardeOpPad(doc, veld)
+        if waarde is None or (isinstance(waarde, float) and math.isnan(waarde)):
+            if veld in VELDEN_OOK_LEEG:
+                update[veld] = None
+            continue
+        update[veld] = waarde
+    return update
+
+
+def setReferenceKeys(pipeline, soort, col='analyse', incrementeel=False):
     """Bereken de sleutels (key, key_project, ...) van een soort met de pipeline uit meta.py.
+
+    Schrijft per document alleen de velden die de pipeline berekent (de
+    $addFields- en $set-fasen, getPipelineVelden), niet het hele document
+    (issue 88). De Set_ReferenceKeys-taken van Transform 3 draaien parallel.
+    Tot issue 88 schreef elke taak de documenten volledig terug zoals hij ze
+    had gelezen, en de lege pipeline van Fotokoppel las en schreef zo de hele
+    collectie: de key (en bij stellingen de soort) die een andere taak
+    intussen had berekend, werd dan met de oude waarde (None) overschreven.
+    Welke documenten dat trof hing af van de timing; in de volledige cyclus
+    van 29 oktober 2026 op de productie-installatie onder meer alle sporen,
+    vullingen, stellingen en tekeningen en de meeste standplaatsen. Een lege
+    pipeline berekent niets en doet nu niets.
 
     Args:
         pipeline: pipeline uit meta.getReferenceKeysPipeline
@@ -48,10 +130,22 @@ def setReferenceKeys(pipeline, soort, col='analyse', incrementeel=False):
             de geraakte projecten (delta_transform.getDeltaOfProjectFilter). De
             pipeline uit meta.py zelf blijft ongewijzigd
     """
+    if not pipeline:
+        logger.info(f"Soort {soort} heeft geen sleutelpipeline in meta.py: er zijn geen sleutels te berekenen.")
+        return
+    if '$match' not in pipeline[0]:
+        logger.warning(f"De sleutelpipeline van {soort} begint niet met $match; alleen de documenten van soort "
+                       f"{soort} worden bewerkt.")
+        pipeline = [{'$match': {'soort': soort}}] + list(pipeline)
     if incrementeel:
         pipeline = delta_transform.voegToeAanEersteMatch(
             pipeline, delta_transform.getDeltaOfProjectFilter(soort, verwerkingsrun.huidigeRun()))
+    velden = getPipelineVelden(pipeline)
+    if velden is None:
+        logger.warning(f"De sleutelpipeline van {soort} heeft andere fasen dan $match, $addFields en $set; de "
+                       f"documenten worden volledig teruggeschreven.")
 
+    collection = None
     try:
         if (col == 'analyse'):
             collection = getAnalyseCollection()
@@ -59,19 +153,22 @@ def setReferenceKeys(pipeline, soort, col='analyse', incrementeel=False):
             collection = getAnalyseCleanCollection()
         else:
             raise ValueError('Error: Herkent de collectie niet met naam ' + col)
-        
-        logger.info(f"Setting references voor soort {soort} with pipeline {pipeline}")
-        df = pd.DataFrame(list(collection.aggregate(pipeline)))
-        # Fix problem with dates
-        if 'datum' in df.columns.values:
-            df[['datum']] = df[['datum']].astype(object).where(df[['datum']].notnull(), None)
-        
-        if not df.empty:
-            # Update soort documents 
-            updates=[ UpdateOne({'_id':x['_id']}, {'$set':x}, upsert=True) for x in [util.safe_row_to_dict(v, keep_fields=['_id', 'key', 'soort']) for k,v in df.iterrows()]]
-            result = collection.bulk_write(updates)
+
+        logger.info(f"Sleutels berekenen voor soort {soort} met pipeline {pipeline}")
+        # Eerst alle uitkomsten lezen, dan schrijven: de pipeline kan een geïndexeerd veld (soort) wijzigen
+        updates = []
+        for doc in collection.aggregate(pipeline, allowDiskUse=True):
+            update = maakSleutelUpdate(doc, velden if velden is not None else list(doc))
+            if update:
+                updates.append(UpdateOne({'_id': doc['_id']}, {'$set': update}))
+
+        if updates:
+            for batch in delta_transform.inBatches(updates):
+                collection.bulk_write(batch, ordered=False)
+            logger.info(f"Sleutels van {len(updates)} documenten van soort {soort} geschreven "
+                        f"(velden: {velden if velden is not None else 'alle'}).")
         else:
-            logger.warning(f"trying to insert empty dataframe of soort: {soort} into collection {col}.")
+            logger.warning(f"Geen documenten van soort {soort} gevonden in collectie {col} om sleutels voor te berekenen.")
 
     except Exception as err:
         msg = "Onbekende fout bij het aanroepen van een aggregation met melding: " + str(err)
@@ -79,7 +176,8 @@ def setReferenceKeys(pipeline, soort, col='analyse', incrementeel=False):
         raise Exception(msg) from err
 
     finally:
-        collection.database.client.close()
+        if collection is not None:
+            collection.database.client.close()
 
 
 def setPrimaryKeys(soort, col='analyse', stabiel=False):   

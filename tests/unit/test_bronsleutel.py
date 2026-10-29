@@ -23,14 +23,26 @@ Test wasstraat/delta_transform.py:
 
 en de load (vulLaadKey, leesDocumenten) en meta.py (key van Monster_Botanie en
 Monster_Schelp uit het autonummer Id).
+
+Issue 88: leesBrondataTekst op echte teksten uit de productie-installatie
+(tests/unit/fixtures/brondata_delft.json) en op Decimal128, Decimal,
+Timestamp, geneste waarden en lange teksten; getVervangendeKeys en de
+koppeling op een vervangende key in bepaalStabieleIds (stap 3b), plus de
+telling van documenten die een nieuw nummer krijgen terwijl hun bronrij met
+een andere key in de tabel staat.
 """
 import datetime
+import decimal
+import json
+import os
 import sys
 import types
 
 import pytest
 from bson import ObjectId
+from bson.decimal128 import Decimal128
 from bson.int64 import Int64
+from bson.timestamp import Timestamp as BsonTimestamp
 
 # Mock shared.image_util (wordt via bronbestanden/opruimen geïmporteerd door image_import.py)
 if "shared.image_util" not in sys.modules:
@@ -479,3 +491,185 @@ class TestSetStabielePrimaryKeysMetBronsleutel:
         verwerkingsrun.startRun('incrementeel')
         assert delta_transform.setStabielePrimaryKeys('Fotokoppel', col) is True
         assert col.find_one({'_id': OID[0]})['ID'] == 0
+
+
+# ============================================================
+# Issue 88: echte brondata-teksten, vervangende keys
+# ============================================================
+
+FIXTURE_BRONDATA = json.load(open(os.path.join(os.path.dirname(__file__), 'fixtures', 'brondata_delft.json'),
+                                  encoding='utf-8'))['teksten']
+
+
+@pytest.mark.unit
+class TestLeesBrondataTekstProductie:
+    """leesBrondataTekst op echte teksten uit de kolom brondata van de Delftse productie-installatie.
+
+    De teksten komen uit de backup van 22 oktober 2026 (tests/unit/fixtures/brondata_delft.json).
+    Op die backup en op de tabellen na de cyclus van 29 oktober gaf de parser voor geen enkele rij
+    None; de hernummering van issue 88 kwam niet van de parser.
+    """
+
+    @pytest.mark.parametrize('fixture', FIXTURE_BRONDATA, ids=[f['naam'] for f in FIXTURE_BRONDATA])
+    def test_echte_tekst_geeft_de_bronsleutel(self, fixture):
+        bronrijen = delta_transform.leesBrondataTekst(fixture['tekst'])
+        assert isinstance(bronrijen, list) and len(bronrijen) == fixture['aantal_bronrijen']
+        assert delta_transform.getBronsleutel(bronrijen) == fixture['bronsleutel']
+
+    @pytest.mark.parametrize('fixture', FIXTURE_BRONDATA, ids=[f['naam'] for f in FIXTURE_BRONDATA])
+    def test_rondgang_via_str_is_stabiel(self, fixture):
+        """Wat de load opnieuw schrijft (str van de teruggelezen rijen) geeft dezelfde bronsleutel."""
+        bronrijen = delta_transform.leesBrondataTekst(fixture['tekst'])
+        opnieuw = delta_transform.leesBrondataTekst(str(bronrijen))
+        assert delta_transform.getBronsleutel(opnieuw) == fixture['bronsleutel']
+
+    def test_alle_soorten_waarden_uit_de_fixture(self):
+        """De fixture dekt nan, False, een backslash, aanhalingstekens, \\r en een regeleinde."""
+        teksten = ' '.join(f['tekst'] for f in FIXTURE_BRONDATA)
+        for teken in (': nan', ': False', '\\\\', '\\r', '\\n', "\"", 'ObjectId('):
+            assert teken in teksten, teken
+
+    def test_lange_samengevoegde_tekst(self):
+        """Het grootste samengevoegde document op productie had 81.909 tekens (Def_Vondst)."""
+        rijen = [bronrij(tabel='VONDSTENLIJST', ID=i, INHOUD='aw, bot', OPMERKING="o'k \"x\"\n" * 5) for i in range(600)]
+        tekst = str(rijen)
+        assert len(tekst) > 80000
+        assert delta_transform.getBronsleutel(delta_transform.leesBrondataTekst(tekst)) == \
+            delta_transform.getBronsleutel(rijen)
+
+    @pytest.mark.parametrize('waarde', [
+        Decimal128('12.50'), decimal.Decimal('3.14'), datetime.datetime(2003, 5, 5, 0, 0),
+        float('nan'), {'genest': {'lijst': [1, 'twee', None, True], 'getal': -2.5}}, [1, [2, [3]]],
+        BsonTimestamp(1700000000, 1),
+    ], ids=['Decimal128', 'Decimal', 'datetime', 'nan', 'geneste_dict', 'geneste_lijst', 'bson_Timestamp'])
+    def test_bijzondere_waarden_zonder_autonummer(self, waarde):
+        """Zonder autonummer hangt de hash van de inhoud af: teruggelezen moet die hetzelfde zijn."""
+        brondata = [bronrij(tabel='ARTF_GLS', VELD=waarde, ANDER='x')]
+        terug = delta_transform.leesBrondataTekst(str(brondata))
+        assert terug is not None
+        assert delta_transform.getBronsleutel(terug) == delta_transform.getBronsleutel(brondata)
+
+    def test_pandas_timestamp_als_tekst(self):
+        terug = delta_transform.leesBrondataTekst("[{'d': Timestamp('2020-01-02 03:04:05')}]")
+        assert terug == [{'d': datetime.datetime(2020, 1, 2, 3, 4, 5)}]
+
+    @pytest.mark.parametrize('tekst', ["[{'a': Decimal128('geen getal')}]", "[{'a': Timestamp('morgen')}]"])
+    def test_onleesbare_bijzondere_waarde_geeft_none(self, tekst):
+        assert delta_transform.leesBrondataTekst(tekst) is None
+
+
+@pytest.mark.unit
+class TestVervangendeKeys:
+    """getVervangendeKeys: keys waarmee een document geladen kan zijn toen zijn natuurlijke key ontbrak."""
+
+    def test_standplaats_met_natuurlijke_key(self):
+        doc = {'key': 'SAV1L2'}
+        assert delta_transform.getVervangendeKeys('Standplaats', doc, 'm:1') == ['bron:m:1']
+
+    def test_zonder_natuurlijke_key_geen_vervanging(self):
+        """De laadkey is dan zelf de hulpsleutel-key."""
+        assert delta_transform.getVervangendeKeys('Plaatsing', {}, 'm:1') == []
+
+    def test_artefact_met_natuurlijke_key(self):
+        doc = {'key': 'PDC024V32A14S0', 'key_subnr': 'PDC024V32A0S0', 'artefactsoort': 'Glas',
+               'projectcd': 'DC024', 'vondstnr': 32.0}
+        assert delta_transform.getVervangendeKeys('Artefact', doc, 'g:#1') == [
+            'PDC024V32|Glas|bron:g:#1', 'PDC024V32A0S0|Glas']
+
+    def test_artefact_met_alleen_key_subnr(self):
+        doc = {'key_subnr': 'PDC024V32A0S0', 'artefactsoort': 'Glas', 'projectcd': 'DC024', 'vondstnr': 32.0}
+        assert delta_transform.getVervangendeKeys('Artefact', doc, 'g:#1') == ['PDC024V32|Glas|bron:g:#1']
+
+    @pytest.mark.parametrize('soort', ['Bestand', 'Foto', 'ABR'])
+    def test_geen_vervanging_voor_bestanden_en_abr(self, soort):
+        assert delta_transform.getVervangendeKeys(soort, {'key': 'K'}, 'b:1') == []
+
+    def test_zonder_bronsleutel_geen_vervanging(self):
+        assert delta_transform.getVervangendeKeys('Spoor', {'key': 'K'}, None) == []
+
+    def test_hulpsleutel_key_herkennen(self):
+        assert delta_transform.isHulpsleutelKey('bron:m:1')
+        assert delta_transform.isHulpsleutelKey('PDB034V460|Aardewerk|bron:x:4')
+        assert not delta_transform.isHulpsleutelKey('PDB034V460A1|Glas')
+        assert not delta_transform.isHulpsleutelKey(None)
+
+
+def docV(i, key, bronsleutel, vervangend=(), **velden):
+    d = doc(i, key, bronsleutel, vervangende_keys=list(vervangend))
+    d.update(velden)
+    return d
+
+
+@pytest.mark.unit
+class TestStabieleIdsMetVervangendeKey:
+    """bepaalStabieleIds stap 3b (issue 88): rijen die met een vervangende key zijn geladen."""
+
+    def test_standplaats_krijgt_natuurlijke_key_terug(self):
+        """29 oktober: de key ontbrak, de load schreef bron:<bronsleutel>; nu is de key er weer."""
+        pg = [{'primary_key': 50, '_id': 'x', 'key': 'bron:m:1'}, {'primary_key': 51, '_id': 'y', 'key': 'bron:m:2'},
+              {'primary_key': 52, '_id': 'z', 'key': 'SA', 'bronsleutel': 'm:3'}]
+        docs = [docV(0, 'SA', 'm:2', ['bron:m:2']), docV(1, 'SA', 'm:1', ['bron:m:1']), docV(2, 'SA', 'm:3', ['bron:m:3'])]
+        toewijzing, tellingen = delta_transform.bepaalStabieleIds(docs, pg, lambda pks: pytest.fail('niet nodig'))
+        assert dict(toewijzing) == {OID[0]: 51, OID[1]: 50, OID[2]: 52}
+        assert tellingen['op_vervangende_key'] == 2 and tellingen['op_bronsleutel'] == 1 and tellingen['nieuw'] == 0
+
+    def test_eigen_rij_gaat_voor_gegenereerde_rij_met_dezelfde_key(self):
+        """Een spoor zonder key liet Transform 5 een spoor genereren; het echte spoor houdt zijn eigen nummer."""
+        pg = [{'primary_key': 5, '_id': 'x', 'key': 'bron:s:1'}, {'primary_key': 9, '_id': 'y', 'key': 'PDB034P1S1'}]
+        toewijzing, tellingen = delta_transform.bepaalStabieleIds([docV(0, 'PDB034P1S1', 's:1', ['bron:s:1'])], pg)
+        assert dict(toewijzing) == {OID[0]: 5}
+        assert tellingen['op_vervangende_key'] == 1 and tellingen['op_key'] == 0
+
+    def test_artefact_op_key_subnr_en_bronsleutel(self):
+        """Twee artefacten met dezelfde key_subnr|artefactsoort in PostgreSQL: de bronsleutel beslist."""
+        pg = [{'primary_key': 25113, '_id': 'x', 'key': 'PDC024V32A0S0|Glas'},
+              {'primary_key': 25114, '_id': 'y', 'key': 'PDC024V32A0S0|Glas'},
+              {'primary_key': 7, '_id': 'z', 'key': 'PDC024V31A0S0|Glas'}]
+        gelezen = []
+
+        def lees(pks):
+            gelezen.append(sorted(pks))
+            return {25113: 'g:#b', 25114: 'g:#a', 7: 'g:#c'}
+
+        docs = [docV(0, 'PDC024V32A14S0', 'g:#a', ['PDC024V32|Glas|bron:g:#a', 'PDC024V32A0S0|Glas']),
+                docV(1, 'PDC024V32A15S0', 'g:#b', ['PDC024V32|Glas|bron:g:#b', 'PDC024V32A0S0|Glas'])]
+        toewijzing, tellingen = delta_transform.bepaalStabieleIds(docs, pg, lees)
+        assert dict(toewijzing) == {OID[0]: 25114, OID[1]: 25113}
+        assert gelezen[0] == [25113, 25114], "Alleen de rijen met een vervangende key worden gelezen"
+        assert tellingen['op_vervangende_key'] == 2
+
+    def test_vervangende_key_neemt_geen_rij_van_een_ander_artefact(self):
+        """Een artefact zonder artefactnr heeft key_subnr|artefactsoort als natuurlijke key: andere bronsleutel."""
+        pg = [{'primary_key': 3, '_id': 'x', 'key': 'S|Glas', 'bronsleutel': 'b:2'},
+              {'primary_key': 4, '_id': 'y', 'key': 'K'}]
+        docs = [docV(0, 'K', 'b:1', ['P|Glas|bron:b:1', 'S|Glas']), docV(1, 'S|Glas', 'b:2', ['P|Glas|bron:b:2'])]
+        toewijzing, tellingen = delta_transform.bepaalStabieleIds(docs, pg)
+        assert dict(toewijzing) == {OID[0]: 4, OID[1]: 3}
+        assert tellingen['op_vervangende_key'] == 0 and tellingen['op_key'] == 2
+
+    def test_monster_krijgt_key_met_autonummer(self):
+        """Na issue 81 kreeg Monster_Botanie de key M<monstercd>ID<Id>; eerder geladen als bron:<bronsleutel>."""
+        pg = [{'primary_key': 0, '_id': 'x', 'key': 'bron:mon:1'}]
+        toewijzing, _ = delta_transform.bepaalStabieleIds([docV(0, 'MALT_p62_v26ID1', 'mon:1', ['bron:mon:1'])], pg)
+        assert dict(toewijzing) == {OID[0]: 0}
+
+    def test_identieke_rijen_paarsgewijs_op_vervangende_key(self):
+        pg = [{'primary_key': p, '_id': str(p), 'key': 'bron:t:#h'} for p in (7, 8)]
+        docs = [docV(i, 'PDC024P1S1', 't:#h', ['bron:t:#h']) for i in range(2)]
+        toewijzing, tellingen = delta_transform.bepaalStabieleIds(docs, pg)
+        assert sorted(pk for _, pk in toewijzing) == [7, 8] and tellingen['op_vervangende_key'] == 2
+
+    def test_verloren_key_wordt_gemeld(self):
+        """Ontbreekt de natuurlijke key (zoals op 29 oktober), dan een nieuw nummer en een telling met voorbeeld."""
+        pg = [{'primary_key': 10, '_id': 'x', 'key': 'SA', 'bronsleutel': 'm:1'},
+              {'primary_key': 11, '_id': 'y', 'key': 'SA', 'bronsleutel': 'm:2'}]
+        docs = [docV(0, 'bron:m:1', 'm:1'), docV(1, 'SA', 'm:2', ['bron:m:2'])]
+        toewijzing, tellingen = delta_transform.bepaalStabieleIds(docs, pg)
+        assert dict(toewijzing) == {OID[0]: 12, OID[1]: 11}
+        assert tellingen['nieuw'] == 1 and tellingen['nieuw_bronrij_bekend'] == 1
+        assert tellingen['voorbeelden'] == [{'key': 'bron:m:1', 'primary_key': 10, 'key_in_tabel': 'SA'}]
+
+    def test_geen_melding_bij_stabiele_sleutels(self):
+        pg = [{'primary_key': 10, '_id': 'x', 'key': 'SA', 'bronsleutel': 'm:1'}]
+        _, tellingen = delta_transform.bepaalStabieleIds([docV(0, 'SA', 'm:1', ['bron:m:1'])], pg)
+        assert tellingen['nieuw_bronrij_bekend'] == 0 and 'voorbeelden' not in tellingen

@@ -40,6 +40,8 @@ Een document dat niet te verwerken is, blijft ongewijzigd en komt in `_processin
 
 `Set_Artefactnr_Unique` bepaalt per project of artefactnummers uniek zijn en of vondstnummers in meer putten voorkomen (vlag `vondstkey_met_putnr`). `mergeRAAPArtefacts` neemt aantal, gewicht en materiaal over uit de `ARTEFACT`-tabellen van RAAP-databases. Daarna geeft `Set_ReferenceKeys_<soort>` elk document zijn sleutels.
 
+De `Set_ReferenceKeys`-taken draaien parallel op dezelfde collectie. Elke taak schrijft daarom alleen de velden die zijn pipeline berekent (de `$addFields`-fasen), niet het hele document, en een soort zonder sleutelpipeline (`Fotokoppel`) doet niets. Tot issue 88 schreef elke taak de documenten volledig terug zoals hij ze had gelezen, en las de lege pipeline van `Fotokoppel` de hele `Single_Store`: afhankelijk van de timing overschreef die taak de net berekende keys van andere soorten met `None` (en de soort van stellingen met `stelling`). Zie [Incrementeel laden](incrementeel-laden.md#verloren-keys-in-transform-3-issue-88).
+
 ### Sleutels
 
 Elke entiteit krijgt in Transform 3 (`setReferenceKeys`, pipelines `SET_KEYS_PIPELINES` in `airflow_app/dags/wasstraat/meta.py`) een samengestelde sleutel `key` uit zijn identificerende velden, bijvoorbeeld `PDB034P10V460` voor vondst 460 in put 10 van project DB034, en sleutels naar de entiteiten waarnaar hij verwijst (`key_vondst`, `key_put`, `key_monster`, ...). Transform 4 koppelt op die sleutels (`setReferences`) en kent de integer-sleutels toe (`setPrimaryKeys`, in PostgreSQL `primary_key`).

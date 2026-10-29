@@ -50,6 +50,15 @@ class SwapCursor(NepPgCursor):
                 elif voorwaarde != 'FALSE' and rij.get('key') is not None and rij.get('key') != nieuwe_rij.get('key'):
                     self.resultaat.append((pk, False))
             return
+        m = re.match(r'SELECT o\.primary_key, o\.brondata, n\.brondata FROM "(\w+)" AS o JOIN "(\w+)" AS n '
+                     r'ON n\.primary_key = o\.primary_key WHERE o\.primary_key = ANY\(%s\)$', tekst)
+        if m:
+            oud, nieuw = m.groups()
+            self.db.log.append(sql)
+            self.resultaat = [(pk, rij.get('brondata'), tabellen[nieuw]['rijen'][pk].get('brondata'))
+                              for pk, rij in tabellen[oud]['rijen'].items()
+                              if pk in params[0] and pk in tabellen[nieuw]['rijen']]
+            return
         m = re.match(r'DELETE FROM "(\w+)" AS g WHERE g\."(\w+)" = ANY\(%s\)$', tekst)
         if m:
             self.db.log.append(sql)
@@ -196,6 +205,26 @@ class TestVervallenRijen:
         assert vervallen == {'Def_Bestand': {'verdwenen': [], 'hernummerd': []},
                              'Def_ABR': {'verdwenen': [], 'hernummerd': []}}
         assert not [r for r in caplog.records if r.levelno >= logging.WARNING]
+
+    def test_andere_key_bij_dezelfde_bronrij_is_geen_hernummering(self, caplog):
+        """Issue 88: een artefact krijgt zijn natuurlijke key terug en houdt zijn nummer (vervangende key).
+
+        De oude rij had key_subnr|artefactsoort of de hulpsleutel-key; de nieuwe rij heeft dezelfde bronrij.
+        Een andere key met een andere bronrij blijft een hernummering.
+        """
+        kol = kolommen('primary_key', '_id', 'key', 'soort', 'brondata', primary_key='integer')
+        bron = lambda i: str([{'_id': 'x', 'table': 'ARTF_GLS', 'mdbfile': '/input/a.mdb', 'ARTEFACT': i}])
+        rij = lambda pk, key, i: dict(artefact(pk, key), brondata=bron(i))
+        pg = SwapPostgres({
+            'Def_Artefact': {'kolommen': kol, 'rijen': {0: rij(0, 'PDC024V32A0S0|Glas', 14), 1: rij(1, 'PDC024V33A0S0|Glas', 1),
+                                                         2: rij(2, 'K2', 2)}},
+            'Def_Artefact_new': {'kolommen': kol, 'rijen': {0: rij(0, 'PDC024V32A14S0', 14), 1: rij(1, 'PDC024V33A9S0', 9),
+                                                             2: rij(2, 'K2', 2)}},
+        })
+        with caplog.at_level(logging.WARNING, logger='airflow.task'):
+            vervallen = load.bepaalVervallenSleutels(pg.cursor(), [('Def_Artefact', 'Def_Artefact_new')])
+        assert vervallen == {'Def_Artefact': {'verdwenen': [], 'hernummerd': [1]}}
+        assert any('Sleutels niet stabiel' in r.getMessage() for r in caplog.records)
 
     def test_geen_waarschuwing_bij_stabiele_sleutels(self, caplog):
         pg = maakPostgres([artefact(0, 'A'), artefact(1, 'B')])

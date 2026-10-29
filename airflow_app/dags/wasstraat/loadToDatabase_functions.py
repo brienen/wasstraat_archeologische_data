@@ -823,7 +823,10 @@ def bepaalVervallenRijen(cursor, tabel, nieuwe_tabel, vergelijk_key=True):
       Single_Store_Clean niet stabiel toegekend (bijv. DAG_Load_Only op
       MongoDB-data uit een andere backup dan PostgreSQL) en wijst hetzelfde
       nummer naar een andere entiteit. Een rij zonder key in de huidige tabel
-      telt niet als hernummerd.
+      telt niet als hernummerd, en ook geen rij met dezelfde bronsleutel in de
+      oude en de nieuwe tabel (issue 88): dat is dezelfde bronrij, die
+      Transform 4 op een vervangende key heeft teruggevonden, bijvoorbeeld een
+      artefact dat zijn natuurlijke key terugkrijgt.
 
     Args:
         cursor: psycopg2 cursor
@@ -846,9 +849,37 @@ def bepaalVervallenRijen(cursor, tabel, nieuwe_tabel, vergelijk_key=True):
                    f'WHERE n.primary_key IS NULL OR ({andere_key})')
     for primary_key, verdwenen in cursor.fetchall():
         vervallen['verdwenen' if verdwenen else 'hernummerd'].append(int(primary_key))
+    if vervallen['hernummerd'] and 'brondata' in kolommen:
+        vervallen['hernummerd'] = _zonderZelfdeBronrij(cursor, tabel, nieuwe_tabel, vervallen['hernummerd'])
     vervallen['verdwenen'].sort()
     vervallen['hernummerd'].sort()
     return vervallen
+
+
+def _zonderZelfdeBronrij(cursor, tabel, nieuwe_tabel, primary_keys):
+    """Laat de primary_keys weg waarvan de oude en de nieuwe rij dezelfde bronsleutel hebben (issue 88).
+
+    Args:
+        cursor: psycopg2 cursor
+        tabel: de huidige tabel
+        nieuwe_tabel: de nieuw geladen tabel
+        primary_keys: primary_keys met een andere key in de nieuwe tabel
+
+    Returns:
+        Lijst met de primary_keys die echt bij een andere bronrij horen
+    """
+    cursor.execute(f'SELECT o.primary_key, o.brondata, n.brondata FROM "{tabel}" AS o '
+                   f'JOIN "{nieuwe_tabel}" AS n ON n.primary_key = o.primary_key '
+                   f'WHERE o.primary_key = ANY(%s)', (list(primary_keys),))
+    zelfde = set()
+    for primary_key, oud, nieuw in cursor.fetchall():
+        bron_oud = delta_transform.getBronsleutel(delta_transform.leesBrondataTekst(oud))
+        if bron_oud is not None and bron_oud == delta_transform.getBronsleutel(delta_transform.leesBrondataTekst(nieuw)):
+            zelfde.add(int(primary_key))
+    if zelfde:
+        logger.info(f"{len(zelfde)} rijen in {tabel} houden hun primary_key met een andere key maar dezelfde bronrij "
+                    f"(teruggevonden op een vervangende key); die tellen niet als hernummerd.")
+    return [pk for pk in primary_keys if pk not in zelfde]
 
 
 def getTabellenMetKeyControle():
