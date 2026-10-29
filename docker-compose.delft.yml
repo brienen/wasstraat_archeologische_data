@@ -35,6 +35,9 @@ services:
       - elasticsearch
     environment:
       WASSTRAAT_GEMEENTE: delft
+      # Versie in het verwerkingsrapport; make delft geeft die mee uit config/version.env
+      # (anders config/version.env.example)
+      WASSTRAAT_VERSION: ${WASSTRAAT_VERSION:-}
     volumes:
        - ./data/delft/data/projecten:/input/projecten
        - ./data/delft/data/projecten:/input/images

@@ -14,13 +14,15 @@ LIJSTBESTAND="${3:-}"
 # Map van dit script: csv_kolommen.py staat ernaast
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-WORKDIR=$AIRFLOW_TEMPDIR
+# Werkmap en logmap, met dezelfde standaardwaarden als shared/config.py
+WORKDIR="${AIRFLOW_TEMPDIR:-/opt/airflow/tmp}"
+LOGDIR="${AIRFLOW_LOGDIR:-/opt/airflow/logs}"
 DATABASE=$DB_STAGING
 
 timestamp=`date --iso-8601=seconds`
 Collection="$2"
-LOG=${AIRFLOW_LOGDIR}/${Collection}.log
-ERRORLOG=${AIRFLOW_LOGDIR}/${Collection}_encoding_errors.log
+LOG=${LOGDIR}/${Collection}.log
+ERRORLOG=${LOGDIR}/${Collection}_encoding_errors.log
 
 echo Loading from "$1" to collection "$Collection" in database "$DATABASE" and logging to "$LOG"
 # Setting logging to log files, including error log
@@ -351,10 +353,17 @@ fi
 for mdbfile in "${MDB_FILES[@]}"
 do
 	TOTAL_FILES=$((TOTAL_FILES + 1))
+	# Projectcode: het begin van de eerste map onder de invoermap (of van de bestandsnaam)
+	# in hoofdletters en cijfers. Per bestand opnieuw bepaald: begint de map anders (zoals
+	# 'werkmap'), dan blijft de projectcode leeg en erft het bestand niet die van het vorige.
+	PROJECT=""
 	PROJECT_R=${mdbfile#$1"/"}
 	PROJECT_L=${PROJECT_R%%/*}
 	[[ $PROJECT_L =~ ^([A-Z0-9]+).* ]] && PROJECT=${BASH_REMATCH[1]}
     echo "Processing $mdbfile file for project $PROJECT ..."
+	if [ -z "$PROJECT" ]; then
+		echo "INFO: Geen projectcode af te leiden uit '$PROJECT_L' (begint niet met hoofdletters of cijfers); projectcd blijft leeg voor $mdbfile"
+	fi
 
 	# Controleer of het MDB-bestand leesbaar is voordat we tabellen proberen te lezen
 	if ! mdb-tables -d , "$mdbfile" > /dev/null 2>&1; then

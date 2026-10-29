@@ -199,9 +199,9 @@ def vulFilenames(client, mislukt=0, verwerkt=3):
 class TestControleerAfbeeldingen:
 
     @pytest.fixture(autouse=True)
-    def geenDrempelUitOmgeving(self, monkeypatch):
-        monkeypatch.delenv(image_import.OMGEVING_MAX_MISLUKT, raising=False)
-        monkeypatch.delenv(image_import.OMGEVING_MAX_MISLUKT_PCT, raising=False)
+    def standaardDrempel(self, monkeypatch):
+        monkeypatch.setattr(image_import.config, 'AIRFLOW_MAX_MISLUKTE_AFBEELDINGEN', 10)
+        monkeypatch.setattr(image_import.config, 'AIRFLOW_MAX_MISLUKTE_AFBEELDINGEN_PCT', 1.0)
         monkeypatch.setattr(image_import.pymongo, 'MongoClient', lambda *args, **kwargs: None)
 
     def test_volledige_cyclus_tellingen_en_waarschuwing(self, nep_client, monkeypatch):

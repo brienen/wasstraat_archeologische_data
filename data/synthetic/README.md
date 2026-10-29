@@ -49,7 +49,7 @@ data/synthetic/
 │   ├── referentietabellen/                            # Standaardtabellen
 │   │   ├── abr_versie_01122018.xlsx                   #   ABR-thesaurus (perioden, materialen)
 │   │   └── Alle Bestanden Archeologisch Depot.xlsx    #   Depotinventarisatie
-│   └── rapporten/                                     # Rapporten (leeg in synthetische data)
+│   └── rapporten/                                     # Rapporten (leeg in synthetische data, alleen .gitkeep)
 ├── wasstraat_config/                                  # Pipeline-configuratie
 │   ├── Wasstraat_Config_HarmonizeV3.xlsx              #   Harmonisatie-mapping (veldnamen per objecttype)
 │   └── correcties.yml                                 #   Datacorrecties (projectcodes, rapportprefixen, paden_overslaan)
@@ -91,6 +91,7 @@ volumes:
   - ./data/synthetic/data/fotolijst:/input/fotolijst
   - ./data/synthetic/data/monsterdatabase:/input/monsterdatabase
   - ./data/synthetic/data/referentietabellen:/input/referentietabellen
+  - ./data/synthetic/data/rapporten:/input/rapporten
 ```
 
 De volledige Wasstraat-applicatie gebruikt deze data standaard: `make app` start alle services met `docker-compose.yml`, dat dezelfde mappen koppelt.

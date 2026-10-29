@@ -99,7 +99,7 @@ process_example() {
         jupyter.env)
             _sed_inplace "s/jupyter_secret_42/$PW_JUPYTER/g" "$target"
             ;;
-        # elasticsearch.env en version.env hebben geen wachtwoorden
+        # version.env heeft geen wachtwoorden
     esac
 
     echo "  ✅ $filename aangemaakt"

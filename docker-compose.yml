@@ -33,9 +33,14 @@ services:
       - postgres
       - mongo
       - elasticsearch
+    environment:
+      # Versie in het verwerkingsrapport; make app en make dev geven die mee uit
+      # config/version.env (anders config/version.env.example)
+      WASSTRAAT_VERSION: ${WASSTRAAT_VERSION:-}
     volumes:
        - ./data/synthetic/data/projecten:/input/projecten
        - ./data/synthetic/data/projecten:/input/images
+       - ./data/synthetic/data/rapporten:/input/rapporten
        - ./data/synthetic/data/monsterdatabase:/input/monsterdatabase
        - ./data/synthetic/data/projectenlijst:/input/projectenlijst
        - ./data/synthetic/data/magazijnlijst:/input/magazijnlijst

@@ -21,7 +21,7 @@ PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(_
 DEPLOY = os.path.join(PROJECT_ROOT, "deploy")
 # Jupyter is een ontwikkelvoorziening en wordt niet gepubliceerd
 EIGEN_IMAGES = {"airflow", "flask", "postgres", "apache"}
-# De env-bestanden die deploy/docker-compose.yml gebruikt (geen jupyter, elasticsearch of version)
+# De env-bestanden die deploy/docker-compose.yml gebruikt (geen jupyter of version)
 DEPLOY_ENV_EXAMPLES = {"airflow", "airflow_db", "flask", "mongo", "postgres", "redis"}
 BRONCODE_MAPPEN = ("airflow_app", "shared", "app", ".vscode", "scripts")
 

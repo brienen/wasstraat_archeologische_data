@@ -1,7 +1,7 @@
 # Wasstraat Archeologische Data
 
 [![License: EUPL-1.2](https://img.shields.io/badge/License-EUPL--1.2-yellow.svg)](https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12)
-[![Version](https://img.shields.io/badge/version-1.2.0-blue.svg)](https://github.com/brienen/wasstraat_archeologische_data/releases)
+[![Version](https://img.shields.io/badge/version-1.2.1-blue.svg)](https://github.com/brienen/wasstraat_archeologische_data/releases)
 [![Python](https://img.shields.io/badge/python-3.11-3776ab.svg)](https://www.python.org/)
 [![Docker](https://img.shields.io/badge/docker-compose-2496ed.svg)](https://docs.docker.com/compose/)
 
@@ -52,8 +52,8 @@ Het verwerken van alle archeologische data is uitgewerkt in procesmodellen in [A
 3. **Transform1 Harmonize** — Harmoniseer de veldnamen van alle ingelezen data over alle bronnen heen.
 4. **Transform2 Enhance Attributes** — Maak de inhoud van alle velden consistent. Datumformaten, codes, projectnummers en metadata worden genormaliseerd.
 5. **Transform3 Set Keys** — Genereer unieke sleutels en verwijzende sleutels voor alle entiteiten.
-6. **Transform4 Move and Merge** — Voeg dubbele entiteiten samen met behoud van [polymorfisme](https://nl.wikipedia.org/wiki/Polymorfisme_(informatica)). Artefacten en Bestanden kunnen zo verschillende soorten hebben met eigen attributen.
-7. **Transform5 Set References** — Ken integer-sleutels toe voor gebruik in de relationele database.
+6. **Transform5 Move and Merge** — Voeg dubbele entiteiten samen met behoud van [polymorfisme](https://nl.wikipedia.org/wiki/Polymorfisme_(informatica)). Artefacten en Bestanden kunnen zo verschillende soorten hebben met eigen attributen.
+7. **Transform4 Set References** — Ken stabiele integer-sleutels toe voor gebruik in de relationele database. De nummers in de namen van de taakgroepen volgen de historische volgorde; Airflow draait Transform 5 vóór Transform 4.
 8. **Load to Database & Index** — Kopieer data naar PostgreSQL en bouw de Elasticsearch-zoekindex op.
 
 ## Ondersteunde data

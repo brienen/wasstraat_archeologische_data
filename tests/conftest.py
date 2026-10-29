@@ -73,7 +73,6 @@ mock_config.MONGO_ANALYSE_URI = "mongodb://test:test@localhost:27017/test_analys
 mock_config.MONGO_SERVER = "localhost"
 mock_config.MONGO_INITDB_ROOT_USERNAME = "test"
 mock_config.MONGO_INITDB_ROOT_PASSWORD = "test"
-mock_config.MONGO_MINPOOLSIZE = 50
 mock_config.DB_STAGING = "test_staging"
 mock_config.DB_FILES = "test_files"
 mock_config.DB_ANALYSE = "test_analyse"
@@ -92,18 +91,7 @@ mock_config.COLL_STAGING_FOTOLIJST = "Staging_Projecten_Fotolijst"
 mock_config.COLL_STAGING_MONSTER = "Staging_Projecten_Monster"
 mock_config.COLL_STAGING_REFERENTIETABELLEN = "Staging_Referentietabellen"
 mock_config.COLL_STAGING_RAPPORTEN = "Staging_Rapporten"
-mock_config.COLL_ANALYSE_FOTO = "Def_Fotos"
-mock_config.COLL_ANALYSE_ARTEFACT = "Def_Artefact"
-mock_config.COLL_ANALYSE_PROJECT = "Def_Project"
-mock_config.COLL_ANALYSE_VONDST = "Def_Vondst"
-mock_config.COLL_ANALYSE_SPOOR = "Def_Spoor"
-mock_config.COLL_ANALYSE_VLAK = "Def_Vlak"
-mock_config.COLL_ANALYSE_PUT = "Def_Put"
 mock_config.COLL_ANALYSE_DOOS = "Def_Doos"
-mock_config.COLL_ANALYSE_STANDPLAATS = "Def_Standplaats"
-mock_config.COLL_ANALYSE_STELLING = "Def_Stelling"
-mock_config.COLL_ANALYSE_PLAATSING = "Def_Plaatsing"
-mock_config.COLL_ANALYSE_VINDPLAATS = "Def_Vindplaats"
 
 # PostgreSQL
 mock_config.POSTGRES_DB = "test_db"
@@ -131,8 +119,10 @@ mock_config.AIRFLOW_INPUT_FOTOLIJST = "/input/fotolijst"
 mock_config.AIRFLOW_INPUT_MONSTER = "/input/monsterdatabase"
 mock_config.AIRFLOW_INPUT_RAPPORTEN = "/input/rapporten"
 mock_config.AIRFLOW_OUTPUT_MEDIA = "/output/archeomedia"
-# Verwerkingsrapport (issue 62) en drempels van het foutbeleid (issue 54), standaardwaarden uit shared/config.py
+# Verwerkingsrapport (issue 62) en drempels van het foutbeleid (issues 54 en 70), standaardwaarden uit shared/config.py
 mock_config.AIRFLOW_OUTPUT_RAPPORTEN = os.getenv("AIRFLOW_OUTPUT_RAPPORTEN", "/tmp/wasstraat_test/rapporten")
+mock_config.AIRFLOW_MAX_MISLUKTE_AFBEELDINGEN = 10
+mock_config.AIRFLOW_MAX_MISLUKTE_AFBEELDINGEN_PCT = 1.0
 mock_config.AIRFLOW_MAX_MISLUKTE_DATABASES = 2
 mock_config.AIRFLOW_MAX_MISLUKTE_DATABASES_PCT = 5.0
 mock_config.AIRFLOW_MAX_VERWERKINGSFOUTEN = 100

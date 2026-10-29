@@ -56,7 +56,7 @@ Overschrijft instellingen voor lokale ontwikkeling:
 
 ### `docker-compose.test.yml` en `docker-compose.delft-test.yml` — Testomgevingen
 
-Zelfstandige testomgevingen voor `make integration` en `make integration-delft`, met eigen containernamen, een eigen projectnaam (`wasstraat-test`, `wasstraat-delft-test`), eigen poorten (Airflow 8081 en 8082, Apache 5061 en 5062) en MongoDB en PostgreSQL in het geheugen. Ze kunnen naast een installatie draaien, maar niet naast elkaar (beide gebruiken MongoDB-poort 27117). Zie [Testen](../testen.md).
+Zelfstandige testomgevingen voor `make integration` en `make integration-delft`, met eigen containernamen, een eigen projectnaam (`wasstraat-test`, `wasstraat-delft-test`), eigen hostpoorten (Airflow 8081 en 8082, Apache 5061 en 5062, MongoDB 27117 en 27118) en MongoDB en PostgreSQL in het geheugen. Ze kunnen naast een installatie en naast elkaar draaien; `tests/unit/test_testomgevingen_poorten.py` bewaakt dat de hostpoorten niet overlappen. Zie [Testen](../testen.md).
 
 ## Starten en Stoppen
 
@@ -111,8 +111,7 @@ Alle services lezen configuratie uit bestanden in `config/`. Hieronder in het ko
 | `redis.env` | Redis-wachtwoord en cache-instellingen |
 | `flask.env` | Flask geheime sleutel, wachtwoord van de beheerder (`FLASK_ADMIN_PASSWORD`) en mailinstellingen |
 | `jupyter.env` | Token voor Jupyter Lab (`JUPYTER_PASSWORD`) |
-| `elasticsearch.env` | Wordt niet ingelezen; de services gebruiken standaard `http://elasticsearch:9200` |
-| `version.env` | Versienummer voor `make publish` en `make release` (zie [Publicatie van images](#publicatie-van-images)) |
+| `version.env` | Versienummer voor `make publish` en `make release` (zie [Publicatie van images](#publicatie-van-images)); `make app`, `make delft` en `make dev` geven het als `WASSTRAAT_VERSION` mee aan Airflow, voor het verwerkingsrapport |
 
 Daarnaast leest de Airflow-container configuratie uit `wasstraat_config/` (gemount als `/opt/airflow/config/`):
 
@@ -140,7 +139,7 @@ Airflow
 ./data/<omgeving>/data/magazijnlijst      → /input/magazijnlijst
 ./data/<omgeving>/data/fotolijst          → /input/fotolijst
 ./data/<omgeving>/data/monsterdatabase    → /input/monsterdatabase
-./data/<omgeving>/data/rapporten          → /input/rapporten          (alleen make delft)
+./data/<omgeving>/data/rapporten          → /input/rapporten          (in de synthetische data leeg)
 ./data/<omgeving>/data/referentietabellen → /input/referentietabellen
 ./data/<omgeving>/output/archeomedia      → /output/archeomedia       (verwerkte media)
 ./data/<omgeving>/output/rapporten        → /output/rapporten         (verwerkingsrapporten)

@@ -109,11 +109,23 @@ def adjust(media, monkeypatch):
     return nep
 
 
+# Standaarddrempel uit shared/config.py (AIRFLOW_MAX_MISLUKTE_AFBEELDINGEN en _PCT)
+STANDAARD_MAX_MISLUKT = 10
+STANDAARD_MAX_MISLUKT_PCT = 1.0
+
+
 @pytest.fixture(autouse=True)
-def geenDrempelUitOmgeving(monkeypatch):
-    """De drempel komt in de tests alleen uit de omgeving als een test die zelf zet."""
-    monkeypatch.delenv(image_import.OMGEVING_MAX_MISLUKT, raising=False)
-    monkeypatch.delenv(image_import.OMGEVING_MAX_MISLUKT_PCT, raising=False)
+def standaardDrempel(monkeypatch):
+    """Elke test begint met de standaarddrempel; een test die een andere wil, zet die zelf."""
+    zetDrempel(monkeypatch, STANDAARD_MAX_MISLUKT, STANDAARD_MAX_MISLUKT_PCT)
+
+
+def zetDrempel(monkeypatch, aantal=None, pct=None):
+    """Zet de drempel in shared.config, zoals een omgevingsvariabele dat bij het starten doet."""
+    if aantal is not None:
+        monkeypatch.setattr(config, 'AIRFLOW_MAX_MISLUKTE_AFBEELDINGEN', aantal)
+    if pct is not None:
+        monkeypatch.setattr(config, 'AIRFLOW_MAX_MISLUKTE_AFBEELDINGEN_PCT', pct)
 
 
 def filenames(client):
@@ -315,16 +327,11 @@ class TestTellingenEnDrempel:
     def test_drempel_is_grootste_van_aantal_en_percentage(self, totaal, aantal, pct, verwacht):
         assert image_import.bepaalDrempel(totaal, aantal, pct) == verwacht
 
-    @pytest.mark.parametrize("waarde, soort, verwacht", [
-        (None, int, 10), ('', int, 10), ('25', int, 25), (' 3 ', int, 3), ('0', int, 0),
-        ('abc', int, 10), ('-1', int, 10), ('0,5', float, 0.5), ('2.5', float, 2.5),
-    ])
-    def test_getal_uit_omgeving(self, monkeypatch, waarde, soort, verwacht):
-        if waarde is None:
-            monkeypatch.delenv('WASSTRAAT_TEST_GETAL', raising=False)
-        else:
-            monkeypatch.setenv('WASSTRAAT_TEST_GETAL', waarde)
-        assert image_import.leesGetalUitOmgeving('WASSTRAAT_TEST_GETAL', 10, soort) == verwacht
+    def test_drempel_komt_uit_config(self, monkeypatch):
+        """De drempel staat in shared/config.py, net als de andere drempels (tests/unit/test_config.py)."""
+        zetDrempel(monkeypatch, 7, 2.5)
+        assert image_import.leesDrempels() == (7, 2.5)
+        assert not hasattr(image_import, 'leesGetalUitOmgeving')
 
     def test_tellingen_per_status(self, nep_client):
         col = vulAlleStatussen(nep_client)
@@ -362,7 +369,7 @@ class TestTellingenEnDrempel:
 
     def test_boven_drempel_faalt_de_taak(self, nep_client, monkeypatch):
         vulAlleStatussen(nep_client)
-        monkeypatch.setenv(image_import.OMGEVING_MAX_MISLUKT, '2')
+        zetDrempel(monkeypatch, aantal=2)
         with pytest.raises(image_import.OnherstelbareFout) as exc:
             image_import.controleerAfbeeldingen()
         melding = str(exc.value)
@@ -372,21 +379,21 @@ class TestTellingenEnDrempel:
 
     def test_precies_op_drempel_faalt_niet(self, nep_client, monkeypatch):
         vulAlleStatussen(nep_client)
-        monkeypatch.setenv(image_import.OMGEVING_MAX_MISLUKT, '3')
+        zetDrempel(monkeypatch, aantal=3)
         image_import.controleerAfbeeldingen()
 
     def test_percentage_verhoogt_de_drempel(self, nep_client, monkeypatch):
         vulAlleStatussen(nep_client)
-        monkeypatch.setenv(image_import.OMGEVING_MAX_MISLUKT, '0')
-        monkeypatch.setenv(image_import.OMGEVING_MAX_MISLUKT_PCT, '50')    # 50% van 7 = 3
+        zetDrempel(monkeypatch, aantal=0)
+        zetDrempel(monkeypatch, pct=50)    # 50% van 7 = 3
         image_import.controleerAfbeeldingen()
-        monkeypatch.setenv(image_import.OMGEVING_MAX_MISLUKT_PCT, '40')    # 40% van 7 = 2
+        zetDrempel(monkeypatch, pct=40)    # 40% van 7 = 2
         with pytest.raises(image_import.OnherstelbareFout):
             image_import.controleerAfbeeldingen()
 
     def test_onverwerkte_bestanden_tellen_mee(self, nep_client, monkeypatch):
         vulFilenames(nep_client, ['a.jpg', 'b.jpg'])
-        monkeypatch.setenv(image_import.OMGEVING_MAX_MISLUKT, '1')
+        zetDrempel(monkeypatch, aantal=1)
         with pytest.raises(image_import.OnherstelbareFout) as exc:
             image_import.controleerAfbeeldingen()
         assert '0 mislukt, 2 onverwerkt' in str(exc.value)
@@ -403,7 +410,7 @@ class TestTellingenEnDrempel:
         for index in range(2):
             image_import.importImages(index, 2)
         image_import.controleerAfbeeldingen()
-        monkeypatch.setenv(image_import.OMGEVING_MAX_MISLUKT, '0')
+        zetDrempel(monkeypatch, aantal=0)
         with pytest.raises(image_import.OnherstelbareFout):
             image_import.controleerAfbeeldingen()
 
@@ -429,7 +436,7 @@ class TestTellingenIncrementeel:
         tellingen = verwerkingsrun.huidigeRun()['tellingen']['afbeeldingen']
         assert {k: tellingen[k] for k in ['totaal', 'verwerkt', 'overgeslagen', 'mislukt', 'onverwerkt']} == \
             {'totaal': 3, 'verwerkt': 2, 'overgeslagen': 0, 'mislukt': 1, 'onverwerkt': 0}
-        assert tellingen['drempel'] == image_import.STANDAARD_MAX_MISLUKT
+        assert tellingen['drempel'] == STANDAARD_MAX_MISLUKT
         assert tellingen['boven_drempel'] is False
         assert [os.path.basename(v['filename']) for v in tellingen['voorbeelden']] == ['oud_kapot.jpg']
         assert 'kapot' in tellingen['voorbeelden'][0]['fout']
@@ -438,7 +445,7 @@ class TestTellingenIncrementeel:
         verwerkingsrun.startRun(verwerkingsrun.SOORT_INCREMENTEEL)
         vulFilenames(nep_client, ['SY003_kapot.jpg', 'SY003_F002.jpg'])
         image_import.importImages(0, 1)
-        monkeypatch.setenv(image_import.OMGEVING_MAX_MISLUKT, '0')
+        zetDrempel(monkeypatch, aantal=0)
         with pytest.raises(image_import.OnherstelbareFout):
             image_import.controleerAfbeeldingen(incrementeel=True)
         tellingen = verwerkingsrun.huidigeRun()['tellingen']['afbeeldingen']

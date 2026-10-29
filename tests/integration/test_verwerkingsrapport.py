@@ -38,7 +38,10 @@ pymongo = pytest.importorskip("pymongo")
 from wasstraat.loadToDatabase_functions import LOAD_TABELLEN
 
 
+# MongoDB van de synthetische testomgeving (hostpoort 27117) en van de Delftse (27118, zie
+# docker-compose.delft-test.yml); make integration-delft zet MONGO_TEST_URI op de Delftse
 MONGO_TEST_URI = os.getenv("MONGO_TEST_URI", "mongodb://testroot:testpass@localhost:27117/")
+MONGO_TEST_URI_DELFT = os.getenv("MONGO_TEST_URI_DELFT", "mongodb://testroot:testpass@localhost:27118/")
 DB_STAGING = "Arch_Staging_Test"
 SYNTHETISCH = {"airflow": os.getenv("AIRFLOW_CONTAINER", "wasstraat_airflow_test"),
                "postgres": os.getenv("POSTGRES_CONTAINER", "wasstraat_postgres_test")}
@@ -133,13 +136,27 @@ def laatsteRun(mongo_client, soort):
     return mongo_client[DB_STAGING]["Verwerkingsruns"].find_one({"soort": soort}, sort=[("gestart_op", pymongo.DESCENDING)])
 
 
-@pytest.fixture(scope="module")
-def mongo_client():
-    client = pymongo.MongoClient(MONGO_TEST_URI, serverSelectionTimeoutMS=5000)
+def verbindMongo(uri):
+    """Maak een MongoClient en sla de test over als MongoDB niet bereikbaar is."""
+    client = pymongo.MongoClient(uri, serverSelectionTimeoutMS=5000)
     try:
         client.admin.command("ping")
     except pymongo.errors.ConnectionFailure:
-        pytest.skip("MongoDB niet bereikbaar op " + MONGO_TEST_URI)
+        pytest.skip("MongoDB niet bereikbaar op " + uri)
+    return client
+
+
+@pytest.fixture(scope="module")
+def mongo_client():
+    client = verbindMongo(MONGO_TEST_URI)
+    yield client
+    client.close()
+
+
+@pytest.fixture(scope="module")
+def mongo_client_delft():
+    """MongoDB van de Delftse testomgeving (eigen hostpoort, zie MONGO_TEST_URI_DELFT)."""
+    client = verbindMongo(MONGO_TEST_URI_DELFT)
     yield client
     client.close()
 
@@ -283,8 +300,8 @@ class TestRapportenSynthetisch:
 @pytest.mark.delft_load
 class TestRapportDelft:
 
-    def test_rapport_na_load_only(self, mongo_client):
-        run = laatsteRun(mongo_client, "laden")
+    def test_rapport_na_load_only(self, mongo_client_delft):
+        run = laatsteRun(mongo_client_delft, "laden")
         assert run is not None, "Geen run van DAG_Load_Only in de Delftse testomgeving"
         assert run["status"] == "afgerond", run.get("melding")
         rapport, markdown = rapportVanRun(DELFT, run)

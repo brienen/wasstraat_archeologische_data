@@ -18,7 +18,8 @@ herhalingen) in plaats van alle volgende bestanden stil te laten mislukken. De
 taak ``Controleer_Afbeeldingen`` telt daarna de statussen, logt de eerste
 foutmeldingen en faalt als het aantal mislukte en onverwerkte bestanden boven
 de drempel komt (``AIRFLOW_MAX_MISLUKTE_AFBEELDINGEN`` en
-``AIRFLOW_MAX_MISLUKTE_AFBEELDINGEN_PCT``).
+``AIRFLOW_MAX_MISLUKTE_AFBEELDINGEN_PCT``, ingelezen in ``shared/config.py`` net als
+de andere drempels van het foutbeleid).
 """
 import errno
 import logging
@@ -33,6 +34,7 @@ from pymongo import InsertOne
 
 import shared.config as config
 import shared.image_util as image_util
+import wasstraat.foutbeleid as foutbeleid
 import wasstraat.paden_overslaan as paden_overslaan
 import wasstraat.verwerkingsrun as verwerkingsrun
 
@@ -60,11 +62,11 @@ FILTER_MISLUKT = {'processed': False, 'fout': {'$exists': True}}
 FILTER_ONVERWERKT = {'processed': False, 'fout': {'$exists': False}}
 
 # Drempel voor Controleer_Afbeeldingen: de taak faalt als het aantal mislukte plus
-# onverwerkte bestanden groter is dan max(aantal, percentage van het totaal)
+# onverwerkte bestanden groter is dan max(aantal, percentage van het totaal). De waarden
+# staan in shared/config.py (config.AIRFLOW_MAX_MISLUKTE_AFBEELDINGEN en _PCT); dit zijn de
+# namen van de omgevingsvariabelen, voor de meldingen.
 OMGEVING_MAX_MISLUKT = 'AIRFLOW_MAX_MISLUKTE_AFBEELDINGEN'
 OMGEVING_MAX_MISLUKT_PCT = 'AIRFLOW_MAX_MISLUKTE_AFBEELDINGEN_PCT'
-STANDAARD_MAX_MISLUKT = 10
-STANDAARD_MAX_MISLUKT_PCT = 1.0
 
 MAX_VOORBEELDEN = 10        # aantal foutmeldingen in het log en het run-document
 MAX_LENGTE_FOUT = 2000      # foutmeldingen in Filenames worden hierop afgekapt
@@ -372,32 +374,14 @@ def importImages(index, of):
             myclient.close()
 
 
-def leesGetalUitOmgeving(naam, standaard, soort=int):
-    """Lees een niet-negatief getal uit een omgevingsvariabele.
-
-    Omgevingsvariabelen zijn altijd tekst. Een lege, ongeldige of negatieve
-    waarde levert de standaardwaarde op, met een waarschuwing in het log.
-
-    Args:
-        naam: naam van de omgevingsvariabele
-        standaard: waarde als de variabele ontbreekt of ongeldig is
-        soort: int of float
+def leesDrempels():
+    """Lees de drempel voor mislukte afbeeldingen en rapporten uit shared/config.py.
 
     Returns:
-        Het getal
+        Tuple (max_aantal, max_pct): AIRFLOW_MAX_MISLUKTE_AFBEELDINGEN en
+        AIRFLOW_MAX_MISLUKTE_AFBEELDINGEN_PCT
     """
-    waarde = os.getenv(naam)
-    if waarde is None or not str(waarde).strip():
-        return standaard
-    try:
-        getal = soort(str(waarde).strip().replace(',', '.'))
-    except ValueError:
-        logger.warning(f"Ongeldige waarde '{waarde}' voor {naam}; standaardwaarde {standaard} gebruikt.")
-        return standaard
-    if getal < 0:
-        logger.warning(f"Negatieve waarde '{waarde}' voor {naam}; standaardwaarde {standaard} gebruikt.")
-        return standaard
-    return getal
+    return config.AIRFLOW_MAX_MISLUKTE_AFBEELDINGEN, config.AIRFLOW_MAX_MISLUKTE_AFBEELDINGEN_PCT
 
 
 def bepaalDrempel(totaal, max_aantal, max_pct):
@@ -405,7 +389,8 @@ def bepaalDrempel(totaal, max_aantal, max_pct):
 
     De drempel is het grootste van een vast aantal en een percentage van het
     totaal: bij een kleine verzameling telt het vaste aantal, bij een grote
-    (~100.000 foto's) het percentage.
+    (~100.000 foto's) het percentage. Dezelfde regel als de andere drempels
+    van het foutbeleid (foutbeleid.bepaalDrempel).
 
     Args:
         totaal: aantal bestanden waarover geteld is
@@ -415,7 +400,7 @@ def bepaalDrempel(totaal, max_aantal, max_pct):
     Returns:
         Het hoogste toegestane aantal mislukte plus onverwerkte bestanden
     """
-    return max(int(max_aantal), int(totaal * max_pct / 100))
+    return foutbeleid.bepaalDrempel(totaal, max_aantal, max_pct)
 
 
 def _metBereik(bereik, filt):
@@ -475,8 +460,7 @@ def controleerAfbeeldingen(incrementeel=False):
     Raises:
         OnherstelbareFout: als het aantal mislukte plus onverwerkte bestanden boven de drempel ligt
     """
-    max_aantal = leesGetalUitOmgeving(OMGEVING_MAX_MISLUKT, STANDAARD_MAX_MISLUKT, int)
-    max_pct = leesGetalUitOmgeving(OMGEVING_MAX_MISLUKT_PCT, STANDAARD_MAX_MISLUKT_PCT, float)
+    max_aantal, max_pct = leesDrempels()
 
     run = verwerkingsrun.huidigeRun() if incrementeel else None
     bereik = {'$or': [{'processed': False}, {'verwerkt_op': {'$gte': run['gestart_op']}}]} if run else None

@@ -4,6 +4,9 @@
 # Structureel identiek aan docker-compose.test.yml, maar mount data/test/
 # in plaats van data/synthetic/. Hierdoor draaien de Delft-integratietests
 # in dezelfde geïsoleerde omgeving als de synthetische tests.
+# Eigen hostpoorten (MongoDB 27118, Airflow 8082, Apache 5062; synthetisch: 27117, 8081,
+# 5061), zodat beide testomgevingen tegelijk kunnen draaien. Bewaakt door
+# tests/unit/test_testomgevingen_poorten.py.
 #
 # Gebruik: make integration-delft
 
@@ -11,8 +14,9 @@ services:
   mongo-test:
     image: mongo:7.0
     container_name: "wasstraat_mongo_delft_test"
+    # Eigen hostpoort (synthetisch: 27117), zodat beide testomgevingen tegelijk kunnen draaien
     ports:
-      - "27117:27017"
+      - "27118:27017"
     environment:
       MONGO_INITDB_ROOT_USERNAME: testroot
       MONGO_INITDB_ROOT_PASSWORD: testpass
@@ -108,7 +112,7 @@ services:
       SECURITY__ADMIN_FIRSTNAME: Test
       SECURITY__ADMIN_LASTNAME: Admin
       SECURITY__ADMIN_EMAIL: test@test.nl
-      # shared.config vereist deze drie, anders KeyError
+      # Ontbreekt een van deze drie, dan logt shared.config een fout
       POSTGRES_DB: airflow_test
       POSTGRES_USER: testuser
       POSTGRES_PASSWORD: testpass
@@ -128,24 +132,11 @@ services:
       COLL_FILENAMES: Filenames
       COLL_STAGING_METAINFO: Kolominformatie
       COLL_STAGING_OUD: Staging_Projecten_Oud
-      COLL_STAGING_NIEUW: Staging_Projecten_Nieuw
       COLL_STAGING_MAGAZIJNLIJST: Staging_Projecten_Magazijnlijst
       COLL_STAGING_PROJECTENLIJST: Staging_Projecten_Projectenlijst
       COLL_STAGING_FOTOLIJST: Staging_Projecten_Fotolijst
       COLL_STAGING_MONSTER: Staging_Projecten_Monster
-      COLL_ANALYSE_FOTO: Def_Fotos
-      COLL_ANALYSE_ARTEFACT: Def_Artefact
-      COLL_ANALYSE_PROJECT: Def_Project
-      COLL_ANALYSE_VONDST: Def_Vondst
-      COLL_ANALYSE_SPOOR: Def_Spoor
-      COLL_ANALYSE_VLAK: Def_Vlak
-      COLL_ANALYSE_PUT: Def_Put
       COLL_ANALYSE_DOOS: Def_Doos
-      COLL_ANALYSE_STANDPLAATS: Def_Standplaats
-      COLL_ANALYSE_STELLING: Def_Stelling
-      COLL_ANALYSE_PLAATSING: Def_Plaatsing
-      COLL_ANALYSE_VINDPLAATS: Def_Vindplaats
-      MONGO_MINPOOLSIZE: "10"
       # Paden
       AIRFLOW_TEMPDIR: /opt/airflow/tmp
       AIRFLOW_LOGDIR: /opt/airflow/logs
@@ -214,23 +205,11 @@ services:
       COLL_FILENAMES: Filenames
       COLL_STAGING_METAINFO: Kolominformatie
       COLL_STAGING_OUD: Staging_Projecten_Oud
-      COLL_STAGING_NIEUW: Staging_Projecten_Nieuw
       COLL_STAGING_MAGAZIJNLIJST: Staging_Projecten_Magazijnlijst
       COLL_STAGING_PROJECTENLIJST: Staging_Projecten_Projectenlijst
       COLL_STAGING_FOTOLIJST: Staging_Projecten_Fotolijst
       COLL_STAGING_MONSTER: Staging_Projecten_Monster
-      COLL_ANALYSE_FOTO: Def_Fotos
-      COLL_ANALYSE_ARTEFACT: Def_Artefact
-      COLL_ANALYSE_PROJECT: Def_Project
-      COLL_ANALYSE_VONDST: Def_Vondst
-      COLL_ANALYSE_SPOOR: Def_Spoor
-      COLL_ANALYSE_VLAK: Def_Vlak
-      COLL_ANALYSE_PUT: Def_Put
       COLL_ANALYSE_DOOS: Def_Doos
-      COLL_ANALYSE_STANDPLAATS: Def_Standplaats
-      COLL_ANALYSE_STELLING: Def_Stelling
-      COLL_ANALYSE_PLAATSING: Def_Plaatsing
-      COLL_ANALYSE_VINDPLAATS: Def_Vindplaats
 
   apache-test:
     build:

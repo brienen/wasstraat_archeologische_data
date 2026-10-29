@@ -50,17 +50,17 @@
     "@graph": [
       {
         "@type": "Organization",
-        "@id": "https://wasstraat.e-space.nl/#org-espace",
+        "@id": "{{ config.site_url }}#org-espace",
         "name": "E-Space",
         "description": "Ontwikkelaar van de Wasstraat Archeologische Data.",
         "inLanguage": "nl"
       },
       {
         "@type": "Person",
-        "@id": "https://wasstraat.e-space.nl/#person-arjen",
+        "@id": "{{ config.site_url }}#person-arjen",
         "name": "Arjen Brienen",
         "jobTitle": "Architect en ontwikkelaar",
-        "affiliation": { "@id": "https://wasstraat.e-space.nl/#org-espace" },
+        "affiliation": { "@id": "{{ config.site_url }}#org-espace" },
         "sameAs": [
           "https://www.linkedin.com/in/arjenbrienen/",
           "https://github.com/brienen"
@@ -68,20 +68,20 @@
       },
       {
         "@type": "WebSite",
-        "@id": "https://wasstraat.e-space.nl/#website",
-        "url": "https://wasstraat.e-space.nl/",
+        "@id": "{{ config.site_url }}#website",
+        "url": "{{ config.site_url }}",
         "name": "{{ config.site_name }}",
         "description": "{{ config.site_description }}",
         "inLanguage": "nl",
-        "publisher": { "@id": "https://wasstraat.e-space.nl/#org-espace" },
-        "author": { "@id": "https://wasstraat.e-space.nl/#person-arjen" },
-        "creator": { "@id": "https://wasstraat.e-space.nl/#person-arjen" },
-        "copyrightHolder": { "@id": "https://wasstraat.e-space.nl/#org-espace" },
+        "publisher": { "@id": "{{ config.site_url }}#org-espace" },
+        "author": { "@id": "{{ config.site_url }}#person-arjen" },
+        "creator": { "@id": "{{ config.site_url }}#person-arjen" },
+        "copyrightHolder": { "@id": "{{ config.site_url }}#org-espace" },
         "license": "https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12"
       },
       {
         "@type": "SoftwareSourceCode",
-        "@id": "https://wasstraat.e-space.nl/#software",
+        "@id": "{{ config.site_url }}#software",
         "name": "Wasstraat Archeologische Data",
         "alternateName": "Wasstraat",
         "description": "Open-source ETL-platform dat archeologische gegevens verzamelt, verwerkt en toegankelijk maakt. Ontwikkeld voor de gemeente Delft en uitgebreid tot een generiek platform voor Nederlandse gemeenten.",
@@ -89,11 +89,11 @@
         "runtimePlatform": "Docker Compose",
         "codeRepository": "https://github.com/brienen/wasstraat_archeologische_data",
         "license": "https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12",
-        "author": { "@id": "https://wasstraat.e-space.nl/#person-arjen" },
-        "creator": { "@id": "https://wasstraat.e-space.nl/#person-arjen" },
-        "publisher": { "@id": "https://wasstraat.e-space.nl/#org-espace" },
-        "maintainer": { "@id": "https://wasstraat.e-space.nl/#person-arjen" },
-        "copyrightHolder": { "@id": "https://wasstraat.e-space.nl/#org-espace" },
+        "author": { "@id": "{{ config.site_url }}#person-arjen" },
+        "creator": { "@id": "{{ config.site_url }}#person-arjen" },
+        "publisher": { "@id": "{{ config.site_url }}#org-espace" },
+        "maintainer": { "@id": "{{ config.site_url }}#person-arjen" },
+        "copyrightHolder": { "@id": "{{ config.site_url }}#org-espace" },
         "inLanguage": "nl",
         "keywords": "archeologie, ETL, Airflow, PostgreSQL, MongoDB, Elasticsearch, ABR, CIDOC CRM, GGM, erfgoed, open data",
         "about": [
@@ -113,9 +113,9 @@
         "headline": "{{ page.title }}",
         "description": "{% if page.meta and page.meta.description %}{{ page.meta.description }}{% else %}{{ config.site_description }}{% endif %}",
         "inLanguage": "nl",
-        "isPartOf": { "@id": "https://wasstraat.e-space.nl/#website" },
-        "author": { "@id": "https://wasstraat.e-space.nl/#person-arjen" },
-        "publisher": { "@id": "https://wasstraat.e-space.nl/#org-espace" },
+        "isPartOf": { "@id": "{{ config.site_url }}#website" },
+        "author": { "@id": "{{ config.site_url }}#person-arjen" },
+        "publisher": { "@id": "{{ config.site_url }}#org-espace" },
         "license": "https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12"
       }
       {% endif %}

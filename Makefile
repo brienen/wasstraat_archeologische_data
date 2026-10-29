@@ -42,6 +42,9 @@ DC := docker compose
 COMPOSE_TEST := $(DC) -p wasstraat-test -f docker-compose.test.yml
 COMPOSE_DELFT := $(DC) -f docker-compose.delft.yml
 COMPOSE_DELFT_TEST := $(DC) -p wasstraat-delft-test -f docker-compose.delft-test.yml
+# MongoDB van de Delftse testomgeving (hostpoort 27118; de synthetische gebruikt 27117), zodat
+# beide testomgevingen tegelijk kunnen draaien. De integratietests lezen MONGO_TEST_URI.
+MONGO_TEST_URI_DELFT := mongodb://testroot:testpass@localhost:27118/
 DT := $(shell date +"%Y-%m-%d_%H-%M-%S")
 PG_CONTAINER ?= wasstraat_postgres
 
@@ -72,6 +75,12 @@ endif
 ifeq ($(NO_CACHE),1)
 PUBLISH_OPTS += --no-cache --pull
 endif
+
+# --- Versie in het verwerkingsrapport (ontwikkelomgeving) ---
+# make app, make delft en make dev geven de versie uit config/version.env (anders
+# config/version.env.example, zie VERSION hierboven) als WASSTRAAT_VERSION mee aan Airflow;
+# de compose-bestanden zetten die in de Airflow-container.
+VERSIE_ENV := WASSTRAAT_VERSION=$(VERSION)
 
 # --- Init-config: genereer .env uit .env.example als ze nog niet bestaan ---
 define init-config
@@ -170,11 +179,11 @@ integration-delft: install ## Draai volledige Delft-integratietests: Extract + T
 	@echo "➜ Delft test-omgeving starten (data/test, project DB034)..."
 	$(COMPOSE_DELFT_TEST) up -d mongo-test postgres-test redis-test elasticsearch-test airflow-test flask-test apache-test
 	@echo "➜ Stap 1: Extract + Transform + Load pipeline..."
-	$(PYTEST) tests/integration/ \
+	MONGO_TEST_URI=$(MONGO_TEST_URI_DELFT) $(PYTEST) tests/integration/ \
 		-v -s -m "(delft or delft_load) and not delft_flask" --tb=short; \
 	PIPE_EXIT=$$?; \
 	echo "➜ Stap 2: Flask smoke tests (vereist geladen PostgreSQL)..."; \
-	$(PYTEST) tests/integration/ \
+	MONGO_TEST_URI=$(MONGO_TEST_URI_DELFT) $(PYTEST) tests/integration/ \
 		-v -s -m delft_flask --tb=short; \
 	FLASK_EXIT=$$?; \
 	echo "➜ Delft test-omgeving opruimen..."; \
@@ -186,7 +195,7 @@ integration-delft: install ## Draai volledige Delft-integratietests: Extract + T
 integration-delft-pipeline: install ## Draai alleen Delft Extract + Transform (zonder Load en Flask)
 	@echo "➜ Delft test-omgeving starten (data/test, project DB034)..."
 	$(COMPOSE_DELFT_TEST) up -d mongo-test postgres-test elasticsearch-test airflow-test
-	$(PYTEST) tests/integration/ \
+	MONGO_TEST_URI=$(MONGO_TEST_URI_DELFT) $(PYTEST) tests/integration/ \
 		-v -s -m "delft and not delft_load and not delft_flask" --tb=short; \
 	EXIT=$$?; \
 	echo "➜ Delft test-omgeving opruimen..."; \
@@ -256,17 +265,17 @@ constraints: ## Leg nieuwe pakketversies vast voor Flask, Jupyter en Airflow (da
 .PHONY: app
 app: ## Start de wasstraat (alle services, synthetische data)
 	$(init-config)
-	$(DC) up -d
+	$(VERSIE_ENV) $(DC) up -d
 
 .PHONY: delft
 delft: ## Start de wasstraat met Delftse data
 	$(init-config)
-	$(COMPOSE_DELFT) up -d
+	$(VERSIE_ENV) $(COMPOSE_DELFT) up -d
 
 .PHONY: dev
 dev: ## Start in development mode (met hot-reload volumes)
 	$(init-config)
-	$(DC) -f docker-compose.yml -f docker-compose.develop.yml up -d
+	$(VERSIE_ENV) $(DC) -f docker-compose.yml -f docker-compose.develop.yml up -d
 
 .PHONY: stop
 stop: ## Stop alle containers
@@ -385,8 +394,10 @@ endif
 	@echo "VERSION=$(VERSION)" > config/version.env.example
 	@echo "VERSION=$(VERSION)" > config/version.env
 	@sed -i.bak 's/^WASSTRAAT_VERSION=.*/WASSTRAAT_VERSION=$(VERSION)/' deploy/.env.example && rm -f deploy/.env.example.bak
+	@# Versiebadge in de README meenemen
+	@sed -i.bak -E 's/badge\/version-[0-9.]+-blue/badge\/version-$(VERSION)-blue/' README.md && rm -f README.md.bak
 	@# Alleen de versiebestanden stagen (geen 'git add .': dat zou ongetrackte bestanden meenemen)
-	git add config/version.env.example deploy/.env.example
+	git add config/version.env.example deploy/.env.example README.md
 	git commit -m "$(MSG)"
 	git tag -a $(VERSION) -m "$(MSG)"
 	@# Alleen de huidige branch en de nieuwe tag pushen (geen 'git push --all': dat publiceert alle lokale branches)

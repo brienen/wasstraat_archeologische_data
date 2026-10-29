@@ -240,9 +240,7 @@ def _tellingenAfbeeldingen(incrementeel, run):
     """Tellingen van de afbeeldingen voor het run-document (de volledige cyclus telt de hele collectie)."""
     if incrementeel:
         return (run.get('tellingen') or {}).get('afbeeldingen')
-    max_aantal = image_import.leesGetalUitOmgeving(image_import.OMGEVING_MAX_MISLUKT, image_import.STANDAARD_MAX_MISLUKT, int)
-    max_pct = image_import.leesGetalUitOmgeving(image_import.OMGEVING_MAX_MISLUKT_PCT,
-                                                image_import.STANDAARD_MAX_MISLUKT_PCT, float)
+    max_aantal, max_pct = image_import.leesDrempels()
     client = pymongo.MongoClient(str(config.MONGO_URI))
     try:
         tellingen = image_import.telAfbeeldingStatussen(client[config.DB_FILES][config.COLL_FILENAMES])

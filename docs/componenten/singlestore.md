@@ -12,7 +12,7 @@ De namen zijn instelbaar in `config/mongo.env` (zie [Configuratie](configuratie.
 |----------|-----------|--------|-----------------|
 | `Arch_Staging` | `Staging_Projecten_Oud` | Alle rijen uit de opgravingsdatabases, één document per rij | `Extract_Data_From_Projecten` |
 | | `Staging_Projecten_Projectenlijst`, `_Magazijnlijst`, `_Fotolijst`, `_Monster` | De centrale lijsten (projectenlijst plus de extra projecten uit Excel, magazijnlijst, fotocatalogus, monsterdatabase) | `Extract_Data_From_<map>`, `Extract_ExtraProjecten` |
-| | `Staging_Projecten_Rapporten` | Rijen uit de rapportendatabases | `Extract_Data_From_RapportaneDBs` |
+| | `Staging_Rapporten` | Rijen uit de rapportendatabases | `Extract_Data_From_RapportaneDBs` |
 | | `Staging_Referentietabellen` | De ABR-thesaurus | `Extract_Referentietabellen` |
 | | `Kolominformatie` | Per geïmporteerde tabel de kolommen en het aantal records | `importMDB.sh` |
 | | `Plaatjes` | Per verwerkt bestand de metadata en de paden van de drie formaten in de mediamap | `Extract_Data_From_Fotos_*` |
