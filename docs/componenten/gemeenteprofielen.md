@@ -36,7 +36,9 @@ from wasstraat.profielen import get_profiel
 profiel = get_profiel()   # geeft altijd hetzelfde object terug
 ```
 
-Als `WASSTRAAT_GEMEENTE` niet is ingesteld of leeg is, wordt `delft` gebruikt. Hoofdletters en spaties maken niet uit. Een andere waarde dan `delft` of `voorbeeld` geeft de fout `Onbekend gemeenteprofiel` (`ConventieProfiel` is de basisklasse en niet zelf te kiezen; `voorbeeld` gedraagt zich precies zo).
+Als `WASSTRAAT_GEMEENTE` niet is ingesteld of leeg is, wordt `delft` gebruikt. Hoofdletters en spaties maken niet uit. Een andere waarde dan `delft` of `voorbeeld` (de sleutels van `PROFIELEN` in `profielen/__init__.py`) geeft de fout `Onbekend gemeenteprofiel: '<waarde>' (WASSTRAAT_GEMEENTE). Bekende profielen: delft, voorbeeld.` (`ConventieProfiel` is de basisklasse en niet zelf te kiezen; `voorbeeld` gedraagt zich precies zo).
+
+**Controle bij de start van een run.** De taak `Start_Run` van de volledige cyclus, de incrementele cyclus en `DAG_Load_Only` laadt het profiel direct na het aanmaken van het run-document (`verwerkingsrun.startRunEnLaadProfiel`). Is het profiel onbekend, dan stopt de run daar als cruciale fout: een melding `profiel_onbekend` (niveau fout) in het run-document, status `mislukt`, en het [verwerkingsrapport](verwerkingsrapport.md) noemt `Start_Run` als de taak die de run stopte. Er is dan nog niets ingelezen of gewijzigd; stel `WASSTRAAT_GEMEENTE` goed in en start opnieuw. Tot issue 87 merkte pas Transform 1 (`ParseFotobestanden`) of Transform 2 de fout op, na de extractie, en telde Transform 2 elk document als verwerkingsfout. In de losse DAG's zonder `Start_Run` laden `ParseFotobestanden` en `Enhance_All_Attributes` het profiel nu één keer vóór de documenten, zodat ook die taken direct falen.
 
 Waar je de variabele zet:
 
@@ -46,7 +48,7 @@ Waar je de variabele zet:
 | Ontwikkelomgeving, `make app` | Niet gezet, dus `delft`; voeg een `environment:`-regel toe in `docker-compose.yml` om te wisselen |
 | Live installatie | `WASSTRAAT_GEMEENTE` in `deploy/.env` |
 
-Een `environment:`-regel in het compose-bestand gaat vóór dezelfde variabele in `config/airflow.env`. Het profiel wordt alleen door Airflow gebruikt (Transform 1 en 2). Maak na een wijziging de Airflow-container opnieuw aan en draai de volledige cyclus. Zie ook [Configuratie](configuratie.md#5-gemeenteprofiel).
+Een `environment:`-regel in het compose-bestand gaat vóór dezelfde variabele in `config/airflow.env`. Het profiel wordt alleen door Airflow gebruikt (Transform 1 en 2, en de controle in `Start_Run`). Maak na een wijziging de Airflow-container opnieuw aan en draai de volledige cyclus. Zie ook [Configuratie](configuratie.md#5-gemeenteprofiel).
 
 ## ConventieProfiel (basisprofiel)
 
@@ -249,13 +251,17 @@ class MijnGemeenteProfiel(ConventieProfiel):
         return projectcd.upper()
 ```
 
-2. **Registreer het profiel** in `airflow_app/dags/wasstraat/profielen/__init__.py`:
+2. **Registreer het profiel** in `PROFIELEN` in `airflow_app/dags/wasstraat/profielen/__init__.py` (waarde van `WASSTRAAT_GEMEENTE` → module en klasse; de sleutel is in kleine letters):
 
 ```python
-elif gemeente == 'mijn_gemeente':
-    from wasstraat.profielen.mijn_gemeente import MijnGemeenteProfiel
-    _profiel_cache = MijnGemeenteProfiel()
+PROFIELEN = {
+    'delft': ('wasstraat.profielen.delft', 'DelftProfiel'),
+    'voorbeeld': ('wasstraat.profielen.voorbeeld', 'VoorbeeldProfiel'),
+    'mijn_gemeente': ('wasstraat.profielen.mijn_gemeente', 'MijnGemeenteProfiel'),
+}
 ```
+
+   De foutmelding bij een onbekende waarde noemt de nieuwe sleutel dan vanzelf.
 
 3. **Stel de omgevingsvariabele in** (zie [Profielselectie](#profielselectie) voor de plek per omgeving):
 
@@ -269,12 +275,12 @@ WASSTRAAT_GEMEENTE=mijn_gemeente
 
 ## Gebruik in de pipeline
 
-Het profiel wordt op twee plaatsen aangeroepen:
+Het profiel wordt op twee plaatsen aangeroepen (en in `Start_Run` alleen geladen, als controle). Beide taken laden het één keer, vóór de documenten:
 
 ### parseFotobestanden() — bestandsnaam-parsing
 
 ```python
-profiel = get_profiel()
+profiel = get_profiel()   # één keer, vóór de lus over de bestanden
 projectcd = profiel.extract_projectcode_uit_bestandsnaam(doc['fileName'], doc.get('directory', ''))
 
 parsed = profiel.identificeer_foto(doc, projectcd)
@@ -291,7 +297,7 @@ if parsed is not None:
 ### enhanceAllAttributes() — entiteit-identificatie
 
 ```python
-profiel = get_profiel()
+profiel = get_profiel()   # één keer, vóór de lus over de documenten
 soort = doc.get('soort', '')
 
 # De dispatcher kiest per soort de methode; voor Foto, Tekening en Rapport

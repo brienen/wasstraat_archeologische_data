@@ -59,6 +59,41 @@ class TestProfielSelectie:
             with pytest.raises(ValueError, match="Onbekend gemeenteprofiel"):
                 get_profiel()
 
+    def test_onbekend_profiel_noemt_variabele_en_bekende_profielen(self):
+        """De melding noemt WASSTRAAT_GEMEENTE en alle bekende profielen (issue 87)."""
+        import shared.config as config
+        from wasstraat.profielen import get_profiel, reset_profiel, PROFIELEN
+        with patch.object(config, 'WASSTRAAT_GEMEENTE', ' Rotterdam ', create=True):
+            reset_profiel()
+            with pytest.raises(ValueError) as fout:
+                get_profiel()
+        tekst = str(fout.value)
+        assert "'rotterdam'" in tekst and 'WASSTRAAT_GEMEENTE' in tekst
+        assert f"Bekende profielen: {', '.join(PROFIELEN)}." in tekst
+
+    @pytest.mark.parametrize('waarde', ['', '   ', None])
+    def test_lege_waarde_is_delft(self, waarde):
+        import shared.config as config
+        from wasstraat.profielen import get_profiel, reset_profiel
+        with patch.object(config, 'WASSTRAAT_GEMEENTE', waarde, create=True):
+            reset_profiel()
+            assert get_profiel().naam == "delft"
+
+    def test_hoofdletters_en_spaties_maken_niet_uit(self):
+        import shared.config as config
+        from wasstraat.profielen import get_profiel, reset_profiel
+        with patch.object(config, 'WASSTRAAT_GEMEENTE', ' VoorBeeld ', create=True):
+            reset_profiel()
+            assert get_profiel().naam == "voorbeeld"
+
+    def test_elk_geregistreerd_profiel_laadt_onder_zijn_naam(self):
+        import shared.config as config
+        from wasstraat.profielen import get_profiel, reset_profiel, PROFIELEN
+        for gemeente in PROFIELEN:
+            with patch.object(config, 'WASSTRAAT_GEMEENTE', gemeente, create=True):
+                reset_profiel()
+                assert get_profiel().naam == gemeente
+
     def test_profiel_wordt_gecached(self):
         """Meerdere aanroepen geven hetzelfde object terug."""
         from wasstraat.profielen import get_profiel
@@ -392,3 +427,49 @@ class TestVoorbeeldProfiel:
         assert tekening['tekeningcd'] == 'B2'
         rapport = profiel.identificeer('Rapport', {'soort': 'Rapport', 'rapportnr': '12'})
         assert rapport['rapportnr'] == '12'
+
+
+# ============================================================
+# Onbekend profiel in de pipeline (issue 87)
+# ============================================================
+
+@pytest.fixture
+def onbekendProfiel(monkeypatch):
+    """WASSTRAAT_GEMEENTE op een onbekende waarde en een nagebootste MongoDB met drie documenten."""
+    import shared.config as config
+    import wasstraat.harmonize_functions as harmonize_functions
+    import wasstraat.setAttributes_functions as setAttributes_functions
+    from wasstraat.profielen import reset_profiel
+    from tests.unit.nep_mongo import NepClient
+
+    client = NepClient()
+    monkeypatch.setattr(config, 'WASSTRAAT_GEMEENTE', 'rotterdam', raising=False)
+    monkeypatch.setattr(setAttributes_functions.pymongo, 'MongoClient', lambda *a, **k: client)
+    monkeypatch.setattr(harmonize_functions.pymongo, 'MongoClient', lambda *a, **k: client)
+    client[config.DB_ANALYSE][config.COLL_ANALYSE].insert_many(
+        [{'_id': i, 'soort': 'Vondst', 'projectcd': 'SY001', 'vondstnr': str(i)} for i in range(3)])
+    client[config.DB_STAGING][config.COLL_PLAATJES].insert_many(
+        [{'_id': i, 'fileName': f'SY001_F00{i}.jpg', 'fullFileName': f'/SY001_F00{i}.jpg', 'fileType': '.jpg'}
+         for i in range(3)])
+    reset_profiel()
+    yield client
+    reset_profiel()
+
+
+@pytest.mark.unit
+class TestOnbekendProfielInDePipeline:
+    """Transform 1 en 2 falen direct bij een onbekend profiel, in plaats van één fout per document."""
+
+    def test_transform2_faalt_direct_zonder_verwerkingsfouten(self, onbekendProfiel):
+        import shared.config as config
+        import wasstraat.setAttributes_functions as setAttributes_functions
+        with pytest.raises(ValueError, match="Onbekend gemeenteprofiel: 'rotterdam'"):
+            setAttributes_functions.enhanceAllAttributes()
+        assert onbekendProfiel[config.DB_ANALYSE]['_processing_errors'].count_documents({}) == 0
+
+    def test_parse_fotobestanden_faalt_direct(self, onbekendProfiel):
+        import shared.config as config
+        import wasstraat.harmonize_functions as harmonize_functions
+        with pytest.raises(ValueError, match="Onbekend gemeenteprofiel"):
+            harmonize_functions.parseFotobestanden()
+        assert onbekendProfiel[config.DB_ANALYSE][config.COLL_ANALYSE].count_documents({'fileName': {'$exists': True}}) == 0

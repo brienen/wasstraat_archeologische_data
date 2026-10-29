@@ -17,6 +17,7 @@ import shared.const as const
 import wasstraat.mongoUtils as mongoUtil
 import wasstraat.verwerkingsrun as verwerkingsrun
 import wasstraat.delta_transform as delta_transform
+import wasstraat.foutbeleid as foutbeleid
 from wasstraat.profielen import get_profiel
 
 import logging
@@ -24,6 +25,14 @@ logger = logging.getLogger("airflow.task")
 
 
 _correcties_cache = None
+
+# Sectie in correcties.yml met de prefixen van rapportcodes (ParseFotobestanden)
+SECTIE_RAPPORTCODE_PREFIXEN = 'rapportcode_prefixen'
+# Toegestane waarden van type in rapportcode_prefixen en de bestandsoort die erbij hoort
+RAPPORT_TYPES = {
+    'archeologische_rapportage': const.RAPP_ARCHEOLOGISCHE_RAPPORTAGE,
+    'archeologische_notitie': const.RAPP_ARCHEOLOGISCHE_NOTITIE,
+}
 
 def laadCorrecties():
     """Laad het correctiebestand (YAML) en cache het resultaat.
@@ -57,6 +66,63 @@ def laadCorrecties():
     _correcties_cache = result
     logger.info(f"Correctiebestand geladen: {pad}")
     return _correcties_cache
+
+
+def _meldOngeldigeRapportcodeRegel(regel, reden, melden):
+    """Log een ongeldige regel uit rapportcode_prefixen als fout en meld hem in het run-document."""
+    msg = (f"Ongeldige regel in {SECTIE_RAPPORTCODE_PREFIXEN} (correcties.yml): {regel!r} — {reden}. "
+           f"De regel wordt overgeslagen: bestanden met dit prefix worden niet als rapport herkend.")
+    logger.error(msg)
+    if melden:
+        foutbeleid.meld(foutbeleid.NIVEAU_WAARSCHUWING, foutbeleid.SOORT_CONFIGURATIE_ONGELDIG, msg,
+                        details={'bestand': 'correcties.yml', 'sectie': SECTIE_RAPPORTCODE_PREFIXEN,
+                                 'regel': str(regel)[:500]})
+
+
+def leesRapportcodePrefixen(correcties, melden=False):
+    """Lees en controleer de sectie rapportcode_prefixen uit correcties.yml.
+
+    Elke regel heeft een ``prefix`` (tekst, bijv. ``DAR``) en een ``type``:
+    een van de sleutels van RAPPORT_TYPES (``archeologische_rapportage`` of
+    ``archeologische_notitie``; hoofdletters en spaties eromheen maken niet
+    uit). Een regel zonder prefix of type, of met een onbekend type, wordt met
+    een foutmelding in het log overgeslagen; met ``melden`` komt er ook een
+    waarschuwing in het run-document (foutbeleid.SOORT_CONFIGURATIE_ONGELDIG).
+    Tot issue 87 werd elk ander type stil een notitie.
+
+    Args:
+        correcties: dict uit laadCorrecties() (of None)
+        melden: als True ongeldige regels ook in het run-document melden
+
+    Returns:
+        Lijst met dicts met prefix (tekst), type en bestandsoort, in de volgorde van het bestand
+    """
+    sectie = (correcties or {}).get(SECTIE_RAPPORTCODE_PREFIXEN)
+    if sectie is None:
+        return []
+    if not isinstance(sectie, list):
+        _meldOngeldigeRapportcodeRegel(sectie, f"de sectie is geen lijst maar {type(sectie).__name__}", melden)
+        return []
+    toegestaan = ', '.join(RAPPORT_TYPES)
+    regels = []
+    for regel in sectie:
+        if not isinstance(regel, dict):
+            _meldOngeldigeRapportcodeRegel(regel, "verwacht een regel met prefix en type", melden)
+            continue
+        prefix = regel.get('prefix')
+        if prefix is None or isinstance(prefix, (dict, list, bool)) or not str(prefix).strip():
+            _meldOngeldigeRapportcodeRegel(regel, "prefix ontbreekt of is leeg", melden)
+            continue
+        soort = regel.get('type')
+        if soort is None:
+            _meldOngeldigeRapportcodeRegel(regel, f"type ontbreekt (toegestaan: {toegestaan})", melden)
+            continue
+        sleutel = str(soort).strip().lower()
+        if sleutel not in RAPPORT_TYPES:
+            _meldOngeldigeRapportcodeRegel(regel, f"onbekend type {soort!r} (toegestaan: {toegestaan})", melden)
+            continue
+        regels.append({'prefix': str(prefix).strip(), 'type': sleutel, 'bestandsoort': RAPPORT_TYPES[sleutel]})
+    return regels
 
 
 def fixProjectNames():
@@ -297,11 +363,21 @@ def parseFotobestanden(incrementeel=False):
         else:
             docs = stagingCol.find()
 
+        # Eén keer per taak: het gemeenteprofiel (faalt direct bij een onbekend profiel) en de
+        # rapportcode-prefixen uit correcties.yml (ongeldige regels gemeld en overgeslagen, issue 87)
+        profiel = get_profiel()
+        rapport_prefixen = leesRapportcodePrefixen(laadCorrecties(), melden=True)
+        rapport_regex = None
+        prefix_bestandsoort = {}
+        if rapport_prefixen:
+            prefix_patroon = '|'.join(p['prefix'] for p in rapport_prefixen)
+            rapport_regex = re.compile(r'^(' + prefix_patroon + r')\s*([0-9]{2,3}).*', re.M | re.I)
+            prefix_bestandsoort = {p['prefix'].upper(): p['bestandsoort'] for p in rapport_prefixen}
+
         #extract projectinfo from filename
         for doc in docs:
 
             # Get projectcd from fullfilename (via gemeenteprofiel)
-            profiel = get_profiel()
             projectcd = profiel.extract_projectcode_uit_bestandsnaam(doc['fileName'], doc.get('directory', ''))
 
 
@@ -336,27 +412,16 @@ def parseFotobestanden(incrementeel=False):
 
 
                 # Rapporten: bestanden waarvan de naam begint met een rapportcode-prefix
-                rapport_prefixen_raw = laadCorrecties().get('rapportcode_prefixen', [])
-                # Filter ongeldige entries (ontbrekende prefix/type)
-                rapport_prefixen = [p for p in rapport_prefixen_raw if isinstance(p, dict) and 'prefix' in p and 'type' in p]
-                if rapport_prefixen:
-                    prefix_patroon = '|'.join(str(p['prefix']) for p in rapport_prefixen)
-                    prefix_type_map = {str(p['prefix']).upper(): p['type'] for p in rapport_prefixen}
-                    matchObj = re.match(r'^(' + prefix_patroon + r')\s*([0-9]{2,3}).*', doc['fileName'], re.M|re.I)
-                    if matchObj:
-                        doc['rapportnr'] = matchObj.group(1) + str(int(matchObj.group(2))).zfill(3)
-                        doc['key'] = 'R' + doc['rapportnr']
-                        doc['soort'] = 'Rapport'
-                        doc['fototype'] = 'R'
-                        # Bepaal bestandsoort op basis van het prefix-type uit de configuratie
-                        matched_prefix = matchObj.group(1).upper()
-                        rapport_type = prefix_type_map.get(matched_prefix, 'archeologische_rapportage')
-                        if rapport_type == 'archeologische_rapportage':
-                            doc['bestandsoort'] = const.RAPP_ARCHEOLOGISCHE_RAPPORTAGE
-                        else:
-                            doc['bestandsoort'] = const.RAPP_ARCHEOLOGISCHE_NOTITIE
-                        _bewaarFotodocument(analyseCol, doc['_id'], doc, delta_run)
-                        continue
+                matchObj = rapport_regex.match(doc['fileName']) if rapport_regex is not None else None
+                if matchObj:
+                    doc['rapportnr'] = matchObj.group(1) + str(int(matchObj.group(2))).zfill(3)
+                    doc['key'] = 'R' + doc['rapportnr']
+                    doc['soort'] = 'Rapport'
+                    doc['fototype'] = 'R'
+                    # Bestandsoort volgens het type van het prefix in de configuratie
+                    doc['bestandsoort'] = prefix_bestandsoort.get(matchObj.group(1).upper(), const.RAPP_ARCHEOLOGISCHE_RAPPORTAGE)
+                    _bewaarFotodocument(analyseCol, doc['_id'], doc, delta_run)
+                    continue
 
 
 

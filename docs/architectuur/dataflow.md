@@ -97,7 +97,7 @@ Start_Run → Bepaal_Delta → Opruimen_Oude_Records → Extract_Group (delta)
 | `DAG_Transform_Only` | `Drop_Analyse_Database`, Transform 1, 2, 3, 5 en 4 | Alleen transformeren, zonder laden |
 | `DAG_Transform_Load_Only` | Idem, plus laden en indexeren | Transformeren en laden zonder nieuwe extractie |
 | `DAG_Transform1_Harmonize_Only` | `Drop_SingleStore`, Transform 1 | Stap voor stap debuggen |
-| `DAG_Transform2_Enhance_Attributes_Only` | `Drop_SingleStoreClean`, Transform 2 | idem |
+| `DAG_Transform2_Enhance_Attributes_Only` | Transform 2 op de bestaande `Single_Store` (raakt `Single_Store_Clean` niet, zie [Transformatie](../componenten/transformatie.md#losse-dags-per-stap)) | idem |
 | `DAG_Transform3_Keys_Only` | Transform 3 | idem |
 | `DAG_Transform_Move_Only` | Transform 5 | idem |
 | `DAG_Transform4_Refs_Only` | Transform 4 | idem |

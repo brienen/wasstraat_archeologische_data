@@ -4,6 +4,7 @@ from airflow.operators.python import PythonOperator
 
 import wasstraat.harmonize_functions as harmonize_functions
 import wasstraat.harmonisatie_voorrang as harmonisatie_voorrang
+import wasstraat.harmonizer as harmonizer
 import wasstraat.delta_transform as delta_transform
 import wasstraat.meta as meta
 
@@ -23,6 +24,13 @@ def getHarmonizeTaskGroup(incrementeel=False):
     with tg1:
         first = DummyOperator(task_id="first")
         last = DummyOperator(task_id="last")
+
+        # Rijen in het blad Objecten die geen soort zijn, worden niet gebruikt: waarschuwing (issue 87)
+        Controleer_Harmonisatie_Excel = PythonOperator(
+            task_id='Controleer_Harmonisatie_Excel',
+            python_callable=harmonizer.controleerObjecten,
+        )
+        first >> Controleer_Harmonisatie_Excel >> last
 
         FixProjectNames = PythonOperator(
             task_id='FixProjectNames',

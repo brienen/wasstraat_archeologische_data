@@ -27,10 +27,14 @@ def getDefaultArgs():
 
 
 def maakStartRun(soort):
-    """Taak Start_Run: maak het run-document aan (faalt als er al een run actief is)."""
+    """Taak Start_Run: maak het run-document aan en laad het gemeenteprofiel.
+
+    Faalt als er al een run actief is, of (als cruciale fout, de run wordt
+    mislukt) als het gemeenteprofiel van WASSTRAAT_GEMEENTE onbekend is.
+    """
     return PythonOperator(
         task_id='Start_Run',
-        python_callable=verwerkingsrun.startRun,
+        python_callable=verwerkingsrun.startRunEnLaadProfiel,
         op_kwargs={'soort': soort, 'airflow_run_id': '{{ run_id }}', 'dag_id': '{{ dag.dag_id }}'},
     )
 

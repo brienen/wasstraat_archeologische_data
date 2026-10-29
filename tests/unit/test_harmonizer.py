@@ -10,9 +10,12 @@ import pandas as pd
 import ast
 import copy
 
+from unittest.mock import patch
+
+import wasstraat.harmonizer as harmonizer
 from wasstraat.harmonizer import (
     getAggrTables, getKolomValues, getAttributes, initAttributes,
-    createAggr, loadHarmonizer, getHarmonizeAggr, getObjects
+    createAggr, loadHarmonizer, getHarmonizeAggr
 )
 
 
@@ -182,15 +185,18 @@ class TestGetHarmonizeAggr:
         assert len(artefact_stages) > 0, "Aardewerk mist artefactsoort $addFields"
 
     def test_twee_aanroepen_leveren_dezelfde_pipeline(self, monkeypatch):
-        """De pipeline in het (gecachete) HARMONIZER-dataframe krijgt er per aanroep geen fase bij."""
-        import wasstraat.harmonizer as harmonizer
+        """De pipeline in het (gecachete) DataFrame krijgt er per aanroep geen fase bij."""
         bron = [{'$match': {'table': 'AARDEWERK'}}, {'$addFields': {'x': 1}},
                 {'$merge': {'into': 'Single_Store', 'on': '_id'}}]
         df = pd.DataFrame({'Object': ['Aardewerk'], 'aggr': [copy.deepcopy(bron)]})
         monkeypatch.setattr(harmonizer, 'loadHarmonizer', lambda: df)
-
-        eerste = harmonizer.getHarmonizeAggr('Aardewerk')
-        tweede = harmonizer.getHarmonizeAggr('Aardewerk')
+        harmonizer.resetHarmonizer()
+        try:
+            eerste = harmonizer.getHarmonizeAggr('Aardewerk')
+            tweede = harmonizer.getHarmonizeAggr('Aardewerk')
+        finally:
+            # Het nep-DataFrame mag niet in de cache blijven voor de volgende tests
+            harmonizer.resetHarmonizer()
 
         assert eerste == tweede
         assert sum(1 for fase in tweede if 'artefactsoort' in fase.get('$addFields', {})) == 1
@@ -199,30 +205,132 @@ class TestGetHarmonizeAggr:
 
 
 # ============================================================
-# getObjects — objectlijsten uit het configuratiebestand
+# Cache van de harmonisatie-Excel (issue 87)
 # ============================================================
 
-class TestGetObjects:
+def _nepHarmonizer():
+    """Klein DataFrame zoals loadHarmonizer het oplevert."""
+    return pd.DataFrame({'Object': ['Ignore', 'Vondst'],
+                         'aggr': [[{'$match': {}}, {'$merge': {}}], [{'$match': {}}, {'$merge': {}}]]})
 
-    def test_base_objects(self):
-        objects = getObjects(inherit=False, merge=False)
-        assert "Put" in objects
-        assert "Spoor" in objects
-        # Artefact-kinderen horen hier NIET bij
-        assert "Aardewerk" not in objects
 
-    def test_inherited_objects(self):
-        objects = getObjects(inherit=True, merge=False)
-        assert "Aardewerk" in objects
-        assert "Glas" in objects
-        assert "Hout" in objects
-        # Basis-objecten horen hier NIET bij
-        assert "Put" not in objects
+class TestHarmonizerCache:
+    """De Excel wordt per pad één keer gelezen; reload=True en een ander pad lezen opnieuw."""
 
-    def test_inherit_and_merge_raises(self):
-        """Kan niet inherit=True en merge=True tegelijk zijn."""
+    def setup_method(self):
+        harmonizer.resetHarmonizer()
+
+    def teardown_method(self):
+        harmonizer.resetHarmonizer()
+
+    def test_twee_aanroepen_lezen_de_excel_een_keer(self):
+        with patch.object(harmonizer.pd, 'read_excel', wraps=pd.read_excel) as lezen:
+            eerste = getHarmonizeAggr("Vondst")
+            tweede = getHarmonizeAggr("Spoor")
+            derde = getHarmonizeAggr("Vondst")
+        assert lezen.call_count == 1
+        assert eerste == derde and tweede != eerste
+
+    def test_reload_leest_opnieuw(self):
+        with patch.object(harmonizer.pd, 'read_excel', wraps=pd.read_excel) as lezen:
+            getHarmonizeAggr("Vondst")
+            getHarmonizeAggr("Vondst", reload=True)
+            getHarmonizeAggr("Vondst")
+        assert lezen.call_count == 2
+
+    def test_meegegeven_dataframe_gebruikt_de_cache_niet(self, monkeypatch):
+        gelezen = []
+        monkeypatch.setattr(harmonizer, 'loadHarmonizer', lambda: gelezen.append(1) or _nepHarmonizer())
+        aggr = getHarmonizeAggr('Vondst', df=_nepHarmonizer())
+        assert aggr == [{'$match': {}}, {'$merge': {}}]
+        assert gelezen == []
+
+    def test_ander_pad_leest_opnieuw(self, monkeypatch, tmp_path):
+        """Tests wisselen het Excel-pad (bijv. de Delftse Excel): elk pad heeft zijn eigen cache."""
+        paden = []
+        monkeypatch.setattr(harmonizer, 'loadHarmonizer', lambda: paden.append(harmonizer.AIRFLOW_WASSTRAAT_CONFIG) or _nepHarmonizer())
+        a, b = tmp_path / 'a.xlsx', tmp_path / 'b.xlsx'
+        a.write_text('a')
+        b.write_text('b')
+        for pad in [a, b, a, b]:
+            monkeypatch.setattr(harmonizer, 'AIRFLOW_WASSTRAAT_CONFIG', str(pad))
+            harmonizer.getHarmonizer()
+        assert paden == [str(a), str(b)]
+
+    def test_gewijzigd_bestand_wordt_opnieuw_gelezen(self, monkeypatch, tmp_path):
+        gelezen = []
+        monkeypatch.setattr(harmonizer, 'loadHarmonizer', lambda: gelezen.append(1) or _nepHarmonizer())
+        pad = tmp_path / 'config.xlsx'
+        pad.write_text('x')
+        monkeypatch.setattr(harmonizer, 'AIRFLOW_WASSTRAAT_CONFIG', str(pad))
+        harmonizer.getHarmonizer()
+        os.utime(pad, (1, 1))
+        harmonizer.getHarmonizer()
+        harmonizer.getHarmonizer()
+        assert len(gelezen) == 2
+
+
+# ============================================================
+# Objecten die geen soort zijn (issue 87)
+# ============================================================
+
+class TestOnbekendeObjecten:
+    """Rijen in het blad Objecten die geen soort in meta.wasstraat_model zijn, worden gemeld."""
+
+    def setup_method(self):
+        harmonizer.resetHarmonizer()
+
+    def teardown_method(self):
+        harmonizer.resetHarmonizer()
+
+    def test_ignore_en_soorten_tellen_niet(self):
+        df = pd.DataFrame({'Object': ['Ignore', 'Vondst', 'Dia', 'Aardewerk', 'Dia', 'Oud_Object']})
+        assert harmonizer.getOnbekendeObjecten(df) == ['Dia', 'Oud_Object']
+
+    def test_testconfiguratie_zonder_onbekende_objecten_behalve_dia(self):
+        """De test-Excel: alleen een rij Dia kan nog over zijn (verouderd, wordt uit de Excel gehaald)."""
+        assert set(harmonizer.getOnbekendeObjecten()) <= {'Dia'}
+
+    def test_controle_meldt_waarschuwing_per_object(self, monkeypatch, caplog):
+        import logging
+        import wasstraat.foutbeleid as foutbeleid
+        meldingen = []
+        monkeypatch.setattr(harmonizer, 'getHarmonizer', lambda reload=False: pd.DataFrame({'Object': ['Ignore', 'Put', 'Dia']}))
+        monkeypatch.setattr(foutbeleid, 'meld', lambda *a, **k: meldingen.append((a, k)))
+        with caplog.at_level(logging.WARNING, logger="airflow.task"):
+            assert harmonizer.controleerObjecten() == ['Dia']
+        assert len(meldingen) == 1
+        (niveau, soort, tekst), kwargs = meldingen[0]
+        assert (niveau, soort) == (foutbeleid.NIVEAU_WAARSCHUWING, foutbeleid.SOORT_CONFIGURATIE_ONGELDIG)
+        assert 'Dia' in tekst and 'wordt niet gebruikt' in tekst
+        assert kwargs['details']['object'] == 'Dia' and kwargs['details']['blad'] == 'Objecten'
+        assert 'Object Dia in het blad Objecten' in caplog.text
+
+    def test_controle_zonder_onbekende_objecten_meldt_niets(self, monkeypatch):
+        import wasstraat.foutbeleid as foutbeleid
+        meldingen = []
+        monkeypatch.setattr(harmonizer, 'getHarmonizer', lambda reload=False: pd.DataFrame({'Object': ['Ignore', 'Put']}))
+        monkeypatch.setattr(foutbeleid, 'meld', lambda *a, **k: meldingen.append((a, k)))
+        assert harmonizer.controleerObjecten() == []
+        assert meldingen == []
+
+
+class TestGeenAfhankelijkheidVanSamenvoegen:
+    """De kolom Samenvoegen van het blad Objecten wordt niet gebruikt (issue 87) en mag ontbreken."""
+
+    def test_harmonizer_zonder_kolom_samenvoegen(self, monkeypatch, tmp_path):
+        bron = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
+                            "data", "test", "wasstraat_config", "Wasstraat_Config_HarmonizeV3.xlsx")
+        bladen = pd.read_excel(bron, sheet_name=None)
+        bladen['Objecten'] = bladen['Objecten'].drop(columns=['Samenvoegen'], errors='ignore')
+        doel = tmp_path / 'zonder_samenvoegen.xlsx'
+        with pd.ExcelWriter(doel) as schrijver:
+            for naam, blad in bladen.items():
+                blad.to_excel(schrijver, sheet_name=naam, index=False)
+        monkeypatch.setattr(harmonizer, 'AIRFLOW_WASSTRAAT_CONFIG', str(doel))
+        harmonizer.resetHarmonizer()
         try:
-            getObjects(inherit=True, merge=True)
-            assert False, "Verwachtte een exception"
-        except Exception:
-            pass  # verwacht
+            assert getHarmonizeAggr('Vondst') == getHarmonizeAggr('Vondst', df=loadHarmonizer())
+            assert not hasattr(harmonizer, 'getObjects') and not hasattr(harmonizer, 'getMergeWith')
+        finally:
+            harmonizer.resetHarmonizer()

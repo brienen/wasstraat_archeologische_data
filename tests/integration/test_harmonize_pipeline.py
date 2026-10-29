@@ -202,12 +202,16 @@ class TestHarmonizeMultipleObjects:
 
     def test_all_standard_objects(self, staging_db, analyse_db):
         """Draai harmonisatie voor alle standaard objecttypen (zonder data).
-        Dit test of de pipelines geldig zijn en MongoDB ze accepteert."""
-        from wasstraat.harmonizer import getObjects
+        Dit test of de pipelines geldig zijn en MongoDB ze accepteert.
+        Standaard: de objecten in het blad Objecten die van niemand overerven."""
+        import pandas as pd
+        from wasstraat.harmonizer import getHarmonizer
 
         coll = staging_db["Single_Store_Test"]
+        df = getHarmonizer(reload=True)
+        standaard = [obj for obj, overerven in zip(df["Object"], df["Overerven"]) if pd.isnull(overerven)]
 
-        for obj in getObjects(inherit=False, merge=False):
+        for obj in standaard:
             pipeline = getHarmonizeAggr(obj, reload=True)
 
             for stage in pipeline:

@@ -111,7 +111,7 @@ def getPipeline(soort, harmonizerDf=None):
 
     Args:
         soort: soort uit meta.wasstraat_model
-        harmonizerDf: optioneel de al gelezen Excel (harmonizer.loadHarmonizer)
+        harmonizerDf: optioneel de al gelezen Excel (harmonizer.getHarmonizer)
 
     Returns:
         Lijst met aggregatiefasen (leeg als de soort geen pipeline heeft)
@@ -259,10 +259,10 @@ def bepaalClaims(stagingcollectie, collectienaam, soorten=None):
     claims = {}
     soorten = [soort for soort in (getHarmonizeSoorten() if soorten is None else soorten)
                if getStagingCollectie(soort) == collectienaam]
-    # De Excel één keer lezen voor alle soorten op deze collectie
+    # De Excel één keer lezen voor alle soorten op deze collectie (uit de cache, als die er is)
     harmonizerDf = None
     if any(isinstance(meta.getHarmonizePipelines(soort), str) for soort in soorten):
-        harmonizerDf = harmonizer.loadHarmonizer()
+        harmonizerDf = harmonizer.getHarmonizer()
     for soort in soorten:
         try:
             filt = getSelectieFilter(getPipeline(soort, harmonizerDf))

@@ -41,6 +41,6 @@ De webapplicatie controleert invoer in de formulieren van Flask-AppBuilder: verp
 De integratietests leggen de uitkomst van de pipeline vast en vergelijken elke run daarmee:
 
 - met de synthetische data: verwachte aantallen per soort, unieke sleutels, gekoppelde foto's, de werking van `correcties.yml`, stabiele `primary_key`s over de cycli heen, Elasticsearch gelijk aan PostgreSQL;
-- met de Delftse testdata: Delft-specifieke verwachte aantallen in de test, en een referentie-uitkomst (`tests/integration/fixtures/delft_golden_snapshot.json`) met tellingen per soort en voorbeeldsleutels. Die referentie wordt met de hand vergeleken; een verandering moet per verschil worden verklaard voordat de referentie opnieuw wordt vastgelegd.
+- met de Delftse testdata: Delft-specifieke verwachte aantallen in de test, en een referentie-uitkomst (`tests/integration/fixtures/delft_golden_snapshot.json`) met tellingen per soort en voorbeeldsleutels. `tests/integration/test_delft_referentie.py` vergelijkt elke run daarmee en noemt elk verschil; een verandering moet per verschil worden verklaard voordat de referentie opnieuw wordt vastgelegd (`tests/integration/snapshot_mongodb.py referentie`, zie [Testen](../testen.md#delft-specifiek-echte-data)).
 
 Zie [Testen](../testen.md).

@@ -283,6 +283,48 @@ def startRun(soort, airflow_run_id=None, dag_id=None):
         myclient.close()
 
 
+def startRunEnLaadProfiel(soort, airflow_run_id=None, dag_id=None):
+    """Taak Start_Run: start de run (startRun) en laad het gemeenteprofiel (issue 87).
+
+    Een onbekende WASSTRAAT_GEMEENTE liet tot issue 87 pas Transform 1
+    (ParseFotobestanden) of Transform 2 falen, met een verwerkingsfout per
+    document, na een extractie die uren kan duren. Nu stopt de run bij de
+    eerste taak: de fout komt als melding (niveau fout, soort profiel_onbekend)
+    in het run-document, de run krijgt status mislukt en de taak faalt als
+    cruciale fout (foutbeleid.CrucialeFout, zonder herhalingen). Is er al een
+    run actief, dan faalt startRun zoals voorheen en wordt het profiel niet
+    geladen.
+
+    Args:
+        soort: 'incrementeel', 'volledig' of 'laden'
+        airflow_run_id: run_id van de Airflow DagRun (in de DAG via '{{ run_id }}')
+        dag_id: de DAG van die DagRun (in de DAG via '{{ dag.dag_id }}')
+
+    Returns:
+        De run_id van de nieuwe run
+
+    Raises:
+        foutbeleid.CrucialeFout: als het gemeenteprofiel niet te laden is
+    """
+    # Hier geïmporteerd: foutbeleid importeert deze module
+    import wasstraat.foutbeleid as foutbeleid
+    from wasstraat.profielen import get_profiel
+
+    run_id = startRun(soort, airflow_run_id=airflow_run_id, dag_id=dag_id)
+    try:
+        profiel = get_profiel()
+    except Exception as err:
+        msg = (f"Het gemeenteprofiel is niet te laden: {err} Stel WASSTRAAT_GEMEENTE in op een bekend profiel "
+               f"(zie docs/componenten/gemeenteprofielen.md) en start de run opnieuw; er is nog niets verwerkt.")
+        logger.error(msg)
+        foutbeleid.meld(foutbeleid.NIVEAU_FOUT, foutbeleid.SOORT_PROFIEL_ONBEKEND, msg, taak='Start_Run',
+                        run_id=run_id)
+        beeindigRun(STATUS_MISLUKT, run_id=run_id, melding=msg)
+        raise foutbeleid.CrucialeFout(msg) from err
+    logger.info(f"Verwerkingsrun {run_id} gebruikt gemeenteprofiel {profiel.naam}.")
+    return run_id
+
+
 def huidigeRun(verplicht=True):
     """Retourneer het run-document van de actieve run.
 

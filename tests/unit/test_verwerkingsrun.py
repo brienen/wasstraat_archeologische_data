@@ -123,6 +123,60 @@ class TestStartEnBeeindig:
 
 
 # ============================================================
+# Klasse 2b: Start_Run laadt het gemeenteprofiel (issue 87)
+# ============================================================
+
+@pytest.fixture
+def profiel(monkeypatch):
+    """Kies WASSTRAAT_GEMEENTE voor de test; de cache van het profiel is voor en na de test leeg."""
+    import shared.config as config
+    from wasstraat.profielen import reset_profiel
+
+    def kies(gemeente):
+        reset_profiel()
+        monkeypatch.setattr(config, 'WASSTRAAT_GEMEENTE', gemeente, raising=False)
+
+    reset_profiel()
+    yield kies
+    reset_profiel()
+
+
+@pytest.mark.unit
+class TestStartRunMetProfiel:
+    """Start_Run (startRunEnLaadProfiel) stopt de run direct bij een onbekend gemeenteprofiel."""
+
+    def test_bekend_profiel_start_de_run(self, nep_client, profiel):
+        profiel('voorbeeld')
+        run_id = verwerkingsrun.startRunEnLaadProfiel('volledig', airflow_run_id='manual__1', dag_id='DAG_X')
+        run = verwerkingsrun.huidigeRun()
+        assert run['run_id'] == run_id and run['status'] == 'actief' and run['meldingen'] == []
+
+    @pytest.mark.parametrize('soort', ['volledig', 'incrementeel', 'laden'])
+    def test_onbekend_profiel_is_cruciale_fout(self, nep_client, profiel, soort):
+        import wasstraat.foutbeleid as foutbeleid
+        profiel('rotterdam')
+        with pytest.raises(foutbeleid.CrucialeFout, match=r"Onbekend gemeenteprofiel: 'rotterdam'.*delft, voorbeeld"):
+            verwerkingsrun.startRunEnLaadProfiel(soort, airflow_run_id='manual__1')
+        doc = runCollectie(nep_client).find_one({'airflow_run_id': 'manual__1'})
+        assert doc['status'] == 'mislukt' and 'WASSTRAAT_GEMEENTE' in doc['melding']
+        assert isinstance(doc['beeindigd_op'], datetime)
+        assert [(m['niveau'], m['soort'], m['taak'], m['stap']) for m in doc['meldingen']] == [
+            ('fout', foutbeleid.SOORT_PROFIEL_ONBEKEND, 'Start_Run', 'voorbereiding')]
+        # De run blokkeert de volgende niet
+        assert verwerkingsrun.huidigeRun(verplicht=False) is None
+
+    def test_actieve_run_faalt_zonder_profiel_te_laden(self, nep_client, profiel, monkeypatch):
+        import wasstraat.profielen as profielen
+        verwerkingsrun.startRun('incrementeel', airflow_run_id='manual__A')
+        geladen = []
+        monkeypatch.setattr(profielen, 'get_profiel', lambda: geladen.append(1))
+        with pytest.raises(Exception, match="al een actieve verwerkingsrun"):
+            verwerkingsrun.startRunEnLaadProfiel('incrementeel', airflow_run_id='manual__B')
+        assert geladen == []
+        assert verwerkingsrun.huidigeRun()['airflow_run_id'] == 'manual__A'
+
+
+# ============================================================
 # Klasse 3: mislukte runs
 # ============================================================
 
