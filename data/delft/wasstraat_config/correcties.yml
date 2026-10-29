@@ -90,6 +90,12 @@ paden_overslaan:
   # artefacten die alleen uit deze kopieën kwamen. De overige 251 bestanden in de map (o.a. 4 jpg,
   # 2 tif, 2 pdf) vielen al buiten de selectie van afbeeldingen en rapporten.
   - "DC024_Stadskantoor/K Overig/werkmap joris"
+  # Tussenversies van opgravingDC97.mdb in DC097 (issue 86): beide hebben 647 artefacten, 351 vondsten,
+  # 91 sporen, 98 vullingen, 123 fotobeschrijvingen en 6 tekeningen. Met deze bestanden werden 533
+  # artefacten en alle 351 vondsten samengevoegd uit drie bronrijen en stonden sporen, vullingen en
+  # fotobeschrijvingen er drie keer in.
+  - "DC097_Ipse/C Database/HHD2.mdb"
+  - "DC097_Ipse/C Database/dc79a1.mdb"
 
 # Voorrang bij de harmonisatie (issue 89): welke soort een Access-tabel harmoniseert als de patronen
 # van meer dan één soort in de harmonisatie-Excel (blad Objecten, kolom Tabellen) hem selecteren.
@@ -101,3 +107,8 @@ harmonisatie_voorrang:
   # Aardewerk selecteert hem via "AW1.*", Artefact via "Determinaties"; als Aardewerk krijgt hij
   # baksel, codes, decoratie, fragment, rand, glazuur en het ABR-materiaal.
   AW1DeterminatiesJohan: Aardewerk
+  # Codetabellen uit DB034 (opgravingDB34.mdb, issue 75): de lijst met voorwerpen (kolommen CODE en
+  # VOORWERP, 96 rijen) en met baksels (CODE en BAKSEL, 46 rijen) van het aardewerk. Aardewerk selecteert
+  # ze via ".*AARDEWERK.*"; het zijn geen artefacten maar referentiedata, die in de staging blijft staan.
+  "AARDEWERK 1&2 VOORWERP":
+  "AARDEWERK 1 BAKSEL":

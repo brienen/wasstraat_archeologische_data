@@ -55,8 +55,16 @@ SOORT_IMPORT_MELDING = 'import_melding'
 # Transform 1 (issue 89): een tabel die meer dan één harmonisatie-pipeline selecteert, zonder keuze in
 # correcties.yml (harmonisatie_voorrang); de voorrangsregel heeft gekozen
 SOORT_TABEL_DUBBEL_GESELECTEERD = 'tabel_dubbel_geselecteerd'
+# Een regel in de configuratie (harmonisatie-Excel, correcties.yml) die niet te gebruiken is en wordt
+# overgeslagen, bijv. een object dat geen soort is of een onbekend type bij rapportcode_prefixen (issue 87)
+SOORT_CONFIGURATIE_ONGELDIG = 'configuratie_ongeldig'
+# Start_Run: het gemeenteprofiel (WASSTRAAT_GEMEENTE) is niet te laden; de run stopt (issue 87)
+SOORT_PROFIEL_ONBEKEND = 'profiel_onbekend'
 SOORT_AFBEELDINGEN_MISLUKT = 'afbeeldingen_mislukt'
 SOORT_VERWERKINGSFOUTEN = 'verwerkingsfouten'
+# Transform 2 (issue 86): artefacten zonder artefactsoort met een materiaalcode waaruit geen artefactsoort
+# volgt (wasstraat/artefactsoort_materiaal.py); ze worden geladen als Onbekend
+SOORT_ARTEFACTSOORT_NIET_AFGELEID = 'artefactsoort_niet_afgeleid'
 SOORT_UNICITEIT_NIET_BEPAALD = 'uniciteit_niet_bepaald'
 SOORT_FK_NIET_HERSTELD = 'fk_niet_hersteld'
 SOORT_FK_NIET_GEVALIDEERD = 'fk_niet_gevalideerd'

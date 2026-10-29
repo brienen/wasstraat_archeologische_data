@@ -32,6 +32,7 @@ Legenda gedrag tot issue 54: **F** = taak faalt en DAG faalt; **S** = overgeslag
 |---|---|---|---|
 | Volledige cyclus en `DAG_Load_Only` | geen run-document tijdens de run (de volledige cyclus maakte er pas bij de registratie een aan) | — | `Start_Run` aan het begin (soort `volledig` of `laden`), `Markeer_Run_Mislukt`, meldingen, rapport |
 | `Start_Run` | er loopt al een run | F (alleen incrementeel) | F in alle drie de DAG's: twee runs tegelijk beschadigen elkaars staging en registratie |
+| idem | onbekend gemeenteprofiel (`WASSTRAAT_GEMEENTE`) | F, maar laat: pas `ParseFotobestanden` faalde, na de extractie; Transform 2 telde elk document als verwerkingsfout | F in `Start_Run` (issue 87): melding `profiel_onbekend`, run `mislukt` voordat er iets verwerkt is (zie [Gemeenteprofielen](gemeenteprofielen.md#profielselectie)) |
 | `Drop_All_Databases` | MongoDB-fout | **S**: de extractie las daarna bovenop de oude data in | F. De collectie `Verwerkingsruns` blijft staan (geschiedenis van runs en rapporten) |
 | `Bepaal_Delta`, `Opruimen_Oude_Records` | elke fout | F | F |
 | `Extract_Data_From_<map>` (`importMDB.sh`) | onleesbare Access-database | S (ERROR in het log, exit 0) | T met drempel: nieuwe taak `Controleer_Databases`, waarschuwing; boven `AIRFLOW_MAX_MISLUKTE_DATABASES` / `_PCT` cruciaal |
@@ -43,9 +44,12 @@ Legenda gedrag tot issue 54: **F** = taak faalt en DAG faalt; **S** = overgeslag
 | `Controleer_Afbeeldingen` | mislukte afbeeldingen | T met drempel; tellingen alleen in het run-document van de incrementele cyclus | T met drempel; tellingen en melding nu ook in de volledige cyclus |
 | `Extract_Referentietabellen`, `Extract_ExtraProjecten` | bestand onleesbaar | F | F: zonder ABR of projecten is de rest onbruikbaar |
 | Transform 1 (harmonisatie) | aggregatie faalt | F | F |
+| `Controleer_Harmonisatie_Excel` | rij in het blad `Objecten` met een object dat geen soort is | S (rij stil ongebruikt) | T: waarschuwing `configuratie_ongeldig` per object (issue 87) |
 | `ParseFotobestanden` | één bestand niet te parsen | S | ongewijzigd; het rapport telt de onherkende bestandsnamen (soort `Bestand`) |
+| idem | regel in `rapportcode_prefixen` met een onbekend of ontbrekend `type` of zonder `prefix` | S: een onbekend type werd stil een notitie | T: foutmelding in het log, waarschuwing `configuratie_ongeldig`, regel overgeslagen (issue 87) |
 | `Enhance_All_Attributes` (Transform 2) | één record faalt | T (`_processing_errors`), geen drempel | T met drempel (`AIRFLOW_MAX_VERWERKINGSFOUTEN` / `_PCT`), melding |
 | idem | locatie buiten Nederland of onleesbare coördinaat | S (veld `error` in het document) | T: locatiefouten per soort in het rapport |
+| idem | artefact zonder artefactsoort met een materiaalcode waaruit geen artefactsoort volgt | – (de RAAP-tabel `ARTEFACT` werd niet geladen) | T: waarschuwing `artefactsoort_niet_afgeleid` per run, met de codes; het artefact wordt `Onbekend` (issue 86) |
 | `extract_Imagedata_From_FileNames` | één foto faalt | S | T (`_processing_errors`, fase `imagedata`) met drempel |
 | `Set_Artefactnr_Unique` (Transform 3) | fout bij één project | S | T: waarschuwing |
 | idem | fout buiten de projecten | **S**: de sleutels werden zonder de vlag `vondstkey_met_putnr` berekend | F |
@@ -107,11 +111,14 @@ Lege databases, overgeslagen tabellen en overige meldingen zijn waarschuwingen; 
 | Soort | Niveau | Bron |
 |-------|--------|------|
 | `taak_mislukt` | fout of waarschuwing (Index) | `registreerTaakfout` (on_failure_callback) |
+| `profiel_onbekend` | fout | `Start_Run`: het gemeenteprofiel van `WASSTRAAT_GEMEENTE` is niet te laden; de run stopt (issue 87) |
 | `database_onleesbaar` | waarschuwing, boven de drempel fout | `Controleer_Databases` |
 | `database_leeg`, `tabel_overgeslagen`, `import_melding` | waarschuwing | `Controleer_Databases` |
 | `tabel_dubbel_geselecteerd` | waarschuwing | `Harmonize_<soort>` (de taak van de gekozen soort): een tabel die meer harmonisatie-pipelines selecteren, zonder keuze in `harmonisatie_voorrang`, of met een instelling die genegeerd is (issue 89, zie [Configuratie](configuratie.md#36-harmonisatie_voorrang)) |
+| `configuratie_ongeldig` | waarschuwing | `Controleer_Harmonisatie_Excel` (object in het blad `Objecten` dat geen soort is) en `ParseFotobestanden` (ongeldige regel in [`rapportcode_prefixen`](configuratie.md#34-rapportcode_prefixen)): de regel wordt niet gebruikt (issue 87) |
 | `afbeeldingen_mislukt` | waarschuwing, boven de drempel fout | `Controleer_Afbeeldingen` |
 | `verwerkingsfouten` | waarschuwing, boven de drempel fout | `Enhance_All_Attributes`, `extract_Imagedata_From_FileNames` |
+| `artefactsoort_niet_afgeleid` | waarschuwing | `Enhance_All_Attributes`: artefacten zonder artefactsoort met een materiaalcode waaruit geen artefactsoort volgt (geen ABR-materiaalcode, of niet eenduidig); per code het aantal en de reden; tellingen in `tellingen.transform.artefactsoort_uit_materiaalcode` (issue 86, zie [Transformatie](transformatie.md#transform-2-attributen)) |
 | `uniciteit_niet_bepaald` | waarschuwing | `Set_Artefactnr_Unique` |
 | `sleutels_niet_stabiel`, `fk_niet_hersteld`, `fk_niet_gevalideerd`, `afgeleide_velden_mislukt` | waarschuwing | `LoadToDatabase_postgres`, `Load_Upsert` |
 | `rapport` | waarschuwing | `Verwerkingsrapport` (terugval van de rapportmap) |
@@ -254,7 +261,7 @@ Geen.
 | `AIRFLOW_MAX_MISLUKTE_DATABASES_PCT` | getal ≥ 0 (decimaal mag) | `5` | Percentage van de verwerkte databases dat nog acceptabel is |
 | `AIRFLOW_MAX_VERWERKINGSFOUTEN` | geheel getal ≥ 0 | `100` | Vast aantal records per taak van Transform 2 dat niet verwerkt hoeft te kunnen worden |
 | `AIRFLOW_MAX_VERWERKINGSFOUTEN_PCT` | getal ≥ 0 (decimaal mag) | `1` | Percentage van de bekeken records dat nog acceptabel is |
-| `WASSTRAAT_VERSION` | tekst | — | Versie in het rapport; `deploy/docker-compose.yml` geeft de versie uit `.env` mee |
+| `WASSTRAAT_VERSION` | tekst | — | Versie in het rapport; `deploy/docker-compose.yml` geeft de versie uit `.env` mee, in de ontwikkelomgeving `make app`, `make delft` en `make dev` die uit `config/version.env` |
 | `WASSTRAAT_VERSIEBESTAND` | pad | `/opt/airflow/version.env` | Bestand met een regel `VERSION=` (bijvoorbeeld een gemounte `config/version.env`); alleen gelezen zonder `WASSTRAAT_VERSION`. Ontbreken beide, dan staat er geen versie in het rapport |
 
 De drempels worden in `shared/config.py` gelezen (aantallen met `int()`, percentages met `float()`); een lege, ongeldige of negatieve waarde levert de standaard op. Met `0` en `0` is elke fout cruciaal. Ze staan, met `AIRFLOW_OUTPUT_RAPPORTEN`, in `config/airflow.env.example` en `deploy/config/airflow.env.example`. De drempels voor afbeeldingen (`AIRFLOW_MAX_MISLUKTE_AFBEELDINGEN` / `_PCT`) staan bij de [extractie](extractie.md#afbeeldingen-en-rapporten); alle instellingen van Airflow staan in [Configuratie](configuratie.md#23-airflow-airflowenv-airflow_dbenv).

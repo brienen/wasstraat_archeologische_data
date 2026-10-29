@@ -27,9 +27,11 @@ pymongo = pytest.importorskip("pymongo")
 # Configuratie
 # ============================================================
 
+# Hostpoort 27118: de MongoDB van docker-compose.delft-test.yml (de synthetische testomgeving
+# gebruikt 27117, zodat beide tegelijk kunnen draaien)
 MONGO_TEST_URI = os.getenv(
     "MONGO_TEST_URI",
-    "mongodb://testroot:testpass@localhost:27117/",
+    "mongodb://testroot:testpass@localhost:27118/",
 )
 AIRFLOW_CONTAINER = os.getenv("AIRFLOW_CONTAINER", "wasstraat_airflow_delft_test")
 POSTGRES_CONTAINER = os.getenv("POSTGRES_CONTAINER", "wasstraat_postgres_delft_test")
@@ -47,7 +49,8 @@ DB_FILES = "Arch_Files_Test"
 # patroon .*AARDEWERK.* (net als de 46 rijen van "AARDEWERK 1 BAKSEL"), als
 # Aardewerk zonder sleutel. Sinds issue 83 (2026-10-29) blijven de verplaatste exemplaren van
 # samengevoegde artefacten niet meer naast het samengevoegde document staan: 4656 Aardewerk
-# (261 minder). Het minimum (4510, de tabel AARDEWERK 1) blijft.
+# (261 minder). Sinds issue 75 sluit harmonisatie_voorrang in correcties.yml de twee codetabellen
+# uit (lege waarde): 4514 Aardewerk (142 minder). Het minimum (4510, de tabel AARDEWERK 1) blijft.
 EXPECTED_MIN_ARTEFACT_COUNTS = {
     "Aardewerk": 4510,
     "Glas": 20,
@@ -747,6 +750,24 @@ class TestDelftExtractTransform:
         assert meer_bronrijen > 0, "Geen enkele merge-groep met meer bronrijen; controleer Merge_Artefact"
         assert not naast_samengevoegd, (
             f"Verplaatste artefacten naast een samengevoegd document: {sorted(naast_samengevoegd.items())[:10]}")
+
+    def test_24b_verify_codetabellen_alleen_in_staging(self, mongo_client):
+        """De codetabellen van het aardewerk blijven referentiedata in de staging (issue 75).
+
+        AARDEWERK 1&2 VOORWERP (96 rijen) en AARDEWERK 1 BAKSEL (46 rijen) uit
+        opgravingDB34.mdb staan in harmonisatie_voorrang van
+        data/test/wasstraat_config/correcties.yml met een lege waarde: geen enkele
+        soort harmoniseert ze, dus ze komen niet in Single_Store en Single_Store_Clean.
+        Tot dan werden ze 142 aardewerkartefacten zonder vondst en subnummer.
+        """
+        codetabellen = {"AARDEWERK 1&2 VOORWERP": 96, "AARDEWERK 1 BAKSEL": 46}
+        staging = mongo_client[DB_STAGING]["Staging_Projecten_Oud"]
+        for tabel, aantal in codetabellen.items():
+            assert staging.count_documents({"table": tabel}) == aantal, f"{tabel}: verwacht {aantal} in de staging"
+        for collectie in ("Single_Store", "Single_Store_Clean"):
+            coll = mongo_client[DB_ANALYSE][collectie]
+            gevonden = coll.count_documents({"brondata.table": {"$in": list(codetabellen)}})
+            assert gevonden == 0, f"{gevonden} documenten uit de codetabellen in {collectie}"
 
     def test_25_verify_referentie_keys_consistent(self, mongo_client):
         """Referentie-keys (key_project, key_put) zijn consistent met parent keys."""

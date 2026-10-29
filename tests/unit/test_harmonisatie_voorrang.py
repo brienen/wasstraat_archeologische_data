@@ -191,10 +191,20 @@ class TestOverlapDelft:
 
     def test_delftse_correcties_nemen_de_waarschuwing_weg(self, delftExcel, correcties):
         instellingen = voorrang.leesVoorrangInstellingen(correcties(DELFT_CORRECTIES))
-        assert instellingen == {'AW1DeterminatiesJohan': 'Aardewerk'}
-        besluit = alleBesluiten(instellingen)['AW1DeterminatiesJohan']
+        assert instellingen == {'AW1DeterminatiesJohan': 'Aardewerk', 'AARDEWERK 1&2 VOORWERP': None,
+                                'AARDEWERK 1 BAKSEL': None}
+        besluiten = alleBesluiten(instellingen)
+        besluit = besluiten['AW1DeterminatiesJohan']
         assert besluit['gekozen'] == 'Aardewerk' and besluit['bron'] == voorrang.BRON_INSTELLING
         assert not voorrang.isWaarschuwing(besluit)
+        # Issue 75: de codetabellen van het aardewerk door geen enkele soort, zonder waarschuwing
+        for tabel in ('AARDEWERK 1&2 VOORWERP', 'AARDEWERK 1 BAKSEL'):
+            assert besluiten[tabel] == {'tabel': tabel, 'collectie': OUD, 'kandidaten': ['Aardewerk'],
+                                        'gekozen': None, 'bron': voorrang.BRON_INSTELLING}
+            assert not voorrang.isWaarschuwing(besluiten[tabel])
+        assert voorrang.getUitTeSluitenTabellen('Aardewerk', besluiten) == ['AARDEWERK 1 BAKSEL',
+                                                                             'AARDEWERK 1&2 VOORWERP']
+        assert voorrang.getUitTeSluitenTabellen('Artefact', besluiten) == ['AW1DeterminatiesJohan']
 
     def test_distinct_per_soort_met_het_filter_van_de_pipeline(self, delftExcel):
         """Eén distinct('table', filter) per pipeline op de collectie, met de $match-fasen van die pipeline."""
@@ -375,11 +385,16 @@ class SimulatieClient:
         pass
 
 
-def simuleer(monkeypatch, volgorde, incrementeel=False, soort_doorgeven=True):
+SIMULATIE_TABELLEN = ('AW1DeterminatiesJohan', 'Determinaties', 'CATALOGUS AW1', 'AARDEWERK 1')
+
+
+def simuleer(monkeypatch, volgorde, incrementeel=False, soort_doorgeven=True, tabellen=SIMULATIE_TABELLEN,
+             staging_docs=None):
     """Draai de Harmonize-taken van Staging_Projecten_Oud in een gegeven volgorde; retourneer Single_Store."""
     single_store = {}
-    docs = [{'_id': f'{tabel}:{i}', 'table': tabel, 'mdbfile': SY003_MDB}
-            for tabel in ('AW1DeterminatiesJohan', 'Determinaties', 'CATALOGUS AW1', 'AARDEWERK 1') for i in range(2)]
+    docs = [{'_id': f'{tabel}:{i}', 'table': tabel, 'mdbfile': SY003_MDB} for tabel in tabellen for i in range(2)]
+    if staging_docs is not None:
+        staging_docs.extend(docs)
     staging = {OUD: SimulatieStaging(OUD, single_store, docs)}
     monkeypatch.setattr(harmonize_functions.pymongo, 'MongoClient', lambda *a, **k: SimulatieClient(staging))
     for soort in volgorde:
@@ -430,3 +445,56 @@ class TestHarmonizeDeterministisch:
         meldingen = [m for m in verwerkingsrun.huidigeRun().get('meldingen') or []
                      if m['soort'] == foutbeleid.SOORT_TABEL_DUBBEL_GESELECTEERD]
         assert len(meldingen) == 1 and meldingen[0]['details']['gekozen'] == 'Aardewerk'
+
+
+@pytest.mark.unit
+class TestCodetabelZonderSoort:
+    """Issue 75: een tabel met een lege waarde in harmonisatie_voorrang komt niet in Single_Store(_Clean).
+
+    In Delft de codetabellen AARDEWERK 1&2 VOORWERP en AARDEWERK 1 BAKSEL uit
+    opgravingDB34.mdb: alleen Aardewerk selecteert ze (via ".*AARDEWERK.*"),
+    zodat er geen dubbele selectie is; de lege waarde sluit ze uit. De
+    staging-documenten blijven staan als referentiedata.
+    """
+
+    TABELLEN = ('AARDEWERK 1', 'AARDEWERK 1&2 VOORWERP', 'AARDEWERK 1 BAKSEL')
+
+    @pytest.fixture
+    def instelling(self, correcties, tmp_path):
+        bestand = tmp_path / 'correcties.yml'
+        bestand.write_text('harmonisatie_voorrang:\n  "AARDEWERK 1&2 VOORWERP":\n  "AARDEWERK 1 BAKSEL":\n',
+                           encoding='utf-8')
+        return correcties(str(bestand))
+
+    def test_niet_in_single_store_wel_in_de_staging(self, monkeypatch, delftExcel, instelling, client):
+        startRunMet()
+        staging = []
+        single_store, pipelines = simuleer(monkeypatch, ['Artefact', 'Aardewerk'], tabellen=self.TABELLEN,
+                                           staging_docs=staging)
+        assert sorted({d['table'] for d in single_store.values()}) == ['AARDEWERK 1']
+        assert pipelines[1][0] == {'$match': {'table': {'$nin': ['AARDEWERK 1 BAKSEL', 'AARDEWERK 1&2 VOORWERP']}}}
+        # De taak van Artefact selecteert de tabellen niet en sluit dus niets uit
+        assert pipelines[0][0] != pipelines[1][0]
+        # Referentiedata: de staging-documenten blijven ongewijzigd staan
+        assert sorted({d['table'] for d in staging}) == sorted(self.TABELLEN) and len(staging) == 6
+        # Geen waarschuwing, wel de besluiten in het run-document (gemeld door de taak van Aardewerk)
+        run = verwerkingsrun.huidigeRun()
+        assert not [m for m in run.get('meldingen') or [] if m['soort'] == foutbeleid.SOORT_TABEL_DUBBEL_GESELECTEERD]
+        besluiten = run['tellingen']['transform']['harmonisatie_voorrang']['Aardewerk']
+        assert [(b['tabel'], b['gekozen'], b['bron']) for b in besluiten] == [
+            ('AARDEWERK 1 BAKSEL', None, voorrang.BRON_INSTELLING), ('AARDEWERK 1&2 VOORWERP', None, voorrang.BRON_INSTELLING)]
+
+    def test_niet_in_single_store_clean(self, monkeypatch, delftExcel, instelling, client):
+        """Wat niet in Single_Store staat, kan Transform 5 niet verplaatsen of samenvoegen."""
+        from tests.unit.test_merge_artefacten import artefact, simuleerTransform5
+        single_store, _ = simuleer(monkeypatch, ['Aardewerk', 'Artefact'], tabellen=self.TABELLEN)
+        docs = [artefact(d['table'], bron_id=i) for i, d in enumerate(single_store.values())]
+        clean = simuleerTransform5(docs)
+        assert len(clean) == 2 and {b['table'] for d in clean for b in d['brondata']} == {'AARDEWERK 1'}
+
+    def test_incrementeel(self, monkeypatch, delftExcel, instelling, client):
+        startRunMet(nieuw={'projecten': [SY003_MDB]})
+        single_store, pipelines = simuleer(monkeypatch, ['Aardewerk'], incrementeel=True, tabellen=self.TABELLEN)
+        assert pipelines[0][0] == {'$match': {'mdbfile': {'$in': [SY003_MDB]}}}
+        assert pipelines[0][1] == {'$match': {'table': {'$nin': ['AARDEWERK 1 BAKSEL', 'AARDEWERK 1&2 VOORWERP']}}}
+        assert sorted({d['table'] for d in single_store.values()}) == ['AARDEWERK 1']

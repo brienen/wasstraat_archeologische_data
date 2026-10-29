@@ -1,11 +1,11 @@
 {
-  "beschrijving": "Golden snapshot Delft testdata (DB034) - opnieuw gegenereerd op 2026-10-29 na issue 83 (move/merge van artefacten): een artefact wordt in Transform 5 verplaatst of samengevoegd, niet meer allebei. In opgravingDB34.mdb hebben 261 rijen in AARDEWERK 1 een rij in CATALOGUS AW1 met dezelfde put, vondst en subnummer; die groepen van twee bronrijen werden samengevoegd, maar het verplaatste exemplaar uit de andere tabel bleef ernaast staan met dezelfde key. Nu is elke groep \u00e9\u00e9n artefact: Artefact 6336 -> 6075 en Aardewerk 4917 -> 4656 (beide -261); Single_Store en alle andere tellingen en voorbeeldkeys zijn gelijk. Issue 84 (paden_overslaan) verandert hier niets: de testdata heeft geen werkmap. Daarvoor (2026-10-21): herstel van de foto-identificatie in Transform 2 (Put 278 -> 275, Vondst 3091 -> 3060, genormaliseerde sleutels van Bestand: PDB034... in plaats van PDB34...), de kopregel-fix in importMDB.sh (tabel MUNTEN EN PENNINGEN: +50 munten) en de sed-escape-fix (tabel AARDEWERK 1&2 VOORWERP: +96 aardewerk zonder sleutel).",
+  "beschrijving": "Golden snapshot Delft testdata (DB034) - opnieuw vastgelegd op 2026-10-29 na issue 75 (codetabellen als referentiedata): de codetabellen AARDEWERK 1&2 VOORWERP (96 rijen, kolommen CODE en VOORWERP) en AARDEWERK 1 BAKSEL (46 rijen, CODE en BAKSEL) uit opgravingDB34.mdb staan in harmonisatie_voorrang van data/test/wasstraat_config/correcties.yml met een lege waarde en worden niet meer als aardewerk geharmoniseerd; ze blijven in Staging_Projecten_Oud. Daardoor: Artefact in Single_Store 6336 -> 6194, Artefact in Single_Store_Clean 6075 -> 5933 en Aardewerk 4656 -> 4514 (telkens -142 = 96 + 46). Alle andere tellingen en voorbeeldkeys zijn gelijk. Issue 85 (kolommen van Spijkeranalyse Koningsveld op het blad Artefact) en issue 86 (RAAP-tabel ARTEFACT geladen met een artefactsoort uit de materiaalcode, tussenversies van DC097 in paden_overslaan) raken de testdata niet: de spijkeranalyse, RAAP-databases en DC097 zitten er niet in. Eerder: Golden snapshot Delft testdata (DB034) - opnieuw gegenereerd op 2026-10-29 na issue 83 (move/merge van artefacten): een artefact wordt in Transform 5 verplaatst of samengevoegd, niet meer allebei. In opgravingDB34.mdb hebben 261 rijen in AARDEWERK 1 een rij in CATALOGUS AW1 met dezelfde put, vondst en subnummer; die groepen van twee bronrijen werden samengevoegd, maar het verplaatste exemplaar uit de andere tabel bleef ernaast staan met dezelfde key. Nu is elke groep één artefact: Artefact 6336 -> 6075 en Aardewerk 4917 -> 4656 (beide -261); Single_Store en alle andere tellingen en voorbeeldkeys zijn gelijk. Issue 84 (paden_overslaan) verandert hier niets: de testdata heeft geen werkmap. Daarvoor (2026-10-21): herstel van de foto-identificatie in Transform 2 (Put 278 -> 275, Vondst 3091 -> 3060, genormaliseerde sleutels van Bestand: PDB034... in plaats van PDB34...), de kopregel-fix in importMDB.sh (tabel MUNTEN EN PENNINGEN: +50 munten) en de sed-escape-fix (tabel AARDEWERK 1&2 VOORWERP: +96 aardewerk zonder sleutel).",
   "testdata": "data/test/ (project DB034 Koningsveld IV)",
   "soort_counts_clean": {
     "Fotokoppel": 31469,
     "Monster_Botanie": 21381,
     "Standplaats": 8675,
-    "Artefact": 6075,
+    "Artefact": 5933,
     "Plaatsing": 5902,
     "ABR": 4838,
     "Doos": 4443,
@@ -30,7 +30,7 @@
     "Fotokoppel": 31469,
     "Monster_Botanie": 21381,
     "Standplaats": 8675,
-    "Artefact": 6336,
+    "Artefact": 6194,
     "Plaatsing": 5902,
     "ABR": 4838,
     "Doos": 4442,
@@ -52,7 +52,7 @@
     "DT_Soort_Staat": 4
   },
   "artefact_subtypes": {
-    "Aardewerk": 4656,
+    "Aardewerk": 4514,
     "Metaal": 629,
     "Hout": 294,
     "Menselijk_Bot": 273,

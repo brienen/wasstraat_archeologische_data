@@ -74,7 +74,7 @@ def nietMergenProjecten(monkeypatch):
 
 @pytest.mark.unit
 class TestVoorwaarden:
-    """Elk artefact (behalve uit de tabel ARTEFACT) wordt verplaatst óf samengevoegd."""
+    """Elk artefact wordt verplaatst óf samengevoegd, sinds issue 86 ook uit de RAAP-tabel ARTEFACT."""
 
     @pytest.mark.parametrize("doc", [
         artefact('AARDEWERK 1', subnr=2),
@@ -90,9 +90,12 @@ class TestVoorwaarden:
         artefact('AARDEWERK 1', subnr=5, projectcd='DC112'),
         artefact('ARTF_MET', subnr=1, artefactsoort='Metaal', brondata_extra={'ARTEFACT': 12}),
         artefact('ARTEFACTEN', subnr=6),
+        artefact('ARTEFACT', artefactsoort=None, brondata_extra={'ARTEFACT': 1, 'MATERIAAL': 'OPH'}),
+        artefact('ARTEFACT', subnr=1),
     ], ids=['specifieke tabel met subnr', 'zonder subnr', 'tweede tabel met subnr', 'munt', 'glas',
             'raap-tabel zonder subnr', 'zonder artefactsoort', 'lege artefactsoort', 'artefactsoort onbekend',
-            'romeins aardewerk', 'artefact_niet_mergen', 'kolom ARTEFACT', 'tabel begint met ARTEFACT'])
+            'romeins aardewerk', 'artefact_niet_mergen', 'kolom ARTEFACT', 'tabel begint met ARTEFACT',
+            'raap-tabel ARTEFACT', 'tabel ARTEFACT met subnr'])
     def test_precies_een_van_beide(self, doc, nietMergenProjecten):
         assert verplaatst(doc) != samengevoegd(doc), (
             f"{doc['brondata']['table']}: verplaatst={verplaatst(doc)}, samengevoegd={samengevoegd(doc)}")
@@ -136,12 +139,18 @@ class TestVoorwaarden:
         assert verplaatst(doc)
         assert not samengevoegd(doc)
 
-    def test_tabel_artefact_nooit_verplaatst(self, nietMergenProjecten):
-        """De tabel ARTEFACT wordt nooit verplaatst (ontwerp van 2022): met subnr samengevoegd, anders niet."""
-        assert samengevoegd(artefact('ARTEFACT', subnr=1)) and not verplaatst(artefact('ARTEFACT', subnr=1))
-        for doc in [artefact('ARTEFACT'), artefact('ARTEFACT', subnr=1, projectcd='DC112'),
+    def test_raap_tabel_artefact_verplaatst(self, nietMergenProjecten):
+        """Issue 86: de RAAP-tabel ARTEFACT wordt verplaatst zoals elke rij met een kolom ARTEFACT.
+
+        Tot dan werd hij nooit verplaatst (ontwerp van 2022) en kwamen zijn rijen niet in
+        Single_Store_Clean (Delft: 132 rijen in DC008, DC024 en DC112).
+        """
+        for doc in [artefact('ARTEFACT', artefactsoort=None, brondata_extra={'ARTEFACT': 1}),
+                    artefact('ARTEFACT', subnr=1, projectcd='DC112'),
                     artefact('ARTEFACT', subnr=1, brondata_extra={'ARTEFACT': 1})]:
-            assert not verplaatst(doc) and not samengevoegd(doc)
+            assert verplaatst(doc) and not samengevoegd(doc)
+        # Met subnummer en zonder kolom ARTEFACT (komt in RAAP niet voor): samengevoegd, zoals elke tabel
+        assert samengevoegd(artefact('ARTEFACT', subnr=1)) and not verplaatst(artefact('ARTEFACT', subnr=1))
 
     def test_andere_soort_niet_verplaatst_als_artefact(self):
         doc = artefact('AARDEWERK 1')
@@ -157,7 +166,9 @@ class TestPijplijnen:
         pipeline = merge_functions.getMoveAggregate('Artefact')
         assert pipeline[0] == {'$match': {'soort': 'Artefact'}}
         assert pipeline[1] == merge_functions.getInverseMatchArtefact()
-        assert pipeline[1]['$match']['$and'][2] == {'$nor': [merge_functions.getArtefactMergeVoorwaarde()]}
+        # Precies het complement van de merge-voorwaarde, zonder uitgezonderde tabellen (issue 86)
+        assert pipeline[1]['$match'] == {'$and': [{'soort': 'Artefact'},
+                                                  {'$nor': [merge_functions.getArtefactMergeVoorwaarde()]}]}
         assert pipeline[2] == merge_functions.AGGR_PHASE_CLEAN_EMPTY
         assert '$merge' in pipeline[-1]
 
@@ -178,9 +189,9 @@ class TestPijplijnen:
     def test_geen_gedeelde_lijsten(self, monkeypatch):
         """Een aangepaste pipeline (bijv. de delta-variant) verandert de voorwaarde niet."""
         pipeline = merge_functions.getMoveAggregate('Artefact')
-        pipeline[1]['$match']['$and'][2]['$nor'][0]['$and'][2]['brondata.table']['$nin'].append('X')
+        pipeline[1]['$match']['$and'][1]['$nor'][0]['$and'][2]['brondata.table']['$nin'].append('X')
         assert 'X' not in merge_functions.ARTEFACT_NOT_MERGE_TABLES
-        assert 'X' not in merge_functions.getMoveAggregate('Artefact')[1]['$match']['$and'][2]['$nor'][0]['$and'][2]['brondata.table']['$nin']
+        assert 'X' not in merge_functions.getMoveAggregate('Artefact')[1]['$match']['$and'][1]['$nor'][0]['$and'][2]['brondata.table']['$nin']
 
 
 # ============================================================
@@ -278,4 +289,22 @@ class TestSimulatie:
         docs = [artefact('AARDEWERK 1', bron_id=1), artefact('AARDEWERK 1', bron_id=2)]
         clean = simuleerTransform5(docs)
         assert len(clean) == 2
+        assert all(len(d['brondata']) == 1 for d in clean)
+
+    def test_raap_kop_en_detailrijen_elk_een_document(self, nietMergenProjecten):
+        """Issue 86: de rij uit de RAAP-tabel ARTEFACT komt naast zijn detailrijen in Single_Store_Clean.
+
+        In een RAAP-database is ARTEFACT de kop (artefactnummer, materiaal, totaal aantal en gewicht) en
+        staan de stukken in een tabel per materiaal (ARTF_OPH, ARTF_MET ...) met hetzelfde artefactnummer
+        en een SPLIT_ID. mergeRAAPArtefacts (Transform 3) neemt aantal, gewicht en materiaal van de kop
+        over in de detailrijen. Sinds issue 86 wordt ook de kop geladen, met een eigen key zonder S.
+        """
+        kop = artefact('ARTEFACT', artefactsoort='Hout', projectcd='DC112', vondstnr=13, putnr=None,
+                       brondata_extra={'ARTEFACT': 2, 'MATERIAAL': 'OPH'}, artefactnr=2, key='PDC112V13A2')
+        details = [artefact('ARTF_OPH', subnr=701 + i, artefactsoort='Hout', projectcd='DC112', vondstnr=13,
+                            putnr=None, bron_id=10 + i, brondata_extra={'ARTEFACT': 2, 'SPLIT_ID': i},
+                            artefactnr=2, splitid=i, key=f'PDC112V13A2S{i}') for i in range(2)]
+        clean = simuleerTransform5([kop] + details)
+        assert sorted(delta_transform.getArtefactKey(d) for d in clean) == ['PDC112V13A2', 'PDC112V13A2S0',
+                                                                            'PDC112V13A2S1']
         assert all(len(d['brondata']) == 1 for d in clean)

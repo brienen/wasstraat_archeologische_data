@@ -28,8 +28,10 @@ tests/
 ├── unit/                                     # Unit tests, zie de tabel hieronder
 │   └── nep_mongo.py                          # In-memory nabootsing van pymongo (hulpmodule, geen tests)
 └── integration/
+    ├── conftest.py                           # Volgorde: test_delft_referentie.py na de pipeline-tests
     ├── fixtures/delft_golden_snapshot.json   # Referentie-uitkomst van de Delftse testdata
     ├── snapshot_mongodb.py                   # Hulpmiddel om een referentie-uitkomst vast te leggen
+    ├── test_delft_referentie.py              # Delftse uitkomst tegen de referentie-uitkomst
     ├── test_full_pipeline.py                 # Pipeline met directe MongoDB-seeding
     ├── test_full_pipeline_synthetic_data.py  # Volledige pipeline via Airflow (synthetische data)
     ├── test_full_pipeline_delft_data.py      # Volledige pipeline via Airflow (Delftse data)
@@ -141,7 +143,22 @@ make integration-delft
 
 Dit target test met de echte Delftse opgravingsdata en controleert op Delft-specifieke aantallen. De Delftse data is niet opgenomen in de repository — deze tests worden automatisch overgeslagen als de data niet aanwezig is in `data/test/`.
 
-Daarnaast legt `tests/integration/fixtures/delft_golden_snapshot.json` een referentie-uitkomst vast: de aantallen per soort in `Single_Store` en `Single_Store_Clean`, de artefactsoorten en voorbeeldsleutels. Geen test leest dat bestand automatisch. Raakt een wijziging de Delftse uitkomst, vergelijk de nieuwe uitkomst dan met de referentie, verklaar elk verschil en leg de referentie opnieuw vast, met de verklaring in het veld `beschrijving`. Voor een vergelijking van de aantallen per collectie in MongoDB is er `tests/integration/snapshot_mongodb.py` (`save` en `compare`).
+Daarnaast legt `tests/integration/fixtures/delft_golden_snapshot.json` een referentie-uitkomst vast: de aantallen per soort in `Single_Store` en `Single_Store_Clean`, de artefactsoorten en voorbeeldsleutels. `tests/integration/test_delft_referentie.py` (marker `delft`) vergelijkt de werkelijke uitkomst daarmee en noemt elk verschil op een eigen regel, bijvoorbeeld `Single_Store_Clean, soort Artefact: referentie 6075, nu 6136 (+61)`. De test draait in `make integration-delft` en `make integration-delft-pipeline` na de pipeline-tests (`tests/integration/conftest.py` zet hem achteraan) en wordt overgeslagen als `Single_Store_Clean` leeg is.
+
+Raakt een wijziging de Delftse uitkomst, verklaar dan elk verschil en leg de referentie opnieuw vast, met de verklaring in het veld `beschrijving`. De make-targets ruimen de testomgeving aan het eind op; draai de pipeline daarom met de hand en leg de referentie vast zolang de omgeving draait:
+
+```bash
+docker compose -p wasstraat-delft-test -f docker-compose.delft-test.yml up -d mongo-test postgres-test elasticsearch-test airflow-test
+MONGO_TEST_URI="mongodb://testroot:testpass@localhost:27118/" \
+.venv/bin/python -m pytest tests/integration/ -v -s -m "delft and not delft_load and not delft_flask"
+# verschillen tonen (het script leest de Delftse MongoDB op 27118, of MONGO_TEST_URI_DELFT)
+.venv/bin/python tests/integration/snapshot_mongodb.py vergelijk-referentie tests/integration/fixtures/delft_golden_snapshot.json
+# referentie opnieuw vastleggen (zonder verklaring blijft de bestaande beschrijving staan)
+.venv/bin/python tests/integration/snapshot_mongodb.py referentie tests/integration/fixtures/delft_golden_snapshot.json "<verklaring>"
+docker compose -p wasstraat-delft-test -f docker-compose.delft-test.yml down -v
+```
+
+Voor een vergelijking van de aantallen per collectie in alle drie de MongoDB-databases is er daarnaast `save` en `compare` in hetzelfde script.
 
 ### Handmatig
 
@@ -154,6 +171,22 @@ python -m pytest tests/integration/ -v -m integration
 
 docker compose -p wasstraat-test -f docker-compose.test.yml down -v
 ```
+
+De twee testomgevingen hebben elk eigen hostpoorten en kunnen tegelijk draaien, ook naast een installatie:
+
+| Testomgeving | MongoDB | Airflow | Apache |
+|--------------|---------|---------|--------|
+| Synthetisch (`docker-compose.test.yml`) | 27117 | 8081 | 5061 |
+| Delft (`docker-compose.delft-test.yml`) | 27118 | 8082 | 5062 |
+
+PostgreSQL, Redis, Flask en Elasticsearch hebben in de testomgevingen geen hostpoort. De integratietests vinden MongoDB via `MONGO_TEST_URI`; de standaard is 27117, in de Delftse tests 27118, en `make integration-delft` zet hem op 27118. Handmatig voor de Delftse testomgeving:
+
+```bash
+MONGO_TEST_URI="mongodb://testroot:testpass@localhost:27118/" \
+python -m pytest tests/integration/ -v -m "delft or delft_load"
+```
+
+`tests/unit/test_testomgevingen_poorten.py` eist dat de hostpoorten van de compose-bestanden niet overlappen en dat de Makefile en de integratietests de juiste MongoDB-poort gebruiken.
 
 ## Pakketversies bijwerken
 
@@ -192,6 +225,7 @@ Alle bestanden staan in `tests/unit/`.
 | `test_importMDB_bash.py`, `test_importMDB_functions.sh` | De bash-functies van `importMDB.sh` |
 | `test_importMDB_kopregel.py` | `importMDB.sh`: de kopregel van de CSV-export (zelf gequote, ook bij komma's in kolomnamen) |
 | `test_importMDB_lijstbestand.py` | `importMDB.sh` met een lijstbestand (incrementele cyclus) |
+| `test_importMDB_projectcode.py` | `importMDB.sh`: de projectcode per bestand; een map die niet met hoofdletters of cijfers begint, erft niet de code van het vorige bestand |
 | `test_csv_kolommen.py` | `airflow_app/scripts/csv_kolommen.py` en de aanroep in `importMDB.sh`: `table`, `projectcd`, `bron`, `loadtime` en `mdbfile` achter elk record, ook bij een tekstveld met een regeleinde; bijzondere tekens (`&`, `\`) in tabelnamen en paden; byte voor byte gelijk aan de vroegere `sed`-regels zolang er geen regeleinde in een veld staat |
 | `test_encoding.py` | UTF-8-conversie, herkenning van Windows-1252, dubbele CSV-kopregels |
 | `test_paden_overslaan.py` | `paden_overslaan`: patronen, foutieve waarden, het script voor `importMDB.sh` (met nep-MDB's), de registratie, de afbeeldingen en de configuraties in de repository |
@@ -200,16 +234,17 @@ Alle bestanden staan in `tests/unit/`.
 | `test_controle_extractie.py` | Het log van `importMDB.sh` lezen, `Controleer_Databases` onder en boven de drempel, `Controleer_Afbeeldingen` in beide cycli |
 | `test_foto_parsing.py` | Bestandsnamen van objectfoto's, tekeningen (A–E, P, T, LZW), projectfoto's (F/G), DAN/DAR-rapporten, artefactsoort uit het pad |
 | **Transformatie** | |
-| `test_harmonizer.py` | `$ifNull`-ketens, tabelpatronen, `loadHarmonizer` (Excel naar DataFrame), opbouw van de pipeline, overerving, `getHarmonizeAggr` wijzigt de gecachete pipeline niet |
-| `test_correcties_yml.py` | `correcties.yml` laden en toepassen, inclusief foutscenario's, `paden_overslaan` en `harmonisatie_voorrang` |
-| `test_harmonisatie_voorrang.py` | Voorrang bij een tabel die meer harmonisatie-pipelines selecteren (issue 89): de voorrangsregel, welke pipelines meedoen, de overlap in de Delftse staging (Delftse Excel en de tabelnamen uit `fixtures/delft_staging_tabellen.json`, met een nagebootste `distinct`), de besluiten met en zonder instelling, de waarschuwing in het run-document, en `harmonize` met dezelfde uitkomst in elke volgorde van de taken (ook incrementeel) |
-| `test_profielen.py` | Gemeenteprofielen: keuze, cache, `ConventieProfiel`, `DelftProfiel`, `VoorbeeldProfiel` |
+| `test_harmonizer.py` | `$ifNull`-ketens, tabelpatronen, `loadHarmonizer` (Excel naar DataFrame), opbouw van de pipeline, overerving, `getHarmonizeAggr` wijzigt de gecachete pipeline niet, de cache per Excel-pad (één keer lezen, opnieuw bij `reload=True`, een ander pad of een gewijzigd bestand), de waarschuwing voor objecten die geen soort zijn, geen afhankelijkheid van de kolom `Samenvoegen` |
+| `test_correcties_yml.py` | `correcties.yml` laden en toepassen, inclusief foutscenario's, `paden_overslaan`, `harmonisatie_voorrang` en de controle van `rapportcode_prefixen` (onbekend type gemeld en overgeslagen) |
+| `test_harmonisatie_voorrang.py` | Voorrang bij een tabel die meer harmonisatie-pipelines selecteren (issue 89): de voorrangsregel, welke pipelines meedoen, de overlap in de Delftse staging (Delftse Excel en de tabelnamen uit `fixtures/delft_staging_tabellen.json`, met een nagebootste `distinct`), de besluiten met en zonder instelling, de waarschuwing in het run-document, en `harmonize` met dezelfde uitkomst in elke volgorde van de taken (ook incrementeel); een tabel met een lege waarde (codetabel, issue 75) komt niet in `Single_Store` en `Single_Store_Clean` en blijft in de staging |
+| `test_artefactsoort_materiaal.py` | Artefactsoort uit de ABR-materiaalcode (issue 86): de artefactsoorten uit het blad `Objecten`, de afleiding per code langs een nagebootste ABR-thesaurus (eenduidig, Metaal of Munt, onderverdeeld materiaal, één niveau lager, geen ABR-code) en `zetArtefactsoortUitMateriaalcode` met telling, waarschuwing en incrementeel filter |
+| `test_profielen.py` | Gemeenteprofielen: keuze, cache, foutmelding bij een onbekend profiel, `ConventieProfiel`, `DelftProfiel`, `VoorbeeldProfiel`; Transform 1 en 2 falen direct bij een onbekend profiel |
 | `test_archutils.py` | `convertToInt`, `convertToBool`, `fixDatering` (eeuw-kwartnotatie, Romeinse cijfers, LMEb, RT, gecombineerde dateringen) |
 | `test_rijksdriehoek.py` | Rijksdriehoek naar WGS84 en terug, met referentiepunten |
 | `test_fix_monster_projectcds.py` | Projectcodes van de monsterdatabase |
 | `test_fixes_1_to_4.py`, `test_fix_5_nonetype_foto.py`, `test_fix_6_coordinaatvalidatie.py`, `test_fix_7_kolomselectie.py`, `test_fix_8_dropna.py` | Eerdere reparaties: robuustheid bij ontbrekende of ongeldige data, coördinaatvalidatie, kolomselectie in `mergeFotoinfo`, `dropna` |
 | `test_meta_project.py`, `test_meta_generate_missing.py` | De Project-configuratie en de pipelines voor ontbrekende putten, vlakken, sporen, vondsten en dozen in `meta.py` |
-| `test_merge_artefacten.py` | Verplaatsen en samenvoegen van artefacten: elke bronrij in precies één document |
+| `test_merge_artefacten.py` | Verplaatsen en samenvoegen van artefacten: elke bronrij in precies één document, ook uit de RAAP-tabel `ARTEFACT` (issue 86) |
 | `test_delta_transform.py` | Delta-varianten van de transformaties en stabiele sleutels (ook de samengestelde sleutel van artefacten) |
 | `test_bronsleutel.py` | De hulpsleutel uit de bronrij en het toekennen van stabiele `primary_key`s daarop, ook bij een andere artefactsoort in de key (issue 89) |
 | `test_stabiele_sleutels_cycli.py` | Opeenvolgende volledige cycli met productie-achtige data: verloren keys (issue 88), een eerste load zonder hulpsleutel, en een wisselende artefactsoort en een gecorrigeerd vondstnummer (issue 89): 0 nieuw en 0 hernummerd |
@@ -220,7 +255,7 @@ Alle bestanden staan in `tests/unit/`.
 | `test_load_incrementeel.py` | `loadIncrementeel` (upsert, verwijderen, FK's, sequence, schemamigratie en verwijzingen van gebruikersdata) en `indexTableIncrementeel` |
 | `test_afgeleide_velden.py` | `herberekenAfgeleideVelden`: SQL, randgevallen op SQLite en gelijkheid met `init.init()` van de webapplicatie |
 | **Run, foutbeleid en rapport** | |
-| `test_verwerkingsrun.py`, `test_bronbestanden.py`, `test_opruimen.py` | Run-document, registratie en delta van bronbestanden, opruimen van oude records |
+| `test_verwerkingsrun.py`, `test_bronbestanden.py`, `test_opruimen.py` | Run-document (ook `Start_Run` met een onbekend gemeenteprofiel), registratie en delta van bronbestanden, opruimen van oude records |
 | `test_foutbeleid.py` | Beleid per taak, drempels en meldingen, de `on_failure_callback`, `controleerBewaking` op nagebootste DAG's, het run-document van alle cycli, `dropAll`, Transform 2 en 3, meldingen van de laadstap |
 | `test_verwerkingsrapport.py` | Opbouw per sectie, JSON-structuur, Markdown-koppen, terugval van de rapportmap, de lezers met nagebootste MongoDB en PostgreSQL |
 | **Webapplicatie** | |
@@ -230,10 +265,12 @@ Alle bestanden staan in `tests/unit/`.
 | **Installatie, configuratie en images** | |
 | `test_init_config.py` | `init-config.sh` in een tijdelijke kopie: gegenereerde wachtwoorden, bestaande bestanden blijven staan |
 | `test_config_cache.py` | De cache-instellingen uit `shared/config.py` zijn getallen |
+| `test_config.py` | `shared/config.py`: standaardwaarden van de paden, de `POSTGRES_`-variabelen per variabele, `MAIL_USE_TLS` als ja/nee, alle drempels in de config; de sjablonen bevatten alleen gelezen variabelen; versie en rapportenmap in de compose-bestanden |
 | `test_wachtwoord_maskeren.py` | `maskeerWachtwoord` en dat de logs geen wachtwoorden tonen |
 | `test_apache_voordeur.py` | De Apache-configuratie, de compose-bestanden, de Makefile en `ProxyFix` |
 | `test_deploy.py` | De live installatie in `deploy/`: kopieën gelijk aan het origineel, alleen images, alleen-lezen mounts, `PGDATA`, poorten, `make publish` |
 | `test_elasticsearch_testomgeving.py` | Een eigen Elasticsearch zonder hostpoort in beide testomgevingen |
+| `test_testomgevingen_poorten.py` | De hostpoorten van de twee testomgevingen overlappen niet (onderling en met een installatie); de Makefile en de integratietests gebruiken de juiste MongoDB-poort |
 | `test_pakketversies.py` | Vastgelegde pakketversies en robuuste builds (`constraints.txt`, `pip check`, apt-retries, `make constraints`) |
 | `test_jupyter_image.py` | De pakketten van de Jupyter-image |
 | `test_synthetic_data.py`, `test_synthetic_monster_data.py` | Structuur van de synthetische Access-databases en monsterdata |
@@ -245,6 +282,7 @@ Alle bestanden staan in `tests/unit/`.
 | `test_full_pipeline.py` | Volledige harmonisatie-pipeline met directe MongoDB-seeding: harmonisatie, attributen, sleutels, verplaatsen en samenvoegen, verwijzingen |
 | `test_full_pipeline_synthetic_data.py` | Volledige ETL via Airflow met de synthetische data: verwachte aantallen per soort, objectfoto's gekoppeld aan hun artefact en vondst, unieke sleutels, de werkmap die `paden_overslaan` overslaat, een memo-veld met een regeleinde, `DAG_Load_Only` volledig geslaagd |
 | `test_full_pipeline_delft_data.py` | Dezelfde pipeline met de Delftse testdata (DB034) en Delft-specifieke verwachte aantallen; Elasticsearch per tabel gelijk aan PostgreSQL |
+| `test_delft_referentie.py` | De Delftse uitkomst tegen de referentie-uitkomst (`fixtures/delft_golden_snapshot.json`): aantallen per soort in `Single_Store` en `Single_Store_Clean`, artefactsoorten en voorbeeldsleutels, met een regel per verschil |
 | `test_harmonize_pipeline.py` | Individuele harmonisatie-pipelines |
 | `test_importMDB_bash.py` | Het importscript in Docker: encoding-conversie, CSV, `mongoimport` |
 | `test_incremental_synthetic_data.py` | Volledige cyclus, negen incrementele runs en opnieuw de volledige cyclus (zie [Incrementele cyclus](#incrementele-cyclus)): PostgreSQL, Elasticsearch, registratie, gebruikersdata, run-document en verwerkingsrapport |

@@ -291,13 +291,15 @@ Dit tabblad definieert welke entiteiten (objecten) de Wasstraat herkent en hoe t
 | **Object** | Naam van het entiteitstype | `Vondst`, `Artefact`, `Aardewerk` |
 | **Tabellen** | Regex-patronen die brontabellen matchen | `["^VONDSTENLIJST", "^VONDST$"]` |
 | **Overerven** | Ouder-entiteit waarvan attributen worden overgenomen | `Artefact` (voor `Aardewerk`, `Glas`, etc.) |
-| **Samenvoegen** | Entiteit waarmee samengevoegd wordt | — |
+| **Samenvoegen** | Niet gebruikt door de pipeline; mag leeg blijven of ontbreken | — |
 | **ABR-materiaal** | URI naar ABR-materiaalclassificatie | `https://data.cultureelerfgoed.nl/...` |
 | **ABR-submateriaal** | URI naar ABR-submateriaalclassificatie | `https://data.cultureelerfgoed.nl/...` |
 
+Bij een artefactsoort (een object dat van `Artefact` overerft) dienen **ABR-materiaal** en **ABR-submateriaal** ook om de artefactsoort af te leiden van een artefact zonder soort dat wel een ABR-materiaalcode heeft, zoals de RAAP-tabel `ARTEFACT` (zie [Transformatie](componenten/transformatie.md#transform-2-attributen)). Vul ze daarom in met de URI's uit de ABR-thesaurus.
+
 De kolom **Tabellen** bevat reguliere expressies als lijst. Wanneer de naam van een tabel in een brondatabase overeenkomt met een van deze patronen, wordt de tabel herkend als dat objecttype. Hoofdletters maken niet uit en een patroon hoeft niet de hele naam te dekken: een tabel `VONDSTENLIJST_2019` matcht het patroon `^VONDSTENLIJST` en wordt dus behandeld als `Vondst`, en `VLAK` treft ook `VLAKKEN`. Gebruik `^` en `$` om dat te beperken.
 
-De speciale rij **Ignore** bevat patronen voor tabellen die moeten worden overgeslagen, zoals `.*backup.*`, `.*kopie.*` en `.*tijdelijk.*`.
+De speciale rij **Ignore** bevat patronen voor tabellen die moeten worden overgeslagen, zoals `.*backup.*`, `.*kopie.*` en `.*tijdelijk.*`. Elk ander object moet een soort van de Wasstraat zijn (`meta.py`); een rij met een onbekend object wordt niet gebruikt en geeft bij elke run een waarschuwing in het verwerkingsrapport (taak `Controleer_Harmonisatie_Excel`).
 
 #### Overerving van artefacten
 

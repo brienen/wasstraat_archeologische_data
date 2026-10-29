@@ -106,10 +106,10 @@ AGGR_PHASE_ARTEFACTSOORT = {
     }
 }
 
-## Artefacten uit deze tabel worden nooit verplaatst (ontwerp van 2022). Zonder subnummer, met een
-## kolom ARTEFACT of in een uitgezonderd project worden ze ook niet samengevoegd en komen ze dus niet
-## in Single_Store_Clean (in Delft de RAAP-tabel ARTEFACT van onder meer DC024 en DC112).
-ARTEFACT_NOT_MOVE_TABLES = ['ARTEFACT']
+## Tot issue 86 werden de artefacten uit de RAAP-tabel ARTEFACT nooit verplaatst (ontwerp van 2022,
+## ARTEFACT_NOT_MOVE_TABLES): ze kwamen niet in Single_Store_Clean. Sinds issue 86 (besluit van de
+## opdrachtgever: wel laden) worden ze verplaatst zoals elke andere bronrij met een kolom ARTEFACT, en
+## krijgen ze in Transform 2 een artefactsoort uit hun ABR-materiaalcode (wasstraat/artefactsoort_materiaal.py).
 
 
 def getArtefactMergeVoorwaarde():
@@ -142,14 +142,13 @@ def getInverseMatchArtefact():
     bronrij, dan bleven de verplaatste exemplaren naast het samengevoegde
     document staan, met dezelfde key (in Delft 5.746 documenten in 2.433
     groepen). Nu is de verplaatsing het complement ($nor) van
-    getArtefactMergeVoorwaarde, met als enige uitzondering de tabellen uit
-    ARTEFACT_NOT_MOVE_TABLES, die nooit worden verplaatst.
+    getArtefactMergeVoorwaarde. Sinds issue 86 zonder uitzondering: ook de
+    RAAP-tabel ARTEFACT, die tot dan nooit werd verplaatst, gaat mee.
 
     Returns:
         Dict met een $match-fase
     """
     return {'$match': {'$and': [{'soort': 'Artefact'},
-                                {'brondata.table': {'$nin': list(ARTEFACT_NOT_MOVE_TABLES)}},
                                 {'$nor': [getArtefactMergeVoorwaarde()]}]}}
 
 ''' Factory method to retrieve move aggragtion pipeline for specific type

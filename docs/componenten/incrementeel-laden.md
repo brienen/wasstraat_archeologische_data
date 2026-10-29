@@ -366,6 +366,26 @@ In de Delftse testomgeving is dit nagespeeld: na een nagebootste cyclus met verl
 
 Zonder beide fixes hangt de uitkomst af van de timing: wint `Artefact` opnieuw, dan verandert er niets (en blijven de determinaties weg); wint `Aardewerk`, dan krijgen de 799 rijen opnieuw een nieuw nummer.
 
+### Codetabellen, spijkers, RAAP-koppen en tussenversies (issues 75, 85 en 86)
+
+Vier wijzigingen in de configuratie en de code veranderen welke bronrijen in `Single_Store_Clean` komen: de codetabellen `AARDEWERK 1&2 VOORWERP` en `AARDEWERK 1 BAKSEL` gaan uit de harmonisatie (lege waarde in `harmonisatie_voorrang`, issue 75), de spijkers uit `Spijkeranalyse Koningsveld` krijgen subnummer, vondst en put (blad `Artefact` van de harmonisatie-Excel, issue 85), de RAAP-tabel `ARTEFACT` wordt geladen met een artefactsoort uit de materiaalcode, en de tussenversies `HHD2.mdb` en `dc79a1.mdb` van DC097 staan in `paden_overslaan` (issue 86).
+
+**Samengevoegde documenten die bronrijen verliezen.** Na het overslaan van de tussenversies verliezen 533 samengevoegde artefacten en 351 samengevoegde vondsten van DC097 twee van hun drie bronrijen, en daarmee hun hulpsleutel (de lijst van hun bronrijen). Ze houden hun nummer toch: hun natuurlijke key (`key_subnr|artefactsoort` en `P<project>[P<put>]V<vondst>`) verandert niet en staat precies één keer in de tabel (stap 4). Sporen en vullingen van DC097 stonden drie keer in de tabel, één keer per database (verplaatst, niet samengevoegd); de rij uit `opgravingDC97.mdb` wordt teruggevonden op hulpsleutel en key (stap 5), de twee andere vervallen. Een extra regel voor een document waarvan de hulpsleutel een deel is van die van een bestaande rij is daarom niet nodig.
+
+**Spijkers met een subnummer.** De 285 spijkers stonden met een hulpsleutel-key in `Def_Artefact` (`PDB034|Metaal|bron:…`). Met subnummer, vondst en put krijgen 254 van hen een eigen key `key_subnr|Metaal`; Transform 4 vindt hun rij terug op de hulpsleutel-key als vervangende key (stap 3b) en de load schrijft de nieuwe key bij het bestaande nummer. De andere 31 worden samengevoegd zoals elk artefact met een subnummer: 16 met een artefact uit de tabel `METAAL` met hetzelfde project, dezelfde put, vondst en subnummer (in één geval samen met een tweede spijker; dat artefact houdt zijn nummer via zijn key), en 15 in 6 groepen van 2 tot 4 spijkers met hetzelfde nummer (vooral vondstnummer 0), die een nieuw nummer krijgen. Hun 31 oude nummers vervallen.
+
+**Volgende volledige cyclus op productie.** Simulatie (alleen lezen) van Transform 1 tot en met het toekennen van de `primary_key`s in Transform 4, met de code van de repository, op een kopie van de staging van de productie-installatie in een aparte MongoDB, met nieuwe `_id`'s zoals na een nieuwe extractie, de documenten van de tussenversies weggelaten zoals de extractie ze overslaat, en vergeleken met de tabellen in PostgreSQL na de cyclus van 29 oktober 2026 19:01. Met de code en configuratie van vóór deze wijzigingen geeft dezelfde simulatie in alle 21 tabellen 0 nieuw, 0 gewijzigd en 0 vervallen.
+
+| Tabel | Rijen | Teruggevonden | Nieuw | Vervallen | Toelichting |
+|-------|------:|--------------:|------:|----------:|-------------|
+| `Def_Artefact` | 22.551 | 22.263 | 138 | 288 | Nieuw: 132 RAAP-koppen en 6 groepen spijkers. Vervallen: 142 rijen uit de codetabellen, 115 artefacten die alleen in de tussenversies van DC097 stonden en 31 spijkers die opgaan in een ander artefact. Van de teruggevonden rijen krijgen 254 spijkers een nieuwe key en hebben 548 artefacten (533 van DC097, 15 uit `METAAL`) andere bronrijen; geen enkel nummer gaat naar een andere bronrij |
+| `Def_Spoor` | 1.535 | 1.353 | 1 | 182 | Nieuw: het spoor `PDB034P10S288` uit de spijkeranalyse (gegenereerd). Vervallen: de sporen uit de tussenversies van DC097 |
+| `Def_Vulling` | 1.091 | 895 | 0 | 196 | Vervallen: de vullingen uit de tussenversies van DC097 |
+| `Def_Vondst` | 6.266 | 6.266 | 1 | 0 | Nieuw: de vondst `PDB034P11V318` uit de spijkeranalyse (gegenereerd); 351 vondsten van DC097 met minder bronrijen houden hun nummer |
+| 17 andere tabellen | | alle | 0 | 0 | |
+
+Geen van de vervallen rijen heeft gebruikersdata (bruiklenen, conservering, extra ABR-materiaal) of een gekoppelde foto. Draai na het bijwerken de volledige cyclus.
+
 ### Elasticsearch-delta (`fulltext.indexTableIncrementeel`)
 
 Per tabel uit `LOAD_TABELLEN` een taak `Index_<tabel>`, parallel na `Load_Upsert`. Bestaat de alias van de tabel (aangemaakt door `indexTable`), dan worden alle rijen in de index achter de alias geïndexeerd met dezelfde documenten als `generate_docs` (`_id` = `primary_key`, een bestaand document wordt overschreven) en daarna de documenten verwijderd waarvan de `_id` niet meer in de tabel staat (id's uit Elasticsearch met `helpers.scan` zonder `_source`, verschil bepalen, bulk delete). Zonder alias, of als de alias naar meer dan één index wijst, volgt een volledige indexering met `indexTable`. Alleen `LOAD_TABELLEN` worden geïndexeerd: de gebruikerstabellen verandert de incrementele cyclus niet.

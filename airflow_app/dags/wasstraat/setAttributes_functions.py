@@ -11,6 +11,7 @@ import wasstraat.mongoUtils as mongoUtil
 import wasstraat.verwerkingsrun as verwerkingsrun
 import wasstraat.delta_transform as delta_transform
 import wasstraat.foutbeleid as foutbeleid
+import wasstraat.artefactsoort_materiaal as artefactsoort_materiaal
 
 # Import app code
 # Absolute imports for Hydrogen (Jupyter Kernel) compatibility
@@ -140,6 +141,10 @@ def enhanceAllAttributes(incrementeel=False):
         if incrementeel:
             doc_filter = {delta_transform.VELD_DELTA_RUN: verwerkingsrun.huidigeRun()['run_id']}
 
+        # Gemeenteprofiel één keer laden, buiten de lus: een onbekend profiel (WASSTRAAT_GEMEENTE) laat de
+        # taak direct falen in plaats van elk document als verwerkingsfout te tellen (issue 87)
+        profiel = get_profiel()
+
         #loop over all docs in Collection
         for doc in analyseCol.find(doc_filter):
             success = False
@@ -147,7 +152,6 @@ def enhanceAllAttributes(incrementeel=False):
             try:
                 # Identificeer: normaliseer en valideer identificerende velden
                 # via gemeenteprofiel (projectcd, tekeningcd, rapportnr, integers, artefactsoort)
-                profiel = get_profiel()
                 soort = doc.get('soort', '')
 
                 # Tekst-cleaning vóór identificatie (nodig voor tekeningcd, typevoorwerp)
@@ -269,6 +273,10 @@ def enhanceAllAttributes(incrementeel=False):
                     raise Exception(msg) from e
 
         logger.info(f"enhanceAllAttributes voltooid: {count_success} succesvol, {count_error} fouten")
+
+        # Artefacten zonder artefactsoort met een ABR-materiaalcode (RAAP-tabel ARTEFACT, issue 86)
+        artefactsoort_materiaal.zetArtefactsoortUitMateriaalcode(analyseCol, doc_filter)
+
         toetsVerwerkingsfouten('enhance_attributes', count_error, count_success + count_error, voorbeelden)
 
     finally:
