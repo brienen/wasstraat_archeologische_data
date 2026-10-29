@@ -27,7 +27,8 @@ T0 = datetime(2026, 10, 29, 10, 0, 0)
 KOPPEN = ['## Foutbeleid', '### Fouten', '### Waarschuwingen', '### Mislukte taken', '## Bronbestanden',
           '### Totalen per categorie', '### Bestanden', '## Objecttotalen', '### Artefacten per soort',
           '## Kwaliteitsmeldingen', '### Verwerkingsfouten (Transform 2)', '### Afbeeldingen en rapporten',
-          '### Access-databases', '### Overgeslagen paden (paden_overslaan)', '### Locatiefouten',
+          '### Access-databases', '### Overgeslagen paden (paden_overslaan)',
+          '### Harmonisatie: tabellen bij meer dan één soort', '### Locatiefouten',
           '### Onherkende bestandsnamen', '### Rijen zonder key', '### Verwijzingen (FK)', '### Gebruikersdata',
           '### Sleutels', '### Afgeleide velden', '## Pipeline', '### Doorlooptijd per stap', '### Langste taken']
 
@@ -235,6 +236,26 @@ class TestObjecttotalenEnKwaliteit:
     def test_kwaliteit_zonder_run(self):
         kw = rapportmodule.bouwKwaliteit(None, [], None, None)
         assert kw['afbeeldingen'] is None and kw['databases'] is None and kw['fk'] is None
+        assert kw['harmonisatie_voorrang'] == []
+
+    def test_voorrang_bij_de_harmonisatie(self):
+        """Issue 89: de besluiten per melder uit het run-document, één lijst op collectie en tabel."""
+        aw1 = {'tabel': 'AW1DeterminatiesJohan', 'collectie': 'Staging_Projecten_Oud', 'kandidaten': ['Aardewerk', 'Artefact'],
+               'gekozen': 'Aardewerk', 'bron': 'correcties.yml'}
+        code = {'tabel': 'CODES', 'collectie': 'Staging_Projecten_Oud', 'kandidaten': ['Vlak', 'Metaal'],
+                'gekozen': None, 'bron': 'correcties.yml'}
+        regel = {'tabel': 'X', 'collectie': 'Staging_Projecten_Monster', 'kandidaten': ['Monster', 'Monster_Schelp'],
+                 'gekozen': 'Monster', 'bron': 'voorrangsregel'}
+        ongeldig = dict(regel, tabel='Y', ongeldige_instelling='Glas')
+        run = maakRun('volledig', tellingen={'transform': {'harmonisatie_voorrang': {
+            'Aardewerk': [aw1], 'Vlak': [code], 'Monster': [regel, ongeldig]}}})
+        kw = rapportmodule.bouwKwaliteit(run, [], None, None)
+        assert [b['tabel'] for b in kw['harmonisatie_voorrang']] == ['X', 'Y', 'AW1DeterminatiesJohan', 'CODES']
+        md = rapportmodule.maakMarkdown({'kwaliteitsmeldingen': kw})
+        assert '| AW1DeterminatiesJohan | Staging_Projecten_Oud | Aardewerk, Artefact | Aardewerk | correcties.yml |' in md
+        assert '| CODES | Staging_Projecten_Oud | Vlak, Metaal | geen enkele soort | correcties.yml |' in md
+        assert '| X | Staging_Projecten_Monster | Monster, Monster_Schelp | Monster | voorrangsregel (waarschuwing) |' in md
+        assert 'voorrangsregel; instelling Glas genegeerd' in md
 
 
 # ============================================================

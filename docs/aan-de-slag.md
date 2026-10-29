@@ -371,7 +371,7 @@ Het configuratiebestand bevat de volgende objecttypen:
 
 ## 5b. Correcties configureren (optioneel)
 
-Naast de harmonisatie-Excel kan je een `correcties.yml` aanmaken in dezelfde `wasstraat_config/`-directory. Dit bestand bevat gemeente-specifieke datacorrecties en uitzonderingen die de pipeline automatisch toepast. Hieronder de vijf secties in het kort; de volledige beschrijving met alle regels en het foutgedrag staat in [Configuratie: correcties.yml](componenten/configuratie.md#3-correctiesyml).
+Naast de harmonisatie-Excel kan je een `correcties.yml` aanmaken in dezelfde `wasstraat_config/`-directory. Dit bestand bevat gemeente-specifieke datacorrecties en uitzonderingen die de pipeline automatisch toepast. Hieronder de secties in het kort; de volledige beschrijving met alle regels en het foutgedrag staat in [Configuratie: correcties.yml](componenten/configuratie.md#3-correctiesyml).
 
 ```
 data/<omgeving>/wasstraat_config/correcties.yml
@@ -430,6 +430,11 @@ rapportcode_prefixen:
     type: "archeologische_rapportage"
   - prefix: "DAN"
     type: "archeologische_notitie"
+
+# Welke soort een tabel harmoniseert die de patronen van meer soorten in de Excel selecteren
+# (de run waarschuwt met tabel_dubbel_geselecteerd); leeg: door geen enkele soort
+harmonisatie_voorrang:
+  AW1DeterminatiesJohan: Aardewerk
 ```
 
 !!! tip "Leeg bestand is prima"

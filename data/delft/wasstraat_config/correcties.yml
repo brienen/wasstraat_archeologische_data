@@ -90,3 +90,14 @@ paden_overslaan:
   # artefacten die alleen uit deze kopieën kwamen. De overige 251 bestanden in de map (o.a. 4 jpg,
   # 2 tif, 2 pdf) vielen al buiten de selectie van afbeeldingen en rapporten.
   - "DC024_Stadskantoor/K Overig/werkmap joris"
+
+# Voorrang bij de harmonisatie (issue 89): welke soort een Access-tabel harmoniseert als de patronen
+# van meer dan één soort in de harmonisatie-Excel (blad Objecten, kolom Tabellen) hem selecteren.
+# Tabelnaam (precies, hoofdlettergevoelig) → soort, of een lege waarde: door geen enkele soort
+# (bijvoorbeeld een codetabel). Zonder instelling kiest de voorrangsregel (een specifieke artefactsoort
+# vóór Artefact, verder de volgorde in meta.py) en meldt de run een waarschuwing.
+harmonisatie_voorrang:
+  # Determinaties van aardewerk uit DB034 (opgravingDB34.mdb, 802 rijen in Staging_Projecten_Oud).
+  # Aardewerk selecteert hem via "AW1.*", Artefact via "Determinaties"; als Aardewerk krijgt hij
+  # baksel, codes, decoratie, fragment, rand, glazuur en het ABR-materiaal.
+  AW1DeterminatiesJohan: Aardewerk

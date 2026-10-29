@@ -8,7 +8,8 @@ count_documents, estimated_document_count, create_index (unieke, eventueel
 partiële indexen worden gecontroleerd) en aggregate met $match + $group/$sum.
 
 Filters: gelijkheid, een gecompileerde reguliere expressie, $in, $nin, $ne,
-$exists, $gt, $gte, $lt, $lte, $or, $and, $nor en veldnamen met punten.
+$exists, $not, $gt, $gte, $lt, $lte, $or, $and, $nor en veldnamen met punten.
+distinct(veld, filter) zoals op een pymongo-collectie.
 """
 import copy
 import re
@@ -88,6 +89,9 @@ def matcht(doc, filt):
                     ok = waarde is _ONTBREEKT or waarde != arg
                 elif op == '$exists':
                     ok = (waarde is not _ONTBREEKT) == bool(arg)
+                elif op == '$not':
+                    # $not met een reguliere expressie of met operatoren (harmonisatie, issue 89)
+                    ok = not matcht(doc, {veld: arg})
                 elif op in ('$gt', '$gte', '$lt', '$lte'):
                     ok = waarde is not _ONTBREEKT and waarde is not None and _VERGELIJK[op](waarde, arg)
                 else:
@@ -166,6 +170,9 @@ class NepCollectie:
 
     def count_documents(self, filt):
         return len([d for d in self.docs if matcht(d, filt)])
+
+    def distinct(self, veld, filt=None):
+        return self.find(filt).distinct(veld)
 
     def estimated_document_count(self):
         return len(self.docs)

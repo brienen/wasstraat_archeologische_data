@@ -52,6 +52,9 @@ SOORT_DATABASE_ONLEESBAAR = 'database_onleesbaar'
 SOORT_DATABASE_LEEG = 'database_leeg'
 SOORT_TABEL_OVERGESLAGEN = 'tabel_overgeslagen'
 SOORT_IMPORT_MELDING = 'import_melding'
+# Transform 1 (issue 89): een tabel die meer dan één harmonisatie-pipeline selecteert, zonder keuze in
+# correcties.yml (harmonisatie_voorrang); de voorrangsregel heeft gekozen
+SOORT_TABEL_DUBBEL_GESELECTEERD = 'tabel_dubbel_geselecteerd'
 SOORT_AFBEELDINGEN_MISLUKT = 'afbeeldingen_mislukt'
 SOORT_VERWERKINGSFOUTEN = 'verwerkingsfouten'
 SOORT_UNICITEIT_NIET_BEPAALD = 'uniciteit_niet_bepaald'

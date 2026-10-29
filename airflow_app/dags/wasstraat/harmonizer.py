@@ -114,19 +114,30 @@ def loadHarmonizer():
     return HARMONIZER
   
     
-def getHarmonizeAggr(soort, reload=False):
+def getHarmonizeAggr(soort, reload=False, df=None):
+    """Retourneer de harmonisatie-pipeline van een soort uit de harmonisatie-Excel.
+
+    Args:
+        soort: naam van het object in het blad Objecten
+        reload: als True de Excel opnieuw lezen
+        df: optioneel een al gelezen harmonizer (loadHarmonizer), zodat wie de
+            pipelines van veel soorten nodig heeft de Excel één keer leest
+            (voorrang bij de harmonisatie, issue 89)
+    """
     global HARMONIZER
-    
-    if not isinstance(HARMONIZER, type(pd.DataFrame))  or reload:
-        HARMONIZER = loadHarmonizer()
+
+    if df is None:
+        if not isinstance(HARMONIZER, type(pd.DataFrame))  or reload:
+            HARMONIZER = loadHarmonizer()
+        df = HARMONIZER
       
-    if not soort in HARMONIZER['Object'].unique():
+    if not soort in df['Object'].unique():
         msg = 'Error while loading harmonizer, ' + soort + ' does not exist in Excel.'
         logger.error(msg) 
         raise Exception(msg)
 
     # Kopie: de lijst in het (gecachete) HARMONIZER-dataframe mag niet bij elke aanroep een fase bijkrijgen
-    aggr = copy.deepcopy(HARMONIZER[HARMONIZER.Object == soort]['aggr'].values[0])
+    aggr = copy.deepcopy(df[df.Object == soort]['aggr'].values[0])
     if soort in meta.lst_artefactsoort:
         aggr.insert(-1, { '$addFields': {"artefactsoort": soort, 'soort': 'Artefact'}})
     return aggr

@@ -24,6 +24,11 @@ Scenario's:
    krijgen hun nummers van cyclus 0 terug, en geen enkele rij is hernummerd.
 2. Een eerste load zonder hulpsleutel (vóór issue 81: lege key voor rijen
    zonder natuurlijke key), daarna twee cycli: 0 hernummerde rijen.
+3. Issue 89: de artefactsoort van een artefact zonder natuurlijke key wisselt
+   tussen cycli (de tabel AW1DeterminatiesJohan werd afwisselend door
+   Aardewerk en door Artefact geharmoniseerd), en het vondstnummer in de
+   bronrij wordt gecorrigeerd: elke rij houdt zijn nummer, 0 nieuw en 0
+   hernummerd, en de load schrijft telkens de nieuwe key.
 """
 import copy
 import datetime
@@ -249,3 +254,52 @@ class TestCycliNaOudeLoad:
         assert all(t['nieuw'] == 0 for t in tellingen2.values()), tellingen2
         assert pg2 == pg1
         assert not any(v['verdwenen'] or v['hernummerd'] for v in vergelijk(pg0, pg2).values())
+
+
+def metAndereArtefactsoort(docs, artefactsoort, vondstnr=None):
+    """De documenten waarin de artefacten van DB034 een andere artefactsoort (of vondstnr) hebben.
+
+    Het artefact uit AW1DeterminatiesJohan heeft geen subnr (hulpsleutel-key), dat uit AARDEWERK 1 alleen
+    key_subnr (key key_subnr|artefactsoort).
+    """
+    docs = copy.deepcopy(docs)
+    for d in docs:
+        if d['soort'] == 'Artefact' and d.get('projectcd') == 'DB034':
+            if artefactsoort is None:
+                d.pop('artefactsoort', None)
+            else:
+                d['artefactsoort'] = artefactsoort
+            if vondstnr is not None:
+                d['vondstnr'] = vondstnr
+    return docs
+
+
+@pytest.mark.unit
+class TestCycliMetAndereArtefactsoort:
+    """Issue 89: een andere artefactsoort of vondstnummer van een rij zonder natuurlijke key geeft geen nieuw nummer."""
+
+    def test_wisselende_artefactsoort_houdt_het_nummer(self, omgeving):
+        verwerkingsrun.startRun('incrementeel')
+        # Elke cyclus een nieuwe extractie: nieuwe _id's, dezelfde bronrijen
+        _, pg0 = cyclus(omgeving, documenten())
+        artefacten = pg0['Def_Artefact']
+        pk = next(p for p, (k, _) in artefacten.items() if k and k.startswith('PDB034P10V460|Aardewerk|bron:'))
+
+        # Cyclus 1: Artefact won de harmonisatie (geen artefactsoort), zoals op 29 oktober om 17:49
+        tellingen1, pg1 = cyclus(omgeving, metAndereArtefactsoort(documenten(), None))
+        assert tellingen1['Artefact']['nieuw'] == 0 and tellingen1['Artefact']['nieuw_bronrij_bekend'] == 0
+        assert tellingen1['Artefact']['op_bronsleutel_andere_key'] == 2
+        assert pg1['Def_Artefact'][pk][0].startswith('PDB034P10V460||bron:')
+        assert 'PDB034P10V460A1|' in {k for k, _ in pg1['Def_Artefact'].values()}
+
+        # Cyclus 2: met de voorrang uit correcties.yml weer Aardewerk; cyclus 3: vondstnummer gecorrigeerd
+        tellingen2, pg2 = cyclus(omgeving, documenten())
+        tellingen3, pg3 = cyclus(omgeving, metAndereArtefactsoort(documenten(), 'Aardewerk', vondstnr=461.0))
+        for tellingen in (tellingen2, tellingen3):
+            assert all(t['nieuw'] == 0 and t['nieuw_bronrij_bekend'] == 0 for t in tellingen.values()), tellingen
+        assert pg2['Def_Artefact'][pk][0].startswith('PDB034P10V460|Aardewerk|bron:')
+        assert pg3['Def_Artefact'][pk][0].startswith('PDB034P10V461|Aardewerk|bron:')
+        for voor, na in ((pg0, pg1), (pg1, pg2), (pg2, pg3)):
+            assert not any(v['verdwenen'] or v['nieuw'] or v['hernummerd'] for v in vergelijk(voor, na).values())
+            zelfdeNummerPerBronrij(voor, na)
+        assert pg2 == pg0

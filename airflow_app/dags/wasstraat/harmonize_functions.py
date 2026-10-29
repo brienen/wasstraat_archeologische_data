@@ -8,6 +8,7 @@ import yaml
 import pandas as pd
 import numpy as np
 import wasstraat.harmonizer as harmonizer
+import wasstraat.harmonisatie_voorrang as harmonisatie_voorrang
 
 # Import app code
 # Absolute imports for Hydrogen (Jupyter Kernel) compatibility
@@ -189,8 +190,13 @@ def fixMonsterProjectcds(incrementeel=False):
 
 
 
-def harmonize(collection, strOrAggr, incrementeel=False):
+def harmonize(collection, strOrAggr, incrementeel=False, soort=None):
     """Harmoniseer de documenten van een staging-collectie naar Single_Store.
+
+    Selecteren meer pipelines dezelfde tabel, dan harmoniseert alleen de
+    pipeline met voorrang hem (issue 89, harmonisatie_voorrang.bepaalVoorrang):
+    de andere pipelines krijgen vooraan ``{$match: {table: {$nin: [...]}}}``.
+    In de incrementele cyclus komt de delta-$match daar nog vóór.
 
     Args:
         collection: staging-collectie
@@ -198,6 +204,8 @@ def harmonize(collection, strOrAggr, incrementeel=False):
         incrementeel: als True alleen de documenten uit de nieuwe en gewijzigde
             bronbestanden van de actieve verwerkingsrun harmoniseren en die
             documenten het veld delta_run geven (incrementeel laden)
+        soort: soort van de taak (Harmonize_<soort>); zonder soort wordt hij
+            afgeleid uit strOrAggr (harmonisatie_voorrang.bepaalSoort)
     """
     if incrementeel:
         run = verwerkingsrun.huidigeRun()
@@ -207,30 +215,42 @@ def harmonize(collection, strOrAggr, incrementeel=False):
             return
 
     if type(strOrAggr) == str:
-        pipeline = harmonizer.getHarmonizeAggr(str(strOrAggr)) 
+        pipeline = harmonizer.getHarmonizeAggr(str(strOrAggr))
     else:
         pipeline = strOrAggr[0]
+    if soort is None:
+        soort = harmonisatie_voorrang.bepaalSoort(strOrAggr)
 
-    if incrementeel:
-        # Altijd een kopie: de pipeline uit meta.py of de harmonizer mag niet veranderen
-        pipeline = delta_transform.maakDeltaHarmonizePipeline(pipeline, padfilter, run['run_id'])
-        if pipeline is None:
-            logger.info(f"Incrementeel: pipeline voor {strOrAggr if type(strOrAggr) == str else collection} schrijft niets — overslaan.")
-            return
-
-    try: 
-        logger.info("Calling aggregation with pipeline: " + str(pipeline))
+    myclient = None
+    try:
         myclient = pymongo.MongoClient(str(config.MONGO_URI))
         stagingdb = myclient[str(config.DB_STAGING)]
         stagingcollection = stagingdb[collection]
+
+        # Voorrang (issue 89): tabellen die een andere pipeline harmoniseert, overslaan
+        if soort is not None:
+            voorrang = harmonisatie_voorrang.bepaalVoorrang(soort, collection, stagingcollection, laadCorrecties())
+            pipeline = harmonisatie_voorrang.pasUitsluitingToe(pipeline, voorrang['uitsluiten'])
+        else:
+            logger.warning(f"Soort van de harmonisatie op {collection} onbekend — geen voorrang bepaald.")
+
+        if incrementeel:
+            # Altijd een kopie: de pipeline uit meta.py of de harmonizer mag niet veranderen
+            pipeline = delta_transform.maakDeltaHarmonizePipeline(pipeline, padfilter, run['run_id'])
+            if pipeline is None:
+                logger.info(f"Incrementeel: pipeline voor {strOrAggr if type(strOrAggr) == str else collection} schrijft niets — overslaan.")
+                return
+
+        logger.info("Calling aggregation with pipeline: " + str(pipeline))
         stagingcollection.aggregate(pipeline)
 
     except Exception as err:
         msg = "Onbekende fout bij het aanroepen van een aggregation met melding: " + str(err)
-        logger.error(msg)    
+        logger.error(msg)
         raise Exception(msg) from err
     finally:
-        myclient.close()
+        if myclient is not None:
+            myclient.close()
 
 
 

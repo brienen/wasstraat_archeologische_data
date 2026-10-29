@@ -32,3 +32,12 @@ brondata_correcties: []
 paden_overslaan: []
 #  - "AB001_Voorbeeldproject/K Overig/werkmap"
 #  - "**/oude kopie*"
+
+# Voorrang bij de harmonisatie: welke soort een Access-tabel harmoniseert als de patronen van meer dan
+# één soort in de harmonisatie-Excel hem selecteren. Tabelnaam (precies) → soort, of een lege waarde
+# voor geen enkele soort (bijvoorbeeld een codetabel). Zonder instelling kiest de voorrangsregel en
+# meldt de run een waarschuwing met de kandidaten.
+harmonisatie_voorrang: {}
+#harmonisatie_voorrang:
+#  ABDeterminaties: Aardewerk     # door Aardewerk, niet door Artefact
+#  "METAAL OPPERVLAK":            # codetabel: door geen enkele soort

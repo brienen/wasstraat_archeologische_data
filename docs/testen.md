@@ -201,7 +201,8 @@ Alle bestanden staan in `tests/unit/`.
 | `test_foto_parsing.py` | Bestandsnamen van objectfoto's, tekeningen (A–E, P, T, LZW), projectfoto's (F/G), DAN/DAR-rapporten, artefactsoort uit het pad |
 | **Transformatie** | |
 | `test_harmonizer.py` | `$ifNull`-ketens, tabelpatronen, `loadHarmonizer` (Excel naar DataFrame), opbouw van de pipeline, overerving, `getHarmonizeAggr` wijzigt de gecachete pipeline niet |
-| `test_correcties_yml.py` | `correcties.yml` laden en toepassen, inclusief foutscenario's en `paden_overslaan` |
+| `test_correcties_yml.py` | `correcties.yml` laden en toepassen, inclusief foutscenario's, `paden_overslaan` en `harmonisatie_voorrang` |
+| `test_harmonisatie_voorrang.py` | Voorrang bij een tabel die meer harmonisatie-pipelines selecteren (issue 89): de voorrangsregel, welke pipelines meedoen, de overlap in de Delftse staging (Delftse Excel en de tabelnamen uit `fixtures/delft_staging_tabellen.json`, met een nagebootste `distinct`), de besluiten met en zonder instelling, de waarschuwing in het run-document, en `harmonize` met dezelfde uitkomst in elke volgorde van de taken (ook incrementeel) |
 | `test_profielen.py` | Gemeenteprofielen: keuze, cache, `ConventieProfiel`, `DelftProfiel`, `VoorbeeldProfiel` |
 | `test_archutils.py` | `convertToInt`, `convertToBool`, `fixDatering` (eeuw-kwartnotatie, Romeinse cijfers, LMEb, RT, gecombineerde dateringen) |
 | `test_rijksdriehoek.py` | Rijksdriehoek naar WGS84 en terug, met referentiepunten |
@@ -210,7 +211,8 @@ Alle bestanden staan in `tests/unit/`.
 | `test_meta_project.py`, `test_meta_generate_missing.py` | De Project-configuratie en de pipelines voor ontbrekende putten, vlakken, sporen, vondsten en dozen in `meta.py` |
 | `test_merge_artefacten.py` | Verplaatsen en samenvoegen van artefacten: elke bronrij in precies één document |
 | `test_delta_transform.py` | Delta-varianten van de transformaties en stabiele sleutels (ook de samengestelde sleutel van artefacten) |
-| `test_bronsleutel.py` | De hulpsleutel uit de bronrij en het toekennen van stabiele `primary_key`s daarop |
+| `test_bronsleutel.py` | De hulpsleutel uit de bronrij en het toekennen van stabiele `primary_key`s daarop, ook bij een andere artefactsoort in de key (issue 89) |
+| `test_stabiele_sleutels_cycli.py` | Opeenvolgende volledige cycli met productie-achtige data: verloren keys (issue 88), een eerste load zonder hulpsleutel, en een wisselende artefactsoort en een gecorrigeerd vondstnummer (issue 89): 0 nieuw en 0 hernummerd |
 | **Laden en zoeken** | |
 | `test_loadToDatabase.py` | De helpers van de laadstap (typen, enums, FK-mechaniek, afgeleide velden als FASE 4) |
 | `test_load_projectie.py` | De veldselectie van de load (`leesDocumenten`) |

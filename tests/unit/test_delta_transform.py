@@ -139,6 +139,10 @@ class OpnameCollectie:
         self.filters.append(copy.deepcopy(filt))
         return iter([])
 
+    def distinct(self, veld, filt=None):
+        """Voorrang bij de harmonisatie (issue 89): zonder documenten selecteert geen pipeline een tabel."""
+        return []
+
 
 @pytest.fixture
 def client(monkeypatch):
@@ -501,7 +505,7 @@ class TestStabieleSleutels:
         ]
         toewijzing, tellingen = delta_transform.bepaalStabieleIds(docs, pg)
         assert dict(toewijzing) == {OID_B: 4, OID_C: 7, OID_D: 10}
-        assert tellingen == {'behouden': 1, 'uit_bron': 0, 'op_id': 1, 'op_bestand': 0, 'op_vervangende_key': 0, 'op_key': 1, 'op_bronsleutel': 0, 'op_bronsleutel_overgang': 0, 'nieuw': 1, 'nieuw_bronrij_bekend': 0}
+        assert tellingen == {'behouden': 1, 'uit_bron': 0, 'op_id': 1, 'op_bestand': 0, 'op_vervangende_key': 0, 'op_key': 1, 'op_bronsleutel': 0, 'op_bronsleutel_andere_key': 0, 'op_bronsleutel_overgang': 0, 'nieuw': 1, 'nieuw_bronrij_bekend': 0}
 
     def test_dubbele_key_in_tabel_wordt_niet_gebruikt(self):
         """Move-soorten zoals Standplaats hebben dubbele keys; die zijn geen betrouwbare sleutel."""
@@ -530,7 +534,7 @@ class TestStabieleSleutels:
         toewijzing, tellingen = delta_transform.bepaalStabieleIds(docs, pg)
         # Nieuwe nummers in volgorde van key: PSY002S1 vóór PSY002S99
         assert dict(toewijzing) == {OID_A: 3, OID_D: 6, OID_B: 7}
-        assert tellingen == {'behouden': 1, 'uit_bron': 0, 'op_id': 1, 'op_bestand': 0, 'op_vervangende_key': 0, 'op_key': 0, 'op_bronsleutel': 0, 'op_bronsleutel_overgang': 0, 'nieuw': 2, 'nieuw_bronrij_bekend': 0}
+        assert tellingen == {'behouden': 1, 'uit_bron': 0, 'op_id': 1, 'op_bestand': 0, 'op_vervangende_key': 0, 'op_key': 0, 'op_bronsleutel': 0, 'op_bronsleutel_andere_key': 0, 'op_bronsleutel_overgang': 0, 'nieuw': 2, 'nieuw_bronrij_bekend': 0}
 
     def test_soort_zonder_tabel(self):
         docs = [{'_id': OID_A, 'ID': 2}, {'_id': OID_B}, {'_id': OID_C, 'ID': float('nan')}]
@@ -573,7 +577,7 @@ class TestStabieleSleutels:
         assert docs[OID_B] == {'_id': OID_B, 'soort': 'Vondst', 'key': 'PSY002P1V1', 'projectcd': 'SY002', 'ID': 1}
         assert docs[OID_C]['ID'] == 3
         telling = verwerkingsrun.huidigeRun()['tellingen']['transform']['primary_keys']['Vondst']
-        assert telling == {'behouden': 1, 'uit_bron': 0, 'op_id': 0, 'op_bestand': 0, 'op_vervangende_key': 0, 'op_key': 1, 'op_bronsleutel': 0, 'op_bronsleutel_overgang': 0, 'nieuw': 1, 'nieuw_bronrij_bekend': 0,
+        assert telling == {'behouden': 1, 'uit_bron': 0, 'op_id': 0, 'op_bestand': 0, 'op_vervangende_key': 0, 'op_key': 1, 'op_bronsleutel': 0, 'op_bronsleutel_andere_key': 0, 'op_bronsleutel_overgang': 0, 'nieuw': 1, 'nieuw_bronrij_bekend': 0,
                            'verdwenen': 1, 'tabel': 'Def_Vondst'}
 
     def test_lege_database_volgt_oude_gedrag(self, client, monkeypatch):
@@ -630,7 +634,7 @@ class TestArtefactSleutel:
         # Alleen het veld ID is geschreven, niet de (samengestelde) key
         assert all('key' not in d for d in col.find({}))
         telling = verwerkingsrun.huidigeRun()['tellingen']['transform']['primary_keys']['Artefact']
-        assert telling == {'behouden': 1, 'uit_bron': 0, 'op_id': 0, 'op_bestand': 0, 'op_vervangende_key': 0, 'op_key': 2, 'op_bronsleutel': 0, 'op_bronsleutel_overgang': 0, 'nieuw': 1, 'nieuw_bronrij_bekend': 0,
+        assert telling == {'behouden': 1, 'uit_bron': 0, 'op_id': 0, 'op_bestand': 0, 'op_vervangende_key': 0, 'op_key': 2, 'op_bronsleutel': 0, 'op_bronsleutel_andere_key': 0, 'op_bronsleutel_overgang': 0, 'nieuw': 1, 'nieuw_bronrij_bekend': 0,
                            'verdwenen': 1, 'tabel': 'Def_Artefact'}
 
     def test_dubbele_samengestelde_sleutel_wordt_niet_gebruikt(self, client, monkeypatch):
@@ -745,7 +749,7 @@ class TestStabieleSleutelsVolledigeCyclus:
         ]
         toewijzing, tellingen = delta_transform.bepaalStabieleIds(docs, pg)
         assert dict(toewijzing) == {OID_A: 0, OID_B: 5, OID_C: 9}
-        assert tellingen == {'behouden': 0, 'uit_bron': 0, 'op_id': 0, 'op_bestand': 0, 'op_vervangende_key': 0, 'op_key': 2, 'op_bronsleutel': 0, 'op_bronsleutel_overgang': 0, 'nieuw': 1, 'nieuw_bronrij_bekend': 0}
+        assert tellingen == {'behouden': 0, 'uit_bron': 0, 'op_id': 0, 'op_bestand': 0, 'op_vervangende_key': 0, 'op_key': 2, 'op_bronsleutel': 0, 'op_bronsleutel_andere_key': 0, 'op_bronsleutel_overgang': 0, 'nieuw': 1, 'nieuw_bronrij_bekend': 0}
 
     def test_zelfde_key_twee_documenten(self):
         """Twee documenten met dezelfde (in PostgreSQL unieke) key: het eerste krijgt de oude primary_key."""

@@ -20,7 +20,8 @@ functies uit deze module om zich te beperken tot de delta:
 - Transform 4 kent stabiele sleutels toe: een document houdt zijn ID, krijgt
   anders de primary_key uit de bron (ABR) of uit PostgreSQL (op _id, op een
   unieke bestandsidentiteit, op een unieke key of, sinds issue 81, op de
-  hulpsleutel uit de bronrij: getBronsleutel) en pas als laatste een nieuw
+  hulpsleutel uit de bronrij: getBronsleutel; sinds issue 89 ook als de
+  artefactsoort in de key is veranderd) en pas als laatste een nieuw
   nummer boven het bestaande maximum. Sinds issue 71 doet de volledige cyclus
   dat ook (setStabielePrimaryKeys); daar is het _id altijd nieuw.
 
@@ -328,6 +329,66 @@ def isHulpsleutelKey(key):
     return key.startswith(PREFIX_BRONSLEUTEL) or f"{SCHEIDING_ARTEFACT_KEY}{PREFIX_BRONSLEUTEL}" in key
 
 
+def getBronsleutelUitKey(key):
+    """Retourneer de bronsleutel die in een hulpsleutel-key staat (getHulpsleutelKey), of None.
+
+    ``bron:<bronsleutel>`` geeft ``<bronsleutel>``, bij artefacten
+    ``P<project>[P<put>][V<vondst>]|<artefactsoort>|bron:<bronsleutel>`` ook.
+
+    Args:
+        key: key uit PostgreSQL of een document
+
+    Returns:
+        De bronsleutel, of None als de key geen hulpsleutel-key is
+    """
+    if not isHulpsleutelKey(key):
+        return None
+    if key.startswith(PREFIX_BRONSLEUTEL):
+        bronsleutel = key[len(PREFIX_BRONSLEUTEL):]
+    else:
+        bronsleutel = key.split(f"{SCHEIDING_ARTEFACT_KEY}{PREFIX_BRONSLEUTEL}", 1)[1]
+    return bronsleutel or None
+
+
+def getBronsleutelWaarde(bronsleutel, key):
+    """Retourneer de waarde waarop Transform 4 een rij met een andere key op zijn bronsleutel terugvindt (issue 89).
+
+    Na het koppelen op bronsleutel én key (stap 3b en 5 van bepaalStabieleIds)
+    volgt een tweede ronde met deze waarde, voor keys die een deel bevatten dat
+    kan veranderen terwijl de bronrij dezelfde blijft:
+
+    - een hulpsleutel-key (isHulpsleutelKey): de bronsleutel alleen. Zo'n key
+      bestaat uit de bronsleutel plus, bij artefacten, project, put, vondst en
+      artefactsoort;
+    - de samengestelde sleutel ``key_subnr|artefactsoort`` van een artefact
+      zonder artefactnummer (getArtefactKey): de bronsleutel en ``key_subnr``,
+      zonder de artefactsoort.
+
+    De artefactsoort hangt af van de harmonisatie: werd een tabel door een
+    andere pipeline geharmoniseerd (issue 89: AW1DeterminatiesJohan als
+    Artefact in plaats van Aardewerk), dan veranderde de key en kreeg de rij
+    een nieuw nummer. Een andere natuurlijke key (zonder ``|``) geeft geen
+    waarde: die key bepaalt de entiteit. Een document met een hulpsleutel-key
+    koppelt hiermee ook niet aan een rij met ``key_subnr|artefactsoort`` of
+    een natuurlijke key, en andersom: dat blijft een nieuw nummer met de
+    waarschuwing ``nieuw_bronrij_bekend`` (een verloren key, zoals bij issue 88).
+
+    Args:
+        bronsleutel: de bronsleutel (getBronsleutel)
+        key: de key van het document (getLaadKey) of van de rij in PostgreSQL
+
+    Returns:
+        Tuple, of None zonder bronsleutel of key, of bij een andere key
+    """
+    if not bronsleutel or not isinstance(key, str) or isLeeg(key):
+        return None
+    if isHulpsleutelKey(key):
+        return ('hulpsleutel', bronsleutel)
+    if SCHEIDING_ARTEFACT_KEY in key:
+        return ('key_subnr', bronsleutel, key.rsplit(SCHEIDING_ARTEFACT_KEY, 1)[0])
+    return None
+
+
 def getVervangendeKeys(soort, doc, bronsleutel):
     """Retourneer de keys die een document in PostgreSQL kan hebben gekregen toen zijn natuurlijke key ontbrak.
 
@@ -345,7 +406,9 @@ def getVervangendeKeys(soort, doc, bronsleutel):
     Volgorde: eerst de hulpsleutel-key (bevat de bronsleutel, dus precies),
     dan bij artefacten ``key_subnr|artefactsoort`` (kan vaker voorkomen; daar
     moet ook de bronsleutel van de rij gelijk zijn). De key die getLaadKey nu
-    geeft hoort er niet bij.
+    geeft hoort er niet bij. Sinds issue 89 vindt _koppelOpVervangendeKey in
+    een tweede ronde ook een rij terug die met een andere artefactsoort (of
+    ander project, put of vondst) is geladen (getBronsleutelWaarde).
 
     Args:
         soort: soort van het document
@@ -1087,6 +1150,13 @@ def _koppelOpVervangendeKey(zonder_id, toewijzing, in_gebruik, pg_rijen, lees_br
     ``vervangende_keys`` gekoppeld (eerst de hulpsleutel-key), met
     _koppelOpGroep: identieke bronrijen worden paarsgewijs gekoppeld.
 
+    Sinds issue 89 volgt daarna een tweede ronde voor de documenten die nog
+    vrij zijn, op getBronsleutelWaarde: een rij met een hulpsleutel-key met
+    dezelfde bronsleutel, of met ``key_subnr|artefactsoort`` met dezelfde
+    bronsleutel en ``key_subnr``, ook als de artefactsoort (of project, put of
+    vondst in de hulpsleutel-key) anders is. De bronsleutel van een rij met
+    een hulpsleutel-key komt uit die key zelf (getBronsleutelUitKey).
+
     Args:
         zonder_id: documenten zonder ID (met vervangende_keys en bronsleutel)
         toewijzing: dict index -> primary_key (wordt aangevuld)
@@ -1097,40 +1167,56 @@ def _koppelOpVervangendeKey(zonder_id, toewijzing, in_gebruik, pg_rijen, lees_br
     Returns:
         Aantal toegekende primary_keys
     """
-    vrij_per_key = defaultdict(list)
-    for rij in pg_rijen or []:
-        if rij.get('primary_key') is None or isLeeg(rij.get('key')) or int(rij['primary_key']) in in_gebruik:
-            continue
-        vrij_per_key[rij['key']].append(rij)
-    kandidaten = {key for i, doc in enumerate(zonder_id) if i not in toewijzing
-                  for key in doc.get('vervangende_keys') or () if key in vrij_per_key}
+    open_docs = [doc for i, doc in enumerate(zonder_id)
+                 if i not in toewijzing and doc.get('bronsleutel') and doc.get('vervangende_keys')]
+    if not open_docs:
+        return 0
+    doc_keys = {key for doc in open_docs for key in doc['vervangende_keys']}
+    doc_los = {getBronsleutelWaarde(doc['bronsleutel'], key) for doc in open_docs for key in doc['vervangende_keys']}
+    los_subnr = {waarde[2] for waarde in doc_los if waarde is not None and waarde[0] == 'key_subnr'}
+
+    def isKandidaat(rij):
+        key = rij['key']
+        if key in doc_keys:
+            return True
+        if isHulpsleutelKey(key):
+            return ('hulpsleutel', getBronsleutelUitKey(key)) in doc_los
+        return SCHEIDING_ARTEFACT_KEY in key and key.rsplit(SCHEIDING_ARTEFACT_KEY, 1)[0] in los_subnr
+
+    kandidaten = [rij for rij in pg_rijen or [] if rij.get('primary_key') is not None and not isLeeg(rij.get('key'))
+                  and int(rij['primary_key']) not in in_gebruik and isKandidaat(rij)]
     if not kandidaten:
         return 0
-    te_lezen = sorted({int(rij['primary_key']) for key in kandidaten if not isHulpsleutelKey(key)
-                       for rij in vrij_per_key[key] if 'bronsleutel' not in rij})
+    te_lezen = sorted({int(rij['primary_key']) for rij in kandidaten
+                       if not isHulpsleutelKey(rij['key']) and 'bronsleutel' not in rij})
     gelezen = lees_bronsleutels(te_lezen) if te_lezen and lees_bronsleutels is not None else {}
 
     def bronsleutelVanRij(rij):
+        if isHulpsleutelKey(rij['key']):
+            return getBronsleutelUitKey(rij['key'])
         return rij['bronsleutel'] if 'bronsleutel' in rij else gelezen.get(int(rij['primary_key']))
 
-    pg_waarden = []
-    for key in kandidaten:
-        for rij in vrij_per_key[key]:
-            bronsleutel = None if isHulpsleutelKey(key) else bronsleutelVanRij(rij)
-            if isHulpsleutelKey(key) or bronsleutel is not None:
-                pg_waarden.append((int(rij['primary_key']), (key, bronsleutel)))
+    exact, los = [], []
+    for rij in kandidaten:
+        bronsleutel = bronsleutelVanRij(rij)
+        if bronsleutel is None:
+            continue
+        exact.append((int(rij['primary_key']), (rij['key'], bronsleutel)))
+        waarde = getBronsleutelWaarde(bronsleutel, rij['key'])
+        if waarde is not None:
+            los.append((int(rij['primary_key']), waarde))
 
+    lengte = max(len(doc['vervangende_keys']) for doc in open_docs)
     gekoppeld = 0
-    for positie in range(max(len(doc.get('vervangende_keys') or ()) for doc in zonder_id)):
-        def waardeVanDoc(doc, positie=positie):
-            keys = doc.get('vervangende_keys') or ()
-            if positie >= len(keys) or keys[positie] not in kandidaten:
-                return None
-            key = keys[positie]
-            if isHulpsleutelKey(key):
-                return (key, None)
-            return (key, doc['bronsleutel']) if doc.get('bronsleutel') else None
-        gekoppeld += _koppelOpGroep(zonder_id, toewijzing, in_gebruik, waardeVanDoc, pg_waarden)
+    # Eerst op key en bronsleutel, dan (issue 89) op de bronsleutel bij een andere artefactsoort
+    for waardeVan, pg_waarden in ((lambda bronsleutel, key: (key, bronsleutel), exact), (getBronsleutelWaarde, los)):
+        for positie in range(lengte):
+            def waardeVanDoc(doc, positie=positie, waardeVan=waardeVan):
+                keys = doc.get('vervangende_keys') or ()
+                if positie >= len(keys) or not doc.get('bronsleutel'):
+                    return None
+                return waardeVan(doc['bronsleutel'], keys[positie])
+            gekoppeld += _koppelOpGroep(zonder_id, toewijzing, in_gebruik, waardeVanDoc, pg_waarden)
     return gekoppeld
 
 
@@ -1153,7 +1239,10 @@ def bepaalStabieleIds(docs, pg_rijen=None, lees_bronsleutels=None):
     3b. (issue 88) de primary_key van een vrije rij waarvan de key een van de
        ``vervangende_keys`` van het document is (getVervangendeKeys): de key
        die de load schreef toen het document zijn natuurlijke key niet had
-       (_koppelOpVervangendeKey). Vóór stap 4, zodat zo'n document zijn eigen
+       (_koppelOpVervangendeKey). Daarna (issue 89) een tweede ronde op de
+       bronsleutel, voor een rij die met een andere artefactsoort (of ander
+       project, put of vondst in de hulpsleutel-key) is geladen
+       (getBronsleutelWaarde). Vóór stap 4, zodat zo'n document zijn eigen
        rij houdt en niet die van een gegenereerd document met dezelfde
        natuurlijke key (bijvoorbeeld een spoor dat Transform 5 genereerde
        omdat het spoor uit de bron geen key had);
@@ -1163,11 +1252,21 @@ def bepaalStabieleIds(docs, pg_rijen=None, lees_bronsleutels=None):
        rij bij welk document hoort, beslist dan de bronsleutel (stap 5);
     5. (issue 81) de primary_key van een vrije rij met dezelfde ``bronsleutel``
        én dezelfde ``key`` (getBronsleutel; voor de rijen in PostgreSQL
-       afgeleid uit de kolom brondata met ``lees_bronsleutels``). Zo houden
+       afgeleid uit de kolom brondata met ``lees_bronsleutels``, en bij een
+       hulpsleutel-key zonder leesbare brondata uit de key zelf). Zo houden
        rijen met een key die vaker voorkomt (standplaatsen, sporen, dozen,
        artefacten die zowel verplaatst als samengevoegd zijn) hun nummer.
        Komt de combinatie vaker voor (identieke bronrijen), dan worden
        documenten en rijen paarsgewijs gekoppeld (_koppelOpGroep);
+    5b. (issue 89) de primary_key van een vrije rij met dezelfde bronsleutel
+       en een key die alleen verschilt in een deel dat van de harmonisatie
+       afhangt (getBronsleutelWaarde): twee hulpsleutel-keys (de bronsleutel
+       alleen telt) of twee keys ``key_subnr|artefactsoort`` met dezelfde
+       ``key_subnr``. Een andere artefactsoort (een andere
+       harmonisatie-pipeline), een gecorrigeerd vondst- of putnummer of een
+       ander project in de bronrij geeft zo geen nieuw nummer; de load
+       schrijft de nieuwe key bij het bestaande nummer. Telling
+       ``op_bronsleutel_andere_key``;
     6. (issue 81, overgang) de primary_key van een vrije rij zonder key met
        dezelfde ``bronsleutel``: rijen die zijn geladen vóór de hulpsleutel en
        nog geen key hebben (artefacten zonder subnr, monsters, plaatsingen,
@@ -1187,8 +1286,10 @@ def bepaalStabieleIds(docs, pg_rijen=None, lees_bronsleutels=None):
     Na stap 7 telt ``nieuw_bronrij_bekend`` de documenten die een nieuw
     nummer krijgen terwijl een vrije rij met dezelfde bronsleutel en een
     andere key in de tabel staat (met voorbeelden in ``voorbeelden``): dan is
-    de key van de bronrij veranderd, of in Transform 3 verloren gegaan zoals
-    bij issue 88. setStabielePrimaryKeys meldt dat als waarschuwing.
+    de natuurlijke key van de bronrij veranderd, of in Transform 3 verloren
+    gegaan zoals bij issue 88. Een andere artefactsoort of hulpsleutel-key
+    valt daar sinds issue 89 niet meer onder: die koppelt in stap 5b.
+    setStabielePrimaryKeys meldt dat als waarschuwing.
 
     Args:
         docs: documenten van de soort uit Single_Store_Clean (met _id, key en eventueel ID,
@@ -1203,7 +1304,8 @@ def bepaalStabieleIds(docs, pg_rijen=None, lees_bronsleutels=None):
     Returns:
         Tuple (lijst met (_id, ID) voor de documenten zonder ID, dict met tellingen
         'behouden', 'uit_bron', 'op_id', 'op_bestand', 'op_vervangende_key', 'op_key',
-        'op_bronsleutel', 'op_bronsleutel_overgang', 'nieuw' en 'nieuw_bronrij_bekend',
+        'op_bronsleutel', 'op_bronsleutel_andere_key', 'op_bronsleutel_overgang', 'nieuw' en
+        'nieuw_bronrij_bekend',
         plus 'voorbeelden' als die laatste niet 0 is)
     """
     in_gebruik = set()
@@ -1225,8 +1327,8 @@ def bepaalStabieleIds(docs, pg_rijen=None, lees_bronsleutels=None):
             per_id[str(rij['_id'])] = pk
 
     tellingen = {'behouden': len(docs) - len(zonder_id), 'uit_bron': 0, 'op_id': 0, 'op_bestand': 0,
-                 'op_vervangende_key': 0, 'op_key': 0, 'op_bronsleutel': 0, 'op_bronsleutel_overgang': 0,
-                 'nieuw': 0, 'nieuw_bronrij_bekend': 0}
+                 'op_vervangende_key': 0, 'op_key': 0, 'op_bronsleutel': 0, 'op_bronsleutel_andere_key': 0,
+                 'op_bronsleutel_overgang': 0, 'nieuw': 0, 'nieuw_bronrij_bekend': 0}
     toewijzing = {}
 
     # 1. Uit de bron (ABR)
@@ -1259,7 +1361,7 @@ def bepaalStabieleIds(docs, pg_rijen=None, lees_bronsleutels=None):
         zonder_id, toewijzing, in_gebruik, lambda d: d.get('key'), pg_rijen,
         alleen=lambda d: d.get('bronsleutel') is None or keys_in_docs[d.get('key')] <= 1)
 
-    # 5. en 6. Op de bronsleutel (issue 81), alleen voor de rijen die nog vrij zijn
+    # 5., 5b. en 6. Op de bronsleutel (issue 81 en 89), alleen voor de rijen die nog vrij zijn
     vrij_per_bronsleutel = {}
     resterend = [i for i in range(len(zonder_id)) if i not in toewijzing and zonder_id[i].get('bronsleutel')]
     vrij = [rij for rij in pg_rijen or [] if rij.get('primary_key') is not None
@@ -1269,11 +1371,14 @@ def bepaalStabieleIds(docs, pg_rijen=None, lees_bronsleutels=None):
             gelezen = {}
         else:
             gelezen = lees_bronsleutels([int(rij['primary_key']) for rij in vrij if 'bronsleutel' not in rij])
-        met_key, zonder_key = [], []
+        met_key, met_andere_key, zonder_key = [], [], []
         vrij_per_bronsleutel = defaultdict(list)
         for rij in vrij:
             pk = int(rij['primary_key'])
             bronsleutel = rij['bronsleutel'] if 'bronsleutel' in rij else gelezen.get(pk)
+            if bronsleutel is None:
+                # Kolom brondata leeg of onleesbaar: een hulpsleutel-key bevat de bronsleutel zelf
+                bronsleutel = getBronsleutelUitKey(rij.get('key'))
             if bronsleutel is None:
                 continue
             vrij_per_bronsleutel[bronsleutel].append((pk, rij.get('key')))
@@ -1281,9 +1386,16 @@ def bepaalStabieleIds(docs, pg_rijen=None, lees_bronsleutels=None):
                 zonder_key.append((pk, bronsleutel))
             else:
                 met_key.append((pk, (bronsleutel, rij['key'])))
+                waarde = getBronsleutelWaarde(bronsleutel, rij['key'])
+                if waarde is not None:
+                    met_andere_key.append((pk, waarde))
         tellingen['op_bronsleutel'] = _koppelOpGroep(
             zonder_id, toewijzing, in_gebruik,
             lambda d: (d['bronsleutel'], d.get('key')) if d.get('bronsleutel') else None, met_key)
+        # 5b. (issue 89) Op de bronsleutel bij een andere hulpsleutel-key of artefactsoort
+        tellingen['op_bronsleutel_andere_key'] = _koppelOpGroep(
+            zonder_id, toewijzing, in_gebruik,
+            lambda d: getBronsleutelWaarde(d.get('bronsleutel'), d.get('key')), met_andere_key)
         tellingen['op_bronsleutel_overgang'] = _koppelOpGroep(
             zonder_id, toewijzing, in_gebruik, lambda d: d.get('bronsleutel'), zonder_key)
 

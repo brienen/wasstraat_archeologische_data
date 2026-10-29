@@ -7,6 +7,7 @@ Test dat de generieke correctielogica correct werkt:
 - Rapportcode-prefixen dynamisch matchen
 - Merge-uitzonderingen laden
 - Image-filterpatronen uitbreiden
+- Paden overslaan (issue 84) en voorrang bij de harmonisatie (issue 89)
 
 Mockt pymongo zodat er geen live database nodig is.
 """
@@ -595,3 +596,93 @@ class TestPadenOverslaan:
 
     def test_ongeldige_yaml_geeft_geen_patronen(self, tmp_path):
         assert self._laad(tmp_path, 'paden_overslaan: [\n  - "kapot"\n')[0] == []
+
+
+# ============================================================
+# Klasse 8: Voorrang bij de harmonisatie (issue 89)
+# ============================================================
+
+class TestHarmonisatieVoorrang:
+    """Test de sectie harmonisatie_voorrang: tabelnaam → soort, of leeg voor geen enkele soort.
+
+    De sectie wordt via laadCorrecties() gelezen (dezelfde cache als de andere
+    secties) en door harmonisatie_voorrang.leesVoorrangInstellingen
+    gecontroleerd; foute regels worden gelogd en overgeslagen, zonder dat de
+    rest van het bestand verloren gaat. De werking (besluiten, uitsluiting,
+    waarschuwing) staat in tests/unit/test_harmonisatie_voorrang.py.
+    """
+
+    def setup_method(self):
+        import wasstraat.harmonize_functions as hf
+        hf._correcties_cache = None
+
+    def teardown_method(self):
+        import wasstraat.harmonize_functions as hf
+        hf._correcties_cache = None
+
+    def _laad(self, tmp_path, inhoud):
+        import wasstraat.harmonize_functions as hf
+        import wasstraat.harmonisatie_voorrang as hv
+        yml_file = tmp_path / "correcties.yml"
+        yml_file.write_text(inhoud, encoding="utf-8")
+        with patch.object(hf.config, 'AIRFLOW_CORRECTIES_CONFIG', str(yml_file)):
+            hf._correcties_cache = None
+            correcties = hf.laadCorrecties()
+        return hv.leesVoorrangInstellingen(correcties), correcties
+
+    def test_sectie_wordt_geladen(self, tmp_path):
+        instellingen, correcties = self._laad(tmp_path, (
+            'projectcode_correcties:\n  - patroon: "SCHE"\n    projectcode: "DC039"\n'
+            'harmonisatie_voorrang:\n  AW1DeterminatiesJohan: Aardewerk\n  "METAAL OPPERVLAK":\n'
+            '  CODES: ""\n  Spijkers: " Metaal "\n'))
+        assert instellingen == {'AW1DeterminatiesJohan': 'Aardewerk', 'METAAL OPPERVLAK': None, 'CODES': None,
+                                'Spijkers': 'Metaal'}
+        assert correcties['projectcode_correcties'][0]['projectcode'] == "DC039"
+
+    def test_delftse_correcties(self):
+        """De Delftse configuratie: AW1DeterminatiesJohan door Aardewerk."""
+        import wasstraat.harmonize_functions as hf
+        import wasstraat.harmonisatie_voorrang as hv
+        pad = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
+                           'data', 'delft', 'wasstraat_config', 'correcties.yml')
+        with patch.object(hf.config, 'AIRFLOW_CORRECTIES_CONFIG', pad):
+            assert hv.leesVoorrangInstellingen(hf.laadCorrecties()) == {'AW1DeterminatiesJohan': 'Aardewerk'}
+
+    def test_ontbrekende_of_lege_sectie(self, tmp_path):
+        assert self._laad(tmp_path, 'artefact_niet_mergen:\n  projectcodes: ["DC112"]\n')[0] == {}
+        assert self._laad(tmp_path, 'harmonisatie_voorrang:\n')[0] == {}
+        assert self._laad(tmp_path, 'harmonisatie_voorrang: {}\n')[0] == {}
+
+    def test_lijst_in_plaats_van_dictionary(self, tmp_path, caplog):
+        import logging
+        with caplog.at_level(logging.ERROR, logger="airflow.task"):
+            instellingen, correcties = self._laad(tmp_path, (
+                'harmonisatie_voorrang:\n  - AW1DeterminatiesJohan: Aardewerk\n'
+                'artefact_niet_mergen:\n  projectcodes: ["DC112"]\n'))
+        assert instellingen == {}
+        assert correcties['artefact_niet_mergen'] == {'projectcodes': ['DC112']}
+        assert "geen dictionary" in caplog.text
+
+    def test_foutieve_regels_worden_overgeslagen(self, tmp_path, caplog):
+        import logging
+        with caplog.at_level(logging.ERROR, logger="airflow.task"):
+            instellingen, _ = self._laad(tmp_path, (
+                'harmonisatie_voorrang:\n  2005: Aardewerk\n  yes: Glas\n  LIJST: [Aardewerk, Glas]\n'
+                '  GETAL: 12\n  AW1DeterminatiesJohan: Aardewerk\n'))
+        assert instellingen == {'AW1DeterminatiesJohan': 'Aardewerk'}
+        assert caplog.text.count("Ongeldige tabelnaam in harmonisatie_voorrang") == 2
+        assert caplog.text.count("Ongeldige soort in harmonisatie_voorrang") == 2
+
+    def test_ongeldige_yaml_geeft_geen_instellingen(self, tmp_path):
+        assert self._laad(tmp_path, 'harmonisatie_voorrang: {\n  AW1: "kapot\n')[0] == {}
+
+    def test_zonder_correcties(self):
+        import wasstraat.harmonisatie_voorrang as hv
+        assert hv.leesVoorrangInstellingen(None) == {} and hv.leesVoorrangInstellingen({}) == {}
+
+    def test_sjabloon_voor_de_live_installatie(self):
+        """deploy/: een lege sectie met een voorbeeld als commentaar."""
+        pad = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
+                           'deploy', 'wasstraat_config', 'correcties.yml')
+        with open(pad, encoding='utf-8') as f:
+            assert yaml.safe_load(f)['harmonisatie_voorrang'] == {}

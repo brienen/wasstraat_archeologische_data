@@ -3,6 +3,7 @@ from airflow.operators.dummy import DummyOperator
 from airflow.operators.python import PythonOperator
 
 import wasstraat.harmonize_functions as harmonize_functions
+import wasstraat.harmonisatie_voorrang as harmonisatie_voorrang
 import wasstraat.delta_transform as delta_transform
 import wasstraat.meta as meta
 
@@ -45,13 +46,14 @@ def getHarmonizeTaskGroup(incrementeel=False):
             FixMonsterProjectcds >> last
 
 
-        obj_types = meta.getKeys(meta.HARMONIZE_PIPELINES)
-        obj_types.remove('Foto')
-        for obj_type in obj_types:
+        # De taken draaien parallel; welke pipeline een tabel harmoniseert die meer pipelines selecteren,
+        # bepaalt elke taak zelf (issue 89, wasstraat/harmonisatie_voorrang.py)
+        for obj_type in harmonisatie_voorrang.getHarmonizeSoorten():
             tsk = PythonOperator(
                 task_id=f'Harmonize_{obj_type}',
                 python_callable=harmonize_functions.harmonize,
-                op_kwargs=dict({'collection': meta.getHarmonizeStagingCollection(obj_type), 'strOrAggr': meta.getHarmonizePipelines(obj_type)}, **delta_kwargs)
+                op_kwargs=dict({'collection': meta.getHarmonizeStagingCollection(obj_type), 'strOrAggr': meta.getHarmonizePipelines(obj_type),
+                                'soort': obj_type}, **delta_kwargs)
             )
             FixProjectNames >> tsk >> FixMonsterProjectcds
 

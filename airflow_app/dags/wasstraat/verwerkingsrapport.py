@@ -613,6 +613,10 @@ def bouwKwaliteit(run, verwerkingsfouten, analyse, rijen_zonder_key):
     meldingen = (run or {}).get('meldingen') or []
     afgeleid_mislukt = [m['melding'] for m in meldingen if m.get('soort') == foutbeleid.SOORT_AFGELEIDE_VELDEN]
     extractie = tellingen.get('extractie')
+    # Transform 1 (issue 89): tabellen die meer dan één harmonisatie-pipeline selecteert, per melder
+    voorrang = sorted((besluit for besluiten in (transform.get('harmonisatie_voorrang') or {}).values()
+                       if isinstance(besluiten, list) for besluit in besluiten if isinstance(besluit, dict)),
+                      key=lambda b: (str(b.get('collectie')), str(b.get('tabel'))))
     return {
         'verwerkingsfouten': {'totaal': sum(g['aantal'] for g in verwerkingsfouten or []),
                               'groepen': verwerkingsfouten or [],
@@ -622,6 +626,7 @@ def bouwKwaliteit(run, verwerkingsfouten, analyse, rijen_zonder_key):
                                                     'onleesbare_databases', 'lege_databases', 'overgeslagen_tabellen',
                                                     'overige_meldingen', 'drempel')} if extractie else None,
         'paden_overgeslagen': tellingen.get('paden_overgeslagen'),
+        'harmonisatie_voorrang': voorrang,
         'locatiefouten': (analyse or {}).get('locatiefouten') or [],
         'onherkende_bestandsnamen': (analyse or {}).get('onherkende_bestandsnamen'),
         'rijen_zonder_key': rijen_zonder_key,
@@ -1003,6 +1008,14 @@ def maakMarkdown(rapport):
         uit += ['Geen Access-databases gecontroleerd in deze run.', '']
     uit += ['### Overgeslagen paden (paden_overslaan)', '']
     uit += _tabel(['Categorie', 'Aantal'], [[c, n] for c, n in (kw.get('paden_overgeslagen') or {}).items()])
+    uit += ['### Harmonisatie: tabellen bij meer dan één soort', '']
+    uit += _tabel(['Tabel', 'Collectie', 'Kandidaten', 'Geharmoniseerd door', 'Keuze'],
+                  [[b.get('tabel'), b.get('collectie'), ', '.join(b.get('kandidaten') or []),
+                    b.get('gekozen') if b.get('gekozen') is not None else 'geen enkele soort',
+                    'correcties.yml' if b.get('bron') == 'correcties.yml' else
+                    (f"voorrangsregel; instelling {b['ongeldige_instelling']} genegeerd"
+                     if b.get('ongeldige_instelling') is not None else 'voorrangsregel (waarschuwing)')]
+                   for b in kw.get('harmonisatie_voorrang') or []])
     uit += ['### Locatiefouten', '']
     uit += _tabel(['Soort', 'Type', 'Aantal', 'Voorbeeld'],
                   [[g['soort'], g['type'], g['aantal'], (g['voorbeelden'][0]['melding'] if g.get('voorbeelden') else None)]

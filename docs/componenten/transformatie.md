@@ -18,10 +18,21 @@ De namen van de taakgroepen zijn ouder dan de volgorde: Transform 5 draait vóó
 |------|---------|
 | `FixProjectNames` | Past de `brondata_correcties` uit `correcties.yml` toe op de staging en zet numerieke projectcodes om naar tekst (zie [Configuratie](configuratie.md#31-brondata_correcties)) |
 | `fixMonsterProjectcds` | Zet de oude projectcodes van de monsterdatabase om naar de codes uit de projectenlijst |
-| `Harmonize_<soort>` | Eén taak per soort uit `meta.py`. Voor de meeste soorten bouwt `harmonizer.py` de aggregatie uit de [harmonisatie-Excel](configuratie.md#4-harmonisatie-excel): welke Access-tabellen bij de soort horen en welke kolom welk veld wordt. Projecten, vindplaatsen, stellingen, standplaatsen, plaatsingen en dozen hebben een vaste pipeline in `meta.py`. Elk document krijgt `soort` en het oorspronkelijke record in `brondata` |
+| `Harmonize_<soort>` | Eén taak per soort uit `meta.py`. Voor de meeste soorten bouwt `harmonizer.py` de aggregatie uit de [harmonisatie-Excel](configuratie.md#4-harmonisatie-excel): welke Access-tabellen bij de soort horen en welke kolom welk veld wordt. Projecten, vindplaatsen, stellingen, standplaatsen, plaatsingen en dozen hebben een vaste pipeline in `meta.py`. Elk document krijgt `soort` en het oorspronkelijke record in `brondata`. Een tabel die meer soorten selecteren, harmoniseert alleen de soort met voorrang (zie [hieronder](#voorrang-bij-een-tabel-die-meer-soorten-selecteren)) |
 | `ParseFotobestanden` | Bepaalt voor elk bestand in `Plaatjes` of het een foto, tekening of rapport is, en leidt de nummers af uit de bestandsnaam: via het gemeenteprofiel (`identificeer_foto`, `identificeer_tekening`) en `rapportcode_prefixen` uit `correcties.yml`. Een onherkende naam geeft soort `Bestand` |
 
 Voorbeeld uit de Excel: het putnummer heet in de ene database `PUT` en in de andere `PUTNO`; met `["PUT", "PUTNO"]` op het tabblad van de soort wordt het in beide gevallen het veld `putnr`.
+
+### Voorrang bij een tabel die meer soorten selecteren
+
+De taken `Harmonize_<soort>` draaien parallel en schrijven met `$merge` op `_id` (`whenMatched: replace`) naar `Single_Store`. Selecteren de patronen van twee soorten dezelfde Access-tabel, dan won tot issue 89 de taak die het laatst klaar was, en dat verschilde per run. In Delft gebeurde dat met `AW1DeterminatiesJohan`: `Aardewerk` selecteert hem via `AW1.*`, `Artefact` via `Determinaties`. Na de cyclus van 29 oktober 2026 om 17:49 stonden zo 801 aardewerkdeterminaties uit DB034 als `Onbekend` in de webapplicatie, zonder baksel, decoratie en ABR-materiaal, en met een nieuw nummer.
+
+Nu bepaalt elke taak zelf welke tabellen de pipelines op zijn staging-collectie selecteren (`distinct('table', ...)` met de `$match`-fasen van elke pipeline), kiest per tabel die meer pipelines selecteren één soort en slaat in zijn eigen pipeline de tabellen over die een andere soort krijgen (`{$match: {table: {$nin: [...]}}}` vooraan; in de incrementele cyclus na de delta-`$match`). De keuze:
+
+1. de instelling in [`harmonisatie_voorrang`](configuratie.md#36-harmonisatie_voorrang) in `correcties.yml`: tabelnaam → soort, of leeg voor geen enkele soort (codetabellen);
+2. anders de voorrangsregel: een specifieke artefactsoort (`Aardewerk`, `Glas`, …) gaat vóór de algemene `Artefact`; verder de volgorde van de soorten in `wasstraat_model` in `meta.py`.
+
+Elke tabel die meer soorten selecteren zonder instelling geeft een waarschuwing `tabel_dubbel_geselecteerd` in het run-document, gemeld door de taak van de gekozen soort; alle besluiten staan in het [verwerkingsrapport](verwerkingsrapport.md). Omdat alle taken dezelfde staging, configuratie en regel gebruiken, nemen ze hetzelfde besluit, in elke volgorde. Alleen pipelines die het `_id` van het staging-document schrijven doen mee (standplaatsen, plaatsingen en dozen maken uit één rij van de magazijnlijst elk een eigen document). De code staat in `wasstraat/harmonisatie_voorrang.py`; per taak kost de bepaling enkele distinct-queries (op de Delftse `Staging_Projecten_Oud` met 22 pipelines ongeveer 2 seconden).
 
 ## Transform 2: attributen
 
@@ -105,7 +116,7 @@ Nummer `0` telt niet mee. Gegenereerde records herken je aan `brondata.table` = 
 
 ## Transform 4: primary_keys en verwijzingen
 
-`Set_PrimaryKey_<soort>` (`references_functions.setPrimaryKeys(stabiel=True)`) geeft elk document in `Single_Store_Clean` een integer-sleutel `ID`, die in PostgreSQL de `primary_key` wordt. Bestaande nummers worden uit PostgreSQL overgenomen: op de `primary_key` uit de bron (ABR), op `_id`, op map en bestandsnaam (bestanden), op een `key` die precies één keer in de tabel staat en daarna op de hulpsleutel uit de bronrij. Alleen nieuwe entiteiten krijgen een nummer boven het bestaande maximum. Daardoor blijven links, bruiklenen en de zoekindex geldig, ook na een volledige cyclus. Transform 4 heeft dus in elke DAG een bereikbare PostgreSQL nodig.
+`Set_PrimaryKey_<soort>` (`references_functions.setPrimaryKeys(stabiel=True)`) geeft elk document in `Single_Store_Clean` een integer-sleutel `ID`, die in PostgreSQL de `primary_key` wordt. Bestaande nummers worden uit PostgreSQL overgenomen: op de `primary_key` uit de bron (ABR), op `_id`, op map en bestandsnaam (bestanden), op een `key` die precies één keer in de tabel staat en daarna op de hulpsleutel uit de bronrij. Sinds issue 89 houdt een rij zonder natuurlijke key (hulpsleutel-key of `key_subnr|artefactsoort`) zijn nummer ook als de artefactsoort in zijn key verandert, bijvoorbeeld door een andere keuze in `harmonisatie_voorrang`. Alleen nieuwe entiteiten krijgen een nummer boven het bestaande maximum. Daardoor blijven links, bruiklenen en de zoekindex geldig, ook na een volledige cyclus. Transform 4 heeft dus in elke DAG een bereikbare PostgreSQL nodig.
 
 Daarna vullen `Set_Reference_<soort>` de verwijzingen (`projectID`, `putID`, `vondstID`, `artefactID`, ...) op basis van de sleutels uit Transform 3, koppelen `Set_Reference_ABR_Materiaal` en `_SubMateriaal` artefacten aan de ABR, en koppelen `Set_Reference_Images_to_Foto1` en `_Foto3` objectfoto's aan hun artefact. Zie [Incrementeel laden](incrementeel-laden.md#uitwerking-in-fase-2) voor de volgorde van het terugvinden en de tellingen.
 
@@ -118,7 +129,7 @@ De incrementele cyclus (`Extract_Transform_Load_Incremental`) gebruikt dezelfde 
 | Wat | Waar | Zie |
 |-----|------|-----|
 | Welke tabellen en kolommen bij welke soort horen | Harmonisatie-Excel | [Configuratie: harmonisatie-Excel](configuratie.md#4-harmonisatie-excel) |
-| Correcties van brondata en projectcodes, uitzonderingen op het samenvoegen, rapportcodes | `correcties.yml` | [Configuratie: correcties.yml](configuratie.md#3-correctiesyml) |
+| Correcties van brondata en projectcodes, uitzonderingen op het samenvoegen, rapportcodes, voorrang bij een tabel die meer soorten selecteren | `correcties.yml` | [Configuratie: correcties.yml](configuratie.md#3-correctiesyml) |
 | Normaliseren van codes en lezen van bestandsnamen | Gemeenteprofiel (`WASSTRAAT_GEMEENTE`) | [Gemeenteprofielen](gemeenteprofielen.md) |
 | Drempel op verwerkingsfouten | `AIRFLOW_MAX_VERWERKINGSFOUTEN` en `_PCT` | [Configuratie: Airflow](configuratie.md#23-airflow-airflowenv-airflow_dbenv) |
 

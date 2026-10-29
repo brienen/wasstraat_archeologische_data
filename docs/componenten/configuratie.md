@@ -319,6 +319,7 @@ Een fout in `correcties.yml` stopt de pipeline dus nooit, met één uitzondering
 | [`artefact_niet_mergen`](#33-artefact_niet_mergen) | Transform 5, samenvoegen van artefacten | dictionary met de lijst `projectcodes` | alle projecten worden samengevoegd |
 | [`rapportcode_prefixen`](#34-rapportcode_prefixen) | Extractie (selectie van bestanden) en Transform 1 (`ParseFotobestanden`) | lijst van regels met `prefix` en `type` | geen rapportherkenning op naam |
 | [`paden_overslaan`](#35-paden_overslaan) | Extractie en registratie van bronbestanden | lijst van glob-patronen | niets overgeslagen |
+| [`harmonisatie_voorrang`](#36-harmonisatie_voorrang) | Transform 1, taken `Harmonize_<soort>` | dictionary van tabelnaam naar soort (of leeg) | de voorrangsregel, met een waarschuwing |
 
 ### 3.1 brondata_correcties
 
@@ -434,7 +435,33 @@ paden_overslaan:
 
 **Wijzigen.** Een nieuw patroon werkt ook in de incrementele cyclus: een al geregistreerd bestand dat erbuiten valt, geldt daar als verwijderd en zijn rijen worden opgeruimd; haal je een patroon weg, dan gelden de bestanden als nieuw. Na een grotere wijziging is de volledige cyclus de veilige weg. Meer achtergrond en de Delftse aantallen staan in [Extractie: paden overslaan](extractie.md#paden-overslaan).
 
-### 3.6 Volledig voorbeeld
+### 3.6 harmonisatie_voorrang
+
+Bepaalt welke soort een Access-tabel harmoniseert als de patronen van meer dan één soort in de [harmonisatie-Excel](#4-harmonisatie-excel) hem selecteren, en welke tabellen door geen enkele soort worden geharmoniseerd. Zonder deze keuze schreven de parallelle taken `Harmonize_<soort>` hetzelfde document om beurten weg en won de taak die het laatst klaar was, per run anders (issue 89: `AW1DeterminatiesJohan` werd de ene keer aardewerk met baksel, decoratie en ABR-materiaal, de andere keer een kaal artefact).
+
+```yaml
+harmonisatie_voorrang:
+  AW1DeterminatiesJohan: Aardewerk   # door Aardewerk ("AW1.*"), niet door Artefact ("Determinaties")
+  "CODES BAKSEL":                    # codetabel: door geen enkele soort
+```
+
+| Onderdeel | Regel |
+|-----------|-------|
+| Sleutel | De naam van de Access-tabel (veld `table` in de staging), precies en hoofdlettergevoelig. Zet een naam met een spatie, dubbele punt of alleen cijfers tussen aanhalingstekens |
+| Waarde | De naam van een soort uit `meta.py` die de tabel selecteert, zoals `Aardewerk` of `Artefact`. Leeg (niets, `~`, `null` of `""`): door geen enkele soort, ook als maar één soort de tabel selecteert |
+| Zonder instelling | De voorrangsregel: een specifieke artefactsoort (`Aardewerk`, `Glas`, `Metaal`, …) gaat vóór de algemene `Artefact`; verder de volgorde van de soorten in `wasstraat_model` in `meta.py` (`Put`, `Vlak`, `Spoor`, `Vulling`, `Stelling`, de artefactsoorten, `Artefact`, `Monster`, …). Elke tabel die meer dan één soort selecteert geeft dan een waarschuwing |
+| Fouten | Is de sectie geen dictionary, dan geldt geen enkele instelling (foutmelding in het log). Een regel met een tabelnaam die geen tekst is of een waarde die geen tekst is (zoals een lijst) wordt met een foutmelding overgeslagen. Een soort die de tabel niet selecteert (of niet bestaat) wordt genegeerd: dan kiest de voorrangsregel, met een waarschuwing die de genegeerde instelling noemt |
+| Standaard | Geen sectie of een lege sectie (`{}`): de voorrangsregel |
+
+**Hoe het werkt.** Elke taak `Harmonize_<soort>` bepaalt bij de start met `distinct('table', ...)` op zijn staging-collectie welke tabellen de pipelines van de soorten op die collectie selecteren (de `$match`-fasen uit de Excel of `meta.py`), kiest per tabel die meer pipelines selecteren één soort en slaat in zijn eigen pipeline de tabellen over die een andere soort (of geen enkele) krijgen (`{$match: {table: {$nin: [...]}}}` vooraan). Alle taken komen zo tot hetzelfde besluit, onafhankelijk van de volgorde waarin ze draaien; in de incrementele cyclus geldt hetzelfde. Alleen pipelines die het `_id` van het staging-document schrijven kunnen elkaar overschrijven en doen mee: standplaatsen, plaatsingen en dozen maken uit één rij van de magazijnlijst elk een eigen document en tellen niet mee. De code staat in `wasstraat/harmonisatie_voorrang.py`.
+
+**Zichtbaarheid.** Een tabel die meer soorten selecteren zonder instelling geeft een waarschuwing `tabel_dubbel_geselecteerd` in het run-document, met de tabel, de collectie, de kandidaten en de gekozen soort; de run gaat door. Alle besluiten, ook die uit deze sectie, staan in het [verwerkingsrapport](verwerkingsrapport.md) onder Kwaliteitsmeldingen ("Harmonisatie: tabellen bij meer dan één soort") en in het log van de taak van de gekozen soort (bij geen enkele soort: van de eerste kandidaat). Een instelling voor een tabel die geen enkele pipeline selecteert heeft geen effect en wordt niet gemeld.
+
+**Delft.** In de Delftse staging selecteren twee pipelines dezelfde tabel bij alleen `AW1DeterminatiesJohan` (802 rijen uit `opgravingDB34.mdb`): `Aardewerk` via `AW1.*` en `Artefact` via `Determinaties`; `data/delft/wasstraat_config/correcties.yml` kiest `Aardewerk`. De codetabel `METAAL OPPERVLAK` staat in de projectenlijst, waar alleen de vaste pipelines van projecten (`OPGRAVINGEN`) en vindplaatsen (`VINDPLAATSEN`) draaien; geen enkele soort selecteert hem. De synthetische data en de Delftse testdata hebben geen dubbel geselecteerde tabellen.
+
+**Wijzigen.** Een andere keuze verandert de soort (en bij artefacten de artefactsoort en de velden) van de documenten uit die tabel: draai daarna de volledige cyclus. Rijen die zo een andere artefactsoort krijgen, houden hun nummer in PostgreSQL (zie [Incrementeel laden](incrementeel-laden.md#andere-artefactsoort-door-de-harmonisatie-issue-89)).
+
+### 3.7 Volledig voorbeeld
 
 ```yaml
 # correcties.yml van een gemeente; alle secties zijn optioneel
@@ -459,9 +486,13 @@ rapportcode_prefixen:           # extractie en ParseFotobestanden
 paden_overslaan:                # extractie en registratie
   - "AB001_Voorbeeldproject/K Overig/werkmap"
   - "**/oude kopie*"
+
+harmonisatie_voorrang:          # Transform 1: welke soort een dubbel geselecteerde tabel harmoniseert
+  ABDeterminaties: Aardewerk
+  "AARDEWERK BAKSEL":           # codetabel: door geen enkele soort
 ```
 
-Controleer na een run of de correcties werkten: de logs van `FixProjectNames` en `Enhance_All_Attributes` noemen per regel het aantal gewijzigde documenten, en het verwerkingsrapport noemt de overgeslagen paden. `tests/unit/test_correcties_yml.py` en `tests/unit/test_paden_overslaan.py` toetsen het inlezen en de foutgevallen.
+Controleer na een run of de correcties werkten: de logs van `FixProjectNames` en `Enhance_All_Attributes` noemen per regel het aantal gewijzigde documenten, en het verwerkingsrapport noemt de overgeslagen paden en de voorrang bij de harmonisatie. `tests/unit/test_correcties_yml.py`, `tests/unit/test_paden_overslaan.py` en `tests/unit/test_harmonisatie_voorrang.py` toetsen het inlezen, de werking en de foutgevallen.
 
 ## 4. Harmonisatie-Excel
 
@@ -503,7 +534,7 @@ Andere kolommen (zoals `Opmerkingen` of een volgnummer) worden genegeerd.
 Transform 1 maakt per objecttype een taak `Harmonize_<soort>` (de soorten uit `meta.py`). Die leest de Excel met pandas (`harmonizer.loadHarmonizer`) en bouwt er een MongoDB-aggregatie van:
 
 1. documenten uit de staging-collectie van de soort waarvan het veld `table` (de naam van de Access-tabel) **niet** op een patroon uit `Ignore` lijkt;
-2. en **wel** op een patroon uit `Tabellen`. De patronen zijn hoofdletterongevoelig en niet verankerd: `VLAK` treft ook `VLAKKEN` en `SPOOR_VLAK`; gebruik `^` en `$` om dat te beperken;
+2. en **wel** op een patroon uit `Tabellen`. De patronen zijn hoofdletterongevoelig en niet verankerd: `VLAK` treft ook `VLAKKEN` en `SPOOR_VLAK`; gebruik `^` en `$` om dat te beperken. Selecteren de patronen van meer soorten dezelfde tabel, dan harmoniseert alleen de soort met voorrang hem (zie [harmonisatie_voorrang](#36-harmonisatie_voorrang));
 3. het hele brondocument gaat naar het veld `brondata`, met hetzelfde `_id`;
 4. de attributen van het `Overerven`-type en daarna die van het eigen tabblad worden gezet, elk als de eerste niet-lege kolom uit de lijst (`$ifNull`-keten);
 5. `soort` wordt de naam van het object; artefactsoorten krijgen `soort: Artefact` en `artefactsoort: <object>`, plus de ABR-velden;
@@ -584,6 +615,7 @@ Het verwerkingsrapport vermeldt de versie als die in de Airflow-container bekend
 | Alleen lokaal bereikbaar, achter een reverse proxy | `WASSTRAAT_BIND=127.0.0.1` in `deploy/.env` |
 | Meer geheugen voor Elasticsearch | `WASSTRAAT_ES_GEHEUGEN=2g` in `deploy/.env` |
 | Een werkmap met kopieën overslaan | `paden_overslaan` in `correcties.yml`, daarna de volledige of de incrementele cyclus |
+| Een tabel die de patronen van twee soorten selecteren aan één soort toewijzen, of een codetabel niet harmoniseren | `harmonisatie_voorrang` in `correcties.yml` (de waarschuwing `tabel_dubbel_geselecteerd` noemt tabel en kandidaten), daarna de volledige cyclus |
 | Een verkeerde projectcode corrigeren | `brondata_correcties` (één bron) of `projectcode_correcties` (alle bronnen), daarna de volledige cyclus |
 | Een kolomnaam van een eigen database herkennen | Kolomnaam toevoegen aan de lijst `Kolommen` in de harmonisatie-Excel, daarna de volledige cyclus |
 | Meer mislukte foto's toestaan | `AIRFLOW_MAX_MISLUKTE_AFBEELDINGEN` en `_PCT` in `config/airflow.env`, Airflow-container opnieuw aanmaken |

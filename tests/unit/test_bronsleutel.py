@@ -673,3 +673,163 @@ class TestStabieleIdsMetVervangendeKey:
         pg = [{'primary_key': 10, '_id': 'x', 'key': 'SA', 'bronsleutel': 'm:1'}]
         _, tellingen = delta_transform.bepaalStabieleIds([docV(0, 'SA', 'm:1', ['bron:m:1'])], pg)
         assert tellingen['nieuw_bronrij_bekend'] == 0 and 'voorbeelden' not in tellingen
+
+
+# ============================================================
+# Issue 89: rijen zonder natuurlijke key op de bronsleutel alleen
+# ============================================================
+
+B460 = f'{DB34_RELATIEF}:AW1DeterminatiesJohan:458'
+
+
+@pytest.mark.unit
+class TestBronsleutelUitKey:
+    """getBronsleutelUitKey en getBronsleutelWaarde: de waarde waarop stap 3b en 5 koppelen."""
+
+    def test_bronsleutel_uit_hulpsleutel_key(self):
+        assert delta_transform.getBronsleutelUitKey(f'PDB034P10V460|Aardewerk|bron:{B460}') == B460
+        assert delta_transform.getBronsleutelUitKey(f'PDB034P10V460||bron:{B460}') == B460
+        assert delta_transform.getBronsleutelUitKey('bron:magazijnlijst/MAGAZIJN.mdb:magazijnlijst:5') == \
+            'magazijnlijst/MAGAZIJN.mdb:magazijnlijst:5'
+
+    @pytest.mark.parametrize('key', ['PDB034V460A1|Glas', 'SAV1L1', None, '', 'bron:'])
+    def test_geen_bronsleutel_uit_andere_key(self, key):
+        assert delta_transform.getBronsleutelUitKey(key) is None
+
+    def test_waarde_bij_hulpsleutel_key_zonder_key(self):
+        """Twee hulpsleutel-keys met dezelfde bronsleutel geven dezelfde waarde, ook met een andere artefactsoort."""
+        aardewerk = delta_transform.getBronsleutelWaarde(B460, f'PDB034P10V460|Aardewerk|bron:{B460}')
+        onbekend = delta_transform.getBronsleutelWaarde(B460, f'PDB034P10V460||bron:{B460}')
+        assert aardewerk == onbekend == ('hulpsleutel', B460)
+
+    def test_waarde_bij_key_subnr_zonder_artefactsoort(self):
+        """key_subnr|artefactsoort: de bronsleutel en key_subnr, zonder de artefactsoort."""
+        aardewerk = delta_transform.getBronsleutelWaarde(B460, 'PDB034P10V630A2|Aardewerk')
+        assert aardewerk == delta_transform.getBronsleutelWaarde(B460, 'PDB034P10V630A2|Onbekend') \
+            == delta_transform.getBronsleutelWaarde(B460, 'PDB034P10V630A2|') == ('key_subnr', B460, 'PDB034P10V630A2')
+        assert aardewerk != delta_transform.getBronsleutelWaarde(B460, 'PDB034P10V630A3|Aardewerk')
+
+    @pytest.mark.parametrize('bronsleutel, key', [('m:1', 'SA'), ('m:1', 'PDC024V32A14S0'), (None, 'SA'),
+                                                  (None, f'bron:{B460}'), ('m:1', None), ('m:1', '')])
+    def test_geen_waarde_bij_natuurlijke_key_of_zonder_bronsleutel(self, bronsleutel, key):
+        """Een natuurlijke key zonder artefactsoort bepaalt de entiteit: alleen koppelen op bronsleutel én key."""
+        assert delta_transform.getBronsleutelWaarde(bronsleutel, key) is None
+
+
+@pytest.mark.unit
+class TestStabieleIdsAndereArtefactsoort:
+    """bepaalStabieleIds stap 5b en 3b (issue 89): een andere artefactsoort of hulpsleutel-key geeft geen nieuw nummer."""
+
+    def test_andere_artefactsoort_houdt_het_nummer(self):
+        """29 oktober 17:49: de rijen staan als Onbekend (lege artefactsoort) in de tabel; nu weer als Aardewerk."""
+        pg = [{'primary_key': 60321 + i, '_id': f'x{i}', 'key': f'PDB034P10V460||bron:{DB34_RELATIEF}:AW1DeterminatiesJohan:{i}',
+               'bronsleutel': f'{DB34_RELATIEF}:AW1DeterminatiesJohan:{i}'} for i in range(3)]
+        docs = [doc(i, f'PDB034P10V460|Aardewerk|bron:{DB34_RELATIEF}:AW1DeterminatiesJohan:{i}',
+                    f'{DB34_RELATIEF}:AW1DeterminatiesJohan:{i}') for i in (2, 0, 1)]
+        toewijzing, tellingen = delta_transform.bepaalStabieleIds(docs, pg)
+        assert dict(toewijzing) == {OID[0]: 60321, OID[1]: 60322, OID[2]: 60323}
+        assert tellingen['op_bronsleutel_andere_key'] == 3 and tellingen['op_bronsleutel'] == 0 and tellingen['nieuw'] == 0
+        assert tellingen['nieuw_bronrij_bekend'] == 0 and 'voorbeelden' not in tellingen
+
+    def test_gecorrigeerd_vondstnummer_houdt_het_nummer(self):
+        """Een ander vondstnummer in een bronrij met autonummer: zelfde bronsleutel, andere hulpsleutel-key."""
+        pg = [{'primary_key': 7, '_id': 'x', 'key': f'PDB034P10V460|Aardewerk|bron:{B460}', 'bronsleutel': B460}]
+        toewijzing, tellingen = delta_transform.bepaalStabieleIds([doc(0, f'PDB034P10V461|Aardewerk|bron:{B460}', B460)], pg)
+        assert dict(toewijzing) == {OID[0]: 7} and tellingen['op_bronsleutel_andere_key'] == 1
+
+    def test_bronsleutel_uit_de_key_als_brondata_onleesbaar_is(self):
+        """Kan de kolom brondata niet gelezen worden, dan komt de bronsleutel uit de hulpsleutel-key zelf."""
+        pg = [{'primary_key': 7, '_id': 'x', 'key': f'PDB034P10V460||bron:{B460}'}]
+        toewijzing, tellingen = delta_transform.bepaalStabieleIds(
+            [doc(0, f'PDB034P10V460|Aardewerk|bron:{B460}', B460)], pg, lambda pks: {})
+        assert dict(toewijzing) == {OID[0]: 7} and tellingen['op_bronsleutel_andere_key'] == 1
+
+    def test_verloren_natuurlijke_key_blijft_een_melding(self):
+        """Een document zonder natuurlijke key koppelt niet aan een rij die er wel een had (issue 88 blijft zichtbaar)."""
+        pg = [{'primary_key': 10, '_id': 'x', 'key': 'PDB034P10V460A1|Aardewerk', 'bronsleutel': B460}]
+        toewijzing, tellingen = delta_transform.bepaalStabieleIds([doc(0, f'PDB034P10V460|Aardewerk|bron:{B460}', B460)], pg)
+        assert dict(toewijzing) == {OID[0]: 11}
+        assert tellingen['nieuw'] == 1 and tellingen['nieuw_bronrij_bekend'] == 1
+
+    def test_natuurlijke_key_koppelt_niet_aan_hulpsleutel_rij_in_stap_5(self):
+        """Een natuurlijke key zonder vervangende keys koppelt in stap 5 alleen op bronsleutel én key."""
+        pg = [{'primary_key': 10, '_id': 'x', 'key': f'bron:{B460}', 'bronsleutel': B460}]
+        toewijzing, tellingen = delta_transform.bepaalStabieleIds([doc(0, 'PDB034P10S1', B460)], pg)
+        assert dict(toewijzing) == {OID[0]: 11} and tellingen['nieuw_bronrij_bekend'] == 1
+
+    def test_twee_documenten_uit_een_bronrij_met_andere_keys_niet_gegokt(self):
+        """Eén bronrij, twee documenten met een andere hulpsleutel-key en één rij: niet te zeggen welke het was."""
+        pg = [{'primary_key': 5, '_id': 'x', 'key': f'P||bron:{B460}', 'bronsleutel': B460}]
+        docs = [doc(0, f'P|Aardewerk|bron:{B460}', B460), doc(1, f'P|Glas|bron:{B460}', B460)]
+        toewijzing, tellingen = delta_transform.bepaalStabieleIds(docs, pg)
+        assert sorted(pk for _, pk in toewijzing) == [6, 7] and tellingen['op_bronsleutel_andere_key'] == 0
+
+    def test_identieke_bronrijen_met_andere_artefactsoort_paarsgewijs(self):
+        """Drie gelijke rijen zonder autonummer (zelfde hash) met een andere artefactsoort: twee houden hun nummer."""
+        pg = [{'primary_key': p, '_id': str(p), 'key': 'P1||bron:t:#h', 'bronsleutel': 't:#h'} for p in (7, 8)]
+        docs = [doc(i, 'P1|Aardewerk|bron:t:#h', 't:#h') for i in range(3)]
+        toewijzing, tellingen = delta_transform.bepaalStabieleIds(docs, pg)
+        assert sorted(pk for _, pk in toewijzing) == [7, 8, 9]
+        assert tellingen['op_bronsleutel_andere_key'] == 2 and tellingen['nieuw'] == 1
+
+    def test_key_subnr_met_andere_artefactsoort_houdt_het_nummer(self):
+        """Artefact met subnr maar zonder artefactnr: PDB034P10V630A2|Onbekend in de tabel, nu weer |Aardewerk."""
+        pg = [{'primary_key': 61015, '_id': 'x', 'key': 'PDB034P10V630A2|Onbekend'},
+              {'primary_key': 61016, '_id': 'y', 'key': 'PDB034P10V630A3|Onbekend'}]
+        docs = [doc(0, 'PDB034P10V630A2|Aardewerk', 'a:2'), doc(1, 'PDB034P10V630A3|Aardewerk', 'a:3')]
+        toewijzing, tellingen = delta_transform.bepaalStabieleIds(docs, pg, lambda pks: {61015: 'a:2', 61016: 'a:3'})
+        assert dict(toewijzing) == {OID[0]: 61015, OID[1]: 61016}
+        assert tellingen['op_bronsleutel_andere_key'] == 2 and tellingen['nieuw'] == 0
+        assert tellingen['nieuw_bronrij_bekend'] == 0
+
+    def test_key_subnr_andere_bronrij_niet_gekoppeld(self):
+        """Zelfde key_subnr, andere artefactsoort én andere bronrij: een ander artefact, dus een nieuw nummer."""
+        pg = [{'primary_key': 5, '_id': 'x', 'key': 'PDB034P10V630A2|Glas', 'bronsleutel': 'g:1'}]
+        toewijzing, tellingen = delta_transform.bepaalStabieleIds([doc(0, 'PDB034P10V630A2|Aardewerk', 'a:2')], pg)
+        assert dict(toewijzing) == {OID[0]: 6} and tellingen['op_bronsleutel_andere_key'] == 0
+
+    def test_exacte_koppeling_gaat_voor(self):
+        """Eén bronrij als Aardewerk en als Glas, beide in de tabel: elk houdt zijn eigen rij, ook met een derde soort erbij."""
+        pg = [{'primary_key': 1, '_id': 'x', 'key': 'K|Aardewerk', 'bronsleutel': 'b:1'},
+              {'primary_key': 2, '_id': 'y', 'key': 'K|Glas', 'bronsleutel': 'b:1'},
+              {'primary_key': 3, '_id': 'z', 'key': 'K|Aardewerk', 'bronsleutel': 'b:2'},
+              {'primary_key': 4, '_id': 'w', 'key': 'K|Glas', 'bronsleutel': 'b:2'}]
+        docs = [doc(0, 'K|Glas', 'b:1'), doc(1, 'K|Aardewerk', 'b:1'), doc(2, 'K|Metaal', 'b:1')]
+        toewijzing, tellingen = delta_transform.bepaalStabieleIds(docs, pg)
+        assert dict(toewijzing) == {OID[0]: 2, OID[1]: 1, OID[2]: 5}
+        assert tellingen['op_bronsleutel'] == 2 and tellingen['op_bronsleutel_andere_key'] == 0
+
+    def test_vervangende_hulpsleutel_key_met_andere_artefactsoort(self):
+        """Stap 3b: een artefact krijgt zijn subnr (natuurlijke key) terug; de rij stond er met een andere artefactsoort."""
+        pg = [{'primary_key': 3, '_id': 'x', 'key': f'PDB034P10V460||bron:{B460}'},
+              {'primary_key': 9, '_id': 'y', 'key': 'PDB034P10V460A1|Aardewerk'}]
+        d = docV(0, 'PDB034P10V460A2|Aardewerk', B460, [f'PDB034P10V460|Aardewerk|bron:{B460}'])
+        toewijzing, tellingen = delta_transform.bepaalStabieleIds([d], pg, lambda pks: pytest.fail('niet nodig'))
+        assert dict(toewijzing) == {OID[0]: 3}
+        assert tellingen['op_vervangende_key'] == 1 and tellingen['nieuw'] == 0
+
+    def test_vervangende_key_subnr_met_andere_artefactsoort(self):
+        """Stap 3b: een artefact krijgt zijn artefactnr terug; de rij stond er als key_subnr|artefactsoort met een andere soort."""
+        pg = [{'primary_key': 4, '_id': 'x', 'key': 'PDC024V32A0S0|Onbekend'},
+              {'primary_key': 8, '_id': 'y', 'key': 'PDC024V32A0S0|Onbekend'}]
+        d = docV(0, 'PDC024V32A14S0', 'g:#a', ['PDC024V32|Glas|bron:g:#a', 'PDC024V32A0S0|Glas'])
+        toewijzing, tellingen = delta_transform.bepaalStabieleIds([d], pg, lambda pks: {4: 'g:#b', 8: 'g:#a'})
+        assert dict(toewijzing) == {OID[0]: 8}
+        assert tellingen['op_vervangende_key'] == 1 and tellingen['nieuw'] == 0
+
+    def test_artefact_zonder_subnr_met_andere_artefactsoort_via_set_stabiele_primary_keys(self, nep_client, monkeypatch):
+        """Van document tot telling: de key in PostgreSQL heeft een lege artefactsoort, het document Aardewerk."""
+        col = nep_client['Arch_Analyse']['Single_Store_Clean']
+        col.insert_many([{'_id': OID[0], 'soort': 'Artefact', 'projectcd': 'DB034', 'putnr': 10.0, 'vondstnr': 460.0,
+                          'artefactsoort': 'Aardewerk', 'brondata': [bronrij(ID=458)]}])
+        oude_key = f'PDB034P10V460||bron:{B460}'
+        monkeypatch.setattr(delta_transform, 'leesPgSleutels', lambda tabel: [{'primary_key': 60321, '_id': 'oud', 'key': oude_key}])
+        monkeypatch.setattr(delta_transform, 'leesPgBronsleutels', lambda tabel, pks: {60321: B460})
+        verwerkingsrun.startRun('incrementeel')
+        assert delta_transform.setStabielePrimaryKeys('Artefact', col) is True
+        assert col.find_one({'_id': OID[0]})['ID'] == 60321
+        telling = verwerkingsrun.huidigeRun()['tellingen']['transform']['primary_keys']['Artefact']
+        assert telling['op_bronsleutel_andere_key'] == 1 and telling['nieuw'] == 0 and telling['nieuw_bronrij_bekend'] == 0
+        # De load schrijft de nieuwe key (met artefactsoort) bij hetzelfde nummer
+        assert load.vulLaadKey('Artefact', dict(col.find_one({'_id': OID[0]})))['key'] == \
+            f'PDB034P10V460|Aardewerk|bron:{B460}'

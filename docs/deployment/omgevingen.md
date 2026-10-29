@@ -119,7 +119,7 @@ Daarnaast leest de Airflow-container configuratie uit `wasstraat_config/` (gemou
 | Bestand | Inhoud |
 |---------|--------|
 | `Wasstraat_Config_HarmonizeV3.xlsx` | Harmonisatie-mapping (veldnamen per objecttype) |
-| `correcties.yml` | Gemeente-specifieke datacorrecties en uitzonderingen: brondata- en projectcodecorrecties, `artefact_niet_mergen`, `rapportcode_prefixen` en `paden_overslaan` (zie [Configuratie](../componenten/configuratie.md#3-correctiesyml)) |
+| `correcties.yml` | Gemeente-specifieke datacorrecties en uitzonderingen: brondata- en projectcodecorrecties, `artefact_niet_mergen`, `rapportcode_prefixen`, `paden_overslaan` en `harmonisatie_voorrang` (zie [Configuratie](../componenten/configuratie.md#3-correctiesyml)) |
 
 !!! warning "Gevoelige gegevens"
     De `.env`-bestanden bevatten wachtwoorden en credentials. Neem deze **nooit** op in versiebeheer. Gebruik het `config/`-directory als template en vul per omgeving de juiste waarden in.
