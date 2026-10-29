@@ -385,11 +385,13 @@ endif
 	@echo "VERSION=$(VERSION)" > config/version.env.example
 	@echo "VERSION=$(VERSION)" > config/version.env
 	@sed -i.bak 's/^WASSTRAAT_VERSION=.*/WASSTRAAT_VERSION=$(VERSION)/' deploy/.env.example && rm -f deploy/.env.example.bak
-	git add .
+	@# Alleen de versiebestanden stagen (geen 'git add .': dat zou ongetrackte bestanden meenemen)
+	git add config/version.env.example deploy/.env.example
 	git commit -m "$(MSG)"
 	git tag -a $(VERSION) -m "$(MSG)"
-	git push --all
-	git push --tags
+	@# Alleen de huidige branch en de nieuwe tag pushen (geen 'git push --all': dat publiceert alle lokale branches)
+	git push origin HEAD
+	git push origin $(VERSION)
 	$(MAKE) publish VERSION=$(VERSION)
 
 # ============================================================
