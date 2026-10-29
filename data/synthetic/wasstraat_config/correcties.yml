@@ -20,6 +20,13 @@ brondata_correcties:
 #artefact_niet_mergen:
 #  projectcodes: ["DC112"]
 
+# Paden die de extractie overslaat (issue 84): glob-patronen relatief aan de invoermap (de projectmap,
+# in de testomgeving ook de map met afbeeldingen), hoofdletterongevoelig; een patroon dat een map
+# aanwijst geldt voor alles daaronder. De werkmap van SY001 bevat een kopie van de database en van een
+# foto; de integratietest controleert dat die worden overgeslagen en de aantallen niet veranderen.
+paden_overslaan:
+  - "SY001/K Overig/werkmap"
+
 # Rapportcode-prefixen voor bestandsclassificatie
 #rapportcode_prefixen:
 #  - prefix: "DAR"

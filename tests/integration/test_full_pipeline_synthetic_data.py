@@ -589,6 +589,57 @@ class TestFullPipelineSynthetic:
         assert all(kanaal >= 245 for kanaal in uitkomst["png_rechts"]), (
             f"Doorzichtig deel van het png is niet wit: {uitkomst['png_rechts']}")
 
+    def test_01d_verify_werkmap_overgeslagen(self, mongo_client):
+        """De kopieën in de werkmap van SY001 worden niet ingelezen en staan als overgeslagen in het log (issue 84).
+
+        De staging bevat geen document uit de kopie van de database, alle
+        staging-documenten van SY001 komen uit de echte database, en Filenames en
+        Plaatjes bevatten de kopie van de foto niet: de aantallen zijn gelijk aan
+        die zonder werkmap.
+        """
+        werkmap = re.compile(re.escape("/K Overig/werkmap/"))
+        staging = mongo_client[DB_STAGING]
+        for coll in STAGING_MDB_COLLECTIES:
+            aantal = staging[coll].count_documents({"mdbfile": werkmap})
+            assert aantal == 0, f"{coll}: {aantal} documenten uit de werkmap van SY001"
+        oud = staging["Staging_Projecten_Oud"]
+        bestanden = oud.distinct("mdbfile", {"projectcd": "SY001"})
+        print(f"\n  Staging SY001: {oud.count_documents({'projectcd': 'SY001'})} documenten uit {bestanden}")
+        assert bestanden == [SY001_DATABASE]
+        assert mongo_client[DB_FILES]["Filenames"].count_documents({"filename": werkmap}) == 0
+        assert staging["Plaatjes"].count_documents({"fullFileName": werkmap}) == 0
+        assert staging["Plaatjes"].count_documents({"fileName": "SY001_G001.jpg"}) == 1
+
+        uitvoer = DAG_UITVOER.get("Extract_only", "")
+        for pad in WERKMAP_KOPIEEN:
+            regel = f"Overgeslagen volgens paden_overslaan (patroon '{PATROON_WERKMAP}'): {pad}"
+            assert regel in uitvoer, f"Logregel ontbreekt in Extract_only: {regel}"
+        assert re.search(r"1 van \d+ MDB/ACCDB-bestand\(en\) in /input/projecten overgeslagen volgens paden_overslaan",
+                         uitvoer), "Telling van de overgeslagen databases ontbreekt in het log"
+        assert re.search(r"1 van \d+ afbeeldingen en rapporten in /input/projecten overgeslagen volgens paden_overslaan",
+                         uitvoer), "Telling van de overgeslagen afbeeldingen ontbreekt in het log"
+
+    def test_01e_verify_registratie_slaat_werkmap_over(self, airflow_ready):
+        """De registratie van bronbestanden (incrementele cyclus) slaat dezelfde kopieën over (issue 84)."""
+        script = (
+            "import json\n"
+            "import wasstraat.bronbestanden as bronbestanden\n"
+            "overgeslagen = {}\n"
+            "gescand = bronbestanden.scanBronbestanden(overgeslagen)\n"
+            "print('RESULTAAT:' + json.dumps({'gescand': sorted(gescand), 'overgeslagen': overgeslagen,\n"
+            "    'velden': bronbestanden.maakOvergeslagenVelden(overgeslagen)}))\n"
+        )
+        result = subprocess.run(["docker", "exec", "-e", "PYTHONPATH=/opt/airflow/dags", AIRFLOW_CONTAINER,
+                                 "python", "-c", script], capture_output=True, text=True, timeout=300)
+        regels = [r for r in result.stdout.split("\n") if r.startswith("RESULTAAT:")]
+        assert result.returncode == 0 and regels, f"scanBronbestanden mislukt: {result.stderr[-2000:]}"
+        uitkomst = json.loads(regels[-1][len("RESULTAAT:"):])
+        print(f"\n  Registratie: {len(uitkomst['gescand'])} bestanden, overgeslagen: {uitkomst['overgeslagen']}")
+        assert SY001_DATABASE in uitkomst["gescand"]
+        assert not [p for p in uitkomst["gescand"] if "/K Overig/werkmap/" in p]
+        assert uitkomst["overgeslagen"] == {"projecten": [WERKMAP_KOPIEEN[0]], "afbeeldingen": [WERKMAP_KOPIEEN[1]]}
+        assert uitkomst["velden"]["tellingen.paden_overgeslagen"] == {"afbeeldingen": 1, "projecten": 1, "totaal": 2}
+
     def test_02_verify_staging(self, mongo_client):
         """Staging-collectie bevat geëxtraheerde tabellen uit de MDB."""
         print_all_collections(mongo_client, DB_STAGING, "Na Extract:")
@@ -770,6 +821,38 @@ class TestFullPipelineSynthetic:
             f"controleer MOVEANDMERGE_GENERATE_MISSING_PIPELINES in meta.py."
         )
 
+    def test_08d_verify_geen_dubbele_artefactkeys(self, mongo_client):
+        """Elke niet-lege key van een artefact komt één keer voor in Single_Store_Clean (issue 83).
+
+        Tot issue 83 verplaatste Transform 5 artefacten die ook werden samengevoegd; bij
+        een groep met meer bronrijen bleven de verplaatste exemplaren naast het
+        samengevoegde document staan. Uitgezonderd zijn artefacten die bewust apart
+        blijven (ARTEFACT_NIET_MERGEN_TABELLEN en artefact_niet_mergen). De
+        merge-groep van SY002 is één document met twee bronrijen.
+        """
+        coll = mongo_client[DB_ANALYSE]["Single_Store_Clean"]
+        niet_mergen = leesArtefactNietMergenProjecten()
+        per_key = {}
+        for doc in coll.find({"soort": "Artefact"}, {"key": 1, "key_subnr": 1, "artefactsoort": 1,
+                                                       "projectcd": 1, "brondata.table": 1}):
+            tabellen = {b.get("table") for b in (doc.get("brondata") or []) if isinstance(b, dict)}
+            if doc.get("projectcd") in niet_mergen or tabellen & set(ARTEFACT_NIET_MERGEN_TABELLEN):
+                continue
+            key = artefactKey(doc)
+            if key:
+                per_key.setdefault(key, []).append(doc["_id"])
+        dubbel = {k: v for k, v in per_key.items() if len(v) > 1}
+        print(f"\n  Artefacten met een key: {len(per_key)}, dubbele keys: {len(dubbel)}")
+        assert not dubbel, f"Dubbele artefactkeys in Single_Store_Clean: {sorted(dubbel)[:10]}"
+
+        groep = list(coll.find({"soort": "Artefact", "key_subnr": MERGE_GROEP_SY002["key_subnr"],
+                                "artefactsoort": MERGE_GROEP_SY002["artefactsoort"]}))
+        print(f"  Merge-groep {MERGE_GROEP_SY002['key_subnr']}: {len(groep)} document(en), "
+              f"{[len(d.get('brondata') or []) for d in groep]} bronrijen")
+        assert len(groep) == 1, f"Merge-groep {MERGE_GROEP_SY002} heeft {len(groep)} documenten, verwacht 1"
+        assert groep[0].get("brondata_count") == MERGE_GROEP_SY002["bronrijen"]
+        assert len(groep[0]["brondata"]) == MERGE_GROEP_SY002["bronrijen"]
+
     def test_09_verify_vondst_count(self, mongo_client):
         """Vondst-documenten in clean-collectie >= verwacht."""
         counts = mongo_soort_counts(DB_ANALYSE, "Single_Store_Clean", mongo_client)
@@ -821,38 +904,6 @@ class TestFullPipelineSynthetic:
             f"Geen enkel project heeft latitude/longitude. "
             f"Controleer RD→WGS84 conversie in setAttributes_functions.py."
         )
-    def test_08d_verify_geen_dubbele_artefactkeys(self, mongo_client):
-        """Elke niet-lege key van een artefact komt één keer voor in Single_Store_Clean (issue 83).
-
-        Tot issue 83 verplaatste Transform 5 artefacten die ook werden samengevoegd; bij
-        een groep met meer bronrijen bleven de verplaatste exemplaren naast het
-        samengevoegde document staan. Uitgezonderd zijn artefacten die bewust apart
-        blijven (ARTEFACT_NIET_MERGEN_TABELLEN en artefact_niet_mergen). De
-        merge-groep van SY002 is één document met twee bronrijen.
-        """
-        coll = mongo_client[DB_ANALYSE]["Single_Store_Clean"]
-        niet_mergen = leesArtefactNietMergenProjecten()
-        per_key = {}
-        for doc in coll.find({"soort": "Artefact"}, {"key": 1, "key_subnr": 1, "artefactsoort": 1,
-                                                       "projectcd": 1, "brondata.table": 1}):
-            tabellen = {b.get("table") for b in (doc.get("brondata") or []) if isinstance(b, dict)}
-            if doc.get("projectcd") in niet_mergen or tabellen & set(ARTEFACT_NIET_MERGEN_TABELLEN):
-                continue
-            key = artefactKey(doc)
-            if key:
-                per_key.setdefault(key, []).append(doc["_id"])
-        dubbel = {k: v for k, v in per_key.items() if len(v) > 1}
-        print(f"\n  Artefacten met een key: {len(per_key)}, dubbele keys: {len(dubbel)}")
-        assert not dubbel, f"Dubbele artefactkeys in Single_Store_Clean: {sorted(dubbel)[:10]}"
-
-        groep = list(coll.find({"soort": "Artefact", "key_subnr": MERGE_GROEP_SY002["key_subnr"],
-                                "artefactsoort": MERGE_GROEP_SY002["artefactsoort"]}))
-        print(f"  Merge-groep {MERGE_GROEP_SY002['key_subnr']}: {len(groep)} document(en), "
-              f"{[len(d.get('brondata') or []) for d in groep]} bronrijen")
-        assert len(groep) == 1, f"Merge-groep {MERGE_GROEP_SY002} heeft {len(groep)} documenten, verwacht 1"
-        assert groep[0].get("brondata_count") == MERGE_GROEP_SY002["bronrijen"]
-        assert len(groep[0]["brondata"]) == MERGE_GROEP_SY002["bronrijen"]
-
 
     def test_10c_verify_project_keys(self, mongo_client):
         """Projecten hebben correcte key (begint met 'P')."""
@@ -1218,6 +1269,19 @@ class TestFullPipelineSynthetic:
         assert not fouten, "Verwijzingen gaan verloren in de laadstap:\n  " + "\n  ".join(fouten)
 
     @pytest.mark.load
+    def test_22d_verify_postgres_artefactkeys_uniek(self, airflow_ready):
+        """Elke key in Def_Artefact komt één keer voor (issue 83; de synthetische data heeft geen uitzonderingen)."""
+        totaal = _pg_scalar('SELECT COUNT(*) FROM "Def_Artefact"')
+        zonder_key = _pg_scalar('SELECT COUNT(*) FROM "Def_Artefact" WHERE key IS NULL')
+        dubbel = _pg_tekst(
+            'SELECT string_agg(key || \' (\' || aantal || \')\', \', \') FROM '
+            '(SELECT key, COUNT(*) AS aantal FROM "Def_Artefact" WHERE key IS NOT NULL '
+            'GROUP BY key HAVING COUNT(*) > 1) d')
+        print(f"\n  Def_Artefact: {totaal} rijen, {zonder_key} zonder key, dubbele keys: {dubbel or '-'}")
+        assert zonder_key == 0, f"{zonder_key} artefacten zonder key in Def_Artefact"
+        assert not dubbel, f"Dubbele keys in Def_Artefact: {dubbel}"
+
+    @pytest.mark.load
     def test_23_verify_postgres_no_empty_def_tables(self, airflow_ready):
         """Geen enkele Def_-tabel uit lst_tables mag 0 rijen hebben."""
         lst_tables = [
@@ -1267,16 +1331,3 @@ class TestFullPipelineSynthetic:
         volgende = _pg_scalar(f"SELECT nextval('{sequence}')")
         print(f"  {table}: nextval={volgende}")
         assert volgende > maximum, f"{table}: nextval {volgende} is niet groter dan max(primary_key) {maximum}"
-    @pytest.mark.load
-    def test_22d_verify_postgres_artefactkeys_uniek(self, airflow_ready):
-        """Elke key in Def_Artefact komt één keer voor (issue 83; de synthetische data heeft geen uitzonderingen)."""
-        totaal = _pg_scalar('SELECT COUNT(*) FROM "Def_Artefact"')
-        zonder_key = _pg_scalar('SELECT COUNT(*) FROM "Def_Artefact" WHERE key IS NULL')
-        dubbel = _pg_tekst(
-            'SELECT string_agg(key || \' (\' || aantal || \')\', \', \') FROM '
-            '(SELECT key, COUNT(*) AS aantal FROM "Def_Artefact" WHERE key IS NOT NULL '
-            'GROUP BY key HAVING COUNT(*) > 1) d')
-        print(f"\n  Def_Artefact: {totaal} rijen, {zonder_key} zonder key, dubbele keys: {dubbel or '-'}")
-        assert zonder_key == 0, f"{zonder_key} artefacten zonder key in Def_Artefact"
-        assert not dubbel, f"Dubbele keys in Def_Artefact: {dubbel}"
-

@@ -17,6 +17,7 @@ Gebruik:
 
 import io
 import os
+import shutil
 import struct
 import sys
 import zipfile
@@ -1487,6 +1488,24 @@ def genereerBijzondereBestanden():
     print(f"  {len(bijzondereBestanden())} bijzondere bestanden aangemaakt (png met alfakanaal, Word-document)")
 
 
+# Kopieën in een werkmap van SY001 (issue 84), relatief aan data/projecten: bron -> kopie. De pipeline
+# slaat ze over via paden_overslaan in data/synthetic/wasstraat_config/correcties.yml; zonder dat
+# patroon zou de kopie van de database als aparte bron worden ingelezen en de foto twee keer verwerkt.
+WERKMAP_KOPIEEN = {
+    os.path.join("SY001", "C Database", "opgravingSY001.mdb"): os.path.join("SY001", "K Overig", "werkmap", "opgravingSY001.mdb"),
+    os.path.join("SY001", "L Fotos", "SY001_G001.jpg"): os.path.join("SY001", "K Overig", "werkmap", "L Fotos", "SY001_G001.jpg"),
+}
+
+
+def genereerWerkmapKopieen():
+    """Kopieer de database en een foto van SY001 naar een werkmap die de pipeline overslaat (issue 84)."""
+    for bron, kopie in WERKMAP_KOPIEEN.items():
+        volledig = os.path.join(OUTPUT_DIR, "projecten", kopie)
+        os.makedirs(os.path.dirname(volledig), exist_ok=True)
+        shutil.copyfile(os.path.join(OUTPUT_DIR, "projecten", bron), volledig)
+    print(f"  {len(WERKMAP_KOPIEEN)} kopieën in de werkmap van SY001 (paden_overslaan)")
+
+
 def genereerAlles():
     """Genereer alle synthetische MDB-bestanden en fotobestanden."""
     print("=" * 60)
@@ -1560,6 +1579,7 @@ def genereerAlles():
     print("\n[7/7] Synthetische fotobestanden")
     genereerFotos()
     genereerBijzondereBestanden()
+    genereerWerkmapKopieen()
 
     print("\n" + "=" * 60)
     print("Klaar! Bestanden gegenereerd in:")

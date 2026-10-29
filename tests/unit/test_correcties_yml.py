@@ -531,3 +531,67 @@ class TestImageFilterPatronen:
 
         # DAR is een hoofdletter-prefix, wordt case-sensitive gematcht
         assert any(p[0].isupper() for p in patronen if p == 'DAR')
+
+
+# ============================================================
+# Klasse 7: Paden overslaan (issue 84)
+# ============================================================
+
+class TestPadenOverslaan:
+    """Test de sectie paden_overslaan: glob-patronen voor bestanden die de extractie overslaat.
+
+    De patronen worden via laadCorrecties() gelezen (dezelfde cache als de
+    andere secties); foutieve waarden worden gelogd en overgeslagen, zonder
+    dat de rest van het bestand verloren gaat.
+    """
+
+    def setup_method(self):
+        import wasstraat.harmonize_functions as hf
+        hf._correcties_cache = None
+
+    def teardown_method(self):
+        import wasstraat.harmonize_functions as hf
+        hf._correcties_cache = None
+
+    def _laad(self, tmp_path, inhoud):
+        import wasstraat.harmonize_functions as hf
+        import wasstraat.paden_overslaan as po
+        yml_file = tmp_path / "correcties.yml"
+        yml_file.write_text(inhoud, encoding="utf-8")
+        with patch.object(hf.config, 'AIRFLOW_CORRECTIES_CONFIG', str(yml_file)):
+            return [tekst for tekst, _ in po.laadPatronenUitConfig()], hf.laadCorrecties()
+
+    def test_sectie_wordt_geladen(self, tmp_path):
+        patronen, correcties = self._laad(tmp_path, (
+            'projectcode_correcties:\n  - patroon: "SCHE"\n    projectcode: "DC039"\n'
+            'paden_overslaan:\n  - "DC024_Stadskantoor/K Overig/werkmap joris"\n  - "**/kopie*"\n'))
+        assert patronen == ["DC024_Stadskantoor/K Overig/werkmap joris", "**/kopie*"]
+        assert correcties['projectcode_correcties'][0]['projectcode'] == "DC039"
+
+    def test_ontbrekende_sectie(self, tmp_path):
+        assert self._laad(tmp_path, 'artefact_niet_mergen:\n  projectcodes: ["DC112"]\n')[0] == []
+
+    def test_lege_sectie(self, tmp_path):
+        assert self._laad(tmp_path, 'paden_overslaan:\n')[0] == []
+        import wasstraat.harmonize_functions as hf
+        hf._correcties_cache = None
+        assert self._laad(tmp_path, 'paden_overslaan: []\n')[0] == []
+
+    def test_tekst_in_plaats_van_lijst(self, tmp_path, caplog):
+        import logging
+        with caplog.at_level(logging.ERROR, logger="airflow.task"):
+            patronen, correcties = self._laad(tmp_path, 'paden_overslaan: "SY001/K Overig"\nartefact_niet_mergen:\n  projectcodes: ["DC112"]\n')
+        assert patronen == []
+        assert correcties['artefact_niet_mergen'] == {'projectcodes': ['DC112']}
+        assert "geen lijst" in caplog.text
+
+    def test_foutieve_elementen(self, tmp_path, caplog):
+        import logging
+        with caplog.at_level(logging.WARNING, logger="airflow.task"):
+            patronen, _ = self._laad(tmp_path, (
+                'paden_overslaan:\n  - 12\n  - ""\n  - patroon: "x"\n  - "[]"\n  - "SY001/K Overig"\n'))
+        assert patronen == ["SY001/K Overig"]
+        assert caplog.text.count("Ongeldig patroon in paden_overslaan") == 4
+
+    def test_ongeldige_yaml_geeft_geen_patronen(self, tmp_path):
+        assert self._laad(tmp_path, 'paden_overslaan: [\n  - "kapot"\n')[0] == []

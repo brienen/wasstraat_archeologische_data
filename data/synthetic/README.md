@@ -12,6 +12,7 @@ Gemeenten die hun eigen data willen verwerken, kunnen deze voorbeeldstructuur al
 - 3 monsters (2 met botanische determinaties, 1 zoölogisch)
 - 1 monster met opzettelijk foute projectcode (SYNTFOUT) — test voor correctiemechanisme
 - 1 foto als png met alfakanaal (`L Fotos/SY001_G003.png`) en 1 Word-document (`D Velddocumenten/Dagrapport SY001.docx`) — test voor de extractie: het png komt op een witte achtergrond als jpg in de mediamap, het Word-document krijgt het documenticoon uit `shared/afbeeldingen/document.png` als voorbeeld
+- Een werkmap `K Overig/werkmap/` met een kopie van de database en van foto `SY001_G001.jpg` — test voor `paden_overslaan` in `correcties.yml` (issue 84): de extractie slaat ze over, de aantallen veranderen niet
 - Datering: 1600-1750
 
 ### SY002 — Groot project (Kerkplein, Leiden)
@@ -32,6 +33,7 @@ data/synthetic/
 │   │   ├── SY001/
 │   │   │   ├── C Database/opgravingSY001.mdb          #   Projectdatabase (putten, sporen, vondsten, artefacten)
 │   │   │   ├── D Velddocumenten/                      #   Word-document (dagrapport)
+│   │   │   ├── K Overig/werkmap/                      #   Kopieën die de pipeline overslaat (paden_overslaan)
 │   │   │   └── L Fotos/                               #   Foto's (sfeer-, opgravings- en objectfoto's, één png met alfakanaal)
 │   │   └── SY002/
 │   │       ├── C Database/opgravingSY002.mdb
@@ -50,7 +52,7 @@ data/synthetic/
 │   └── rapporten/                                     # Rapporten (leeg in synthetische data)
 ├── wasstraat_config/                                  # Pipeline-configuratie
 │   ├── Wasstraat_Config_HarmonizeV3.xlsx              #   Harmonisatie-mapping (veldnamen per objecttype)
-│   └── correcties.yml                                 #   Datacorrecties (projectcodes, rapportprefixen)
+│   └── correcties.yml                                 #   Datacorrecties (projectcodes, rapportprefixen, paden_overslaan)
 ├── generatie/                                         # Alles voor (her)generatie
 │   ├── generate_synthetic_data.py                     #   Generator-script
 │   ├── requirements-synthetic.txt                     #   Python dependencies

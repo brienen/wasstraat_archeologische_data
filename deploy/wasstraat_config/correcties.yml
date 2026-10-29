@@ -25,3 +25,10 @@ brondata_correcties: []
 #    type: "archeologische_rapportage"
 #  - prefix: "DAN"
 #    type: "archeologische_notitie"
+
+# Bestanden en mappen die de extractie overslaat, zoals kopieën van databases in een werkmap.
+# Glob-patronen relatief aan de invoermap (de projectmap), hoofdletterongevoelig; * staat voor een deel
+# van één naam, ** voor nul of meer mappen, en een patroon dat een map aanwijst geldt voor alles daaronder.
+paden_overslaan: []
+#  - "AB001_Voorbeeldproject/K Overig/werkmap"
+#  - "**/oude kopie*"

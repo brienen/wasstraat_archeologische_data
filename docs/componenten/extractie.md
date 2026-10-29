@@ -87,6 +87,40 @@ Beide staan in `config/airflow.env.example` (en `deploy/config/airflow.env.examp
 
 **Na een mislukte controle.** Bekijk de mislukte bestanden in het log van `Controleer_Afbeeldingen` of in MongoDB (`db.Filenames.find({processed: false})` in `Arch_Files`). Herstel de oorzaak en draai `Redo_Images` (verwerkt alleen de openstaande bestanden) en daarna de transformatie en de load, of draai de cyclus opnieuw. Zijn de bestanden bekend en acceptabel, verhoog dan de drempel. Haal je in de incrementele cyclus een mislukt nieuw bestand weg voordat een run geslaagd is, dan ruimt de volgende run de openstaande entry in `Filenames` op (`voegImageFilenamesToe`).
 
+### Paden overslaan (issue 84)
+
+In de brondata staan soms kopieën van databases en afbeeldingen die niet als aparte bron mogen tellen. De extractie leest elke Access-database onder een invoermap in (`importMDB.sh`: `**/*.mdb` en `**/*.accdb`), dus zonder filter geeft zo'n kopie dubbele artefacten, sporen en vondsten. Het bekendste geval is de werkmap van Joris in DC024 (`DC024_Stadskantoor/K Overig/werkmap joris`): vijf Access-databases (`opgravingDC24.mdb`, `opgravingDC241.mdb`, `raapimport.accdb`, `test.mdb` en `C Database/DC24_STADSKANTOOR.mdb`), kopieën en tussenversies van de opgravingsdatabase in `C Database`. Op de productie-installatie leverden ze op 22 oktober 2026 17.128 rijen in de staging, 7.404 documenten in `Single_Store` en 6.663 artefacten die alleen uit deze kopieën kwamen (een vijfde van alle Delftse artefacten).
+
+De sectie `paden_overslaan` in `correcties.yml` (zie [Transformatie: datacorrecties](transformatie.md#datacorrecties-yaml)) is een lijst met patronen van bestanden en mappen die de extractie overslaat:
+
+```yaml
+paden_overslaan:
+  - "DC024_Stadskantoor/K Overig/werkmap joris"   # één map, met alles daaronder
+  - "**/werkmap*"                                 # elke map die met werkmap begint, op elk niveau
+  - "DC097_Ipse/C Database/HHD2.mdb"              # één bestand
+```
+
+| Onderdeel | Regel |
+|-----------|-------|
+| Vorm | Glob-patroon. `/` scheidt mappen (een `\` geldt ook als `/`); `*` staat voor een willekeurig deel van één naam, niet over een `/` heen; `?` voor één teken; `[abc]` en `[!abc]` voor een teken uit (of buiten) een reeks; `**` als hele naam voor nul of meer mappen |
+| Waartegen | Het pad relatief aan de invoermap van het bestand: de projectmap (`AIRFLOW_INPUT_PROJECTEN`) voor de opgravingsdatabases, de map met afbeeldingen (`AIRFLOW_INPUT_IMAGES`), de map met rapporten, de monsterdatabase enzovoort. In de standaardopzet (Delft, synthetische data, `deploy/`) is de map met afbeeldingen dezelfde als de projectmap, zodat één patroon zowel de databases als de afbeeldingen in een projectmap dekt. Een `/` aan het begin of eind wordt genegeerd |
+| Mappen | Een patroon dat een map aanwijst, geldt voor alles daaronder. Het patroon moet de hele naam van de map dekken: `DC024_Stadskantoor/K Overig/werkmap` slaat `werkmap joris` niet over, `DC024_Stadskantoor/K Overig/werkmap*` wel |
+| Hoofdletters | Ongevoelig: `dc024_stadskantoor/k overig/WERKMAP JORIS` werkt ook |
+| Fouten | Een sectie die geen lijst is, levert een foutmelding in het log op en er wordt niets overgeslagen; een element dat geen (niet-lege) tekst is of geen geldig patroon (zoals `[]`), wordt met een waarschuwing weggelaten. De rest van `correcties.yml` blijft werken |
+| Standaard | Geen sectie of een lege lijst (`paden_overslaan: []`): er wordt niets overgeslagen |
+
+**Waar het geldt.** Eén instelling dekt alle brontypen, met dezelfde functie (`airflow_app/dags/wasstraat/paden_overslaan.py`, `filterPaden`):
+
+- **Access-databases** in de zes MDB-mappen: `importMDB.sh` geeft de gevonden bestanden (en in de incrementele cyclus de bestanden uit het lijstbestand) aan het script `airflow_app/scripts/paden_overslaan.py`, dat ze in Python filtert en de rest teruggeeft. Het script leest `correcties.yml` zelf (`AIRFLOW_CORRECTIES_CONFIG`). Gaat het filteren mis, dan stopt `importMDB.sh` met een `ERROR`: zonder filter zouden de kopieën stil worden ingelezen.
+- **Registratie van bronbestanden** (incrementele cyclus en de taak `Registreer_Bronbestanden` van de volledige cyclus): `bronbestanden.zoekMdbBestanden` en `zoekAfbeeldingen` gebruiken dezelfde selectie als de extractie. Een overgeslagen bestand wordt niet geregistreerd. Een bestand dat al geregistreerd was en door een nieuw patroon buiten de selectie valt, geldt in de volgende incrementele run als verwijderd: `Opruimen_Oude_Records` haalt zijn rijen weg. Haal je een patroon weg, dan gelden de bestanden als nieuw.
+- **Afbeeldingen en rapporten**: `image_import.getImageFilenames` (via `getImageNamesFromDir` voor de map met afbeeldingen en de map met rapporten, en `getImageNamesFromExcelAndDir` voor de bestandenlijst). Een overgeslagen bestand komt niet in `Filenames` en dus niet in `Plaatjes` of de mediamap. De bestandenlijst brengt een overgeslagen bestand niet terug. De filterpatronen voor rapporten (`rapportcode_prefixen`) werken zoals voorheen; `paden_overslaan` komt daar bovenop.
+
+**Log en run-document.** Per overgeslagen bestand komt er een regel in het log van de taak (`Overgeslagen volgens paden_overslaan (patroon '...'): <pad>`), gevolgd door een telling per invoermap (`5 van 9 Access-databases in /input/projecten overgeslagen volgens paden_overslaan.`). Bij `importMDB.sh` staan die regels in het log van de taak `Extract_Data_From_<map>` (en in `AIRFLOW_LOGDIR/<collectie>.log`), bij de afbeeldingen in dat van `GetAndStoreImageFilenames`. De registratie schrijft de overgeslagen paden ook in het run-document (`Bepaal_Delta` in de incrementele cyclus, `Registreer_Bronbestanden` aan het eind van de volledige cyclus): `paden_overgeslagen` met per categorie de gesorteerde paden (hoogstens 1.000 per categorie) en `tellingen.paden_overgeslagen` met de aantallen per categorie en het totaal, bijvoorbeeld `{"projecten": 5, "totaal": 5}`. Het verwerkingsrapport kan ze daar lezen.
+
+**Delft.** `data/delft/wasstraat_config/correcties.yml` slaat de werkmap van Joris over (de vijf databases; de overige 251 bestanden in die map, waaronder 4 jpg's, 2 tif's en 2 pdf's, vielen al buiten de selectie van afbeeldingen en rapporten). Een simulatie op de productie-installatie (alleen lezen, samen met [issue 83](transformatie.md#10-verplaatsen-en-samenvoegen-van-artefacten-issue-83)) geeft bij de eerstvolgende volledige cyclus 22.551 artefacten in plaats van 32.527: 6.663 artefacten uit de werkmap en 3.313 losse exemplaren uit merge-groepen vervallen, geen enkel artefact krijgt een nieuw nummer. Andere soorten met rijen die alleen uit de werkmap kwamen: 272 sporen, 148 fotobeschrijvingen, 12 putten, 12 vlakken en 1 vulling; 143 bestanden (tekeningen) waren samengevoegd met rijen uit de werkmap en houden hun nummer via map en bestandsnaam (alle 143 uniek in `Def_Bestand`). Eén vondst krijgt eenmalig een nieuw nummer: het samengevoegde document van alle vondstrijen zonder key, dat bronrijen uit de werkmap verliest en daardoor een andere hulpsleutel krijgt. Niet in de werkmap maar mogelijk ook kopieën: `B Arcview/opgravingDC24.mdb` (met onder meer `BOT`, `GLAS` en `KLEIPIJPEN`, die in de hoofddatabase ontbreken), `B Arcview/Database1.accdb` en `F Vondstmateriaal/Aardewerk/Aardewerk.accdb` (elk de tabel `Determinaties` met 880 rijen) in DC024, en `HHD2.mdb` en `dc79a1.mdb` naast `opgravingDC97.mdb` in `DC097_Ipse/C Database` (hun artefacten worden samengevoegd, zie issue 83). Of die ook overgeslagen moeten worden, is een vraag voor de opdrachtgever. De Delftse testdata (`data/test`) heeft geen werkmap: `paden_overslaan: []`.
+
+**Synthetische data.** `data/synthetic/data/projecten/SY001/K Overig/werkmap/` bevat een kopie van de database van SY001 en van foto `SY001_G001.jpg` (ook gemaakt door de generator, `WERKMAP_KOPIEEN`), en `data/synthetic/wasstraat_config/correcties.yml` slaat de map over (`SY001/K Overig/werkmap`). De integratietest controleert dat de staging, `Filenames` en `Plaatjes` niets uit de werkmap bevatten, dat beide bestanden als overgeslagen in het log van `Extract_only` staan en dat de registratie ze overslaat (`test_01d`, `test_01e`). Unit tests: `tests/unit/test_paden_overslaan.py` (patronen, foutieve waarden, het script, `importMDB.sh` met nep-MDB's, de registratie, de afbeeldingen en de configuraties in de repo) en `tests/unit/test_correcties_yml.py` (klasse `TestPadenOverslaan`).
+
 ### Formaatdetectie
 
 Op basis van bestandsextensies en bestandsinhoud detecteert het systeem automatisch welke parser moet worden gebruikt. Dit maakt handmatige configuratie overbodig in veel gevallen.
@@ -163,6 +197,7 @@ De extractielaag implementeert robuuste foutafhandeling:
 - **Encoding-fouten**: Automatische fallback naar alternatieve coderingsschema's
 - **Parsing-fouten**: Gedetailleerde foutmeldingen met regelreferenties
 - **Structuurfouten**: Waarschuwingen voor onverwachte bestandsstructuren
+- **Kopieën van databases en afbeeldingen**: bestanden en mappen uit `paden_overslaan` in `correcties.yml` worden overgeslagen, met een logregel per bestand (zie [Paden overslaan](#paden-overslaan-issue-84))
 - **Afbeeldingen en rapporten**: status per bestand in `Filenames`, een harde fout bij een vol of niet-schrijfbaar mediavolume en een drempel op het aantal mislukte bestanden (taak `Controleer_Afbeeldingen`, zie [Afbeeldingen en rapporten](#afbeeldingen-en-rapporten))
 
 !!! error "Kritieke Fouten"

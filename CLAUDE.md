@@ -55,7 +55,7 @@ De verwerkingsvolgorde is strikt:
 3. Transform1 Harmonize — Harmoniseer veldnamen over alle bronnen + brondata-correcties uit correcties.yml
 4. Transform2 Enhance Attributes — Normaliseer inhoud (datums, codes, metadata) + projectcode-correcties uit correcties.yml
 5. Transform3 Set Keys — Genereer unieke sleutels per entiteit
-6. Transform4 Move and Merge — Voeg dubbele entiteiten samen (polymorfisme)
+6. Transform4 Move and Merge — Voeg dubbele entiteiten samen (polymorfisme). Voor artefacten is de verplaatsing sinds issue 83 precies het complement (`$nor`) van de merge-voorwaarde in `merge_functions.py`, zodat een bronrij die in een merge-groep zit niet ook als los document overblijft; de artefactsoort wordt vóór de `$group` genormaliseerd; `artefact_niet_mergen`, `ROMEINS AARDEWERK` en de RAAP-tabel `ARTEFACT` blijven uitgezonderd
 7. Transform5 Set References — Ken integer-sleutels toe voor PostgreSQL; sinds issue 71 in elke DAG stabiel (`setPrimaryKeys(stabiel=True)`): bestaande `primary_key`s worden uit PostgreSQL herleid via `key` (ABR via de bron-`primary_key`, bestanden via map en bestandsnaam), alleen nieuwe entiteiten krijgen een nummer boven het maximum. Rijen zonder unieke `key` (artefacten zonder subnr, monsters, plaatsingen, vindplaatsen, dubbele keys) worden sinds issue 81 gekoppeld op een hulpsleutel uit de bronrij (`delta_transform.getBronsleutel`: pad, tabel en autonummer van de bronrij, anders een hash van de rij-inhoud; bij samengevoegde documenten de gesorteerde lijst), die in PostgreSQL uit de kolom `brondata` wordt afgeleid (`leesBrondataTekst`, AST-parser zonder eval); de load schrijft voor zulke rijen een leesbare key `...|bron:<hulpsleutel>` (`vulLaadKey`). Draai na een update met deze wijziging eerst de volledige cyclus
 8. Load to Database & Index — Kopieer naar PostgreSQL + bouw Elasticsearch-index
 
@@ -97,7 +97,7 @@ Per omgeving (delft, synthetic, test) kan een `correcties.yml` in `wasstraat_con
 - **`projectcode_correcties`** — eenvoudige regex→projectcode vervangingen, toegepast op het `projectcd` veld in Single_Store na harmonisatie (Transform2). Geen collectie of veldnaam nodig.
 - **`brondata_correcties`** — correcties op raw velden in staging-collecties vóór harmonisatie (Transform1). Nodig als brondata afwijkende codes bevat die niet matchen met de projectenlijst. Vereist `collectie`, `zoek_veld`, `patroon` en `waarde`.
 
-Overige secties: `artefact_niet_mergen`, `rapportcode_prefixen`.
+Overige secties: `artefact_niet_mergen`, `rapportcode_prefixen` en `paden_overslaan` (issue 84: glob-patronen relatief aan de invoermap, hoofdletterongevoelig, voor Access-databases, de registratie van bronbestanden én afbeeldingen en rapporten; logica in `wasstraat/paden_overslaan.py`, toegepast in `importMDB.sh` via `airflow_app/scripts/paden_overslaan.py`, `bronbestanden.py` en `image_import.py`; overgeslagen paden komen in het run-document onder `paden_overgeslagen`).
 
 **Pad:** `shared/config.py` → `AIRFLOW_CORRECTIES_CONFIG` (default `/opt/airflow/config/correcties.yml`).
 **Laden:** `wasstraat/harmonize_functions.py` → `laadCorrecties()` (cached, robuust bij foute YAML).

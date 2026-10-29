@@ -78,3 +78,15 @@ rapportcode_prefixen:
     type: "archeologische_rapportage"
   - prefix: "DAN"
     type: "archeologische_notitie"
+
+# Paden die de extractie overslaat (issue 84): kopieën van databases en afbeeldingen die niet als
+# aparte bron mogen tellen. Glob-patronen, relatief aan de invoermap van het bestand (de projectmap;
+# in Delft is dat ook de map met afbeeldingen), hoofdletterongevoelig. * staat voor een deel van één
+# naam, ** voor nul of meer mappen; een patroon dat een map aanwijst geldt voor alles daaronder.
+paden_overslaan:
+  # Werkmap van Joris in DC024: vijf Access-databases (opgravingDC24.mdb, opgravingDC241.mdb,
+  # raapimport.accdb, test.mdb en C Database/DC24_STADSKANTOOR.mdb), kopieën en tussenversies van
+  # C Database/DC24_STADSKANTOOR.mdb. Gemeten 2026-10-29: 17.128 rijen in de staging, waarvan 6.663
+  # artefacten die alleen uit deze kopieën kwamen. De overige 251 bestanden in de map (o.a. 4 jpg,
+  # 2 tif, 2 pdf) vielen al buiten de selectie van afbeeldingen en rapporten.
+  - "DC024_Stadskantoor/K Overig/werkmap joris"

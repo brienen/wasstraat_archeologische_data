@@ -15,3 +15,8 @@ rapportcode_prefixen:
     type: "archeologische_rapportage"
   - prefix: "DAN"
     type: "archeologische_notitie"
+
+# Paden die de extractie overslaat (issue 84): glob-patronen relatief aan de invoermap, bijvoorbeeld
+# "DC024_Stadskantoor/K Overig/werkmap joris" of "**/werkmap*". De testdata (DB034) heeft geen
+# kopieën van databases, dus er wordt niets overgeslagen.
+paden_overslaan: []

@@ -65,7 +65,7 @@ def invoer(tmp_path, monkeypatch):
     monkeypatch.setattr(config, 'AIRFLOW_TEMPDIR', str(tmp_path / 'tmp'))
     # Afbeeldingen: de selectie zelf zit in image_import en wordt hier vervangen
     afbeeldingen = []
-    monkeypatch.setattr(bronbestanden.image_import, 'getImageFilenames', lambda: list(afbeeldingen))
+    monkeypatch.setattr(bronbestanden.image_import, 'getImageFilenames', lambda overgeslagen=None: list(afbeeldingen))
     return types.SimpleNamespace(root=tmp_path, afbeeldingen=afbeeldingen,
                                  **{naam: str(pad) for naam, pad in mappen.items()})
 

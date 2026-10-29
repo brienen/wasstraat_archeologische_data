@@ -328,6 +328,26 @@ echo "INFO: ${#MDB_FILES[@]} MDB/ACCDB-bestand(en) gevonden in '$1'."
 
 fi
 
+# Bestanden overslaan volgens paden_overslaan in correcties.yml (issue 84), bijvoorbeeld kopieën van
+# databases in een werkmap. Het filter staat in Python (paden_overslaan.py naast dit script, met de
+# logica in wasstraat/paden_overslaan.py), dezelfde selectie als bij de registratie van bronbestanden
+# en de afbeeldingen. Per overgeslagen bestand komt er een regel in het log, gevolgd door een telling.
+# Gaat het filteren mis, dan stopt het script: zonder filter zouden de kopieën stil worden ingelezen.
+if [ ${#MDB_FILES[@]} -gt 0 ]; then
+    GEFILTERD="$WORKDIR/paden_overslaan_${Collection}_$$.lst"
+    if ! printf '%s\0' "${MDB_FILES[@]}" | python3 "$SCRIPT_DIR/paden_overslaan.py" "$1" > "$GEFILTERD"; then
+        echo "ERROR: Filteren van de bestanden met paden_overslaan (correcties.yml) mislukt, niets verwerkt." | tee -a "$ERRORLOG"
+        rm -f "$GEFILTERD"
+        exit 1
+    fi
+    AANTAL_VOOR_FILTER=${#MDB_FILES[@]}
+    mapfile -d '' -t MDB_FILES < "$GEFILTERD"
+    rm -f "$GEFILTERD"
+    if [ ${#MDB_FILES[@]} -lt $AANTAL_VOOR_FILTER ]; then
+        echo "INFO: $((AANTAL_VOOR_FILTER - ${#MDB_FILES[@]})) MDB/ACCDB-bestand(en) overgeslagen volgens paden_overslaan, ${#MDB_FILES[@]} te verwerken."
+    fi
+fi
+
 for mdbfile in "${MDB_FILES[@]}"
 do
 	TOTAL_FILES=$((TOTAL_FILES + 1))

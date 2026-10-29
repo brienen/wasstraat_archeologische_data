@@ -27,6 +27,7 @@ import psycopg2.extras
 import shared.config as config
 import wasstraat.verwerkingsrun as verwerkingsrun
 import wasstraat.image_import as image_import
+import wasstraat.paden_overslaan as paden_overslaan
 from wasstraat.loadToDatabase_functions import getPgConnection
 import logging
 
@@ -56,6 +57,9 @@ HASH_BLOKGROOTTE = 1024 * 1024
 BATCH_GROOTTE = 10000
 # Bovengrens voor de padlijsten in het run-document (MongoDB staat max. 16 MB per document toe)
 MAX_LIJSTEN_BYTES = 12 * 1024 * 1024
+# Maximaal aantal overgeslagen paden (paden_overslaan, issue 84) per categorie in het run-document;
+# de tellingen zijn altijd volledig
+MAX_OVERGESLAGEN_PADEN = 1000
 
 SQL_MAAK_TABEL = f'''
     CREATE TABLE IF NOT EXISTS "{TABEL_BRONBESTAND}" (
@@ -150,15 +154,18 @@ def getLijstbestandPad(categorie):
 # Scannen en vingerafdrukken
 # ============================================================
 
-def zoekMdbBestanden(invoermap):
+def zoekMdbBestanden(invoermap, overgeslagen=None):
     """Zoek alle MDB/ACCDB-bestanden met exact dezelfde selectie als importMDB.sh.
 
     importMDB.sh gebruikt ``"$1"/**/*.mdb "$1"/**/*.accdb`` met globstar: recursief,
     hoofdlettergevoelige extensie, zonder verborgen bestanden en mappen en zonder
-    symbolisch gelinkte mappen te volgen.
+    symbolisch gelinkte mappen te volgen. Daarna laten beide de bestanden weg
+    die onder een patroon uit paden_overslaan in correcties.yml vallen (issue
+    84, wasstraat/paden_overslaan.py), met een logregel per bestand.
 
     Args:
         invoermap: map om te doorzoeken
+        overgeslagen: optionele lijst die met de overgeslagen paden wordt aangevuld
 
     Returns:
         Gesorteerde lijst met volledige paden
@@ -171,12 +178,18 @@ def zoekMdbBestanden(invoermap):
         for f in filenames:
             if not f.startswith('.') and f.endswith(MDB_EXTENSIES):
                 resultaat.append(os.path.join(dirpath, f))
-    return sorted(resultaat)
+    return paden_overslaan.filterPaden(sorted(resultaat), invoermap, overgeslagen=overgeslagen,
+                                       omschrijving='Access-databases')
 
 
-def zoekAfbeeldingen():
-    """Zoek alle afbeeldingen en rapporten met dezelfde selectie als de extractie (image_import)."""
-    return sorted(set(image_import.getImageFilenames()))
+def zoekAfbeeldingen(overgeslagen=None):
+    """Zoek alle afbeeldingen en rapporten met dezelfde selectie als de extractie (image_import).
+
+    Args:
+        overgeslagen: optionele lijst die met de paden wordt aangevuld die
+            volgens paden_overslaan in correcties.yml worden overgeslagen
+    """
+    return sorted(set(image_import.getImageFilenames(overgeslagen=overgeslagen)))
 
 
 def leesVingerafdruk(pad):
@@ -198,13 +211,23 @@ def berekenSha256(pad):
     return h.hexdigest()
 
 
-def scanBronbestanden():
+def scanBronbestanden(overgeslagen=None):
     """Scan alle invoerbestanden per categorie.
+
+    Bestanden die onder een patroon uit paden_overslaan in correcties.yml
+    vallen, worden niet gescand (issue 84). Een geregistreerd bestand dat zo
+    buiten de selectie valt, geldt daarna als verwijderd.
+
+    Args:
+        overgeslagen: optionele dict die per categorie wordt aangevuld met de
+            gesorteerde lijst van overgeslagen paden
 
     Returns:
         Dict pad -> {'categorie', 'grootte', 'mtime'}
     """
     bestanden = {}
+    if overgeslagen is None:
+        overgeslagen = {}
 
     def voegToe(pad, categorie):
         if pad in bestanden:
@@ -220,16 +243,57 @@ def scanBronbestanden():
         bestanden[pad] = {'categorie': categorie, 'grootte': grootte, 'mtime': mtime}
 
     for categorie, invoermap, _ in getMdbCategorieen():
-        for pad in zoekMdbBestanden(invoermap):
+        weggelaten = []
+        for pad in zoekMdbBestanden(invoermap, overgeslagen=weggelaten):
             voegToe(pad, categorie)
-    for pad in zoekAfbeeldingen():
+        if weggelaten:
+            overgeslagen[categorie] = sorted(weggelaten)
+    weggelaten = []
+    for pad in zoekAfbeeldingen(overgeslagen=weggelaten):
         voegToe(pad, CAT_AFBEELDINGEN)
+    if weggelaten:
+        overgeslagen[CAT_AFBEELDINGEN] = sorted(set(weggelaten))
     for categorie, pad in getLosseBestanden():
         if pad and os.path.isfile(pad):
             voegToe(pad, categorie)
 
-    logger.info(f"{len(bestanden)} bronbestanden gevonden.")
+    if overgeslagen:
+        logger.info(f"{len(bestanden)} bronbestanden gevonden, {sum(len(p) for p in overgeslagen.values())} "
+                    f"overgeslagen volgens paden_overslaan: {telOvergeslagen(overgeslagen)}.")
+    else:
+        logger.info(f"{len(bestanden)} bronbestanden gevonden.")
     return bestanden
+
+
+def telOvergeslagen(overgeslagen):
+    """Tel de overgeslagen paden (paden_overslaan) per categorie, plus een totaal.
+
+    Args:
+        overgeslagen: dict categorie -> lijst met paden (uit scanBronbestanden)
+
+    Returns:
+        Dict categorie -> aantal, met de extra sleutel 'totaal'
+    """
+    tellingen = {categorie: len(paden) for categorie, paden in sorted(overgeslagen.items())}
+    tellingen['totaal'] = sum(tellingen.values())
+    return tellingen
+
+
+def maakOvergeslagenVelden(overgeslagen):
+    """Velden voor het run-document met de paden die paden_overslaan overslaat (issue 84).
+
+    ``paden_overgeslagen`` bevat per categorie de gesorteerde paden (hoogstens
+    MAX_OVERGESLAGEN_PADEN per categorie), ``tellingen.paden_overgeslagen`` de
+    volledige aantallen per categorie en het totaal.
+
+    Args:
+        overgeslagen: dict categorie -> lijst met paden (uit scanBronbestanden)
+
+    Returns:
+        Dict met veldnamen voor verwerkingsrun.werkRunBij
+    """
+    paden = {categorie: sorted(lijst)[:MAX_OVERGESLAGEN_PADEN] for categorie, lijst in sorted(overgeslagen.items())}
+    return {'paden_overgeslagen': paden, 'tellingen.paden_overgeslagen': telOvergeslagen(overgeslagen)}
 
 
 def bepaalStatussen(gescand, geregistreerd, berekenHash=berekenSha256):
@@ -576,7 +640,8 @@ def bepaalDelta():
             logger.info(f"De registratie ({TABEL_BRONBESTAND}) is leeg: alle bestanden gelden als nieuw.")
             controleerStagingLeeg(myclient)
 
-        gescand = scanBronbestanden()
+        overgeslagen = {}
+        gescand = scanBronbestanden(overgeslagen)
         records, aantal_hashes = bepaalStatussen(gescand, geregistreerd)
         lijsten = maakDeltaLijsten(records)
         tellingen = telDelta(lijsten)
@@ -593,6 +658,7 @@ def bepaalDelta():
         'tellingen.delta': tellingen,
         'tellingen.hash_berekend': aantal_hashes,
     })
+    velden.update(maakOvergeslagenVelden(overgeslagen))
     verwerkingsrun.werkRunBij(velden, run_id=run_id)
 
     logger.info(f"Delta voor run {run_id}: {tellingen['totaal']} (sha256 berekend voor {aantal_hashes} bestanden).")
@@ -649,7 +715,8 @@ def registreerVolledigeCyclus():
     run_id = verwerkingsrun.startRun(verwerkingsrun.SOORT_VOLLEDIG)
     try:
         geregistreerd = leesRegistratie()
-        gescand = scanBronbestanden()
+        overgeslagen = {}
+        gescand = scanBronbestanden(overgeslagen)
         records, aantal_hashes = bepaalStatussen(gescand, geregistreerd)
         tellingen_delta = telDelta(maakDeltaLijsten(records))
 
@@ -663,12 +730,14 @@ def registreerVolledigeCyclus():
         schrijfRegistratie(rijen, bijwerken)
         tellingen = telRegistratie(rijen, bijwerken)
 
-        verwerkingsrun.werkRunBij({
+        velden = {
             'registratie_leeg': len(geregistreerd) == 0,
             'tellingen.delta': tellingen_delta,
             'tellingen.hash_berekend': aantal_hashes,
             'tellingen.registratie': tellingen,
-        }, run_id=run_id)
+        }
+        velden.update(maakOvergeslagenVelden(overgeslagen))
+        verwerkingsrun.werkRunBij(velden, run_id=run_id)
         verwerkingsrun.beeindigRun(verwerkingsrun.STATUS_AFGEROND, run_id=run_id)
         logger.info(f"Volledige cyclus: registratie van {len(rijen)} bronbestanden bijgewerkt: {tellingen}.")
         return tellingen

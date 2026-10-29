@@ -33,6 +33,7 @@ from pymongo import InsertOne
 
 import shared.config as config
 import shared.image_util as image_util
+import wasstraat.paden_overslaan as paden_overslaan
 import wasstraat.verwerkingsrun as verwerkingsrun
 
 try:
@@ -108,15 +109,19 @@ def _laadImageFilterPatronen():
 
 _image_filter_patronen = None
 
-def getImageNamesFromDir(dir):
+
+def _zoekBestandenInMap(dir):
+    """Alle bestanden onder een map met een extensie uit IMAGE_EXTENSIONS."""
+    return [os.path.join(dp, f) for dp, dn, filenames in os.walk(dir) for f in filenames if os.path.splitext(f)[1].lower() in config.IMAGE_EXTENSIONS]
+
+
+def _selecteerOpNaam(lst):
+    """Houd de bestanden over waarvan het pad een van de filterpatronen bevat (_laadImageFilterPatronen)."""
     global _image_filter_patronen
     if _image_filter_patronen is None:
         _image_filter_patronen = _laadImageFilterPatronen()
-
-    lst = [os.path.join(dp, f) for dp, dn, filenames in os.walk(dir) for f in filenames if os.path.splitext(f)[1].lower() in config.IMAGE_EXTENSIONS]
     patronen = _image_filter_patronen
     # Generieke patronen worden case-insensitive gematcht, rapportcode-prefixen case-sensitive
-    file_lower = None
     def matchesFilter(file):
         fl = file.lower()
         for p in patronen:
@@ -129,22 +134,52 @@ def getImageNamesFromDir(dir):
                 if p in fl:
                     return True
         return False
-    lst = [file for file in lst if matchesFilter(file)]
-    lst = list(set(lst))
-    return lst
+    return [file for file in lst if matchesFilter(file)]
 
 
-def getImageNamesFromExcelAndDir(dir):
+def getImageNamesFromDir(dir, overgeslagen=None):
+    """Retourneer de afbeeldingen en rapporten onder een map waarvan het pad een filterpatroon bevat.
+
+    Bestanden die onder een patroon uit paden_overslaan in correcties.yml
+    vallen, worden weggelaten (issue 84), met een logregel per bestand.
+
+    Args:
+        dir: invoermap (de patronen van paden_overslaan zijn hier relatief aan)
+        overgeslagen: optionele lijst die met de overgeslagen paden wordt aangevuld
+
+    Returns:
+        Lijst met unieke volledige paden
+    """
+    lst = list(set(_selecteerOpNaam(_zoekBestandenInMap(dir))))
+    return paden_overslaan.filterPaden(lst, dir, overgeslagen=overgeslagen, omschrijving='afbeeldingen en rapporten')
+
+
+def getImageNamesFromExcelAndDir(dir, overgeslagen=None):
+    """Retourneer de bestanden uit de bestandenlijst (FILE_IMPORT_FILES_EXCEL) die getImageNamesFromDir niet al vindt.
+
+    Bestanden die onder een patroon uit paden_overslaan vallen, worden
+    weggelaten (issue 84). De vergelijking met getImageNamesFromDir gebeurt op
+    de selectie vóór paden_overslaan, zodat een overgeslagen bestand niet via de
+    bestandenlijst alsnog wordt verwerkt.
+
+    Args:
+        dir: invoermap (de patronen van paden_overslaan zijn hier relatief aan)
+        overgeslagen: optionele lijst die met de overgeslagen paden wordt aangevuld
+
+    Returns:
+        Lijst met volledige paden
+    """
     # get list from excel
     df = pd.read_excel(config.FILE_IMPORT_FILES_EXCEL)
     df = df[df['wel/niet'] == 1]
     df['fulldir'] = df['Dir'] + '/' + df['Bestand']
     excel_lst = df['fulldir'].tolist()
-    
+
     # get files from dir
-    dir_lst = [os.path.join(dp, f) for dp, dn, filenames in os.walk(dir) for f in filenames if os.path.splitext(f)[1].lower() in config.IMAGE_EXTENSIONS] 
-    
-    return list(set(excel_lst).intersection(set(dir_lst)).difference(set(getImageNamesFromDir(dir))))
+    dir_lst = _zoekBestandenInMap(dir)
+
+    lst = list(set(excel_lst).intersection(set(dir_lst)).difference(set(_selecteerOpNaam(dir_lst))))
+    return paden_overslaan.filterPaden(lst, dir, overgeslagen=overgeslagen, omschrijving='bestanden uit de bestandenlijst')
 
 
 def markeerVerwerkt(col, doc_id, overgeslagen=None):
@@ -488,16 +523,23 @@ def controleerAfbeeldingen(incrementeel=False):
 
 
 
-def getImageFilenames():
+def getImageFilenames(overgeslagen=None):
     """Retourneer alle afbeeldingen en rapporten die de extractie verwerkt.
 
     Dezelfde selectie wordt gebruikt door de volledige extractie en door de
     registratie van bronbestanden (bronbestanden.py) voor incrementeel laden.
+    Bestanden die onder een patroon uit paden_overslaan in correcties.yml
+    vallen, horen er niet bij (issue 84).
+
+    Args:
+        overgeslagen: optionele lijst die met de overgeslagen paden wordt aangevuld
 
     Returns:
         Lijst met volledige paden (niet geschud)
     """
-    return getImageNamesFromDir(config.AIRFLOW_INPUT_IMAGES) + getImageNamesFromDir(config.AIRFLOW_INPUT_RAPPORTEN) + getImageNamesFromExcelAndDir(config.AIRFLOW_INPUT_IMAGES)
+    return (getImageNamesFromDir(config.AIRFLOW_INPUT_IMAGES, overgeslagen)
+            + getImageNamesFromDir(config.AIRFLOW_INPUT_RAPPORTEN, overgeslagen)
+            + getImageNamesFromExcelAndDir(config.AIRFLOW_INPUT_IMAGES, overgeslagen))
 
 
 def maakFilenameInserts(paden, aantal_bestaand):
