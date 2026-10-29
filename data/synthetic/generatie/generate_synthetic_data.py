@@ -930,8 +930,9 @@ def dataGrootProject():
         (code, 3, 7, None, "Grijsbakkend", "", "Wand", "Kogelpot", "", "", None, None, "", None, "", "", "", "", "", "", "", "", "", "", "", "", "1200", "1350", "", "", "", "", "D005", "", "", "", "", "", "", "", ""),
         (code, 4, 12, None, "Roodbakkend", "", "Wand", "Grape", "", "", None, None, "", None, "Loodglazuur", "", "", "", "", "", "", "", "", "", "", "", "1500", "1650", "", "", "", "", "D006", "", "", "", "", "", "", "", ""),
         # Issue 81: hetzelfde subnummer als de tweede rij (put 1, vondst 1, subnr 2). De merge voegt
-        # beide rijen samen en de eerste wordt ook verplaatst, zodat de key van het artefact
-        # (PSY002P1V1A2|Aardewerk) twee keer voorkomt, zoals bij 6.949 Delftse artefacten.
+        # beide rijen samen tot één artefact met twee bronrijen (PSY002P1V1A2|Aardewerk). Tot issue 83
+        # werd de eerste rij daarnaast ook verplaatst, zodat de key twee keer voorkwam, zoals bij
+        # 6.949 Delftse artefacten.
         (code, 1, 1, 2, "Grijsbakkend", "", "Wand", "Kogelpot", "", "", None, None, "", None, "", "", "", "", "Radstempel", "", "", "", "", "", "", "", "1250", "1400", "", "", "", "", "D003", "", "", "", "", "", "", "", ""),
     ])
 

@@ -16,7 +16,7 @@ Gemeenten die hun eigen data willen verwerken, kunnen deze voorbeeldstructuur al
 
 ### SY002 — Groot project (Kerkplein, Leiden)
 - 4 putten, 8 sporen, 12 vondsten, 23 artefactregels (8 materiaalsoorten)
-- In AARDEWERK 1 twee scherven zonder subnummer en een tweede regel met hetzelfde subnummer als een bestaande (put 1, vondst 1, subnr 2) — test voor de hulpsleutel uit de bronrij (issue 81): rijen zonder natuurlijke key of met een dubbele key houden hun `primary_key`
+- In AARDEWERK 1 twee scherven zonder subnummer en een tweede regel met hetzelfde subnummer als een bestaande (put 1, vondst 1, subnr 2) — test voor de hulpsleutel uit de bronrij (issue 81): rijen zonder natuurlijke key of met een dubbele key houden hun `primary_key`. De twee regels met subnr 2 vormen samen één artefact met twee bronrijen (merge-groep, issue 83)
 - 4 vullingen, 10 foto's
 - 2 monsters (uit beerput en greppel, met botanische en schelpdeterminaties)
 - Materiaalsoorten: aardewerk, glas, been, metaal, leer, steen, kleipijp, munten

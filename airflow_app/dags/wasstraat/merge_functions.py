@@ -80,36 +80,77 @@ AGGREGATE_MERGE = [{'$match': {'soort': 'XXX'}},
  { "$merge": { "into": { "db": config.DB_ANALYSE, "coll": config.COLL_ANALYSE_CLEAN }, "on": "_id",  "whenMatched": "replace", "whenNotMatched": "insert" } }
 ]
 
-## Match phase aggregation specific for moving Artefacts: inverse of the merge phase. For alle artefacts that do not pass the merge match clause
-INVERSE_MATCH_ARTEFACT = {
-    "$match": {
-        "$and": [
-            {"soort": "Artefact"},
-            {"brondata.table": {"$nin": ["ARTEFACT"]}},
-            {
-                "$or": [
-                    {"subnr": {"$exists": False}},
-                    {"brondata.ARTEFACT": {"$exists": True}},
-                    {"brondata.table": {"$in": ARTEFACT_NOT_MERGE_TABLES}},
-                    {"projectcd": {"$in": ARTEFACT_NOT_MERGE_PROJECTS}},
-                    {"artefactsoort": {"$exists": False}},
-                    {"artefactsoort": None},
-                    {
-                        "$expr": {
-                            "$in": [
-                                {"$toLower": {"$trim": {"input": "$artefactsoort"}}},
-                                ["", "-", "onbekend"]
-                            ]
-                        }
-                    },
-                    # Records uit artefactsoort-specifieke tabellen (MUNT, HOUT,
-                    # METAAL, etc.) hoeven niet gemerged te worden — direct moven.
-                    {"brondata.table": {"$not": {"$regex": "^ARTEFACT"}}}
-                ]
+## Artefactsoort van een samengevoegd artefact: leeg, '-' of 'onbekend' wordt 'Onbekend', de rest
+## zonder spaties aan het begin en eind. Staat vóór de $group (issue 83), zodat varianten van dezelfde
+## artefactsoort (ontbrekend, '', 'onbekend') bij hetzelfde key_subnr één document worden en niet
+## meer documenten met dezelfde key key_subnr|Onbekend.
+AGGR_PHASE_ARTEFACTSOORT = {
+    '$set': {
+        'artefactsoort': {
+            '$let': {
+                'vars': {'val': {'$ifNull': ['$artefactsoort', '']}},
+                'in': {
+                    '$cond': [
+                        { '$or': [
+                            { '$eq': ['$$val', ''] },
+                            { '$eq': [ { '$trim': { 'input': '$$val' } }, '' ] },
+                            { '$eq': [ { '$toLower': { '$trim': { 'input': '$$val' } } }, 'onbekend' ] },
+                            { '$eq': [ { '$trim': { 'input': '$$val' } }, '-' ] }
+                        ]},
+                        'Onbekend',
+                        { '$trim': { 'input': '$$val' } }
+                    ]
+                }
             }
-        ]
+        }
     }
 }
+
+## Artefacten uit deze tabel worden nooit verplaatst (ontwerp van 2022). Zonder subnummer, met een
+## kolom ARTEFACT of in een uitgezonderd project worden ze ook niet samengevoegd en komen ze dus niet
+## in Single_Store_Clean (in Delft de RAAP-tabel ARTEFACT van onder meer DC024 en DC112).
+ARTEFACT_NOT_MOVE_TABLES = ['ARTEFACT']
+
+
+def getArtefactMergeVoorwaarde():
+    """Retourneer de voorwaarde waaronder een artefact wordt samengevoegd in plaats van verplaatst.
+
+    Een artefact met een subnummer wordt samengevoegd met de andere artefacten
+    met dezelfde key_subnr en artefactsoort (mergeSoort), behalve als de bronrij
+    een kolom ARTEFACT heeft of uit een tabel (ARTEFACT_NOT_MERGE_TABLES) of
+    project (artefact_niet_mergen in correcties.yml) komt dat is uitgezonderd.
+    De verplaatsing (getInverseMatchArtefact) neemt precies de andere
+    artefacten, zodat elke bronrij in één document van Single_Store_Clean
+    terechtkomt (issue 83).
+
+    Returns:
+        Filter (dict) voor een $match-fase
+    """
+    return {'$and': [{'subnr': {'$exists': True}},
+                     {'brondata.ARTEFACT': {'$exists': False}},
+                     {'brondata.table': {'$nin': list(ARTEFACT_NOT_MERGE_TABLES)}},
+                     {'projectcd': {'$nin': list(ARTEFACT_NOT_MERGE_PROJECTS)}}]}
+
+
+def getInverseMatchArtefact():
+    """Retourneer de $match-fase voor het verplaatsen van artefacten: het complement van de merge-voorwaarde.
+
+    Tot issue 83 had de verplaatsing een eigen lijst met voorwaarden, die ook
+    artefacten zonder artefactsoort en alle artefacten uit tabellen waarvan de
+    naam niet met ARTEFACT begint verplaatste. Die artefacten werden óók
+    samengevoegd: had een groep (key_subnr, artefactsoort) meer dan één
+    bronrij, dan bleven de verplaatste exemplaren naast het samengevoegde
+    document staan, met dezelfde key (in Delft 5.746 documenten in 2.433
+    groepen). Nu is de verplaatsing het complement ($nor) van
+    getArtefactMergeVoorwaarde, met als enige uitzondering de tabellen uit
+    ARTEFACT_NOT_MOVE_TABLES, die nooit worden verplaatst.
+
+    Returns:
+        Dict met een $match-fase
+    """
+    return {'$match': {'$and': [{'soort': 'Artefact'},
+                                {'brondata.table': {'$nin': list(ARTEFACT_NOT_MOVE_TABLES)}},
+                                {'$nor': [getArtefactMergeVoorwaarde()]}]}}
 
 ''' Factory method to retrieve move aggragtion pipeline for specific type
 '''
@@ -117,7 +158,7 @@ def getMoveAggregate(soort):
     aggr = copy.deepcopy(AGGREGATE_MOVE)
     aggr.insert(1, AGGR_PHASE_CLEAN_EMPTY)
     if soort == 'Artefact':
-        aggr.insert(1, INVERSE_MATCH_ARTEFACT)
+        aggr.insert(1, getInverseMatchArtefact())
         
     aggr[0]['$match']['soort'] = soort
     return aggr
@@ -130,12 +171,9 @@ def getMergeAggregate(soort, key='key'):
     aggr[2]["$group"]["_id"] = {key: "$"+key}
 
     if soort == 'Artefact':
-        aggr.insert(1, 
-            {'$match': {'$and': [{'subnr': {'$exists': True}},
-                {'brondata.ARTEFACT': {'$exists': False}},
-                {'brondata.table': {'$nin': ARTEFACT_NOT_MERGE_TABLES}},
-                {'projectcd': {'$nin': ARTEFACT_NOT_MERGE_PROJECTS}}]}})
-        aggr[3]["$group"]["_id"]['artefactsoort'] = "$artefactsoort"
+        aggr.insert(1, {'$match': getArtefactMergeVoorwaarde()})
+        aggr.insert(3, copy.deepcopy(AGGR_PHASE_ARTEFACTSOORT))
+        aggr[4]["$group"]["_id"]['artefactsoort'] = "$artefactsoort"
     aggr[0]['$match']['soort'] = soort
 
     return aggr
@@ -221,28 +259,6 @@ def mergeSoort(soort, incrementeel=False):
             aggr.insert(-1, {'$addFields': {'soort': 'Bestand'}})
             aggr.insert(-1, {'$addFields': {'bestandsoort_XX': soort}})
 
-        if soort == 'Artefact':
-            aggr.insert(-1, {
-                '$set': {
-                    'artefactsoort': {
-                        '$let': {
-                            'vars': {'val': {'$ifNull': ['$artefactsoort', '']}},
-                            'in': {
-                                '$cond': [
-                                    { '$or': [
-                                        { '$eq': ['$$val', ''] },
-                                        { '$eq': [ { '$trim': { 'input': '$$val' } }, '' ] },
-                                        { '$eq': [ { '$toLower': { '$trim': { 'input': '$$val' } } }, 'onbekend' ] },
-                                        { '$eq': [ { '$trim': { 'input': '$$val' } }, '-' ] }
-                                    ]},
-                                    'Onbekend',
-                                    { '$trim': { 'input': '$$val' } }
-                                ]
-                            }
-                        }
-                    }
-                }
-            })
         if incrementeel:
             mergeSoortDelta(soort, key, aggr, collection)
             return

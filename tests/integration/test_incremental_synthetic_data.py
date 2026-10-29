@@ -12,8 +12,8 @@ incrementele cyclus (Extract_Transform_Load_Incremental) via
   c. incrementele run zonder wijzigingen: niets verandert;
   c2. de database van SY002 opnieuw verwerkt zonder inhoudelijke wijziging
      (issue 81): alle rijen krijgen een nieuw _id, maar elke rij van elke tabel
-     houdt zijn primary_key, ook artefacten zonder subnr, artefacten met een
-     dubbele key, monsters en plaatsingen;
+     houdt zijn primary_key, ook artefacten zonder subnr, het artefact met twee
+     bronrijen (hetzelfde subnummer, issue 83), monsters en plaatsingen;
   d. project SY003 als kopie van SY002 (database opgravingSY003.mdb, foto's
      SY003_*): SY003 komt erbij met nieuwe primary_keys, SY001/SY002 blijven gelijk;
      daarna een tweede bruikleen voor een artefact van SY003 dat in stap e verdwijnt;
@@ -592,7 +592,9 @@ class TestIncrementeelSynthetic:
         zonder_subnr = pgRijen('SELECT key FROM "Def_Artefact" WHERE key LIKE \'PSY002%|bron:%\' ORDER BY key')
         assert len(zonder_subnr) == 2, f"Verwacht twee artefacten zonder subnr in SY002: {zonder_subnr}"
         assert zonder_subnr[0][0].startswith("PSY002P3V7|Aardewerk|bron:projecten/SY002/C Database/opgravingSY002.mdb:AARDEWERK 1:")
-        assert pgWaarde('SELECT COUNT(*) FROM "Def_Artefact" WHERE key = \'PSY002P1V1A2|Aardewerk\'') == 2
+        # Issue 83: de twee rijen met hetzelfde subnummer worden samengevoegd tot één artefact met twee
+        # bronrijen (tot dan bleef de verplaatste rij er ook naast staan, met dezelfde key)
+        assert pgWaarde('SELECT COUNT(*) FROM "Def_Artefact" WHERE key = \'PSY002P1V1A2|Aardewerk\'') == 1
         for tabel in ["Def_Artefact", "Def_Plaatsing", "Def_Monster_Botanie", "Def_Monster_Schelp", "Def_Monster"]:
             assert pgWaarde(f'SELECT COUNT(*) FROM "{tabel}"') > 0, f"{tabel} heeft geen rijen: de test dekt die tabel niet"
             assert pgWaarde(f'SELECT COUNT(*) FROM "{tabel}" WHERE key IS NULL') == 0, f"{tabel} heeft rijen zonder key"
@@ -676,8 +678,8 @@ class TestIncrementeelSynthetic:
 
         De registratie van opgravingSY002.mdb krijgt een andere vingerafdruk, zodat de incrementele run
         de database als gewijzigd opnieuw verwerkt: alle documenten van SY002 krijgen een nieuw _id. Elke
-        rij houdt zijn primary_key: op de unieke key, en anders (artefacten zonder subnr, de dubbele key
-        PSY002P1V1A2|Aardewerk) op de bronsleutel.
+        rij houdt zijn primary_key: op de unieke key (sinds issue 83 ook het artefact PSY002P1V1A2|Aardewerk
+        met twee bronrijen, dat niet meer dubbel voorkomt), en anders op de bronsleutel.
         """
         pad = "/input/projecten/SY002/C Database/opgravingSY002.mdb"
         assert pgWaarde(f"SELECT COUNT(*) FROM \"Def_Bronbestand\" WHERE pad = '{pad}'") == 1
@@ -695,7 +697,7 @@ class TestIncrementeelSynthetic:
         nieuw = {soort: telling["nieuw"] for soort, telling in sleutels_t4.items()
                  if telling.get("tabel") and telling.get("nieuw")}
         assert not nieuw, f"Transform 4 deelde nieuwe nummers uit: {nieuw}"
-        assert sleutels_t4["Artefact"]["op_bronsleutel"] >= 1, "Geen artefact op de bronsleutel teruggevonden"
+        assert sleutels_t4["Artefact"]["op_key"] >= 1, "Geen artefact op de key teruggevonden"
 
         assert telTabellen() == TOESTAND["aantallen"]
         vergelijkRijIdentiteiten(TOESTAND["identiteiten"])
@@ -999,7 +1001,7 @@ class TestIncrementeelSynthetic:
         assert afgeleideVelden() == TOESTAND["afgeleid"]
 
         # Issue 81: elke rij van elke tabel heeft dezelfde primary_key als na de eerste volledige cyclus,
-        # ook artefacten zonder subnr, artefacten met een dubbele key, monsters, plaatsingen en standplaatsen
+        # ook artefacten zonder subnr, het artefact met twee bronrijen, monsters, plaatsingen en standplaatsen
         vergelijkRijIdentiteiten(TOESTAND["identiteiten"])
 
         # Alle FK's geldig (ook die van de gebruikerstabellen) en de sequences kloppen

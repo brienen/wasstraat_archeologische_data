@@ -45,7 +45,9 @@ DB_FILES = "Arch_Files_Test"
 # Single_Store_Clean 4917 Aardewerk (was 4821): de 96 rijen van de codetabel
 # "AARDEWERK 1&2 VOORWERP" krijgen nu table en projectcd en vallen onder het
 # patroon .*AARDEWERK.* (net als de 46 rijen van "AARDEWERK 1 BAKSEL"), als
-# Aardewerk zonder sleutel. Het minimum (4510, de tabel AARDEWERK 1) blijft.
+# Aardewerk zonder sleutel. Sinds issue 83 (2026-10-29) blijven de verplaatste exemplaren van
+# samengevoegde artefacten niet meer naast het samengevoegde document staan: 4656 Aardewerk
+# (261 minder). Het minimum (4510, de tabel AARDEWERK 1) blijft.
 EXPECTED_MIN_ARTEFACT_COUNTS = {
     "Aardewerk": 4510,
     "Glas": 20,
@@ -715,6 +717,36 @@ class TestDelftExtractTransform:
             print(f"    {a.get('artefactsoort', '?')}: key={key}")
             assert key.startswith("P"), f"Artefact key '{key}' begint niet met 'P'"
             assert "A" in key, f"Artefact key '{key}' bevat geen 'A'"
+
+    def test_24a_verify_geen_verplaatst_exemplaar_naast_samengevoegd(self, mongo_client):
+        """Een artefact uit een merge-groep staat niet ook als los document in Single_Store_Clean (issue 83).
+
+        Tot issue 83 werden artefacten uit tabellen waarvan de naam niet met ARTEFACT
+        begint zowel verplaatst als samengevoegd; bij een groep met meer bronrijen
+        bleven de verplaatste exemplaren naast het samengevoegde document staan. Voor
+        elk samengevoegd document (brondata_count) mag geen ander artefact dezelfde
+        key_subnr en artefactsoort hebben. Gemeten 2026-10-29: 261 samengevoegde
+        documenten met twee bronrijen in DB034 (een rij uit AARDEWERK 1 en een uit
+        CATALOGUS AW1 met dezelfde put, vondst en subnummer), dus 261 artefacten minder.
+        """
+        coll = mongo_client[DB_ANALYSE]["Single_Store_Clean"]
+        per_sleutel = {}
+        for doc in coll.find({"soort": "Artefact", "key_subnr": {"$exists": True}},
+                             {"key_subnr": 1, "artefactsoort": 1, "brondata_count": 1, "brondata.table": 1}):
+            # Artefacten die bewust apart blijven (ARTEFACT_NOT_MERGE_TABLES) tellen niet mee
+            if any(b.get("table") == "ROMEINS AARDEWERK" for b in doc.get("brondata") or [] if isinstance(b, dict)):
+                continue
+            sleutel = (doc["key_subnr"], doc.get("artefactsoort"))
+            per_sleutel.setdefault(sleutel, []).append(doc)
+        naast_samengevoegd = {k: len(v) for k, v in per_sleutel.items()
+                              if len(v) > 1 and any("brondata_count" in d for d in v)}
+        meer_bronrijen = sum(1 for v in per_sleutel.values() for d in v if d.get("brondata_count", 0) > 1)
+        print(f"\n  Samengevoegde artefacten met meer dan één bronrij: {meer_bronrijen}")
+        print(f"  key_subnr + artefactsoort met een los exemplaar naast het samengevoegde document: "
+              f"{len(naast_samengevoegd)}")
+        assert meer_bronrijen > 0, "Geen enkele merge-groep met meer bronrijen; controleer Merge_Artefact"
+        assert not naast_samengevoegd, (
+            f"Verplaatste artefacten naast een samengevoegd document: {sorted(naast_samengevoegd.items())[:10]}")
 
     def test_25_verify_referentie_keys_consistent(self, mongo_client):
         """Referentie-keys (key_project, key_put) zijn consistent met parent keys."""

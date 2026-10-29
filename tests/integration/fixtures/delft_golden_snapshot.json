@@ -1,11 +1,11 @@
 {
-  "beschrijving": "Golden snapshot Delft testdata (DB034) - opnieuw gegenereerd op 2026-10-21 na herstel van de foto-identificatie in Transform 2 (de dispatcher identificeer('Foto') koos de bestandsnaam-parser en elke foto gaf een TypeError). Foto's hebben nu projectcode DB034 en integers voor putnr/vondstnr/subnr, waardoor 22 van de 92 objectfoto's een artefactID krijgen en alle 92 een vondstID. Put 278 -> 275 en Vondst 3091 -> 3060: Generate_Missing maakte eerder uit de ongenormaliseerde foto's 3 putten (1, 10, 11) en 32 vondsten aan voor het niet-bestaande project DB34; die vervallen, en van de 32 (put, vondst)-combinaties op de foto's bestaan er 31 al in DB034 en wordt er 1 als DB034-vondst gegenereerd (netto -31). De key_samples van Bestand tonen de genormaliseerde sleutels (PDB034... in plaats van PDB34...). Eerdere aanpassingen: kopregel-fix in importMDB.sh (tabel MUNTEN EN PENNINGEN: +50 munten) en de sed-escape-fix (tabel AARDEWERK 1&2 VOORWERP: +96 aardewerk zonder sleutel).",
+  "beschrijving": "Golden snapshot Delft testdata (DB034) - opnieuw gegenereerd op 2026-10-29 na issue 83 (move/merge van artefacten): een artefact wordt in Transform 5 verplaatst of samengevoegd, niet meer allebei. In opgravingDB34.mdb hebben 261 rijen in AARDEWERK 1 een rij in CATALOGUS AW1 met dezelfde put, vondst en subnummer; die groepen van twee bronrijen werden samengevoegd, maar het verplaatste exemplaar uit de andere tabel bleef ernaast staan met dezelfde key. Nu is elke groep \u00e9\u00e9n artefact: Artefact 6336 -> 6075 en Aardewerk 4917 -> 4656 (beide -261); Single_Store en alle andere tellingen en voorbeeldkeys zijn gelijk. Issue 84 (paden_overslaan) verandert hier niets: de testdata heeft geen werkmap. Daarvoor (2026-10-21): herstel van de foto-identificatie in Transform 2 (Put 278 -> 275, Vondst 3091 -> 3060, genormaliseerde sleutels van Bestand: PDB034... in plaats van PDB34...), de kopregel-fix in importMDB.sh (tabel MUNTEN EN PENNINGEN: +50 munten) en de sed-escape-fix (tabel AARDEWERK 1&2 VOORWERP: +96 aardewerk zonder sleutel).",
   "testdata": "data/test/ (project DB034 Koningsveld IV)",
   "soort_counts_clean": {
     "Fotokoppel": 31469,
     "Monster_Botanie": 21381,
     "Standplaats": 8675,
-    "Artefact": 6336,
+    "Artefact": 6075,
     "Plaatsing": 5902,
     "ABR": 4838,
     "Doos": 4443,
@@ -52,7 +52,7 @@
     "DT_Soort_Staat": 4
   },
   "artefact_subtypes": {
-    "Aardewerk": 4917,
+    "Aardewerk": 4656,
     "Metaal": 629,
     "Hout": 294,
     "Menselijk_Bot": 273,

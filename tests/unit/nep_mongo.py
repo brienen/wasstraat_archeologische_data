@@ -8,7 +8,7 @@ count_documents, estimated_document_count, create_index (unieke, eventueel
 partiële indexen worden gecontroleerd) en aggregate met $match + $group/$sum.
 
 Filters: gelijkheid, een gecompileerde reguliere expressie, $in, $nin, $ne,
-$exists, $gt, $gte, $lt, $lte, $or, $and en veldnamen met punten.
+$exists, $gt, $gte, $lt, $lte, $or, $and, $nor en veldnamen met punten.
 """
 import copy
 import re
@@ -71,6 +71,10 @@ def matcht(doc, filt):
             continue
         if veld == '$and':
             if not all(matcht(doc, f) for f in voorwaarde):
+                return False
+            continue
+        if veld == '$nor':
+            if any(matcht(doc, f) for f in voorwaarde):
                 return False
             continue
         waarde = haalOp(doc, veld)

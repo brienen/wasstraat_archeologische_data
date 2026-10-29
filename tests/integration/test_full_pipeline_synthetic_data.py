@@ -105,6 +105,43 @@ EXPECTED_OBJECTFOTO_KOPPELING = {
 }
 
 
+# Kopieën in de werkmap van SY001 die de pipeline overslaat (paden_overslaan in correcties.yml, issue 84):
+# een kopie van de database en van foto SY001_G001.jpg. Zonder het patroon zou de database als tweede bron
+# worden ingelezen (dubbele artefacten, sporen en vondsten) en de foto twee keer worden verwerkt.
+PATROON_WERKMAP = "SY001/K Overig/werkmap"
+WERKMAP_KOPIEEN = [
+    "/input/projecten/SY001/K Overig/werkmap/opgravingSY001.mdb",
+    "/input/projecten/SY001/K Overig/werkmap/L Fotos/SY001_G001.jpg",
+]
+SY001_DATABASE = "/input/projecten/SY001/C Database/opgravingSY001.mdb"
+
+# Merge-groep met meer dan één bronrij (issue 83): AARDEWERK 1 van SY002 heeft twee rijen met put 1,
+# vondst 1, subnr 2. Ze horen samen één document te vormen, zonder verplaatst exemplaar ernaast.
+MERGE_GROEP_SY002 = {"key_subnr": "PSY002P1V1A2", "artefactsoort": "Aardewerk", "bronrijen": 2}
+# Artefacten die bewust apart blijven en dus dezelfde key mogen hebben: tabellen uit
+# merge_functions.ARTEFACT_NOT_MERGE_TABLES en de projecten uit artefact_niet_mergen in correcties.yml
+ARTEFACT_NIET_MERGEN_TABELLEN = ["ROMEINS AARDEWERK"]
+CORRECTIES_SYNTHETISCH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..",
+                                      "data", "synthetic", "wasstraat_config", "correcties.yml")
+
+
+def leesArtefactNietMergenProjecten():
+    """Lees de projectcodes uit artefact_niet_mergen in de synthetische correcties.yml (leeg als die ontbreekt)."""
+    import yaml
+    with open(CORRECTIES_SYNTHETISCH, encoding="utf-8") as f:
+        correcties = yaml.safe_load(f) or {}
+    return list((correcties.get("artefact_niet_mergen") or {}).get("projectcodes") or [])
+
+
+def artefactKey(doc):
+    """De key van een artefact zoals de load hem in Def_Artefact zet: key, anders key_subnr|artefactsoort."""
+    if doc.get("key"):
+        return doc["key"]
+    if doc.get("key_subnr"):
+        return f"{doc['key_subnr']}|{doc.get('artefactsoort') or ''}"
+    return None
+
+
 # Beschrijving (memo-veld) van spoor 4 van SY002, met een regeleinde (issue 74). In de MDB
 # staat CR LF; mongoimport leest een CR LF binnen een gequote veld in als LF.
 SPOOR4_BESCHRIJVING = "Gemetselde beerput, vierkant\nBinnenwerk met tonvormige bodem"
@@ -784,6 +821,38 @@ class TestFullPipelineSynthetic:
             f"Geen enkel project heeft latitude/longitude. "
             f"Controleer RD→WGS84 conversie in setAttributes_functions.py."
         )
+    def test_08d_verify_geen_dubbele_artefactkeys(self, mongo_client):
+        """Elke niet-lege key van een artefact komt één keer voor in Single_Store_Clean (issue 83).
+
+        Tot issue 83 verplaatste Transform 5 artefacten die ook werden samengevoegd; bij
+        een groep met meer bronrijen bleven de verplaatste exemplaren naast het
+        samengevoegde document staan. Uitgezonderd zijn artefacten die bewust apart
+        blijven (ARTEFACT_NIET_MERGEN_TABELLEN en artefact_niet_mergen). De
+        merge-groep van SY002 is één document met twee bronrijen.
+        """
+        coll = mongo_client[DB_ANALYSE]["Single_Store_Clean"]
+        niet_mergen = leesArtefactNietMergenProjecten()
+        per_key = {}
+        for doc in coll.find({"soort": "Artefact"}, {"key": 1, "key_subnr": 1, "artefactsoort": 1,
+                                                       "projectcd": 1, "brondata.table": 1}):
+            tabellen = {b.get("table") for b in (doc.get("brondata") or []) if isinstance(b, dict)}
+            if doc.get("projectcd") in niet_mergen or tabellen & set(ARTEFACT_NIET_MERGEN_TABELLEN):
+                continue
+            key = artefactKey(doc)
+            if key:
+                per_key.setdefault(key, []).append(doc["_id"])
+        dubbel = {k: v for k, v in per_key.items() if len(v) > 1}
+        print(f"\n  Artefacten met een key: {len(per_key)}, dubbele keys: {len(dubbel)}")
+        assert not dubbel, f"Dubbele artefactkeys in Single_Store_Clean: {sorted(dubbel)[:10]}"
+
+        groep = list(coll.find({"soort": "Artefact", "key_subnr": MERGE_GROEP_SY002["key_subnr"],
+                                "artefactsoort": MERGE_GROEP_SY002["artefactsoort"]}))
+        print(f"  Merge-groep {MERGE_GROEP_SY002['key_subnr']}: {len(groep)} document(en), "
+              f"{[len(d.get('brondata') or []) for d in groep]} bronrijen")
+        assert len(groep) == 1, f"Merge-groep {MERGE_GROEP_SY002} heeft {len(groep)} documenten, verwacht 1"
+        assert groep[0].get("brondata_count") == MERGE_GROEP_SY002["bronrijen"]
+        assert len(groep[0]["brondata"]) == MERGE_GROEP_SY002["bronrijen"]
+
 
     def test_10c_verify_project_keys(self, mongo_client):
         """Projecten hebben correcte key (begint met 'P')."""
@@ -1198,3 +1267,16 @@ class TestFullPipelineSynthetic:
         volgende = _pg_scalar(f"SELECT nextval('{sequence}')")
         print(f"  {table}: nextval={volgende}")
         assert volgende > maximum, f"{table}: nextval {volgende} is niet groter dan max(primary_key) {maximum}"
+    @pytest.mark.load
+    def test_22d_verify_postgres_artefactkeys_uniek(self, airflow_ready):
+        """Elke key in Def_Artefact komt één keer voor (issue 83; de synthetische data heeft geen uitzonderingen)."""
+        totaal = _pg_scalar('SELECT COUNT(*) FROM "Def_Artefact"')
+        zonder_key = _pg_scalar('SELECT COUNT(*) FROM "Def_Artefact" WHERE key IS NULL')
+        dubbel = _pg_tekst(
+            'SELECT string_agg(key || \' (\' || aantal || \')\', \', \') FROM '
+            '(SELECT key, COUNT(*) AS aantal FROM "Def_Artefact" WHERE key IS NOT NULL '
+            'GROUP BY key HAVING COUNT(*) > 1) d')
+        print(f"\n  Def_Artefact: {totaal} rijen, {zonder_key} zonder key, dubbele keys: {dubbel or '-'}")
+        assert zonder_key == 0, f"{zonder_key} artefacten zonder key in Def_Artefact"
+        assert not dubbel, f"Dubbele keys in Def_Artefact: {dubbel}"
+
