@@ -99,9 +99,13 @@ Als je stap voor stap wilt werken, kun je de individuele DAGs in volgorde starte
 ```
 
 !!! warning "Volgorde is belangrijk"
-    De transformatiestappen moeten in de juiste volgorde worden uitgevoerd. Elke stap bouwt voort op het resultaat van de vorige. De volledige ETL-cyclus DAG handelt deze volgorde automatisch af.
+    De transformatiestappen moeten in de juiste volgorde worden uitgevoerd. Elke stap bouwt voort op het resultaat van de vorige. De volledige ETL-cyclus DAG handelt deze volgorde automatisch af. De losse DAG's hebben geen run-document en geen verwerkingsrapport en registreren de bronbestanden niet; draai daarna weer de volledige cyclus voordat je de incrementele cyclus gebruikt.
 
 ## Stap 4: Verwerking volgen
+
+### Verwerkingsrapport
+
+Elke run van de volledige cyclus, de incrementele cyclus en `DAG_Load_Only` eindigt, ook na een fout, met een verwerkingsrapport in `data/<omgeving>/output/rapporten/` (Markdown en JSON). Het noemt de uitkomst, de taak die een mislukte run stopte, de bronbestanden die niet of maar deels verwerkt zijn (onleesbare databases, overgeslagen tabellen, mislukte foto's, paden uit `paden_overslaan`), de aantallen per tabel en de doorlooptijd per stap. Begin daar bij een proefrun. Zie [Foutbeleid en verwerkingsrapport](../componenten/verwerkingsrapport.md).
 
 ### Airflow task logs
 
@@ -186,11 +190,11 @@ curl -s http://localhost:9200/_count | python3 -m json.tool
 
 ### Extractie mislukt
 
-**Probleem**: `Extract_Data_From_Projecten` faalt met `mdb-export` error.
+**Probleem**: een database wordt niet ingelezen: een `ERROR` in het log van `Extract_Data_From_Projecten` en een waarschuwing van `Controleer_Databases`.
 
 **Oorzaak**: Het `.mdb` bestand is mogelijk corrupt of in een niet-ondersteund formaat.
 
-**Oplossing**: Controleer of het bestand een geldig Access 2000/2003 bestand is. De `mdbtools`-suite werkt het best met `.mdb`-bestanden; `.accdb`-bestanden (Access 2007+) worden beperkt ondersteund.
+**Oplossing**: Controleer of het bestand een geldig Access 2000/2003 bestand is. De `mdbtools`-suite werkt het best met `.mdb`-bestanden; `.accdb`-bestanden (Access 2007+) worden beperkt ondersteund. Een onleesbare database stopt de run niet: de taak `Controleer_Databases` telt hem als waarschuwing en het verwerkingsrapport noemt hem. Pas boven de drempel (`AIRFLOW_MAX_MISLUKTE_DATABASES`, standaard 2 databases of 5 procent) stopt de run.
 
 ### MongoDB-verbinding faalt
 
@@ -214,7 +218,7 @@ curl -s http://localhost:9200/_count | python3 -m json.tool
 
 **Oorzaak**: De Elasticsearch-index is niet opgebouwd na de Load-stap.
 
-**Oplossing**: Controleer of Elasticsearch draait (`curl localhost:9200`) en herstart eventueel de Load-stap.
+**Oplossing**: Controleer of Elasticsearch draait (`curl localhost:9200`) en draai `DAG_Load_Only`; die laadt en indexeert opnieuw uit `Single_Store_Clean`.
 
 ## Jupyter Notebooks voor Exploratie
 

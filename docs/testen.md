@@ -19,45 +19,25 @@ Typ `make help` voor alle beschikbare targets.
 ```
 Makefile                                      # Alle commando's (make help)
 requirements-test.txt                         # Python test-dependencies
-docker-compose.test.yml                       # Lichtgewicht test-databases (synthetische data)
-docker-compose.delft-test.yml                 # Zelfstandige testomgeving met Delftse testdata
+pytest.ini                                    # Markers en standaardopties
+docker-compose.test.yml                       # Testomgeving met synthetische data (SY001, SY002)
+docker-compose.delft-test.yml                 # Testomgeving met Delftse testdata (DB034)
 tests/
 ├── conftest.py                               # Mocks voor shared.config, roman, etc.
 ├── run_tests.py                              # Fallback runner (zonder venv/pytest)
-├── unit/
-│   ├── test_archutils.py                     # convertToInt, convertToBool, fixDatering
-│   ├── test_rijksdriehoek.py                 # RD ↔ WGS84 coördinaatconversie
-│   ├── test_harmonizer.py                    # Pipeline-opbouw uit Excel config
-│   ├── test_foto_parsing.py                  # Regex-patronen voor bestandsclassificatie
-│   ├── test_profielen.py                     # Gemeenteprofielen: selectie, ConventieProfiel, DelftProfiel, VoorbeeldProfiel
-│   ├── test_correcties_yml.py                # Correctiebestand laden en toepassen
-│   ├── test_config_cache.py                  # Cache-instellingen uit shared/config.py zijn getallen
-│   ├── test_encoding.py                      # UTF-8 encoding en conversie
-│   ├── test_fixes_1_to_4.py                  # Bugfixes validatie
-│   ├── test_fix_5_nonetype_foto.py           # NoneType fotobestanden
-│   ├── test_fix_6_coordinaatvalidatie.py      # Rijksdriehoek coördinaatvalidatie
-│   ├── test_fix_7_kolomselectie.py           # Kolomselectie robuustheid
-│   ├── test_fix_8_dropna.py                  # dropna() edge cases
-│   ├── test_importMDB_bash.py                # Bash import-functietests
-│   ├── test_importMDB_lijstbestand.py        # importMDB.sh met lijstbestand (incrementeel laden)
-│   ├── test_importMDB_kopregel.py            # importMDB.sh: kopregel van de CSV-export
-│   ├── test_csv_kolommen.py                  # importMDB.sh: extra kolommen per record (csv_kolommen.py)
-│   ├── test_verwerkingsrun.py                # Run-document van de incrementele cyclus
-│   ├── test_bronbestanden.py                 # Registratie bronbestanden, vingerafdruk, delta, lijstbestanden
-│   ├── test_opruimen.py                      # Opruimen oude records + delta-varianten van de extractie
-│   ├── test_delta_transform.py               # Delta-varianten van de transformaties en stabiele sleutels
-│   ├── test_load_incrementeel.py             # Upsert-load naar PostgreSQL en Elasticsearch-delta
-│   ├── nep_mongo.py                          # In-memory nabootsing van pymongo (hulpmodule, geen tests)
-│   ├── test_synthetic_data.py                # Validatie synthetische voorbeelddata
-│   ├── test_synthetic_monster_data.py        # Validatie synthetische monsterdata
-│   └── test_fix_monster_projectcds.py        # Projectcode-matching voor monsters
+├── unit/                                     # Unit tests, zie de tabel hieronder
+│   └── nep_mongo.py                          # In-memory nabootsing van pymongo (hulpmodule, geen tests)
 └── integration/
+    ├── fixtures/delft_golden_snapshot.json   # Referentie-uitkomst van de Delftse testdata
+    ├── snapshot_mongodb.py                   # Hulpmiddel om een referentie-uitkomst vast te leggen
     ├── test_full_pipeline.py                 # Pipeline met directe MongoDB-seeding
-    ├── test_full_pipeline_synthetic_data.py   # Volledige pipeline via Airflow (synthetische data)
-    ├── test_full_pipeline_delft_data.py       # Volledige pipeline via Airflow (Delftse data)
+    ├── test_full_pipeline_synthetic_data.py  # Volledige pipeline via Airflow (synthetische data)
+    ├── test_full_pipeline_delft_data.py      # Volledige pipeline via Airflow (Delftse data)
     ├── test_harmonize_pipeline.py            # Harmonisatie met echte MongoDB
     ├── test_importMDB_bash.py                # MDB-import en encoding in Docker
-    └── test_incremental_synthetic_data.py    # Incrementele cyclus via Airflow (synthetische data + SY003)
+    ├── test_incremental_synthetic_data.py    # Volledige en incrementele cyclus (synthetische data + SY003)
+    ├── test_verwerkingsrapport.py            # Foutbeleid en verwerkingsrapport in de echte DAG's
+    └── test_flask_smoke.py                   # Webapplicatie via Apache
 ```
 
 ## Vereisten
@@ -120,25 +100,28 @@ De container heeft bewust geen hostpoort: poort 9200 op de host is van de echte 
 
 Net als in de echte installatie is Apache de voordeur: `apache-test` (container `wasstraat_apache_test`, gebouwd uit `services/apache/Dockerfile`) luistert op hostpoort 5061, serveert `/archeomedia` en stuurt al het overige door naar `flask-test`, dat geen hostpoort heeft (netwerkalias `flask`, zoals `httpd.conf` verwacht). De media die `airflow-test` schrijft (`AIRFLOW_OUTPUT_MEDIA=/tmp/archeomedia_test`) staan in het volume `archeomedia-test`, een tmpfs-volume met de uid van de airflow-gebruiker, dat `apache-test` alleen-lezen mount onder `htdocs/archeomedia`.
 
-De Flask smoke tests (`tests/integration/test_flask_smoke.py`, marker `flask_smoke`) lopen daardoor via Apache. Naast de kaart, het inloggen en de statische bestanden controleren ze dat een media-URL uit `Def_Bestand` via Apache 200 geeft (alle drie formaten van alle foto's), dat paden met spaties en diakritische tekens werken, dat redirects de `Host`-header van de browser en `X-Forwarded-Proto` van een TLS-proxy volgen, en dat `/archeomedia/` niet te bladeren is. Klasse `TestVerdwenenUitBrondata` (issue 73) maakt met SQL een bruikleen en een conserveringsproject aan waarvan het artefact uit de brondata is verdwenen (lege verwijzing met markering) en vraagt als beheerder de lijst en het detail van de bruiklenen en het detail van het conserveringsproject op: HTTP 200 en de markering in de pagina. Klasse `TestProjectZonderLocatie` (issue 27) maakt via de formulieren (inloggen, CSRF-token) projecten aan zonder locatie, maakt bij bewerken een locatie leeg en controleert in PostgreSQL dat `location` leeg is; Flask-AppBuilder stuurt na opslaan ook bij een databasefout door, dus de redirect alleen zegt niets. Klasse `TestFotoKantelen` (issue 34) maakt in de Flask-container een liggende foto en een liggende pdf met hun voorbeelden, kantelt ze via de knop op de detailpagina en via de selectie in de lijst, en meet via Apache de afmetingen en de stand van de inhoud van alle drie de formaten (en `/Rotate` in de pdf). Daarvoor koppelt `docker-compose.test.yml` het mediavolume ook schrijfbaar in `flask-test` op `/output/archeomedia`; zonder dat volume slaan die tests over. `make test-flask` start de omgeving zonder pipeline; de mediatests slaan dan over. De Delftse testomgeving (`docker-compose.delft-test.yml`) heeft dezelfde opzet op hostpoort 5062, maar met een gewoon schijfvolume (`archeomedia-delft-test`) op `/output/archeomedia` in plaats van tmpfs: de Delftse testdata bevat circa 5 GB aan rapporten die de extractie integraal naar de mediamap kopieert, en in een vol tmpfs mislukt de verwerking van de overige bestanden stil (ze blijven op `processed: False` staan). De Airflow-image maakt `/output/archeomedia` aan met de airflow-gebruiker als eigenaar, zodat een leeg named volume die rechten overneemt. Heb je een test-image van vóór deze wijziging, bouw hem dan opnieuw met `docker compose -p wasstraat-delft-test -f docker-compose.delft-test.yml build airflow-test`. De unit tests in `tests/unit/test_apache_voordeur.py` bewaken de Apache-configuratie en de compose-bestanden.
+De Flask smoke tests (`tests/integration/test_flask_smoke.py`, marker `flask_smoke`) lopen daardoor via Apache. Naast de kaart, het inloggen en de statische bestanden controleren ze dat een media-URL uit `Def_Bestand` via Apache 200 geeft (alle drie formaten van alle foto's), dat paden met spaties en diakritische tekens werken, dat redirects de `Host`-header van de browser en `X-Forwarded-Proto` van een TLS-proxy volgen, en dat `/archeomedia/` niet te bladeren is. Klasse `TestVerdwenenUitBrondata` maakt met SQL een bruikleen en een conserveringsproject aan waarvan het artefact uit de brondata is verdwenen (lege verwijzing met markering) en vraagt als beheerder de lijst en het detail van de bruiklenen en het detail van het conserveringsproject op: HTTP 200 en de markering in de pagina. Klasse `TestProjectZonderLocatie` maakt via de formulieren (inloggen, CSRF-token) projecten aan zonder locatie, maakt bij bewerken een locatie leeg en controleert in PostgreSQL dat `location` leeg is; Flask-AppBuilder stuurt na opslaan ook bij een databasefout door, dus de redirect alleen zegt niets. Klasse `TestFotoKantelen` maakt in de Flask-container een liggende foto en een liggende pdf met hun voorbeelden, kantelt ze via de knop op de detailpagina en via de selectie in de lijst, en meet via Apache de afmetingen en de stand van de inhoud van alle drie de formaten (en `/Rotate` in de pdf). Daarvoor koppelt `docker-compose.test.yml` het mediavolume ook schrijfbaar in `flask-test` op `/output/archeomedia`; zonder dat volume slaan die tests over. `make test-flask` start de omgeving zonder pipeline; de mediatests slaan dan over. De Delftse testomgeving (`docker-compose.delft-test.yml`) heeft dezelfde opzet op hostpoort 5062, maar met een gewoon schijfvolume (`archeomedia-delft-test`) op `/output/archeomedia` in plaats van tmpfs: de Delftse testdata bevat circa 5 GB aan rapporten die de extractie integraal naar de mediamap kopieert, en in een vol tmpfs mislukt de verwerking van de overige bestanden stil (ze blijven op `processed: False` staan). De Airflow-image maakt `/output/archeomedia` aan met de airflow-gebruiker als eigenaar, zodat een leeg named volume die rechten overneemt. Heb je een test-image van vóór deze wijziging, bouw hem dan opnieuw met `docker compose -p wasstraat-delft-test -f docker-compose.delft-test.yml build airflow-test`. De unit tests in `tests/unit/test_apache_voordeur.py` bewaken de Apache-configuratie en de compose-bestanden.
 
 ### Incrementele cyclus
 
-`tests/integration/test_incremental_synthetic_data.py` (markers `integration` en `load`, draait in `make integration` na de andere tests) begint zelf met de volledige cyclus, controleert daarna de incrementele cyclus in acht runs (c tot en met h, met c2 voor issue 81; g en h gaan over onleesbare foto's, issue 70, zie [Incrementeel laden](componenten/incrementeel-laden.md#testen)) en draait tot slot opnieuw de volledige cyclus (i, issue 71):
+`tests/integration/test_incremental_synthetic_data.py` (markers `integration` en `load`, draait in `make integration` na de andere tests) begint zelf met de volledige cyclus, controleert daarna de incrementele cyclus in negen runs (c tot en met h2) en draait tot slot opnieuw de volledige cyclus (i). Na elke run controleert de test ook het run-document en het verwerkingsrapport (zie [Incrementeel laden](componenten/incrementeel-laden.md#testen)):
 
 | Stap | Wijziging | Wat wordt gecontroleerd |
 |------|-----------|-------------------------|
 | a | Volledige cyclus | Aantallen per `Def_`-tabel, `key` → `primary_key` van `Def_Project`, `Def_Put`, `Def_Vondst`, `Def_Artefact`, `Def_Bestand` en de aantallen per Elasticsearch-index (gelijk aan de tabellen) worden vastgelegd |
 | b | Een partij en een bruikleen toegevoegd (SQL) | Gebruikersdata die naar een artefact en het project SY002 verwijst |
 | c | Geen | Run afgerond, alle bronbestanden ongewijzigd, niets ingevoegd, bijgewerkt of verwijderd, aantallen en sleutels gelijk, bruikleen aanwezig, Elasticsearch gelijk; elke rij van elke tabel heeft dezelfde `primary_key` |
-| c2 | De registratie van `opgravingSY002.mdb` krijgt een andere vingerafdruk (SQL), zodat de database ongewijzigd opnieuw wordt verwerkt (issue 81) | Alle documenten van SY002 hebben een nieuw `_id`; Transform 4 deelt geen nieuw nummer uit (artefacten zonder subnr en de dubbele key `PSY002P1V1A2|Aardewerk` via de hulpsleutel), niets ingevoegd of verwijderd, elke rij van elke tabel heeft dezelfde `primary_key`, key en hulpsleutel, de bruikleen blijft gekoppeld |
+| c2 | De registratie van `opgravingSY002.mdb` krijgt een andere vingerafdruk (SQL), zodat de database ongewijzigd opnieuw wordt verwerkt | Alle documenten van SY002 hebben een nieuw `_id`; Transform 4 deelt geen nieuw nummer uit (artefacten zonder subnr en de dubbele key `PSY002P1V1A2|Aardewerk` via de hulpsleutel), niets ingevoegd of verwijderd, elke rij van elke tabel heeft dezelfde `primary_key`, key en hulpsleutel, de bruikleen blijft gekoppeld |
 | d | Project SY003 als kopie van SY002 (`opgravingSY003.mdb`, foto's `SY003_*`); daarna een tweede bruikleen (SQL) voor een artefact van SY003 dat in stap e verdwijnt | SY003 heeft evenveel rijen als SY002, nieuwe `primary_key`s boven het oude maximum, SY001/SY002 ongewijzigd, bruikleen en zijn artefact ongewijzigd, Elasticsearch gelijk aan de tabellen |
-| e | Database van SY003 vervangen door die van SY001, één foto verwijderd | SY003 volgt SY001 (4 vondsten, plus de put en vondst die Transform 5 aanmaakt voor de objectfoto `SY003_P4_H11_1_1.jpg`), geen rij meer voor de verwijderde foto, geen achtergebleven rijen, verdwenen id's ook uit Elasticsearch; de bruikleen van het verdwenen artefact bestaat nog met `artefactID` leeg, de key in `artefact_verdwenen_key` en een tijdstip binnen de run in `artefact_verdwenen_op` (issue 73), de bruikleen uit stap b is ongemoeid en geen enkele FK is `NOT VALID` (`pg_constraint.convalidated`) |
+| e | Database van SY003 vervangen door die van SY001, één foto verwijderd | SY003 volgt SY001 (4 vondsten, plus de put en vondst die Transform 5 aanmaakt voor de objectfoto `SY003_P4_H11_1_1.jpg`), geen rij meer voor de verwijderde foto, geen achtergebleven rijen, verdwenen id's ook uit Elasticsearch; de bruikleen van het verdwenen artefact bestaat nog met `artefactID` leeg, de key in `artefact_verdwenen_key` en een tijdstip binnen de run in `artefact_verdwenen_op`, de bruikleen uit stap b is ongemoeid en geen enkele FK is `NOT VALID` (`pg_constraint.convalidated`) |
 | e2 | Database van SY003 weer die van SY002 | Het artefact keert terug met dezelfde key (nieuwe `primary_key`); de bruikleen is er weer aan gekoppeld en de markering is leeg (`tellingen.gebruikersdata`: één teruggekoppeld), FK's geldig |
 | f | SY003 verwijderd | Geen SY003-rijen meer in PostgreSQL en Elasticsearch, `Def_Bronbestand` op `verwijderd`, alle sleutels en aantallen gelijk aan stap a; de bruikleen van het SY003-artefact is weer losgekoppeld en bestaat nog, FK's geldig |
-| i | Opnieuw de volledige cyclus, na een conserveringsproject met een regel en een extra ABR-materiaal (SQL) voor het artefact van de bruikleen | De inhoud van alle gebruikerstabellen is ongewijzigd (ook de losgekoppelde bruikleen van SY003), de bruikleen hangt aan hetzelfde artefact; aantallen, sleutels, Elasticsearch-aantallen en afgeleide velden gelijk aan stap a; geen melding van hernummerde sleutels, geen FK `NOT VALID`, elke sequence boven het maximum; elke rij van elke tabel uit `LOAD_TABELLEN` heeft dezelfde `primary_key` als na stap a (issue 81) |
+| g | Een onleesbare foto in SY003, met drempel 0 voor mislukte afbeeldingen | `Extract_Group.Controleer_Afbeeldingen` faalt direct (zonder herhaling), `Markeer_Run_Mislukt` zet de run op `mislukt`, PostgreSQL is ongewijzigd; het rapport noemt de taak die de run stopte en de foto |
+| h | De foto weer weggehaald | De run slaagt, de openstaande entry in `Filenames` is opgeruimd, alles gelijk aan stap a |
+| h2 | Een onleesbare Access-database in SY003 (`kapot.mdb`) | `Extract_Group.Controleer_Databases` meldt een waarschuwing binnen de drempel, de run slaagt, het rapport noemt de database als mislukt met de reden, PostgreSQL gelijk aan stap a |
+| i | Opnieuw de volledige cyclus (met de onleesbare database uit h2, dus met een waarschuwing), na een conserveringsproject met een regel en een extra ABR-materiaal (SQL) voor het artefact van de bruikleen | De inhoud van alle gebruikerstabellen is ongewijzigd (ook de losgekoppelde bruikleen van SY003), de bruikleen hangt aan hetzelfde artefact; aantallen, sleutels, Elasticsearch-aantallen en afgeleide velden gelijk aan stap a; geen melding van hernummerde sleutels, geen FK `NOT VALID`, elke sequence boven het maximum; elke rij van elke tabel uit `LOAD_TABELLEN` heeft dezelfde `primary_key` als na stap a |
 
-De fixture `sy003_opruimen` verwijdert `data/synthetic/data/projecten/SY003` vóór en na de test, ook als die faalt, en ruimt achteraf de testgebruikersdata op (partij, bruiklenen, conserveringsproject en het extra ABR-materiaal). De test duurt ongeveer twee minuten. Los draaien (met een draaiende testomgeving):
+De fixture `sy003_opruimen` verwijdert `data/synthetic/data/projecten/SY003` vóór en na de test, ook als die faalt, en ruimt achteraf de testgebruikersdata op (partij, bruiklenen, conserveringsproject en het extra ABR-materiaal). De test duurt ongeveer drie minuten. Los draaien (met een draaiende testomgeving):
 
 ```bash
 python -m pytest tests/integration/test_incremental_synthetic_data.py -v -s
@@ -157,6 +140,8 @@ make integration-delft
 ```
 
 Dit target test met de echte Delftse opgravingsdata en controleert op Delft-specifieke aantallen. De Delftse data is niet opgenomen in de repository — deze tests worden automatisch overgeslagen als de data niet aanwezig is in `data/test/`.
+
+Daarnaast legt `tests/integration/fixtures/delft_golden_snapshot.json` een referentie-uitkomst vast: de aantallen per soort in `Single_Store` en `Single_Store_Clean`, de artefactsoorten en voorbeeldsleutels. Geen test leest dat bestand automatisch. Raakt een wijziging de Delftse uitkomst, vergelijk de nieuwe uitkomst dan met de referentie, verklaar elk verschil en leg de referentie opnieuw vast, met de verklaring in het veld `beschrijving`. Voor een vergelijking van de aantallen per collectie in MongoDB is er `tests/integration/snapshot_mongodb.py` (`save` en `compare`).
 
 ### Handmatig
 
@@ -199,39 +184,70 @@ De basisimage van Jupyter staat vast op een digest in `services/jupyter/Dockerfi
 
 ### Unit tests
 
-| Module | Wat wordt getest |
-|--------|-----------------|
-| `archutils.py` | `convertToInt` (type-conversie, force/no-force), `convertToBool` (ja/nee/true/false), `fixDatering` (eeuw-kwart notatie, Romeinse cijfers, LMEb, RT, gecombineerde dateringen) |
-| `rijksdriehoek.py` | RD→WGS84 conversie met referentiepunten (Amsterdam, Rotterdam, Maastricht, Delft), WGS84→RD inversie, roundtrip-nauwkeurigheid |
-| `harmonizer.py` | `getKolomValues` ($ifNull-ketens), `getAggrTables` (regex-matching), `loadHarmonizer` (Excel → DataFrame), pipeline-structuur ($match, $merge), overerving (Artefact→Aardewerk), `getHarmonizeAggr` wijzigt de gecachete pipeline niet |
-| `foto_parsing.py` | Objectfoto-regex (met put/subnr/BP), tekening-types (A-E, P, T, LZW), projectfoto's (F/G), DAN/DAR rapporten, artefactsoort-detectie uit bestandspad |
-| `encoding.py` | UTF-8 conversie, CP1252-detectie, dubbele CSV-headers |
-| `importMDB_kopregel.py` | `importMDB.sh`: de kopregel van de CSV-export (zelf gequote, ook bij komma's in kolomnamen) |
-| `csv_kolommen.py` | `airflow_app/scripts/csv_kolommen.py` en de aanroep in `importMDB.sh` (issue 74): `table`, `projectcd`, `bron`, `loadtime` en `mdbfile` achter elk record, ook bij een tekstveld met een regeleinde; gewone rijen, lege velden, komma's en aanhalingstekens, bijzondere tekens (`&`, `\`) in tabelnamen en paden, lege tabel, niet-UTF-8-bytes, grote tabel; byte voor byte gelijk aan de vroegere `sed`-regels zolang er geen regeleinde in een veld staat; `importMDB.sh` als geheel met nagebootste mdbtools en mongoimport (aantal records als teller) |
-| `fixes_*.py` | Robuustheid van transformaties bij ontbrekende/ongeldige data |
-| `synthetic_data.py` | Validatie dat de synthetische MDB-bestanden de juiste tabellen en kolomstructuur bevatten |
-| `synthetic_monster_data.py` | Structuur, kolomaantallen, referentiële integriteit en projectverwijzingen van synthetische monsterdata |
-| `fix_monster_projectcds.py` | Projectcode-matching logica voor de monsterdatabase (mocking van MongoDB) |
-| `config_cache.py` | Cache-instellingen uit de echte `shared/config.py` zijn getallen en worden door cachelib geaccepteerd |
-| `afgeleide_velden.py` | `herberekenAfgeleideVelden` (laadstap): SQL-opbouw, randgevallen op SQLite en gelijkheid met `init.init()` van de webapplicatie inclusief de observers uit `models.py` |
-| `wachtwoord_maskeren.py` | `maskeerWachtwoord` (`shared/logutils.py`) voor PostgreSQL-, MongoDB- en Redis-URI's, wachtwoorden met bijzondere tekens, URI's zonder wachtwoord en lege waarden; `shared/database.py`, `shared/fulltext.py` en `loadAll` loggen de verbinding zonder wachtwoord (caplog) |
-| `jupyter_image.py` | De Jupyter-image installeert `roman` (nodig voor de pipelinecode) en een Elasticsearch-client met de hoofd- en minorversie van de server uit `docker-compose.yml`; geen client met een hogere hoofdversie in de Flask- en Jupyter-constraints |
-| `pakketversies.py` | `services/*/constraints.txt` bevatten alleen exacte versies; de Airflow-constraints leggen Airflow zelf niet vast, de Airflow-build houdt de pakketten van de basisimage op hun versie, installeert met constraints, draait `pip check` en controleert de versies; `apt-get` met retries in de Dockerfiles; `make constraints` kent Airflow en raakt geen draaiende containers |
-| `verwerkingsrun.py`, `bronbestanden.py`, `opruimen.py`, `delta_transform.py` | Incrementeel laden: run-document, registratie en delta van bronbestanden, opruimen, delta-transformaties en stabiele sleutels (ook de samengestelde sleutel van artefacten) |
-| `load_incrementeel.py` | Upsert-load (`loadIncrementeel`: upsert, verwijderen, FK-mechaniek, sequence, gebruikerstabellen ongemoeid, tellingen) en de Elasticsearch-delta (`indexTableIncrementeel`) met nagebootste databases |
-| `bronsleutel.py` | Hulpsleutel uit de bronrij (issue 81): identiteit van een bronrij (autonummer of hash), samengevoegde documenten, `brondata` uit PostgreSQL terug lezen, de key voor PostgreSQL (`getLaadKey`, `vulLaadKey`), de key van `Monster_Botanie` en `Monster_Schelp` in `meta.py`, en het toekennen van stabiele `primary_key`s op de hulpsleutel (dubbele keys, overgang voor rijen zonder key, identieke bronrijen) |
-| `load_volledig.py` | Volledige load (`loadAll`) met gebruikersdata (issue 71): vervallen en hernummerde rijen, loskoppelen vóór en terugkoppelen na de rename, koppelrijen, eerste run, met een nagebootste PostgreSQL inclusief de atomic swap; `indexTable` slaat koppeltabellen zonder `primary_key` over |
+Alle bestanden staan in `tests/unit/`.
+
+| Bestand | Wat wordt getest |
+|---------|------------------|
+| **Extractie** | |
+| `test_importMDB_bash.py`, `test_importMDB_functions.sh` | De bash-functies van `importMDB.sh` |
+| `test_importMDB_kopregel.py` | `importMDB.sh`: de kopregel van de CSV-export (zelf gequote, ook bij komma's in kolomnamen) |
+| `test_importMDB_lijstbestand.py` | `importMDB.sh` met een lijstbestand (incrementele cyclus) |
+| `test_csv_kolommen.py` | `airflow_app/scripts/csv_kolommen.py` en de aanroep in `importMDB.sh`: `table`, `projectcd`, `bron`, `loadtime` en `mdbfile` achter elk record, ook bij een tekstveld met een regeleinde; bijzondere tekens (`&`, `\`) in tabelnamen en paden; byte voor byte gelijk aan de vroegere `sed`-regels zolang er geen regeleinde in een veld staat |
+| `test_encoding.py` | UTF-8-conversie, herkenning van Windows-1252, dubbele CSV-kopregels |
+| `test_paden_overslaan.py` | `paden_overslaan`: patronen, foutieve waarden, het script voor `importMDB.sh` (met nep-MDB's), de registratie, de afbeeldingen en de configuraties in de repository |
+| `test_image_import.py` | De status per bestand in `Filenames` (verwerkt, overgeslagen, mislukt), de harde fout bij een vol volume of een niet-schrijfbare uitvoermap, tellingen en drempel, het opruimen van openstaande entries |
+| `test_image_util.py` | `shared/image_util.py`: kleurmodus, EXIF-oriëntatie, documenticoon, afgekapte en beschadigde bestanden |
+| `test_controle_extractie.py` | Het log van `importMDB.sh` lezen, `Controleer_Databases` onder en boven de drempel, `Controleer_Afbeeldingen` in beide cycli |
+| `test_foto_parsing.py` | Bestandsnamen van objectfoto's, tekeningen (A–E, P, T, LZW), projectfoto's (F/G), DAN/DAR-rapporten, artefactsoort uit het pad |
+| **Transformatie** | |
+| `test_harmonizer.py` | `$ifNull`-ketens, tabelpatronen, `loadHarmonizer` (Excel naar DataFrame), opbouw van de pipeline, overerving, `getHarmonizeAggr` wijzigt de gecachete pipeline niet |
+| `test_correcties_yml.py` | `correcties.yml` laden en toepassen, inclusief foutscenario's en `paden_overslaan` |
+| `test_profielen.py` | Gemeenteprofielen: keuze, cache, `ConventieProfiel`, `DelftProfiel`, `VoorbeeldProfiel` |
+| `test_archutils.py` | `convertToInt`, `convertToBool`, `fixDatering` (eeuw-kwartnotatie, Romeinse cijfers, LMEb, RT, gecombineerde dateringen) |
+| `test_rijksdriehoek.py` | Rijksdriehoek naar WGS84 en terug, met referentiepunten |
+| `test_fix_monster_projectcds.py` | Projectcodes van de monsterdatabase |
+| `test_fixes_1_to_4.py`, `test_fix_5_nonetype_foto.py`, `test_fix_6_coordinaatvalidatie.py`, `test_fix_7_kolomselectie.py`, `test_fix_8_dropna.py` | Eerdere reparaties: robuustheid bij ontbrekende of ongeldige data, coördinaatvalidatie, kolomselectie in `mergeFotoinfo`, `dropna` |
+| `test_meta_project.py`, `test_meta_generate_missing.py` | De Project-configuratie en de pipelines voor ontbrekende putten, vlakken, sporen, vondsten en dozen in `meta.py` |
+| `test_merge_artefacten.py` | Verplaatsen en samenvoegen van artefacten: elke bronrij in precies één document |
+| `test_delta_transform.py` | Delta-varianten van de transformaties en stabiele sleutels (ook de samengestelde sleutel van artefacten) |
+| `test_bronsleutel.py` | De hulpsleutel uit de bronrij en het toekennen van stabiele `primary_key`s daarop |
+| **Laden en zoeken** | |
+| `test_loadToDatabase.py` | De helpers van de laadstap (typen, enums, FK-mechaniek, afgeleide velden als FASE 4) |
+| `test_load_projectie.py` | De veldselectie van de load (`leesDocumenten`) |
+| `test_load_volledig.py` | `loadAll` met gebruikersdata en de atomic swap op een nagebootste PostgreSQL; `indexTable` slaat koppeltabellen over |
+| `test_load_incrementeel.py` | `loadIncrementeel` (upsert, verwijderen, FK's, sequence, schemamigratie en verwijzingen van gebruikersdata) en `indexTableIncrementeel` |
+| `test_afgeleide_velden.py` | `herberekenAfgeleideVelden`: SQL, randgevallen op SQLite en gelijkheid met `init.init()` van de webapplicatie |
+| **Run, foutbeleid en rapport** | |
+| `test_verwerkingsrun.py`, `test_bronbestanden.py`, `test_opruimen.py` | Run-document, registratie en delta van bronbestanden, opruimen van oude records |
+| `test_foutbeleid.py` | Beleid per taak, drempels en meldingen, de `on_failure_callback`, `controleerBewaking` op nagebootste DAG's, het run-document van alle cycli, `dropAll`, Transform 2 en 3, meldingen van de laadstap |
+| `test_verwerkingsrapport.py` | Opbouw per sectie, JSON-structuur, Markdown-koppen, terugval van de rapportmap, de lezers met nagebootste MongoDB en PostgreSQL |
+| **Webapplicatie** | |
+| `test_flask_app.py`, `test_flask_models.py`, `test_flask_formatters.py`, `test_flask_geo.py`, `test_flask_route.py`, `test_flask_util.py`, `test_flask_validators.py`, `test_flask_search.py` | Modules van de webapplicatie: imports en modellen (ook tegen `gebruikersdata.VERWIJZINGEN`), formatters, de geo-uitbreiding, routes, hulpfuncties, validators en het zoeken zonder Elasticsearch |
+| `test_flask_beheerder.py` | Aanmaken van de beheerder met `FLASK_ADMIN_PASSWORD` |
+| `test_flask_foto_util.py` | Kantelen van foto's en pdf's |
+| **Installatie, configuratie en images** | |
+| `test_init_config.py` | `init-config.sh` in een tijdelijke kopie: gegenereerde wachtwoorden, bestaande bestanden blijven staan |
+| `test_config_cache.py` | De cache-instellingen uit `shared/config.py` zijn getallen |
+| `test_wachtwoord_maskeren.py` | `maskeerWachtwoord` en dat de logs geen wachtwoorden tonen |
+| `test_apache_voordeur.py` | De Apache-configuratie, de compose-bestanden, de Makefile en `ProxyFix` |
+| `test_deploy.py` | De live installatie in `deploy/`: kopieën gelijk aan het origineel, alleen images, alleen-lezen mounts, `PGDATA`, poorten, `make publish` |
+| `test_elasticsearch_testomgeving.py` | Een eigen Elasticsearch zonder hostpoort in beide testomgevingen |
+| `test_pakketversies.py` | Vastgelegde pakketversies en robuuste builds (`constraints.txt`, `pip check`, apt-retries, `make constraints`) |
+| `test_jupyter_image.py` | De pakketten van de Jupyter-image |
+| `test_synthetic_data.py`, `test_synthetic_monster_data.py` | Structuur van de synthetische Access-databases en monsterdata |
 
 ### Integratietests
 
 | Test | Wat wordt getest |
 |------|-----------------|
-| `test_full_pipeline.py` | Volledige harmonisatie-pipeline met directe MongoDB-seeding: harmonisatie, enhance, keys, move & merge, references |
-| `test_full_pipeline_synthetic_data.py` | Volledige ETL via Airflow DAGs met synthetische MDB-data: extract, transform, verwachte aantallen per soort (inclusief monsters, botanische/schelpdeterminaties en referentietabellen), objectfoto's gekoppeld aan hun artefact en vondst (`artefactID`/`vondstID` in Single_Store_Clean en `Def_Bestand`), geen Transform 2-fouten voor foto's; een memo-veld met een regeleinde (spoor 4 van SY002) komt als één veld in de staging en in Single_Store_Clean, en geen staging-document heeft de extra kolommen van `importMDB.sh` midden in een ander veld (issue 74) |
-| `test_full_pipeline_delft_data.py` | Zelfde pipeline maar met Delftse data en Delft-specifieke verwachte aantallen; objectfoto's met projectcode `DB034`, integers en een `artefactID`; het aantal staging-records met een regeleinde in een tekstveld per tabel, zonder de extra kolommen midden in een veld (issue 74) |
-| `test_harmonize_pipeline.py` | Individuele harmonisatie-pipelines (Vondst, Spoor, alle objecttypen) |
-| `test_importMDB_bash.py` | MDB-import shell-script: encoding-conversie, CSV-generatie, mongoimport |
-| `test_incremental_synthetic_data.py` | Volledige cyclus gevolgd door acht incrementele runs (geen wijziging, ongewijzigde database opnieuw verwerkt (issue 81), nieuw project, vervangen database en verwijderde foto, teruggekeerd artefact, verwijderd project, onleesbare foto en herstel) en opnieuw de volledige cyclus (gebruikerstabellen en sleutels blijven, issue 71): PostgreSQL, Elasticsearch, registratie en gebruikersdata |
+| `test_full_pipeline.py` | Volledige harmonisatie-pipeline met directe MongoDB-seeding: harmonisatie, attributen, sleutels, verplaatsen en samenvoegen, verwijzingen |
+| `test_full_pipeline_synthetic_data.py` | Volledige ETL via Airflow met de synthetische data: verwachte aantallen per soort, objectfoto's gekoppeld aan hun artefact en vondst, unieke sleutels, de werkmap die `paden_overslaan` overslaat, een memo-veld met een regeleinde, `DAG_Load_Only` volledig geslaagd |
+| `test_full_pipeline_delft_data.py` | Dezelfde pipeline met de Delftse testdata (DB034) en Delft-specifieke verwachte aantallen; Elasticsearch per tabel gelijk aan PostgreSQL |
+| `test_harmonize_pipeline.py` | Individuele harmonisatie-pipelines |
+| `test_importMDB_bash.py` | Het importscript in Docker: encoding-conversie, CSV, `mongoimport` |
+| `test_incremental_synthetic_data.py` | Volledige cyclus, negen incrementele runs en opnieuw de volledige cyclus (zie [Incrementele cyclus](#incrementele-cyclus)): PostgreSQL, Elasticsearch, registratie, gebruikersdata, run-document en verwerkingsrapport |
+| `test_verwerkingsrapport.py` | De trigger rules en de bewaking in de echte DAG's (DagBag), een rapport voor elke beëindigde run, `DAG_Load_Only` en een bewust mislukte `Start_Run` |
+| `test_flask_smoke.py` | De webapplicatie via Apache: kaart, inloggen, media, redirects achter een proxy, bruiklenen van verdwenen artefacten, projecten zonder locatie, foto's kantelen |
 
 ## Nieuwe tests toevoegen
 

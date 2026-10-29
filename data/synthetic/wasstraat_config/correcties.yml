@@ -12,7 +12,7 @@ projectcode_correcties:
 # Nodig als brondata afwijkende projectcodes bevat die niet matchen met de projectenlijst.
 brondata_correcties:
   - collectie: COLL_STAGING_MONSTER
-    veld: PROJECT
+    zoek_veld: PROJECT
     patroon: "SYNTFOUT"
     waarde: "SY001"
 

@@ -56,7 +56,7 @@ Overschrijft instellingen voor lokale ontwikkeling:
 
 ### `docker-compose.test.yml` en `docker-compose.delft-test.yml` — Testomgevingen
 
-Zelfstandige testomgevingen voor `make integration` en `make integration-delft`, met eigen containernamen, poorten en databases in het geheugen. Zie [Testen](../testen.md).
+Zelfstandige testomgevingen voor `make integration` en `make integration-delft`, met eigen containernamen, een eigen projectnaam (`wasstraat-test`, `wasstraat-delft-test`), eigen poorten (Airflow 8081 en 8082, Apache 5061 en 5062) en MongoDB en PostgreSQL in het geheugen. Ze kunnen naast een installatie draaien, maar niet naast elkaar (beide gebruiken MongoDB-poort 27117). Zie [Testen](../testen.md).
 
 ## Starten en Stoppen
 
@@ -100,7 +100,7 @@ make ps
 
 ## Configuratie via Environment-bestanden
 
-Alle services lezen configuratie uit bestanden in `config/`:
+Alle services lezen configuratie uit bestanden in `config/`. Hieronder in het kort; elke variabele met zijn standaardwaarde staat in [Configuratie](../componenten/configuratie.md#2-omgevingsvariabelen).
 
 | Bestand | Inhoud |
 |---------|--------|
@@ -119,7 +119,7 @@ Daarnaast leest de Airflow-container configuratie uit `wasstraat_config/` (gemou
 | Bestand | Inhoud |
 |---------|--------|
 | `Wasstraat_Config_HarmonizeV3.xlsx` | Harmonisatie-mapping (veldnamen per objecttype) |
-| `correcties.yml` | Gemeente-specifieke datacorrecties (projectcodes, rapportprefixen) |
+| `correcties.yml` | Gemeente-specifieke datacorrecties en uitzonderingen: brondata- en projectcodecorrecties, `artefact_niet_mergen`, `rapportcode_prefixen` en `paden_overslaan` (zie [Configuratie](../componenten/configuratie.md#3-correctiesyml)) |
 
 !!! warning "Gevoelige gegevens"
     De `.env`-bestanden bevatten wachtwoorden en credentials. Neem deze **nooit** op in versiebeheer. Gebruik het `config/`-directory als template en vul per omgeving de juiste waarden in.
@@ -133,16 +133,31 @@ Daarnaast leest de Airflow-container configuratie uit `wasstraat_config/` (gemou
 De Airflow-container koppelt de invoerdata via volumes. Bij `make app` komen die uit `data/synthetic/data/`, bij `make delft` uit `data/delft/data/`:
 
 ```
+Airflow
 ./data/<omgeving>/data/projecten          → /input/projecten
+./data/<omgeving>/data/projecten          → /input/images             (dezelfde map: foto's staan in de projectmappen)
 ./data/<omgeving>/data/projectenlijst     → /input/projectenlijst
 ./data/<omgeving>/data/magazijnlijst      → /input/magazijnlijst
 ./data/<omgeving>/data/fotolijst          → /input/fotolijst
 ./data/<omgeving>/data/monsterdatabase    → /input/monsterdatabase
 ./data/<omgeving>/data/rapporten          → /input/rapporten          (alleen make delft)
 ./data/<omgeving>/data/referentietabellen → /input/referentietabellen
-./data/<omgeving>/output/archeomedia      → /output/archeomedia
-./data/<omgeving>/wasstraat_config        → /opt/airflow/config
+./data/<omgeving>/output/archeomedia      → /output/archeomedia       (verwerkte media)
+./data/<omgeving>/output/rapporten        → /output/rapporten         (verwerkingsrapporten)
+./data/<omgeving>/wasstraat_config        → /opt/airflow/config       (harmonisatie-Excel, correcties.yml)
+
+Flask
+./data/<omgeving>/output/archeomedia      → /output/archeomedia       (schrijfbaar, voor het kantelen van foto's)
+
+Apache
+./data/<omgeving>/output                  → /usr/local/apache2/htdocs (alleen-lezen; gepubliceerd onder /archeomedia)
+
+PostgreSQL en MongoDB
+./data/<omgeving>/backup/postgres         → /backup
+./data/<omgeving>/backup/mongo            → /backup
 ```
+
+De paden in de container kun je met omgevingsvariabelen wijzigen (`AIRFLOW_INPUT_*`, `AIRFLOW_OUTPUT_*`); zie [Configuratie: paden en mounts](../componenten/configuratie.md#27-paden-en-mounts).
 
 ### Persistente volumes
 
@@ -259,6 +274,6 @@ Na de eerste publicatie zijn de vier packages **privé**. Zet ze op publiek, zod
 make release VERSION=1.1.0 MSG="Incrementeel laden en installatie met images"
 ```
 
-Dit schrijft het versienummer naar `config/version.env.example` (in de repository), `config/version.env` (lokaal, genegeerd door git) en `deploy/.env.example` (de standaardversie voor nieuwe installaties), commit alle wijzigingen, maakt de git-tag `1.1.0` op die commit, pusht de branch en de tags, en roept `make publish` aan. De map `deploy/` van de tag is daarmee precies wat gebruikers ophalen; `tests/unit/test_deploy.py` bewaakt dat `deploy/.env.example` en `config/version.env.example` dezelfde versie noemen.
+Dit schrijft het versienummer naar `config/version.env.example` (in de repository), `config/version.env` (lokaal, genegeerd door git) en `deploy/.env.example` (de standaardversie voor nieuwe installaties), staget alleen `config/version.env.example` en `deploy/.env.example`, commit die met het bericht uit `MSG`, maakt de geannoteerde git-tag `1.1.0` op die commit, pusht alleen de huidige branch (`git push origin HEAD`) en de nieuwe tag, en roept `make publish` aan. Andere wijzigingen in de werkmap gaan dus niet mee in de releasecommit; commit die vooraf. De map `deploy/` van de tag is daarmee precies wat gebruikers ophalen; `tests/unit/test_deploy.py` bewaakt dat `deploy/.env.example` en `config/version.env.example` dezelfde versie noemen.
 
 Controleer vóór een release dat `make test-all` slaagt en test de images met `make publish PUSH=0` in een installatie uit `deploy/`. Een `latest`-tag wijst altijd naar de laatst gepubliceerde versie; installaties horen een versienummer te gebruiken.

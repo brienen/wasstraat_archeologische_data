@@ -36,7 +36,17 @@ from wasstraat.profielen import get_profiel
 profiel = get_profiel()   # geeft altijd hetzelfde object terug
 ```
 
-Als `WASSTRAAT_GEMEENTE` niet is ingesteld of leeg is, wordt `delft` gebruikt.
+Als `WASSTRAAT_GEMEENTE` niet is ingesteld of leeg is, wordt `delft` gebruikt. Hoofdletters en spaties maken niet uit. Een andere waarde dan `delft` of `voorbeeld` geeft de fout `Onbekend gemeenteprofiel` (`ConventieProfiel` is de basisklasse en niet zelf te kiezen; `voorbeeld` gedraagt zich precies zo).
+
+Waar je de variabele zet:
+
+| Omgeving | Plek |
+|----------|------|
+| Ontwikkelomgeving, `make delft` | `environment:` van de service `airflow` in `docker-compose.delft.yml` (staat op `delft`) |
+| Ontwikkelomgeving, `make app` | Niet gezet, dus `delft`; voeg een `environment:`-regel toe in `docker-compose.yml` om te wisselen |
+| Live installatie | `WASSTRAAT_GEMEENTE` in `deploy/.env` |
+
+Een `environment:`-regel in het compose-bestand gaat vóór dezelfde variabele in `config/airflow.env`. Het profiel wordt alleen door Airflow gebruikt (Transform 1 en 2). Maak na een wijziging de Airflow-container opnieuw aan en draai de volledige cyclus. Zie ook [Configuratie](configuratie.md#5-gemeenteprofiel).
 
 ## ConventieProfiel (basisprofiel)
 
@@ -247,11 +257,13 @@ elif gemeente == 'mijn_gemeente':
     _profiel_cache = MijnGemeenteProfiel()
 ```
 
-3. **Stel de omgevingsvariabele in** in het `.env` bestand:
+3. **Stel de omgevingsvariabele in** (zie [Profielselectie](#profielselectie) voor de plek per omgeving):
 
 ```bash
 WASSTRAAT_GEMEENTE=mijn_gemeente
 ```
+
+   Een nieuw profiel bestaat alleen in de code; voor de live installatie is het dus pas bruikbaar in een nieuwe versie van de images.
 
 4. **Schrijf unit tests** in `tests/unit/test_profielen.py` voor de nieuwe klasse.
 

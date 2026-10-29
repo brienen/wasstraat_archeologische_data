@@ -1,5 +1,8 @@
 # Doelstellingen: Onze Ambities
 
+!!! note "Ambities"
+    Deze pagina beschrijft de doelen van het project. Een deel is gerealiseerd (een configureerbare pipeline, open source, installatie uit gepubliceerde images), een deel is toekomstvisie; dat staat apart in [Toekomstvisie](../toekomstvisie.md).
+
 ## Kernvisie
 
 Wasstraat streeft ernaar om archeologische data-integratie van een moeizame, handmatige bezigheid om te vormen naar een **generieke, configureerbare toolbox** die meerdere Nederlandse gemeenten kan bedienen.
@@ -14,7 +17,7 @@ Wasstraat streeft ernaar om archeologische data-integratie van een moeizame, han
 
 - **Metagegevens-gestuurde mapping**: Transformatieregels worden gespecificeerd als configuratie, niet gehard-coded
 - **Plug-and-play connectors**: Nieuwe databronnen kunnen worden toegevoegd via configuratie
-- **Crossviews-framework**: Generieken query-engine die over verschillende schemata werkt
+- **Crossviews** (toekomstvisie): verbanden tussen bronnen zichtbaar maken
 - **Themaplaten**: Herbruikbare transformatiepatterns voor veelvoorkomende gegevenstypen
 
 Dit maakt migratie naar andere gemeenten veel sneller en goedkoper.
@@ -61,7 +64,7 @@ Dit ambitie wordt ondersteund via het innovatieproject van Stichting Reuvens, da
 
 ### 5. FAIR Data Principes
 
-**Doel:** Geologische gegevens moeten aan het FAIR-stelsel voldoen.
+**Doel:** Archeologische gegevens moeten aan het FAIR-stelsel voldoen.
 
 **Implementatie:**
 
@@ -99,11 +102,11 @@ Dit ambitie wordt ondersteund via het innovatieproject van Stichting Reuvens, da
 
 **Technologische Highlights:**
 
-- **SingleStore voor Polymorfische Data**: Flexibel gegevensmodel zonder performance-inlevering
-- **Crossviews-Engine**: Queries over meerdere gegevensbronnen heen
-- **Metagegevens-Gestuurde Transformaties**: Geen code nodig voor nieuwe schema's
-- **Fuzzy Indexing**: Zoeken ondanks onnauwkeurigheid
-- **Moderne DevOps**: Docker, Kubernetes, CI/CD pipelines
+- **Polymorfische data in MongoDB** (`Single_Store`), met een relationeel eindmodel in PostgreSQL
+- **Configuratie-gestuurde transformaties**: tabel- en kolomnamen in de harmonisatie-Excel, correcties in `correcties.yml`
+- **Incrementeel laden** met stabiele sleutels en een verwerkingsrapport per run
+- **Zoeken** in Elasticsearch, ook met onnauwkeurige termen
+- **Moderne DevOps**: Docker Compose, gepubliceerde multi-arch images, geautomatiseerde tests
 
 Dit toont aan dat erfgoeddata net zo geavanceerd beheerd kan worden als bedrijfskritieke data.
 
@@ -113,11 +116,11 @@ Dit toont aan dat erfgoeddata net zo geavanceerd beheerd kan worden als bedrijfs
 
 **Implementatie:**
 
-- **Web Interface** (Flask-AppBuilder): Intuïtieve zoekopdracht en browsen
-- **GIS-Dashboards**: Kaart-gebaseerde verkenning
-- **Data Warehouse Exports**: BI-gereedschap (Power BI, Tableau) support
-- **API's**: Programmatische toegang voor onderzoekers
-- **Rapporten**: Automatisch gegenereerde overzichten en analyses
+- **Webinterface** (Flask-AppBuilder): zoeken, bladeren, een kaart van de projecten, statistieken (gerealiseerd)
+- **API's**: programmatische toegang voor onderzoekers (eerste endpoints onder `/api/v1/` gerealiseerd)
+- **GIS-dashboards en geo-services** (ambitie)
+- **Exports naar BI-gereedschap** zoals Power BI of Tableau (ambitie)
+- **Rapporten**: automatisch gegenereerde overzichten en analyses (ambitie; per verwerkingsrun is er al een verwerkingsrapport)
 
 !!! success "Inclusieve Benadering"
     Van niet-technische erfgoed-curators tot data scientists: iedereen vindt een interface die past.

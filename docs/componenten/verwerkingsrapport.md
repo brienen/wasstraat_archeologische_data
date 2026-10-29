@@ -256,7 +256,7 @@ Geen.
 | `WASSTRAAT_VERSION` | tekst | — | Versie in het rapport; `deploy/docker-compose.yml` geeft de versie uit `.env` mee |
 | `WASSTRAAT_VERSIEBESTAND` | pad | `/opt/airflow/version.env` | Bestand met een regel `VERSION=` (bijvoorbeeld een gemounte `config/version.env`); alleen gelezen zonder `WASSTRAAT_VERSION`. Ontbreken beide, dan staat er geen versie in het rapport |
 
-De drempels worden in `shared/config.py` gelezen (aantallen met `int()`, percentages met `float()`); een lege, ongeldige of negatieve waarde levert de standaard op. Met `0` en `0` is elke fout cruciaal. Ze staan, met `AIRFLOW_OUTPUT_RAPPORTEN`, in `config/airflow.env.example` en `deploy/config/airflow.env.example`. De drempels voor afbeeldingen (`AIRFLOW_MAX_MISLUKTE_AFBEELDINGEN` / `_PCT`) staan bij de [extractie](extractie.md#afbeeldingen-en-rapporten).
+De drempels worden in `shared/config.py` gelezen (aantallen met `int()`, percentages met `float()`); een lege, ongeldige of negatieve waarde levert de standaard op. Met `0` en `0` is elke fout cruciaal. Ze staan, met `AIRFLOW_OUTPUT_RAPPORTEN`, in `config/airflow.env.example` en `deploy/config/airflow.env.example`. De drempels voor afbeeldingen (`AIRFLOW_MAX_MISLUKTE_AFBEELDINGEN` / `_PCT`) staan bij de [extractie](extractie.md#afbeeldingen-en-rapporten); alle instellingen van Airflow staan in [Configuratie](configuratie.md#23-airflow-airflowenv-airflow_dbenv).
 
 Voorbeeld (alleen afwijkingen van de standaard zijn nodig):
 

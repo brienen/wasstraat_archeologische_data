@@ -1,7 +1,7 @@
 # Wasstraat Archeologische Data
 
 [![License: EUPL-1.2](https://img.shields.io/badge/License-EUPL--1.2-yellow.svg)](https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12)
-[![Version](https://img.shields.io/badge/version-1.0.1-blue.svg)](https://github.com/brienen/wasstraat_archeologische_data/releases)
+[![Version](https://img.shields.io/badge/version-1.2.0-blue.svg)](https://github.com/brienen/wasstraat_archeologische_data/releases)
 [![Python](https://img.shields.io/badge/python-3.11-3776ab.svg)](https://www.python.org/)
 [![Docker](https://img.shields.io/badge/docker-compose-2496ed.svg)](https://docs.docker.com/compose/)
 
@@ -220,13 +220,15 @@ make docs-build # Bouw statische site
 
 De documentatie bevat:
 
+- **Aan de slag** — Handleiding voor de ontwikkelomgeving en installatie met images
+- **Configuratie** — Alle instellingen: omgevingsvariabelen, `correcties.yml`, harmonisatie-Excel, gemeenteprofiel, `deploy/`, pakketversies
 - **Projectoverzicht** — Inleiding, probleemstelling en doelstellingen
-- **Aan de slag** — Stap-voor-stap handleiding voor eerste gebruik
-- **Architectuur** — Systeemarchitectuur, dataflow, componentenmodel, gegevensmodel en stack
-- **Componenten** — Extractie, SingleStore, Transformatie, Crossviews, Validatie, Configuratie, Zoeken
-- **Deployment** — Installatie met images, omgevingen, Airflow vs. App, proefdata inlezen
+- **Architectuur** — Systeemarchitectuur, verwerkingspipeline, componentenmodel, gegevensmodel en stack
+- **Componenten** — Extractie, MongoDB en Single_Store, transformatie, incrementeel laden, foutbeleid en verwerkingsrapport, validatie, gemeenteprofielen, zoeken
+- **Deployment** — Omgevingen en Docker Compose, Airflow en webapplicatie, voorbeelddata, proefdata inlezen
 - **Testen** — Unit tests, integratietests en testinfrastructuur
-- **Diagrammen** — draw.io architectuurdiagrammen
+- **Diagrammen** — Architectuurdiagrammen (SVG, gegenereerd met een script)
+- **Toekomstvisie** — Ideeën en ambities die nog niet in de code zitten
 
 ## Technische stack
 

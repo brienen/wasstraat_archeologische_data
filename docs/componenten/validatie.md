@@ -1,328 +1,46 @@
-# Validatie
+# Validatie en kwaliteitscontroles
+
+De Wasstraat heeft geen aparte validatielaag met inhoudelijke regels; zo'n laag is een [ambitie](../toekomstvisie.md#validatie-met-regels). Wel controleert de pipeline op verschillende plaatsen of de brondata te verwerken is, telt ze wat niet lukt en legt ze dat vast in het run-document en het verwerkingsrapport. Deze pagina zet die controles op een rij; het beleid (wanneer een fout de run stopt) staat in [Foutbeleid en verwerkingsrapport](verwerkingsrapport.md).
 
 ## Overzicht
 
-De validatielaag vormt de kwaliteitscontroleur van Wasstraat Archeologische Data. Dit onderdeel voert systematische controles uit op alle opgeslagen gegevens en vergewist zich van semantische integriteit en logische consistentie.
+| Stap | Controle | Gevolg | Zichtbaar in |
+|------|----------|--------|--------------|
+| Extractie | Is de Access-database leesbaar (`mdb-tables`)? | Onleesbaar: overgeslagen | Log van `importMDB.sh`; `Controleer_Databases` |
+| Extractie | Heeft een tabel een kopregel, lukt het toevoegen van de kolommen en `mongoimport`? | Tabel overgeslagen | idem |
+| Extractie | Is de export geldige UTF-8? | Omzetting vanuit de gedetecteerde codering, anders Windows-1252 en ISO-8859-1 | `<collectie>_encoding_errors.log` in `AIRFLOW_LOGDIR` |
+| Extractie | Valt een bestand onder `paden_overslaan`? | Overgeslagen, met een logregel | Log, run-document (`paden_overgeslagen`), rapport |
+| Extractie | Is elke afbeelding en elk rapport te verwerken? | Status `mislukt` met de oorzaak; bij een vol of alleen-lezen mediavolume stopt de taak direct | `Filenames`, `Controleer_Afbeeldingen` |
+| Na de extractie | Aantal onleesbare databases en mislukte afbeeldingen | Waarschuwing; boven de drempel stopt de run | Run-document (`tellingen.extractie`, `tellingen.afbeeldingen`), rapport |
+| Transform 1 | Bestaat elke soort uit `meta.py` in de harmonisatie-Excel? | Nee: de taak `Harmonize_<soort>` faalt | Log |
+| Transform 1 | Is een bestandsnaam van een foto, tekening of rapport te herkennen? | Nee: soort `Bestand`, fototype `N` | Rapport (`onherkende_bestandsnamen`) |
+| Transform 2 | Kan elk document worden opgeschoond? | Nee: het document blijft ongewijzigd en komt in `_processing_errors`; boven de drempel stopt de run | `_processing_errors`, rapport (`verwerkingsfouten`) |
+| Transform 2 | Liggen de Rijksdriehoek-coördinaten in Nederland (x tussen 10.000 en 280.000, y tussen 300.000 en 625.000) en zijn ze te lezen? | Nee: de locatie wordt weggelaten en het document krijgt een veld `error` | `Single_Store`, rapport (`locatiefouten`) |
+| Transform 1 en 2 | Is het gemeenteprofiel (`WASSTRAAT_GEMEENTE`) bekend? | Nee: `ParseFotobestanden` faalt; in Transform 2 faalt elk document en stopt de drempel op verwerkingsfouten de run | Log, `_processing_errors` |
+| Transform 3 | Komt een vondstnummer in een project in meer putten voor? | Ja: het putnummer komt in de sleutel van de vondst (`vondstkey_met_putnr`) | Sleutels |
+| Transform 4 | Behoudt elke rij zijn `primary_key`? | Hernummerde rijen geven een waarschuwing | Run-document (`sleutels_niet_stabiel`), rapport |
+| Laden | Past elke waarde in de kolom? | Tekst wordt afgekapt op de lengte van de kolom, getallen en datums omgezet, een lege enumwaarde wordt `Onbekend` | – |
+| Laden | Kloppen de foreign keys na het laden? | Ze worden hersteld als `NOT VALID` en daarna gevalideerd. Lukt het herstel niet, dan is dat in de volledige cyclus een waarschuwing en in de incrementele cyclus een rollback en een fout; lukt het valideren niet, dan is dat een waarschuwing | Run-document, rapport (`fk`) |
+| Laden | Verwijst gebruikersdata naar een verdwenen rij? | Losgekoppeld met een markering of verwijderd | Rapport (`gebruikersdata`) |
+| Laden | Rijen zonder `key` in PostgreSQL | Geteld | Rapport (`rijen_zonder_key`) |
 
-## Kernfunctionaliteiten
+## Coördinaten
 
-### 1. Gegevenslogica Validatie
+Projecten (en vindplaatsen) hebben Rijksdriehoek-coördinaten in de brondata. Transform 2 controleert of ze binnen de grenzen van Nederland vallen en rekent ze om naar WGS84 (`wasstraat/rijksdriehoek.py`) voor de kaart. Een project met een lege, onleesbare of buitenlandse coördinaat houdt geen locatie en staat niet op de kaart; het document krijgt een veld `error` met type `Afwijkende locatie` of `Ongeldige coordinaat`. In de webapplicatie kun je een project ook zonder locatie aanmaken.
 
-Controle van gegevens tegen voorafgestelde logische regels:
+## Records die niet te verwerken zijn
 
-```
-Validatieregels Voorbeelden:
-──────────────────────────────────────────────────
+Faalt het opschonen van één document in Transform 2 (bijvoorbeeld een onverwachte waarde in een veld), dan blijft het document zoals het was en komt het met de fout en de fase in de collectie `_processing_errors` (database `Arch_Analyse`). De rest van de run gaat door. Per taak geldt de drempel `AIRFLOW_MAX_VERWERKINGSFOUTEN` (standaard 100) of `AIRFLOW_MAX_VERWERKINGSFOUTEN_PCT` (standaard 1 procent van de bekeken documenten), welke het grootst is; daarboven stopt de run. Het verwerkingsrapport telt de fouten per fase, soort en fouttype, met voorbeelden.
 
-1. Datumlógica
-   ├─ Vondstdatum ≤ Verwerkingsdatum
-   ├─ Onderzoeksstartdatum ≤ Onderzoekseindatum
-   └─ Periode moet chronologisch plausibel zijn
+## Controles in de webapplicatie
 
-2. Geografische lógica
-   ├─ Coördinaten moeten in Nederland liggen
-   ├─ Graafvak moet binnen onderzoeksgebied liggen
-   └─ Diepte moet positief zijn
+De webapplicatie controleert invoer in de formulieren van Flask-AppBuilder: verplichte velden, typen en de keuzelijsten van enums. Bij een artefact controleert `ABRCompare_Artefactsoort` (`app/app/validators.py`) of het gekozen ABR-materiaal past bij de artefactsoort. Wijzigingen in de webapplicatie aan tabellen van de pipeline gaan bij de volgende cyclus verloren; alleen de gebruikerstabellen blijven staan (zie [Gegevensmodel](../architectuur/gegevensmodel.md#gebruikerstabellen)).
 
-3. Semantische lógica
-   ├─ Materiaaltype moet geldig zijn
-   ├─ Artefacttype moet erkend zijn
-   └─ Bouwperiode moet geldig zijn
+## Controles op de uitkomst
 
-4. Relationele lógica
-   ├─ Artefact moet aan een locatie gekoppeld zijn
-   ├─ Verwijzingen moeten bestaan
-   └─ Hiërarchie moet consistent zijn
-```
+De integratietests leggen de uitkomst van de pipeline vast en vergelijken elke run daarmee:
 
-#### Voorbeeld Validatieregels
+- met de synthetische data: verwachte aantallen per soort, unieke sleutels, gekoppelde foto's, de werking van `correcties.yml`, stabiele `primary_key`s over de cycli heen, Elasticsearch gelijk aan PostgreSQL;
+- met de Delftse testdata: Delft-specifieke verwachte aantallen in de test, en een referentie-uitkomst (`tests/integration/fixtures/delft_golden_snapshot.json`) met tellingen per soort en voorbeeldsleutels. Die referentie wordt met de hand vergeleken; een verandering moet per verschil worden verklaard voordat de referentie opnieuw wordt vastgelegd.
 
-```python
-from validatie import ValidationRule, Validator
-
-# Definitie van validatieregels
-regel_datum = ValidationRule(
-    name="vondstdatum_logisch",
-    check=lambda record: record.get('vondstdatum') <= record.get('verwerkingsdatum'),
-    error_message="Vondstdatum kan niet na verwerkingsdatum liggen"
-)
-
-regel_coördinaten = ValidationRule(
-    name="coördinaten_nederland",
-    check=lambda record: (50.75 <= record.get('latitude') <= 53.5 and
-                         3.4 <= record.get('longitude') <= 7.2),
-    error_message="Coördinaten liggen buiten Nederlands grondgebied"
-)
-
-# Toepassing
-validator = Validator([regel_datum, regel_coördinaten])
-resultaten = validator.validate(dataset)
-```
-
-### 2. Caching Mechanisme
-
-Intelligente opslag van validatieresultaten ter vermindering van computationele overhead:
-
-```
-Primera validatie:
-┌─────────────────────────────┐
-│  Record WSTR-001            │
-│  ├─ Datum-regel: PASS       │
-│  ├─ Coördinaten-regel: PASS │
-│  ├─ Materiaal-regel: PASS   │
-│  └─ Caching → Opslaan
-└─────────────────────────────┘
-
-Vervolgzoeking (uit cache):
-┌─────────────────────────────┐
-│  Record WSTR-001            │
-│  ├─ Cache Hit!              │
-│  ├─ Resultaat: PASS (snel)  │
-│  └─ Geen re-berekening      │
-└─────────────────────────────┘
-```
-
-#### Cache-Structuur
-
-```json
-{
-  "cache_entry": {
-    "record_id": "WSTR-001",
-    "timestamp_validatie": "2024-03-09T10:30:00Z",
-    "timestamp_record_wijziging": "2024-03-08T15:45:00Z",
-    "validatie_status": "PASS",
-    "regels_gecontroleerd": [
-      "vondstdatum_logisch",
-      "coördinaten_nederland",
-      "materiaal_geldig"
-    ],
-    "cache_geldig_tot": "2024-03-16T10:30:00Z"
-  }
-}
-```
-
-### 3. Cache-Consistentie Beheer
-
-Automatische invalidatie en vernieuwing van cache bij gegevenswijzigingen:
-
-```
-Scenario: Record Wijziging
-         │
-         ▼
-┌────────────────────────────┐
-│ Detectie: Record Modified  │
-│ (timestamp check)          │
-└────────────┬───────────────┘
-             │
-             ▼
-┌────────────────────────────┐
-│ Cache Invalidation         │
-│ (gerelateerde records)     │
-└────────────┬───────────────┘
-             │
-             ▼
-┌────────────────────────────┐
-│ Herschedulering            │
-│ (validatie opnieuw qeued)  │
-└────────────────────────────┘
-```
-
-#### Invalidatie-Triggers
-
-- Record wijzigd
-- Gerelateerde records wijzigen
-- Validatieregels bijgewerkt
-- Cache TTL (Time To Live) verstreken
-
-### 4. Gelijktijdigheid Beheer
-
-Robuuste afhandeling van concurrent verwerkende threads en processes:
-
-```
-Thread 1                     Thread 2
-────────                     ────────
-Validate Record A            Validate Record A
-    │                             │
-    ├─ Read Cache                 ├─ Read Cache
-    │ (miss)                       │ (miss)
-    │                             │
-    ├─ Lock Record                │
-    │ (acquire)                    │ (waiting...)
-    │                             │
-    ├─ Validate                   │
-    │ (compute)                    │
-    │                             │
-    ├─ Write Cache                │
-    │                             │
-    ├─ Unlock                     │
-    │                             │ (acquire lock)
-    │                             │
-    │                             ├─ Read Cache
-    │                             │ (hit!)
-    │                             │
-    │                             ├─ Return Result
-    │                             │
-```
-
-#### Implementatie
-
-```python
-from threading import Lock, RLock
-from queue import Queue
-
-class ThreadSafeValidator:
-    def __init__(self):
-        self.cache = {}
-        self.locks = {}  # Per-record locks
-        self.lock = RLock()  # Global lock
-
-    def validate(self, record_id):
-        # Verkrijg record-specifieke lock
-        with self._get_lock(record_id):
-            # Controleer cache
-            if record_id in self.cache:
-                return self.cache[record_id]
-
-            # Voer validatie uit
-            resultaat = self._validate_impl(record_id)
-
-            # Cache resultaat
-            self.cache[record_id] = resultaat
-            return resultaat
-```
-
-## Architectuur
-
-```
-┌─────────────────────────────────┐
-│  Opgeslagen Data (SingleStore)  │
-└────────────┬────────────────────┘
-             │
-             ▼
-┌─────────────────────────────────┐
-│  Validatieregels Basisbibliotheek│
-│  ├─ Datumvalidatie              │
-│  ├─ Geografische validatie      │
-│  ├─ Semantische validatie       │
-│  └─ Relationele validatie       │
-└────────────┬────────────────────┘
-             │
-             ▼
-┌─────────────────────────────────┐
-│  Validatie Engine               │
-├─────────────────────────────────┤
-│ ✓ Regeltoepassing               │
-│ ✓ Cachecontrole                 │
-│ ✓ Thread-Safety                 │
-│ ✓ Gelijktijdighed Management    │
-└────────────┬────────────────────┘
-             │
-             ▼
-┌─────────────────────────────────┐
-│  Cache Manager                  │
-├─────────────────────────────────┤
-│ • Resultaat-caching             │
-│ • TTL Management                │
-│ • Invalidatie-logica            │
-│ • Lock Coordination             │
-└────────────┬────────────────────┘
-             │
-             ▼
-┌─────────────────────────────────┐
-│  Validatierapporten & Logging   │
-└─────────────────────────────────┘
-```
-
-## Validatie-Niveaus
-
-### Niveau 1: Syntactische Validatie
-
-Controle van basisgegevensstructuur:
-
-```
-✓ Verplichte velden aanwezig
-✓ Gegevenstypen correct
-✓ Geen null-waarden waar verboden
-```
-
-### Niveau 2: Semantische Validatie
-
-Controle van betekenis en inhoud:
-
-```
-✓ Waarden liggen in toegestaan bereik
-✓ Gekenmerkte categorieën
-✓ Referentie-integriteit
-```
-
-### Niveau 3: Logische Validatie
-
-Controle van relaties en consistentie:
-
-```
-✓ Temporale consistentie (datums)
-✓ Geografische plausibiliteit
-✓ Semantische coherentie
-```
-
-## Rapporten
-
-### Validatiesamenvattingen
-
-```json
-{
-  "validatierapport": {
-    "moment": "2024-03-09T10:30:00Z",
-    "dataset": "Alle records",
-    "statistieken": {
-      "totaal_records": 12500,
-      "succesvol": 12475,
-      "waarschuwingen": 15,
-      "fouten": 10,
-      "succes_percentage": 99.88
-    },
-    "fouten": [
-      {
-        "record_id": "WSTR-001",
-        "regel": "vondstdatum_logisch",
-        "ernst": "KRITIEK",
-        "boodschap": "Vondstdatum na verwerkingsdatum"
-      }
-    ],
-    "waarschuwingen": [
-      {
-        "record_id": "WSTR-042",
-        "regel": "coördinaten_precisie",
-        "ernst": "WAARSCHUWING",
-        "boodschap": "Coördinaten hebben lage precisie"
-      }
-    ]
-  }
-}
-```
-
-## Best Practices
-
-!!! warning "Regelconfiguratie"
-    Validatieregels moeten zorgvuldig worden ingesteld. Te strenge regels kunnen valide data verwerpen; te soepele regels laten fouten door.
-
-- Test nieuwe regels op steekproefgegevens
-- Houdt regelwijzigingen in versiecontrole
-- Document alle aangepaste regels
-- Voer periodieke validatie-audits uit
-
-!!! tip "Performance"
-    Cache-instellingen afstemmen op update-frequentie:
-    - Weinig updates: langere TTL (meer cache-hits)
-    - Veel updates: kortere TTL (meer nauwkeurigheid)
-
-## Integratie
-
-De validatielaag werkt samen met:
-
-- **SingleStore**: Valideert opgeslagen records
-- **Transformatie**: Valideert transformatieresultaten
-- **Crossviews**: Valideert geïdentificeerde relaties
-- **Configuratie**: Maakt aangepaste validatieregels mogelijk
-- **Zoeken**: Kan alleen gevalideerde data indexeren
-
+Zie [Testen](../testen.md).

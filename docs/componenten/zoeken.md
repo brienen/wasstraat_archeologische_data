@@ -1,408 +1,77 @@
-# Zoeken en Indexering
+# Zoeken en indexering
 
-## Overzicht
+De webapplicatie zoekt met Elasticsearch 8.17 in de tekst van de tabellen in PostgreSQL. De pipeline bouwt de zoekindex op na het laden; de webapplicatie werkt hem bij als gebruikers iets wijzigen. De code staat in `shared/fulltext.py` (indexeren), `app/app/search.py` en `app/app/filters.py` (zoeken).
 
-Het zoeken en indexeringsysteem van Wasstraat Archeologische Data biedt krachtige, snelle queryopties over het hele gegevensreservoir. Dit onderdeel is bewust gemaakt voor polymorfische gegevens en multidimensionale zoekmogelijkheden.
+## Wat er in de index staat
+
+- **Eén index per `Def_`-tabel.** De webapplicatie zoekt via een alias met de tabelnaam in kleine letters, bijvoorbeeld `def_artefact`. Achter de alias staat een index met een tijdstempel (`def_artefact_1761733500`), zodat een nieuwe index kan worden opgebouwd terwijl de oude in gebruik is.
+- **Eén document per rij**, met de `primary_key` als document-id.
+- **De tekstkolommen** (`text`, `varchar` en enum) van de tabel, als tekst. De kolommen uit `SKIP_FULLTEXT` in `shared/const.py` (`_id`, `herkomst`, `key`, `brondata`, `vindplaats`) blijven buiten de index. Getallen en datums worden niet geïndexeerd.
+- **Geen eigen mapping**: Elasticsearch gebruikt zijn standaardanalyse.
+
+Niet geïndexeerd worden `Def_Bronbestand` (administratie van de pipeline, `PIPELINE_TABELLEN`) en de koppeltabellen zonder `primary_key` (`Def_artefact_abr`, `Def_artefact_conservering`).
 
 ## Indexering door de pipeline
 
-De zoekindex staat in Elasticsearch: één index per `Def_`-tabel, met als document-id de `primary_key` van de rij en als velden de tekst-, varchar- en enum-kolommen van de tabel (zonder de kolommen uit `SKIP_FULLTEXT` in `shared/const.py`, zoals `key`, `_id` en `brondata`). De webapplicatie zoekt via een alias met de tabelnaam in kleine letters (bijv. `def_artefact`). De code staat in `shared/fulltext.py`.
-
 | Functie | Gebruikt door | Werking |
 |---------|---------------|---------|
-| `indexTable(table)` | Volledige cyclus en `DAG_Load_Only` (taken `Index_<tabel>`), de webapplicatie bij de eerste start | Bouwt een nieuwe index `<alias>_<tijdstempel>` met alle rijen en zet de alias daarna in één keer om (zero-downtime); de oude index wordt verwijderd |
-| `indexTableIncrementeel(table)` | Incrementele cyclus (taken `Index_<tabel>` na `Load_Upsert`) | Indexeert alle rijen van de tabel opnieuw in de bestaande index achter de alias (een document met dezelfde `_id` wordt overschreven) en verwijdert daarna de documenten waarvan de `_id` niet meer als `primary_key` in de tabel staat (id's opgehaald met `helpers.scan` zonder `_source`). Bestaat de alias nog niet, of wijst hij naar meer dan één index, dan volgt een volledige indexering met `indexTable` |
+| `indexTable(table)` | Volledige cyclus en `DAG_Load_Only` (taken `Index_<tabel>`, voor alle `Def_`-tabellen behalve de bovengenoemde), en de webapplicatie bij het opstarten | Bouwt een nieuwe index `<alias>_<tijdstempel>` met alle rijen en zet de alias daarna in één keer om; de oude index wordt verwijderd. Mislukt het vullen, dan wordt de nieuwe index weggegooid en blijft de oude in gebruik |
+| `indexTableIncrementeel(table)` | Incrementele cyclus (taken `Index_<tabel>` na `Load_Upsert`, alleen voor `LOAD_TABELLEN`) | Indexeert alle rijen van de tabel opnieuw in de bestaande index achter de alias (een document met dezelfde id wordt overschreven) en verwijdert daarna de documenten waarvan de id niet meer als `primary_key` in de tabel staat. Bestaat de alias nog niet, of wijst hij naar meer dan één index, dan volgt een volledige indexering met `indexTable` |
 
-Bij de incrementele cyclus zijn de `primary_key`s stabiel (zie [Incrementeel laden](incrementeel-laden.md)), zodat de bestaande documenten in de index gewoon worden bijgewerkt. De Index-taken staan buiten de bewaking van de verwerkingsrun: mislukt de indexering, dan klopt PostgreSQL al en blijft de run `afgerond`. Draai de mislukte Index-taak dan opnieuw (taak wissen in Airflow); de volgende incrementele run indexeert ook weer alle rijen.
+Omdat de `primary_key`s stabiel zijn, blijven de document-id's in de index gelijk tussen cycli. De Index-taken staan buiten de bewaking van de run: mislukt de indexering, dan klopt PostgreSQL al, is de mislukte taak een waarschuwing in het run-document en het verwerkingsrapport, en slaagt de DAG. Herstel: draai de mislukte Index-taak opnieuw (taak wissen in Airflow) of `DAG_Load_Only`; de volgende incrementele run indexeert ook weer alle rijen. Zie [Foutbeleid en verwerkingsrapport](verwerkingsrapport.md).
 
-## Kernfunctionaliteiten
+## Indexering door de webapplicatie
 
-### 1. Fulltext-Zoeking
+- **Bij het opstarten** (`app/app/init.py`, `initIfNotInit`): bestaat de index `def_artefact` niet, dan indexeert de webapplicatie alle tabellen (`indexAll`). Een nieuwe installatie is zo doorzoekbaar zodra Flask voor het eerst start na een load.
+- **Bij wijzigingen**: maakt, wijzigt of verwijdert een gebruiker een rij in de webapplicatie, dan werkt de webapplicatie het document in de index bij (`search.add_to_index` en `search.remove_from_index`, aangeroepen vanuit `interface.py`) en leegt ze de cache van de zoekresultaten.
 
-Geavanceerde tekstzoeking over alle ongestructureerde velden:
+## Zoeken in de webapplicatie
 
-```python
-# Voorbeelden van fulltext-queries
-results = search.fulltext("handgevormd aardewerk Amsterdam")
-results = search.fulltext("Bronstijd fragment")
-results = search.fulltext("potscherf kwarts")
+Op de lijstpagina's staat het filter **Fulltext Zoeken** (`FulltextFilter` in `filters.py`). Het zoekt in alle tekstkolommen van de tabel, of in één kolom als je het filter op die kolom zet. De zoekopdracht gaat als `query_string` naar Elasticsearch, dus de syntaxis van Lucene werkt:
+
+| Voorbeeld | Betekenis |
+|-----------|-----------|
+| `kogelpot` | Het woord, in elk tekstveld |
+| `kogel*` | Woorden die met `kogel` beginnen |
+| `kogelpot~` | Ook woorden die er één of twee letters van verschillen |
+| `"rood aardewerk"` | De woorden achter elkaar |
+| `baksel:rood AND vorm:kom` | In bepaalde velden, met `AND`, `OR` en `NOT` |
+
+De webapplicatie haalt hoogstens 1.000 treffers op, voegt ze via de `primary_key` samen met de rijen uit PostgreSQL en sorteert op relevantie; de gevonden woorden worden gemarkeerd. In de lijst van één artefactsoort (zoals Aardewerk) zoekt hij alleen artefacten van die soort, in de lijst van één bestandsoort alleen bestanden van die soort. De resultaten worden in Redis gecachet (`CACHE_DEFAULT_TIMEOUT`, standaard 300 seconden) en bij een wijziging in de index geleegd.
+
+## Configuratie
+
+| Instelling | Waar | Standaard |
+|------------|------|-----------|
+| Adres van Elasticsearch | `ES_HOST` (Airflow en Flask) | `http://elasticsearch:9200` |
+| Geheugen | `ES_JAVA_OPTS` in het compose-bestand; in de live installatie `WASSTRAAT_ES_GEHEUGEN` | 512 MB |
+| Beveiliging | `xpack.security.enabled=false`, single-node | uit; in de live installatie zonder hostpoort |
+| Kolommen buiten de index | `SKIP_FULLTEXT` in `shared/const.py` | zie boven |
+
+Zie [Configuratie](configuratie.md).
+
+## Controleren
+
+In de ontwikkelomgeving heeft Elasticsearch hostpoort 9200:
+
+```bash
+curl -s "http://localhost:9200/_cat/aliases?v"            # alias per tabel
+curl -s "http://localhost:9200/_cat/indices?v"            # indexen en aantallen
+curl -s "http://localhost:9200/def_artefact/_count"       # aantal artefacten in de index
 ```
 
-#### Zoekmechanisme
+In de live installatie en de testomgevingen heeft Elasticsearch geen hostpoort; gebruik daar `docker exec`:
 
-```
-Zoekinvoer: "handgevormd aardewerk"
-            │
-            ▼
-┌───────────────────────────────────┐
-│ Tokenisering                      │
-│ "handgevormd" | "aardewerk"       │
-└────────────┬──────────────────────┘
-             │
-             ▼
-┌───────────────────────────────────┐
-│ Lemmatisering (Nederlands)        │
-│ "handgevormd" → "hand"+"gevormd"  │
-│ "aardewerk" → "aard"+"werk"       │
-└────────────┬──────────────────────┘
-             │
-             ▼
-┌───────────────────────────────────┐
-│ Index Lookup                      │
-│ Alle documenten met beide termen  │
-└────────────┬──────────────────────┘
-             │
-             ▼
-┌───────────────────────────────────┐
-│ Ranking (BM25 algoritme)          │
-│ • Termfrequentie                  │
-│ • Inverse documentfrequentie      │
-│ • Documentlengte normalisatie     │
-└────────────┬──────────────────────┘
-             │
-             ▼
-┌───────────────────────────────────┐
-│ Zoekresultaten (gesorteerd)       │
-└───────────────────────────────────┘
+```bash
+docker exec wasstraat_elasticsearch curl -s "http://localhost:9200/_cat/indices?v"
 ```
 
-### 2. Fuzzy-Zoeking
+Het aantal documenten per index hoort gelijk te zijn aan het aantal rijen in de tabel; de integratietests controleren dat na elke run.
 
-Tolerantie voor typografische fouten en spellingsvarianties:
+## Testen
 
-```
-Zoekinvoer: "potscherf"
-            │
-            ├─→ Exacte match: "potscherf" (score: 1.0)
-            │
-            ├─→ Fuzzy matches:
-            │   ├─ "potscherven" (1 toevoeging) - score: 0.85
-            │   ├─ "potsherd" (Engels) - score: 0.80
-            │   ├─ "potscherp" (typografiefout) - score: 0.75
-            │   └─ "pottenscherf" (spellingsvariant) - score: 0.70
-            │
-            └─→ Gefilterde resultaten (score > 0.70)
-```
-
-#### Fuzzy-Algoritme
-
-Het systeem gebruikt een combinatie van:
-
-- **Levenshtein-afstand**: Minste aantal edits nodig
-- **Jaro-Winkler**: Voor gelijkaardige prefixteksten
-- **N-gram matching**: Voor fragmentaire overeenkomsten
-
-### 3. AI-Gebaseerde Indexering (In Ontwikkeling)
-
-Geavanceerde semantische indexering met machine learning:
-
-```
-Vectorrepresentatie van Documenten:
-
-Artefact 1: "handgevormd aardewerk fragment"
-                    │
-                    ▼
-        ┌──────────────────────┐
-        │  NLP-Model (BERT)    │
-        └──────────┬───────────┘
-                   │
-                   ▼
-        Semantische vector [n-dimensies]
-        Bijv: [0.45, 0.82, 0.12, ..., 0.63]
-
-Artefact 2: "hand crafted pottery shard"
-                    │
-                    ▼
-        ┌──────────────────────┐
-        │  NLP-Model (BERT)    │
-        └──────────┬───────────┘
-                   │
-                   ▼
-        Semantische vector [n-dimensies]
-        Bijv: [0.43, 0.84, 0.11, ..., 0.61]
-
-Gelijkenis-berekening (cosinus-overeenkomst):
-cos(vector_1, vector_2) = 0.98 (zeer gelijk!)
-```
-
-#### Voordelen
-
-- Begrijpt semantische betekenis
-- Werkt in meerdere talen
-- Vindt conceptueel soortgelijke items
-- Tolerant voor variaties
-
-## Indexering Componenten
-
-### 1. Fulltext Index
-
-```json
-{
-  "index_type": "fulltext",
-  "index_name": "artefacten_text",
-  "velden": [
-    "beschrijving",
-    "materiaal_omschrijving",
-    "locatie_notities",
-    "onderzoeksnota's"
-  ],
-  "taal": "nederlands",
-  "analyzer": {
-    "type": "standard",
-    "stopwords": ["de", "het", "een", "van"]
-  },
-  "parameters": {
-    "min_term_length": 3,
-    "max_term_length": 100
-  }
-}
-```
-
-### 2. Fuzzy Index
-
-```json
-{
-  "index_type": "fuzzy",
-  "index_name": "artefacten_fuzzy",
-  "velden": [
-    "object_id",
-    "artefact_type",
-    "materiaal",
-    "periode"
-  ],
-  "fuzzy_parameters": {
-    "max_edits": 2,
-    "prefix_length": 1,
-    "boost": 1.5
-  }
-}
-```
-
-### 3. Geografische Index
-
-```json
-{
-  "index_type": "geospatial",
-  "index_name": "artefacten_geo",
-  "velden": [
-    "locatie.coördinaten"
-  ],
-  "type": "geohash",
-  "precision": 10
-}
-```
-
-### 4. Chronologische Index
-
-```json
-{
-  "index_type": "temporal",
-  "index_name": "artefacten_chrono",
-  "velden": [
-    "discovery_date",
-    "periode_start",
-    "periode_eind"
-  ],
-  "resolutie": "dag"
-}
-```
-
-## Querytypen
-
-### Eenvoudige Queries
-
-```python
-# Fulltext-zoeking
-search.find_text("handgevormd aardewerk")
-
-# Fuzzy-zoeking
-search.find_fuzzy("potscherf", tolerance=0.8)
-
-# Gelijk aan
-search.equal("artefact_type", "aardewerk")
-```
-
-### Geavanceerde Queries
-
-```python
-# Combinatie met operatoren
-search.find({
-  "must": [
-    {"text": "aardewerk"},
-    {"equal": {"periode": "Bronstijd"}}
-  ],
-  "should": [
-    {"text": "handgevormd"},
-    {"text": "ingegraven motief"}
-  ],
-  "must_not": [
-    {"equal": {"status": "verloren"}}
-  ]
-})
-
-# Geografische range-query
-search.find_geo_within(
-  center=[52.3702, 4.8952],
-  radius_m=5000,
-  must=[{"period": "Bronstijd"}]
-)
-
-# Chronologische range-query
-search.find_temporal(
-  date_start="2000-01-01 vC",
-  date_end="500-01-01 vC",
-  must=[{"material": "aarde"}]
-)
-```
-
-### Faceted Search
-
-Classificatie van resultaten in kategoriën:
-
-```python
-results = search.find_text("aardewerk")
-results.facets = {
-  "periode": {
-    "Bronstijd": 245,
-    "IJzertijd": 187,
-    "Romeins": 92,
-    "Middeleeuwen": 34
-  },
-  "materiaal": {
-    "aarde": 487,
-    "steen": 12,
-    "andere": 59
-  },
-  "status": {
-    "compleet": 82,
-    "fragmentair": 437,
-    "verloren": 39
-  }
-}
-```
-
-## Architectuur
-
-```
-┌─────────────────────────────────────────┐
-│  SingleStore Gegevens               │
-└────────────┬────────────────────────────┘
-             │
-             ▼
-┌─────────────────────────────────────────┐
-│  Indexering Pipeline                │
-├─────────────────────────────────────────┤
-│ 1. Data Extraction                  │
-│    (Velden selecteren)              │
-│                                         │
-│ 2. Preprocessing                    │
-│    (Tokenisering, Normalisatie)     │
-│                                         │
-│ 3. Indexing                         │
-│    (Fulltext, Fuzzy, Geo, etc.)     │
-│                                         │
-│ 4. Indexen Persistentie             │
-│    (Opslag in Search Engine)        │
-└────────────┬────────────────────────────┘
-             │
-         ┌───┴───┬───────┬──────┐
-         │       │       │      │
-         ▼       ▼       ▼      ▼
-    Fulltext  Fuzzy   Geo   Chrono
-    Index    Index   Index  Index
-         │       │       │      │
-         └───┬───┴───────┴──────┘
-             │
-             ▼
-┌─────────────────────────────────────────┐
-│  Query Engine                       │
-│  ├─ Query Parser                    │
-│  ├─ Query Optimizer                 │
-│  └─ Results Ranking                 │
-└────────────┬────────────────────────────┘
-             │
-             ▼
-┌─────────────────────────────────────────┐
-│  Zoekresultaten                     │
-│  (Gesorteerd, Gefacetteerd)         │
-└─────────────────────────────────────────┘
-```
-
-## Polymorfische Gegevens
-
-Een van de kernuitdagingen is zoeken in polymorfische data. Wasstraat behandelt dit door:
-
-```json
-{
-  "universal_fields": [
-    "object_id",
-    "beschrijving",
-    "locatie",
-    "discovery_date",
-    "periode"
-  ],
-  "type_specific_fields": {
-    "aardewerk": ["vorm", "decoratie", "branding"],
-    "werktuig": ["functie", "schijf_techniek"],
-    "structuur": ["type", "afmetingen", "diepte"]
-  }
-}
-```
-
-Alle universele velden worden standaard geïndexeerd. Type-specifieke velden worden optioneel geïndexeerd.
-
-## Performance Optimalisering
-
-### Indexen Caching
-
-```
-┌────────────────────────────────┐
-│  Populaire Queries Cache       │
-├────────────────────────────────┤
-│ Query 1: "Bronstijd"           │
-│ Hit Rate: 87%                  │
-│ Avg Response: 15ms             │
-│                                │
-│ Query 2: "Amsterdam aardewerk" │
-│ Hit Rate: 62%                  │
-│ Avg Response: 45ms             │
-│                                │
-│ Query 3: "Handgevormd"         │
-│ Hit Rate: 54%                  │
-│ Avg Response: 127ms            │
-│                                │
-│ (Minder hits = indexering      │
-│  moet geoptimaliseerd worden)  │
-└────────────────────────────────┘
-```
-
-### Incrementele Indexering
-
-Zie [Indexering door de pipeline](#indexering-door-de-pipeline): de incrementele cyclus werkt de bestaande index per tabel bij in plaats van een nieuwe index te bouwen.
-
-## Best Practices
-
-!!! warning "Indexoptimalisatie"
-    Niet alle velden hoeven te worden geïndexeerd. Over-indexering verslechtert performance.
-
-- Indexeer alleen veelgebruikte zoekvelden
-- Monitor query-performance regelmatig
-- Verwijder ongebruikte indexen
-- Test grote query's op testomgeving
-
-!!! tip "Zoekinstructies"
-    Gebruikers kunnen beste resultaten behalen door:
-    - Nauwkeurige zoekwoorden gebruiken
-    - Operators combineren (AND, OR, NOT)
-    - Filters toe te passen voor nauwkeurigheid
-    - Faceten te gebruiken voor verfijning
-
-## Integratie
-
-Het zoeken en indexeringssysteem werkt samen met:
-
-- **SingleStore**: Databestand voor indexering
-- **Validatie**: Indexeert alleen gevalideerde records
-- **Crossviews**: Kan "soortgelijke items" suggeren
-- **Configuratie**: Maakt aangepaste indexen mogelijk
-
+- `tests/unit/test_load_incrementeel.py`: `indexTableIncrementeel` met een nagebootste Elasticsearch.
+- `tests/unit/test_load_volledig.py`: `indexTable` slaat koppeltabellen zonder `primary_key` over.
+- `tests/unit/test_flask_search.py`: het zoeken in de webapplicatie zonder Elasticsearch-verbinding.
+- `tests/unit/test_elasticsearch_testomgeving.py`: beide testomgevingen hebben een eigen Elasticsearch zonder hostpoort.
+- `tests/integration/test_incremental_synthetic_data.py` en `test_full_pipeline_delft_data.py`: na elke run zijn de aantallen en id's in Elasticsearch gelijk aan PostgreSQL.

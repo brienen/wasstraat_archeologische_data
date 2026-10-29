@@ -16,9 +16,11 @@ De verwerking verloopt in drie hoofdfasen via [Apache Airflow](https://airflow.a
 
 | Fase | Stap | Wat gebeurt er? |
 |------|------|-----------------|
-| **1. Extractie & Harmonisatie** | Extract + Harmonize | Ruwe data wordt as-is ingelezen uit 6+ bronnen. Veldnamen worden universeel gelijkgetrokken. |
-| **2. Opschonen & Verrijken** | Enhance + Set Keys | Inhoud wordt consistent gemaakt (datums, codes, metadata). Unieke sleutels worden gegenereerd. |
-| **3. Koppelen & Laden** | Merge + Load + Index | Dubbele entiteiten worden samengevoegd. Data wordt geladen in PostgreSQL en geïndexeerd in Elasticsearch. |
+| **1. Extractie & Harmonisatie** | Extract + Harmonize | Ruwe data wordt ongewijzigd ingelezen uit Access-databases, Excel-bestanden, foto's en rapporten. Veldnamen worden gelijkgetrokken volgens de harmonisatie-Excel. |
+| **2. Opschonen & Verrijken** | Enhance + Set Keys | Inhoud wordt consistent gemaakt (datums, codes, coördinaten). Sleutels worden gegenereerd. |
+| **3. Koppelen & Laden** | Merge + References + Load + Index | Dubbele entiteiten worden samengevoegd en krijgen stabiele sleutels. Data wordt geladen in PostgreSQL en geïndexeerd in Elasticsearch. |
+
+Er zijn twee cycli: de **volledige cyclus** verwerkt alle brondata opnieuw, de **incrementele cyclus** alleen nieuwe, gewijzigde en verwijderde bestanden. Beide eindigen met een **verwerkingsrapport**. Gegevens die gebruikers in de webapplicatie invoeren (bruiklenen, conservering) blijven bij elke cyclus staan. Zie [Verwerkingspipeline](architectuur/dataflow.md).
 
 ## Ondersteunde data
 
@@ -36,18 +38,19 @@ De Wasstraat verwerkt een breed scala aan archeologische gegevens:
 
 | Categorie | Technologieën |
 |-----------|---------------|
-| **Orchestratie** | Apache Airflow |
-| **Backend** | Python, Flask, Flask-AppBuilder |
-| **Databases** | MongoDB (staging), PostgreSQL (definitief), Elasticsearch (zoeken) |
-| **Caching** | Redis |
-| **Infrastructuur** | Docker Compose, multi-service architectuur |
-| **Analyse** | Jupyter Lab, Pandas |
+| **Orchestratie** | Apache Airflow 2.10.5 |
+| **Webapplicatie** | Python 3.11, Flask, Flask-AppBuilder, achter Apache 2.4 als voordeur |
+| **Databases** | MongoDB 7.0 (werkgeheugen), PostgreSQL 18 met PostGIS 3.6 (definitief), Elasticsearch 8.17 (zoeken) |
+| **Caching** | Redis 7.2 |
+| **Infrastructuur** | Docker Compose; gepubliceerde images op `ghcr.io/brienen` voor amd64 en arm64 |
+| **Analyse** | Jupyter Lab, Pandas (ontwikkelomgeving) |
+
+Zie [Technische stack](architectuur/stack.md).
 
 ## Nationale Standaarden
 
-Het platform is verbonden met de Nederlandse erfgoed-infrastructuur:
+De Wasstraat gebruikt de **ABR** (Archeologisch Basisregister) voor de classificatie van materialen. Aansluiting op andere standaarden is een ambitie (zie [Toekomstvisie](toekomstvisie.md)):
 
-- **ABR** — Archeologisch Basisregister (materiaalclassificatie)
 - **GGM** — Gemeentelijk Gegevensmodel (Common Ground)
 - **CIDOC CRM** — Conceptueel referentiemodel voor cultureel erfgoed
 - **DANS e-Depot** — Nationaal digitaal archief
@@ -56,11 +59,12 @@ Het platform is verbonden met de Nederlandse erfgoed-infrastructuur:
 ## Aan de slag
 
 - [Installatie met images](deployment/installatie-met-images.md) — De Wasstraat installeren voor gebruik, zonder te bouwen
-- [Inleiding](overzicht/inleiding.md) — Het archeologische datavraagstuk
+- [Handleiding (ontwikkelomgeving)](aan-de-slag.md) — De repository clonen, starten en een eerste verwerking draaien
+- [Configuratie](componenten/configuratie.md) — Alle instellingen: omgevingsvariabelen, `correcties.yml`, harmonisatie-Excel, gemeenteprofiel
 - [Systeemarchitectuur](architectuur/systeem.md) — Hoe het platform is opgebouwd
-- [Omgevingen & Docker Compose](deployment/omgevingen.md) — De Wasstraat opstarten
+- [Verwerkingspipeline](architectuur/dataflow.md) — De stappen van de volledige en de incrementele cyclus
 - [Proefdata inlezen](deployment/proefdata.md) — Een eerste dataset verwerken
-- [Airflow vs. App](deployment/airflow-vs-app.md) — Verschil tussen de twee applicaties
+- [Inleiding](overzicht/inleiding.md) — Het archeologische datavraagstuk
 
 ## Licentie
 

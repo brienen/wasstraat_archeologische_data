@@ -18,7 +18,7 @@ Zeven containers uit vaste images:
 | Elasticsearch | `elasticsearch:8.17.0` | Zoekindex, alleen bereikbaar binnen de installatie |
 | Redis | `redis:7.2-alpine` | Cache van de webapplicatie |
 
-Elke eigen image heeft twee tags: het versienummer (bijvoorbeeld `1.0.1`) en `latest`. Gebruik in een installatie altijd een versienummer, zodat een `docker compose pull` nooit onverwacht een nieuwe versie binnenhaalt.
+Elke eigen image heeft twee tags: het versienummer (bijvoorbeeld `1.1.0`) en `latest`. Gebruik in een installatie altijd een versienummer, zodat een `docker compose pull` nooit onverwacht een nieuwe versie binnenhaalt.
 
 Jupyter Lab, dat in de ontwikkelomgeving meedraait voor analyses op de broncode, maakt geen deel uit van de live installatie. Het is een ontwikkelvoorziening van de repository.
 
@@ -29,7 +29,7 @@ Van jouw kant komen alleen configuratie en data. De containers lezen en schrijve
 | `config/*.env` | Wachtwoorden en instellingen van de services | Jij (eenmalig gegenereerd) |
 | `wasstraat_config/` | Harmonisatie-Excel en `correcties.yml` | Jij |
 | `data/input/` | Brondata: Access-databases, foto's, rapporten | Jij; de containers lezen alleen |
-| `data/output/` | Verwerkte foto's en documenten in drie formaten | Airflow en Flask |
+| `data/output/` | Verwerkte foto's en documenten in drie formaten (`archeomedia/`) en de verwerkingsrapporten per run (`rapporten/`) | Airflow en Flask |
 | `data/backup/` | Backups van PostgreSQL en MongoDB | `make backup` |
 
 De databases staan in Docker-volumes (`wasstraat_postgres`, `wasstraat_mongo`, `wasstraat_mongo_config`, `wasstraat_elasticsearch`) en de taaklogs van Airflow in `wasstraat_airflow_logs`. Die blijven bestaan bij het bijwerken en bij `docker compose down`.
@@ -50,7 +50,7 @@ De databases staan in Docker-volumes (`wasstraat_postgres`, `wasstraat_mongo`, `
 Haal de map `deploy/` van de gewenste versie op. Zonder Git, met één opdracht:
 
 ```bash
-VERSIE=1.0.1
+VERSIE=1.1.0
 curl -L "https://github.com/brienen/wasstraat_archeologische_data/archive/refs/tags/$VERSIE.tar.gz" \
   | tar xz --strip-components=1 "wasstraat_archeologische_data-$VERSIE/deploy"
 cd deploy
@@ -70,7 +70,7 @@ deploy/
 ├── wasstraat_config/     # Harmonisatie-Excel en correcties.yml voor de pipeline
 └── data/
     ├── input/            # Brondata (zeven mappen, zie stap 4)
-    ├── output/           # Verwerkte media
+    ├── output/           # Verwerkte media (archeomedia/) en verwerkingsrapporten (rapporten/)
     └── backup/           # Backups
 ```
 
@@ -86,7 +86,7 @@ Dit maakt drie dingen aan:
 2. **`config/*.env`** uit de sjablonen, met voor elke installatie unieke wachtwoorden. Ze worden eenmalig in de terminal getoond en staan daarna in de bestanden. Bestaande bestanden blijven ongemoeid.
 3. De **datamappen** uit `.env`, schrijfbaar voor de containers.
 
-Instellingen die je mogelijk wilt aanpassen:
+Instellingen die je mogelijk wilt aanpassen (alle instellingen met hun standaardwaarden staan in [Configuratie](../componenten/configuratie.md)):
 
 | Bestand | Instelling | Wanneer |
 |---------|-----------|---------|
@@ -94,6 +94,7 @@ Instellingen die je mogelijk wilt aanpassen:
 | `.env` | `WASSTRAAT_BIND` | `127.0.0.1` als de webapplicaties alleen op de server zelf bereikbaar mogen zijn, bijvoorbeeld achter een reverse proxy. |
 | `.env` | `WASSTRAAT_ES_GEHEUGEN` | Meer geheugen voor Elasticsearch bij grote datasets, bijvoorbeeld `2g`. |
 | `config/flask.env` | `MAIL_*` | Mailserver voor meldingen vanuit de webapplicatie (optioneel). |
+| `config/airflow.env` | `AIRFLOW_MAX_MISLUKTE_AFBEELDINGEN`, `AIRFLOW_MAX_MISLUKTE_DATABASES`, `AIRFLOW_MAX_VERWERKINGSFOUTEN` (en `_PCT`) | Drempels waarboven losse fouten een run stoppen. Zie [Foutbeleid en verwerkingsrapport](../componenten/verwerkingsrapport.md). |
 | `config/airflow.env` | `AIRFLOW__SCHEDULER__*` | Alleen voor gevorderden. |
 
 !!! danger "Niet aanpassen"
@@ -119,7 +120,7 @@ De containers lezen deze mappen alleen; de pipeline wijzigt je bronbestanden noo
 De pipelineconfiguratie staat in `wasstraat_config/`:
 
 - `Wasstraat_Config_HarmonizeV3.xlsx` vertaalt de tabel- en kolomnamen van jouw databases naar het datamodel van de Wasstraat. De meegeleverde versie is die van Delft; pas haar aan volgens [Aan de slag, stap 5](../aan-de-slag.md#5-wasstraat_config_harmonizev3-configureren).
-- `correcties.yml` bevat optionele datacorrecties, zoals verkeerde projectcodes. Het meegeleverde sjabloon doet niets; zie [stap 5b](../aan-de-slag.md#5b-correcties-configureren-optioneel).
+- `correcties.yml` bevat optionele datacorrecties, zoals verkeerde projectcodes, en de bestanden en mappen die de extractie moet overslaan (`paden_overslaan`, bijvoorbeeld kopieën van databases in een werkmap). Het meegeleverde sjabloon doet niets; zie [stap 5b](../aan-de-slag.md#5b-correcties-configureren-optioneel) en [Configuratie: correcties.yml](../componenten/configuratie.md#3-correctiesyml).
 
 !!! tip "Eerst proberen met voorbeelddata"
     Wil je de installatie eerst zien werken? Download uit de repository de map `data/synthetic/data/` (twee fictieve opgravingen) en zet de inhoud in `data/input/`. De meegeleverde harmonisatie-Excel is daar al op afgestemd.
@@ -167,7 +168,7 @@ De eerste keer verwerk je alle brondata met de DAG `Extract_Transform_Load_Full_
 make volledige-cyclus
 ```
 
-Volg de voortgang in Airflow onder **Graph**. Voor een paar projecten duurt de verwerking enkele minuten, voor een volledige gemeentelijke collectie uren. Daarna zie je de projecten op de kaart in de Flask App (de startpagina wordt vijf minuten gecachet, dus eventueel even wachten) en zijn de foto's verwerkt in `data/output/archeomedia/`.
+Volg de voortgang in Airflow onder **Graph**. Voor een paar projecten duurt de verwerking enkele minuten, voor een volledige gemeentelijke collectie uren. Aan het eind staat een verwerkingsrapport in `data/output/rapporten/` (Markdown en JSON): de uitkomst, de bestanden die niet of maar deels verwerkt zijn met de reden, de aantallen per tabel en de doorlooptijd per stap (zie [Foutbeleid en verwerkingsrapport](../componenten/verwerkingsrapport.md)). Daarna zie je de projecten op de kaart in de Flask App (de startpagina wordt vijf minuten gecachet, dus eventueel even wachten) en zijn de foto's verwerkt in `data/output/archeomedia/`.
 
 Komen er later opgravingen bij, of vervang of verwijder je bestanden, draai dan de incrementele cyclus. Die verwerkt alleen de wijzigingen en laat de rest van de database staan:
 

@@ -11,38 +11,52 @@ theme:
 
 nav:
   - Home: index.md
+  - Aan de slag:
+    - Handleiding (ontwikkelomgeving): aan-de-slag.md
+    - Installatie met images: deployment/installatie-met-images.md
+  - Configuratie: componenten/configuratie.md
   - Projectoverzicht:
     - Inleiding: overzicht/inleiding.md
     - Probleemstelling: overzicht/probleemstelling.md
     - Doelstellingen: overzicht/doelstellingen.md
-  - Aan de slag:
-    - Handleiding: aan-de-slag.md
   - Architectuur:
     - Systeemarchitectuur: architectuur/systeem.md
-    - Dataflow Pipeline: architectuur/dataflow.md
+    - Verwerkingspipeline: architectuur/dataflow.md
     - Componentenmodel: architectuur/componenten.md
-    - Gegevensmodel & Semantiek: architectuur/gegevensmodel.md
-    - Technische Stack: architectuur/stack.md
+    - Gegevensmodel: architectuur/gegevensmodel.md
+    - Technische stack: architectuur/stack.md
   - Componenten:
-    - Extractielaag: componenten/extractie.md
-    - SingleStore & Clusterlaag: componenten/singlestore.md
-    - Transformatielaag: componenten/transformatie.md
+    - Extractie: componenten/extractie.md
+    - MongoDB en Single_Store: componenten/singlestore.md
+    - Transformatie: componenten/transformatie.md
     - Incrementeel laden: componenten/incrementeel-laden.md
-    - Foutbeleid & verwerkingsrapport: componenten/verwerkingsrapport.md
+    - Foutbeleid en verwerkingsrapport: componenten/verwerkingsrapport.md
+    - Validatie en kwaliteitscontroles: componenten/validatie.md
     - Gemeenteprofielen: componenten/gemeenteprofielen.md
-    - Crossviews: componenten/crossviews.md
-    - Validatielaag: componenten/validatie.md
-    - Configuratiemodule: componenten/configuratie.md
-    - Zoek- en Indexeringslaag: componenten/zoeken.md
+    - Zoeken en indexering: componenten/zoeken.md
   - Deployment:
-    - Installatie met images: deployment/installatie-met-images.md
-    - Omgevingen & Docker Compose: deployment/omgevingen.md
-    - Airflow Transformatie vs. Web Applicatie: deployment/airflow-vs-app.md
+    - Omgevingen en Docker Compose: deployment/omgevingen.md
+    - Airflow en webapplicatie: deployment/airflow-vs-app.md
     - Voorbeelddata: deployment/voorbeelddata.md
-    - Proefdata Inlezen: deployment/proefdata.md
-  - Testen:
-    - Unit & Integratietests: testen.md
+    - Proefdata inlezen: deployment/proefdata.md
+  - Testen: testen.md
   - Diagrammen: diagrammen.md
+  - Toekomstvisie: toekomstvisie.md
+
+# De generator van de diagrammen staat naast de SVG-bestanden, maar hoort niet in de site
+exclude_docs: |
+  assets/diagrams/*.py
+
+# Dode links, onbekende ankers en pagina's buiten de navigatie zijn een waarschuwing,
+# zodat 'mkdocs build --strict' ze laat falen
+validation:
+  nav:
+    omitted_files: warn
+    not_found: warn
+  links:
+    not_found: warn
+    anchors: warn
+    unrecognized_links: warn
 
 markdown_extensions:
   - toc:
