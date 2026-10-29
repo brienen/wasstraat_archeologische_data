@@ -10,6 +10,7 @@ import wasstraat.mongoUtils as mongoUtil
 import wasstraat.util as util
 import wasstraat.verwerkingsrun as verwerkingsrun
 import wasstraat.delta_transform as delta_transform
+import wasstraat.foutbeleid as foutbeleid
 import simplejson
  
 # Import app code
@@ -215,11 +216,22 @@ aggr_vondstnr_not_unique = [ #{"$match" : {"soort" : "Vondst"}},
 def setAndVondstUniqueInProject(col='analyse', incrementeel=False):
     """Bepaal per project of artefactnummers uniek zijn en of vondstnummers in meerdere putten voorkomen.
 
+    Een fout bij één project is een waarschuwing (issue 54): de vlag
+    artefactnrs_unique blijft voor dat project leeg, de fout wordt geteld en
+    gemeld in het run-document. Een fout buiten de afzonderlijke projecten
+    laat de taak falen; tot issue 54 werd ook die alleen gelogd, waarna de
+    sleutels zonder de vlag vondstkey_met_putnr werden berekend.
+
     Args:
         col: 'analyse' (Single_Store) of 'analyseclean' (Single_Store_Clean)
         incrementeel: als True alleen de geraakte projecten van de actieve
             verwerkingsrun bekijken (incrementeel laden)
+
+    Raises:
+        Exception: bij een fout buiten de afzonderlijke projecten
     """
+    collection = None
+    mislukte_projecten = []
     try:        
         if (col == 'analyse'):
             collection = getAnalyseCollection()
@@ -249,6 +261,10 @@ def setAndVondstUniqueInProject(col='analyse', incrementeel=False):
         for proj in lst_project:
             try:
                 df_art = pd.DataFrame(list(collection.find({'soort': 'Artefact', 'projectcd': proj}, projection={'subnr':1}))).dropna()
+                if 'subnr' not in df_art.columns:
+                    # Geen enkel artefact met een subnr: niets te bepalen (de vlag blijft leeg, zoals voorheen)
+                    logger.info(f"Project {proj}: geen artefacten met een subnr; uniciteit niet bepaald.")
+                    continue
                 unique = df_art['subnr'].is_unique
                 
                 project = collection.find_one({ 'soort': "Project", 'projectcd': proj })
@@ -257,19 +273,35 @@ def setAndVondstUniqueInProject(col='analyse', incrementeel=False):
 
             except Exception as exp2:
                 logger.error(f'Error while determining whether artefactnrs are unique for project {proj} with message: {str(exp2)} ')
+                mislukte_projecten.append({'projectcd': proj, 'fout': f"{type(exp2).__name__}: {exp2}"[:500]})
 
 
-        lst_vondst_in_multi_putten = list(pd.DataFrame(list(collection.aggregate(aggr_vondstnr)))['projectcd'])
+        # Zonder treffers had pd.DataFrame([]) geen kolom projectcd (KeyError); dat werd tot issue 54
+        # als 'Severe error' gelogd en genegeerd, en nu zou de taak erop falen
+        lst_vondst_in_multi_putten = [r['projectcd'] for r in collection.aggregate(aggr_vondstnr)
+                                      if r.get('projectcd') is not None]
         if len(lst_vondst_in_multi_putten) > 0:
             try:
                 collection.update_many({'vondstnr': {"$exists": {"$Bool": 1}}, 'projectcd': {"$exists": {"$Bool": 1}}, 'projectcd': {'$in': lst_vondst_in_multi_putten}}, {'$set': {'vondstkey_met_putnr': True}})
 
             except Exception as exp2:
-                logger.error(f'Error while setting whether vondstnrs are unique for project {proj} with message: {str(exp2)} ')
+                msg = f'Error while setting whether vondstnrs are unique for projects {lst_vondst_in_multi_putten} with message: {str(exp2)} '
+                logger.error(msg)
+                raise Exception(msg) from exp2
     except Exception as exp1:
-        logger.error(f'Severe error while determining whether artefactnr and vondstnr are unique with message: {str(exp1)} ')
+        msg = f'Severe error while determining whether artefactnr and vondstnr are unique with message: {str(exp1)} '
+        logger.error(msg)
+        raise Exception(msg) from exp1
     finally:
-        collection.database.client.close()
+        if collection is not None:
+            collection.database.client.close()
+
+    if mislukte_projecten:
+        msg = (f"Bij {len(mislukte_projecten)} project(en) kon niet bepaald worden of de artefactnummers uniek zijn: "
+               f"{[p['projectcd'] for p in mislukte_projecten[:10]]}.")
+        logger.warning(msg)
+        foutbeleid.meld(foutbeleid.NIVEAU_WAARSCHUWING, foutbeleid.SOORT_UNICITEIT_NIET_BEPAALD, msg,
+                        aantal=len(mislukte_projecten), details=mislukte_projecten[:10])
 
 def test(aggr):
     collection = getAnalyseCollection()

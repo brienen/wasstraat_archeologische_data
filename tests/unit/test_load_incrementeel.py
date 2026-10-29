@@ -558,14 +558,36 @@ class TestLoadIncrementeel:
         assert 'afgeleide_velden' not in run['tellingen']['load']
         assert resultaat['afgeleide_velden'] == tellingen
 
-    def test_fout_in_afgeleide_velden_rolt_alles_terug(self, omgeving, monkeypatch):
+    def test_fout_in_afgeleide_velden_is_waarschuwing(self, omgeving, monkeypatch):
+        """Issue 54: een fout in de afgeleide velden draait alleen die herberekening terug (SAVEPOINT).
+
+        De upsert gaat door en wordt gecommit; de fout komt als waarschuwing in de meldingen
+        van het run-document, en tellingen.afgeleide_velden ontbreekt. Tot issue 54 draaide
+        zo'n fout de hele upsert terug.
+        """
         def kapot(cursor):
             raise RuntimeError('afgeleide velden kapot')
         monkeypatch.setattr(load, 'herberekenAfgeleideVelden', kapot)
-        with pytest.raises(RuntimeError, match='afgeleide velden kapot'):
-            load.loadIncrementeel()
-        assert omgeving.pg.commits == 1 and omgeving.pg.rollbacks == 1  # alleen de schemamigratie is gecommit
-        assert 'load' not in (verwerkingsrun.huidigeRun().get('tellingen') or {})
+        resultaat = load.loadIncrementeel()
+        log = omgeving.pg.log
+        assert log.index('SAVEPOINT afgeleide_velden_sp') < log.index('ROLLBACK TO SAVEPOINT afgeleide_velden_sp')
+        assert 'RELEASE SAVEPOINT afgeleide_velden_sp' not in log
+        assert omgeving.pg.rollbacks == 0 and omgeving.pg.commits >= 2  # schemamigratie en upsert gecommit
+        assert resultaat['afgeleide_velden'] is None
+        run = verwerkingsrun.huidigeRun()
+        assert 'load' in run['tellingen'] and 'afgeleide_velden' not in run['tellingen']
+        meldingen = [m for m in run['meldingen'] if m['soort'] == 'afgeleide_velden_mislukt']
+        assert len(meldingen) == 1 and meldingen[0]['niveau'] == 'waarschuwing'
+        assert 'afgeleide velden kapot' in meldingen[0]['melding']
+
+    def test_afgeleide_velden_in_savepoint(self, omgeving):
+        """Zonder fout: SAVEPOINT vóór en RELEASE na de herberekening, in de transactie van de upsert."""
+        load.loadIncrementeel()
+        log = omgeving.pg.log
+        updates = [i for i, s in enumerate(log) if isinstance(s, str) and s.startswith('UPDATE "Def_') and ' AS t ' in s]
+        assert log.index('SAVEPOINT afgeleide_velden_sp') < min(updates)
+        assert max(updates) < log.index('RELEASE SAVEPOINT afgeleide_velden_sp')
+        assert 'ROLLBACK TO SAVEPOINT afgeleide_velden_sp' not in log
 
     def test_herstel_fk_geeft_namen_van_mislukte_constraints(self):
         class FoutCursor:

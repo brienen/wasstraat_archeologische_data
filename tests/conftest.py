@@ -131,6 +131,12 @@ mock_config.AIRFLOW_INPUT_FOTOLIJST = "/input/fotolijst"
 mock_config.AIRFLOW_INPUT_MONSTER = "/input/monsterdatabase"
 mock_config.AIRFLOW_INPUT_RAPPORTEN = "/input/rapporten"
 mock_config.AIRFLOW_OUTPUT_MEDIA = "/output/archeomedia"
+# Verwerkingsrapport (issue 62) en drempels van het foutbeleid (issue 54), standaardwaarden uit shared/config.py
+mock_config.AIRFLOW_OUTPUT_RAPPORTEN = os.getenv("AIRFLOW_OUTPUT_RAPPORTEN", "/tmp/wasstraat_test/rapporten")
+mock_config.AIRFLOW_MAX_MISLUKTE_DATABASES = 2
+mock_config.AIRFLOW_MAX_MISLUKTE_DATABASES_PCT = 5.0
+mock_config.AIRFLOW_MAX_VERWERKINGSFOUTEN = 100
+mock_config.AIRFLOW_MAX_VERWERKINGSFOUTEN_PCT = 1.0
 mock_config.AIRFLOW_CORRECTIES_CONFIG = os.getenv(
     "AIRFLOW_CORRECTIES_CONFIG",
     os.path.join(_project_root, "data", "test", "wasstraat_config", "correcties.yml")

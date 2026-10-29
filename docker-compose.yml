@@ -42,6 +42,8 @@ services:
        - ./data/synthetic/data/fotolijst:/input/fotolijst
        - ./data/synthetic/data/referentietabellen:/input/referentietabellen
        - ./data/synthetic/output/archeomedia:/output/archeomedia
+       # Verwerkingsrapporten per run (AIRFLOW_OUTPUT_RAPPORTEN, issue 62)
+       - ./data/synthetic/output/rapporten:/output/rapporten
        - ./data/synthetic/wasstraat_config:/opt/airflow/config
        - ./airflow_app/dags:/opt/airflow/dags # Deze niet aanpassen
        - ./airflow_app/scripts:/opt/airflow/scripts # Deze niet aanpassen

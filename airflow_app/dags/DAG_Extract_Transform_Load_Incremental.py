@@ -31,9 +31,16 @@ Index-taken klaar zijn (Index_Klaar, trigger rule all_done), zodat een volgende
 run niet kan starten terwijl de indexering nog loopt. Markeer_Run_Mislukt
 bewaakt alle taken tot en met Registreer_Run, maar niet de Index-taken: een
 haperende Elasticsearch maakt de run niet ongeldig, want de data in PostgreSQL
-klopt dan al (de Airflow-run wordt wel rood via End_ETL_incremental). Een
-mislukte indexering herstel je door de Index-taak opnieuw te draaien; de
-volgende incrementele run indexeert ook alle rijen opnieuw.
+klopt dan al. Sinds issue 54 slaagt de Airflow-run dan ook (de mislukte
+Index-taak is een waarschuwing in het run-document en het verwerkingsrapport);
+tot dan werd hij rood via End_ETL_incremental. Een mislukte indexering herstel
+je door de Index-taak opnieuw te draaien; de volgende incrementele run
+indexeert ook alle rijen opnieuw.
+
+Elke taak legt bij een fout de foutmelding vast in de meldingen van het
+run-document (on_failure_callback, wasstraat/foutbeleid.py). Na alle andere
+taken, ook na een fout, schrijft de taak Verwerkingsrapport het rapport van de
+run (issue 62); de eindtaak End_ETL_incremental bepaalt de eindstatus.
 """
 from datetime import datetime, timedelta
 
@@ -50,6 +57,7 @@ import tasks_transform2_attributes
 import tasks_transform3_keys
 import tasks_transform4_references
 import tasks_transform5_moveAndMerge
+import tasks_verwerkingsrun
 import wasstraat.verwerkingsrun as verwerkingsrun
 import wasstraat.bronbestanden as bronbestanden
 import wasstraat.opruimen as opruimen
@@ -63,18 +71,15 @@ with DAG(
     catchup=False,
     max_active_runs=1,
     dagrun_timeout=timedelta(minutes=480),
-    template_searchpath="/opt/airflow"
+    template_searchpath="/opt/airflow",
+    default_args=tasks_verwerkingsrun.getDefaultArgs(),
 ) as dag:
     Start_ETL_incremental = DummyOperator(
         task_id='Start_ETL_incremental',
     )
 
     # Stap 0: run-document aanmaken (faalt als er al een actieve run is)
-    Start_Run = PythonOperator(
-        task_id='Start_Run',
-        python_callable=verwerkingsrun.startRun,
-        op_kwargs={'soort': verwerkingsrun.SOORT_INCREMENTEEL, 'airflow_run_id': '{{ run_id }}'}
-    )
+    Start_Run = tasks_verwerkingsrun.maakStartRun(verwerkingsrun.SOORT_INCREMENTEEL)
 
     # Stap 1: bronbestanden scannen en vergelijken met Def_Bronbestand
     Bepaal_Delta = PythonOperator(
@@ -131,12 +136,7 @@ with DAG(
 
     # Bij een mislukte taak: run-document op 'mislukt', zodat een volgende run kan starten.
     # De registratie wordt dan niet bijgewerkt; de volgende run pakt dezelfde bestanden opnieuw op.
-    Markeer_Run_Mislukt = PythonOperator(
-        task_id='Markeer_Run_Mislukt',
-        python_callable=verwerkingsrun.markeerRunMislukt,
-        op_kwargs={'airflow_run_id': '{{ run_id }}'},
-        trigger_rule=TriggerRule.ONE_FAILED
-    )
+    Markeer_Run_Mislukt = tasks_verwerkingsrun.maakMarkeerRunMislukt()
 
     End_ETL_incremental = DummyOperator(
         task_id='End_ETL_incremental',
@@ -146,10 +146,11 @@ with DAG(
     tg_import >> tg_harmonize >> tg_enhanceAttrs >> tg_keys >> tg_moveAndMerge >> tg_references
     tg_references >> Load_Upsert >> index_taken >> Index_Klaar
     [Load_Upsert, Index_Klaar] >> Registreer_Run >> End_ETL_incremental
-    # Een mislukte Index-taak maakt de Airflow-run rood (End_ETL_incremental upstream_failed)
-    index_taken >> End_ETL_incremental
 
     # De Index-taken staan bewust niet in deze lijst: een mislukte indexering zet de run niet op 'mislukt'
     bewaakt = [Start_Run, Bepaal_Delta, Opruimen_Oude_Records, tg_import, tg_harmonize, tg_enhanceAttrs,
                tg_keys, tg_moveAndMerge, tg_references, Load_Upsert, Registreer_Run]
     bewaakt >> Markeer_Run_Mislukt
+
+    # Verwerkingsrapport na alle andere taken, vóór de eindtaak (die de eindstatus van de DAG bepaalt)
+    tasks_verwerkingsrun.voegVerwerkingsrapportToe(dag, End_ETL_incremental)

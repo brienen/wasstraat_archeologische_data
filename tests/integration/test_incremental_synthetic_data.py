@@ -30,7 +30,10 @@ incrementele cyclus (Extract_Transform_Load_Incremental) via
      'mislukt' en PostgreSQL blijft ongewijzigd;
   h. de onleesbare foto weggehaald: de volgende run slaagt, de openstaande
      entry in Filenames is opgeruimd en alles is weer gelijk aan a;
-  i. opnieuw de volledige cyclus, na een conserveringsproject en een extra
+  h2. (issue 54) een onleesbare Access-database in SY003 (een kapotte kopie): de
+     taak Controleer_Databases meldt een waarschuwing, de run slaagt en PostgreSQL
+     blijft gelijk aan a;
+  i. opnieuw de volledige cyclus (met de kapotte database, dus met een waarschuwing), na een conserveringsproject en een extra
      ABR-materiaal voor het artefact van de bruikleen (issue 71): de
      gebruikerstabellen zijn ongewijzigd (ook de losgekoppelde bruikleen van
      SY003), de bruikleen hangt aan hetzelfde artefact, alle sleutels en
@@ -38,7 +41,9 @@ incrementele cyclus (Extract_Transform_Load_Incremental) via
      van elke tabel uit LOAD_TABELLEN heeft dezelfde primary_key als na de
      eerste volledige cyclus (issue 81).
 
-Na elke run worden PostgreSQL (via ``docker exec psql``), MongoDB (run-document)
+Na elke run worden PostgreSQL (via ``docker exec psql``), MongoDB (run-document),
+het verwerkingsrapport (issue 62: JSON en Markdown in de Airflow-container, met de
+secties en totalen per tabel gelijk aan PostgreSQL, ook na de bewust mislukte run g)
 en Elasticsearch (via ``docker exec curl`` in de Elasticsearch-container; die
 heeft geen hostpoort) gecontroleerd. Ook de afgeleide velden (issue 72:
 aantal_fotos, aantal_artefacten en de dateringen) worden na de volledige
@@ -86,7 +91,15 @@ SY003_DIR = os.path.join(PROJECTEN_DIR, "SY003")
 SY003_MDB = os.path.join(SY003_DIR, "C Database", "opgravingSY003.mdb")
 VERWIJDERDE_FOTO = "SY003_F002.jpg"
 ONLEESBARE_FOTO = os.path.join(SY003_DIR, "L Fotos", "SY003_onleesbaar.jpg")
+KAPOTTE_DATABASE = os.path.join(SY003_DIR, "C Database", "kapot.mdb")
 CONTROLETAAK = "Extract_Group.Controleer_Afbeeldingen"
+DATABASETAAK = "Extract_Group.Controleer_Databases"
+
+# Verwerkingsrapport (issue 62): secties van het JSON-rapport en koppen van de Markdown
+RAPPORT_SECTIES = ["run", "samenvatting", "foutbeleid", "bronbestanden", "objecttotalen", "kwaliteitsmeldingen",
+                   "pipeline", "fouten_in_rapport"]
+MARKDOWN_KOPPEN = ["## Foutbeleid", "## Bronbestanden", "## Objecttotalen", "## Kwaliteitsmeldingen", "## Pipeline",
+                   "### Doorlooptijd per stap", "### Waarschuwingen", "### Access-databases"]
 PAD_SY003_IN_CONTAINER = "/input/projecten/SY003/"
 
 # Tabellen waarvan de sleutels (key → primary_key) vastgelegd en vergeleken worden
@@ -258,10 +271,55 @@ def esIds(tabel):
     return {int(hit["_id"]) for hit in antwoord.get("hits", {}).get("hits", [])}
 
 
-def laatsteRun(mongo_client):
-    """Het run-document van de laatste incrementele run."""
+def laatsteRun(mongo_client, soort="incrementeel"):
+    """Het run-document van de laatste run van een soort (sinds issue 54 bewaard over volledige cycli heen)."""
     return mongo_client[DB_STAGING]["Verwerkingsruns"].find_one(
-        {"soort": "incrementeel"}, sort=[("gestart_op", pymongo.DESCENDING)])
+        {"soort": soort}, sort=[("gestart_op", pymongo.DESCENDING)])
+
+
+def leesUitContainer(pad):
+    """Lees een bestand uit de Airflow-testcontainer (de rapporten staan in AIRFLOW_OUTPUT_RAPPORTEN)."""
+    resultaat = subprocess.run(["docker", "exec", AIRFLOW_CONTAINER, "cat", pad], capture_output=True, text=True,
+                               timeout=30)
+    assert resultaat.returncode == 0, f"{pad} niet te lezen in {AIRFLOW_CONTAINER}: {resultaat.stderr.strip()}"
+    return resultaat.stdout
+
+
+def controleerRapport(run, uitkomst=None):
+    """Issue 62: de run heeft een rapport als JSON en Markdown, met alle secties en koppen.
+
+    Het run-document noemt de paden (veld rapport); het rapport hoort bij de run en heeft dezelfde
+    status. Met uitkomst wordt ook de uitkomst van het foutbeleid gecontroleerd.
+
+    Returns:
+        Tuple (rapport als dict, Markdown-tekst)
+    """
+    info = run.get("rapport")
+    assert info and info.get("json") and info.get("markdown"), f"Run {run['run_id']} heeft geen rapport: {info}"
+    assert os.path.basename(info["json"]).startswith(f"verwerkingsrapport_{run['run_id']}_{run['soort']}_")
+    rapport = json.loads(leesUitContainer(info["json"]))
+    markdown = leesUitContainer(info["markdown"])
+    for sectie in RAPPORT_SECTIES:
+        assert sectie in rapport, f"Sectie {sectie} ontbreekt in {info['json']}"
+    for kop in MARKDOWN_KOPPEN:
+        assert f"\n{kop}\n" in markdown, f"Kop {kop} ontbreekt in {info['markdown']}"
+    assert markdown.startswith(f"# Verwerkingsrapport {run['run_id']}")
+    assert rapport["run"]["run_id"] == run["run_id"] and rapport["run"]["status"] == run["status"]
+    assert rapport["fouten_in_rapport"] == [], rapport["fouten_in_rapport"]
+    assert info["samenvatting"]["uitkomst"] == rapport["foutbeleid"]["uitkomst"]
+    assert rapport["pipeline"]["stappen"], "Geen doorlooptijden per stap"
+    if uitkomst is not None:
+        assert rapport["foutbeleid"]["uitkomst"] == uitkomst, (
+            f"Uitkomst {rapport['foutbeleid']['uitkomst']}, verwacht {uitkomst}; waarschuwingen "
+            f"{[m['melding'][:200] for m in rapport['foutbeleid']['waarschuwingen']]}")
+    print(f"  Rapport {os.path.basename(info['json'])}: {info['samenvatting']}")
+    return rapport, markdown
+
+
+def controleerObjecttotalen(rapport):
+    """De totalen per tabel in het rapport zijn gelijk aan het aantal rijen in PostgreSQL."""
+    totalen = {t: v["totaal"] for t, v in rapport["objecttotalen"]["tabellen"].items()}
+    assert totalen == telTabellen(), f"Totalen in het rapport {totalen} wijken af van PostgreSQL"
 
 
 def controleerRun(mongo_client):
@@ -285,6 +343,18 @@ def controleerRun(mongo_client):
     print(f"  Run {run['run_id']}: delta {run['tellingen']['delta']['totaal']}, "
           f"load {run['tellingen']['load']['totaal']}, afbeeldingen "
           f"{ {k: afbeeldingen[k] for k in ('totaal', 'verwerkt', 'overgeslagen', 'mislukt')} }")
+    # Foutbeleid (issue 54): geen fouten in het run-document; verwerkingsrapport (issue 62) met kloppende totalen
+    assert not [m for m in run.get("meldingen", []) if m["niveau"] == "fout"], run.get("meldingen")
+    assert "extractie" in run["tellingen"], "tellingen.extractie (Controleer_Databases) ontbreekt"
+    rapport, _ = controleerRapport(run)
+    assert rapport["foutbeleid"]["uitkomst"] != "mislukt"
+    controleerObjecttotalen(rapport)
+    load = run["tellingen"]["load"]
+    for tabel, telling in rapport["objecttotalen"]["tabellen"].items():
+        if tabel in load:
+            assert (telling["aangemaakt"], telling["bijgewerkt"], telling["verwijderd"]) == (
+                load[tabel]["ingevoegd"], load[tabel]["bijgewerkt"], load[tabel]["verwijderd"]), tabel
+    TOESTAND["rapport"] = rapport
     return run
 
 
@@ -572,6 +642,33 @@ class TestIncrementeelSynthetic:
         filenames = mongo_client[DB_FILES]["Filenames"]
         assert filenames.count_documents({"processed": False}) == 0, "Onverwerkte of mislukte afbeeldingen"
 
+        # Issue 54: de volledige cyclus heeft vanaf het begin een run-document met tellingen en meldingen
+        run = laatsteRun(mongo_client, "volledig")
+        assert run["status"] == "afgerond" and run["dag_id"] == "Extract_Transform_Load_Full_Cycle", run.get("melding")
+        for telling in ["extractie", "afbeeldingen", "load", "gebruikersdata", "afgeleide_velden", "registratie"]:
+            assert telling in run["tellingen"], f"tellingen.{telling} ontbreekt in het run-document van de volledige cyclus"
+        assert run["tellingen"]["extractie"]["onleesbaar"] == 0 and run["tellingen"]["extractie"]["databases"] > 0
+        assert not [m for m in run["meldingen"] if m["niveau"] == "fout"], run["meldingen"]
+        TOESTAND["volledig"] = run
+
+        # Issue 62: het rapport, met totalen gelijk aan PostgreSQL en de bronbestanden van de registratie
+        rapport, markdown = controleerRapport(run)
+        controleerObjecttotalen(rapport)
+        geregistreerd = {r[0]: int(r[1]) for r in pgRijen(
+            f'SELECT categorie, COUNT(*) FROM "Def_Bronbestand" WHERE run_id = \'{run["run_id"]}\' GROUP BY categorie')}
+        # Het rapport telt ook de paden die paden_overslaan (correcties.yml) overslaat; die zijn niet geregistreerd
+        overgeslagen = rapport["bronbestanden"]["paden_overgeslagen"]
+        in_rapport = {c: sum(t.values()) - overgeslagen.get(c, 0) for c, t in rapport["bronbestanden"]["totalen"].items()}
+        assert {c: n for c, n in in_rapport.items() if n} == geregistreerd, (
+            f"Bronbestanden in het rapport {in_rapport} (zonder {overgeslagen}), geregistreerd {geregistreerd}")
+        assert rapport["bronbestanden"]["registratie_uitgevoerd"] is True
+        assert all(t["status"] == "success" for t in rapport["pipeline"]["taken"]
+                   if not t["taak"].endswith("Markeer_Run_Mislukt")), "Niet alle taken geslaagd volgens het rapport"
+        stappen = [s["stap"] for s in rapport["pipeline"]["stappen"]]
+        for stap in ["voorbereiding", "extractie", "transform1", "transform2", "transform3", "transform5",
+                     "transform4", "load", "index", "registratie"]:
+            assert stap in stappen, f"Stap {stap} ontbreekt in de doorlooptijden"
+
     def test_02_uitgangssituatie_vastleggen(self):
         TOESTAND["aantallen"] = telTabellen()
         TOESTAND["sleutels"] = {t: sleutels(t) for t in SLEUTEL_TABELLEN}
@@ -588,7 +685,7 @@ class TestIncrementeelSynthetic:
         assert pgWaarde('SELECT COUNT(*) FROM "Def_Artefact" WHERE key LIKE \'%|%\'') > 0
 
         # Issue 81: de synthetische data heeft artefacten zonder subnr (hulpsleutel uit de bronrij) en
-        # een artefact-key die twee keer voorkomt; monsters en plaatsingen hebben een key
+        # twee bronrijen met hetzelfde subnummer; monsters en plaatsingen hebben een key
         zonder_subnr = pgRijen('SELECT key FROM "Def_Artefact" WHERE key LIKE \'PSY002%|bron:%\' ORDER BY key')
         assert len(zonder_subnr) == 2, f"Verwacht twee artefacten zonder subnr in SY002: {zonder_subnr}"
         assert zonder_subnr[0][0].startswith("PSY002P3V7|Aardewerk|bron:projecten/SY002/C Database/opgravingSY002.mdb:AARDEWERK 1:")
@@ -649,6 +746,9 @@ class TestIncrementeelSynthetic:
     def test_04_incrementeel_zonder_wijzigingen(self, mongo_client):
         TOESTAND["duur"]["c"], _ = draaiDag("Extract_Transform_Load_Incremental")
         run = controleerRun(mongo_client)
+        assert TOESTAND["rapport"]["foutbeleid"]["uitkomst"] == "geslaagd", TOESTAND["rapport"]["foutbeleid"]
+        assert all(t["aangemaakt"] == 0 and t["verwijderd"] == 0
+                   for t in TOESTAND["rapport"]["objecttotalen"]["tabellen"].values())
         delta = run["tellingen"]["delta"]["totaal"]
         assert delta["nieuw"] == 0 and delta["gewijzigd"] == 0 and delta["verwijderd"] == 0, delta
         assert delta["ongewijzigd"] == TOESTAND["bronbestanden"]
@@ -732,6 +832,11 @@ class TestIncrementeelSynthetic:
             else:
                 assert aantallen[tabel] == TOESTAND["aantallen"][tabel], f"{tabel}: aantal gewijzigd"
         print(f"\n  Rijen van SY003: { {t: len(i) for t, i in TOESTAND['sy003_ids'].items()} }")
+        # Het rapport noemt per tabel precies de nieuwe rijen van SY003 als aangemaakt (issue 62)
+        for tabel, ids in TOESTAND["sy003_ids"].items():
+            assert TOESTAND["rapport"]["objecttotalen"]["tabellen"][tabel]["aangemaakt"] == len(ids), tabel
+        bronnen = {b["bestand"] for b in TOESTAND["rapport"]["bronbestanden"]["bestanden"]}
+        assert any(PAD_SY003_IN_CONTAINER in b and b.endswith("opgravingSY003.mdb") for b in bronnen), bronnen
 
         controleerSY001SY002Ongewijzigd()
         controleerBruikleen()
@@ -769,7 +874,7 @@ class TestIncrementeelSynthetic:
         aantal_per_key = {}
         for _, key in rijen_sy003:
             aantal_per_key[key] = aantal_per_key.get(key, 0) + 1
-        # Een key die vaker voorkomt (PSY003P1V1A2|Aardewerk, issue 81) is niet terug te koppelen
+        # Een key die vaker voorkomt is niet terug te koppelen (issue 81); daarom alleen unieke keys
         kandidaten = [r for r in rijen_sy003 if r[1] not in keys_na_e and aantal_per_key[r[1]] == 1]
         assert kandidaten, "Geen artefact van SY003 dat in stap e verdwijnt"
         artefact_pk, artefact_key = int(kandidaten[0][0]), kandidaten[0][1]
@@ -939,6 +1044,25 @@ class TestIncrementeelSynthetic:
         assert telTabellen() == TOESTAND["aantallen"]
         controleerBruikleen()
 
+        # Issue 54: de fout staat in de meldingen van het run-document (met de foto) en de run noemt de taak
+        assert run["melding"] == f"Mislukte taak in Airflow-run {run['airflow_run_id']}: {CONTROLETAAK}.", run["melding"]
+        fouten = [m for m in run["meldingen"] if m["niveau"] == "fout"]
+        assert [m["taak"] for m in fouten] == [CONTROLETAAK], fouten
+        assert fouten[0]["soort"] == "afbeeldingen_mislukt"
+        assert fouten[0]["details"][0]["filename"].endswith("SY003_onleesbaar.jpg")
+
+        # Issue 62: ook na een bewust mislukte run is er een rapport, dat de fout en de stoppende taak noemt
+        rapport, markdown = controleerRapport(run, uitkomst="mislukt")
+        assert rapport["foutbeleid"]["gestopt_door"]["taak"] == CONTROLETAAK
+        assert "drempel" in rapport["foutbeleid"]["gestopt_door"]["melding"]
+        assert rapport["objecttotalen"]["load_uitgevoerd"] is False
+        controleerObjecttotalen(rapport)
+        foto = [b for b in rapport["bronbestanden"]["bestanden"] if b["bestand"].endswith("SY003_onleesbaar.jpg")]
+        assert foto and foto[0]["status"] == "mislukt" and foto[0]["reden"], foto
+        assert f"De run is gestopt door taak `{CONTROLETAAK}`" in markdown
+        niet_uitgevoerd = {t["taak"] for t in rapport["pipeline"]["taken"] if t["status"] == "upstream_failed"}
+        assert "Load_Upsert" in niet_uitgevoerd and "Registreer_Run" in niet_uitgevoerd
+
     # ----------------------------------------------------------
     # h. Onleesbare foto weggehaald: herstel
     # ----------------------------------------------------------
@@ -960,9 +1084,46 @@ class TestIncrementeelSynthetic:
         print(f"\n  Looptijden: { {k: round(v, 1) for k, v in TOESTAND['duur'].items()} }")
 
     # ----------------------------------------------------------
+    # h2. Onleesbare Access-database: waarschuwing, de run gaat door (issue 54)
+    # ----------------------------------------------------------
+    def test_09b_onleesbare_database_is_waarschuwing(self, mongo_client):
+        """Een kapotte kopie van een Access-database stopt de run niet: Controleer_Databases meldt een waarschuwing.
+
+        importMDB.sh slaat de database over (mdb-tables kan hem niet lezen); de controle telt hem als
+        onleesbaar, onder de drempel (standaard max(2, 5%)). De run slaagt, het rapport noemt de
+        database als mislukt met de reden, en PostgreSQL blijft gelijk aan stap a. De database blijft
+        staan voor de volledige cyclus van stap i (de fixture ruimt SY003 na de test op).
+        """
+        os.makedirs(os.path.dirname(KAPOTTE_DATABASE), exist_ok=True)
+        with open(KAPOTTE_DATABASE, "wb") as f:
+            f.write(b"Dit is geen Access-database, maar een kapotte kopie.\n" * 200)
+        TOESTAND["duur"]["h2"], uitvoer = draaiDag("Extract_Transform_Load_Incremental")
+        assert re.search(rf"Marking task as SUCCESS\. dag_id=\S+, task_id={re.escape(DATABASETAAK)},", uitvoer)
+        run = controleerRun(mongo_client)
+        assert run["tellingen"]["delta"]["totaal"]["nieuw"] == 1
+        extractie = run["tellingen"]["extractie"]
+        assert extractie["databases"] == 1 and extractie["onleesbaar"] == 1 and extractie["boven_drempel"] is False
+        assert extractie["onleesbare_databases"][0]["bestand"] == PAD_SY003_IN_CONTAINER + "C Database/kapot.mdb"
+        waarschuwingen = [m for m in run["meldingen"] if m["soort"] == "database_onleesbaar"]
+        assert len(waarschuwingen) == 1 and waarschuwingen[0]["niveau"] == "waarschuwing"
+        assert waarschuwingen[0]["taak"] == DATABASETAAK and waarschuwingen[0]["stap"] == "extractie"
+
+        rapport, markdown = controleerRapport(run, uitkomst="geslaagd met waarschuwingen")
+        bestand = [b for b in rapport["bronbestanden"]["bestanden"] if b["bestand"].endswith("kapot.mdb")]
+        assert bestand and bestand[0]["status"] == "mislukt" and "onleesbaar" in bestand[0]["reden"], bestand
+        assert rapport["kwaliteitsmeldingen"]["databases"]["onleesbaar"] == 1
+        assert "kapot.mdb" in markdown and "| extractie | Extract_Group.Controleer_Databases | database_onleesbaar |" in markdown
+
+        # Niets geladen uit de kapotte database
+        assert telTabellen() == TOESTAND["aantallen"]
+        for tabel in SLEUTEL_TABELLEN:
+            assert sleutels(tabel) == TOESTAND["sleutels"][tabel], f"{tabel}: sleutels gewijzigd"
+        controleerBruikleen()
+
+    # ----------------------------------------------------------
     # i. Opnieuw de volledige cyclus (issue 71)
     # ----------------------------------------------------------
-    def test_10_volledige_cyclus_bewaart_gebruikersdata(self):
+    def test_10_volledige_cyclus_bewaart_gebruikersdata(self, mongo_client):
         """De volledige cyclus leegt de gebruikerstabellen niet en houdt de sleutels stabiel (issue 71).
 
         Vooraf komen er een conserveringsproject met een koppeling naar het artefact van de bruikleen
@@ -987,6 +1148,20 @@ class TestIncrementeelSynthetic:
         TOESTAND["duur"]["i"], uitvoer = draaiDag("Extract_Transform_Load_Full_Cycle")
         assert "Sleutels niet stabiel" not in uitvoer, "loadAll meldt hernummerde sleutels na een volledige cyclus"
 
+        # Issue 54/62: de kapotte database van stap h2 is in de volledige cyclus een waarschuwing; de run
+        # slaagt. Het rapport telt geen nieuwe of verwijderde rijen (stabiele sleutels, dezelfde data).
+        run = laatsteRun(mongo_client, "volledig")
+        assert run["run_id"] != TOESTAND["volledig"]["run_id"] and run["status"] == "afgerond", run.get("melding")
+        eerder = {m["soort"] for m in TOESTAND["volledig"]["meldingen"] if m["niveau"] == "waarschuwing"}
+        assert {m["soort"] for m in run["meldingen"] if m["niveau"] == "waarschuwing"} == eerder | {"database_onleesbaar"}, \
+            run["meldingen"]
+        assert not [m for m in run["meldingen"] if m["niveau"] == "fout"], run["meldingen"]
+        assert mongo_client[DB_STAGING]["Verwerkingsruns"].count_documents({"_id": TOESTAND["volledig"]["run_id"]}) == 1, \
+            "Het run-document van de eerste volledige cyclus is verdwenen"
+        rapport, _ = controleerRapport(run, uitkomst="geslaagd met waarschuwingen")
+        assert rapport["objecttotalen"]["totaal"]["aangemaakt"] == 0, rapport["objecttotalen"]["totaal"]
+        assert rapport["objecttotalen"]["totaal"]["verwijderd"] == 0, rapport["objecttotalen"]["totaal"]
+
         # Gebruikerstabellen ongewijzigd, ook de markering van de losgekoppelde SY003-bruikleen
         assert gebruikersTabellen() == voor
         controleerBruikleen()
@@ -1009,4 +1184,5 @@ class TestIncrementeelSynthetic:
                            "WHERE contype = 'f' AND NOT convalidated")
         assert ongeldig == [], f"FK-constraints die NOT VALID zijn: {ongeldig}"
         controleerSequences(LOAD_TABELLEN + ["Def_Bruikleen", "Def_Partij", "Def_Conserveringsproject"])
+        controleerObjecttotalen(rapport)
         print(f"  Looptijden: { {k: round(v, 1) for k, v in TOESTAND['duur'].items()} }")

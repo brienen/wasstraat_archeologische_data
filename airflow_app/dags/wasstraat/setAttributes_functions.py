@@ -10,6 +10,7 @@ import wasstraat.archutils as ut
 import wasstraat.mongoUtils as mongoUtil
 import wasstraat.verwerkingsrun as verwerkingsrun
 import wasstraat.delta_transform as delta_transform
+import wasstraat.foutbeleid as foutbeleid
 
 # Import app code
 # Absolute imports for Hydrogen (Jupyter Kernel) compatibility
@@ -18,6 +19,9 @@ import shared.const as const
 from wasstraat.profielen import get_profiel
 import logging
 logger = logging.getLogger("airflow.task")
+
+# Aantal mislukte records dat als voorbeeld in de melding van het run-document komt
+MAX_VOORBEELDEN_FOUTEN = 10
 
 
 def _get_error_collection(myclient):
@@ -41,7 +45,40 @@ def _log_processing_error(error_col, doc, fase, error):
     except Exception:
         logger.warning(f"Kon verwerkingsfout niet registreren voor doc {doc.get('_id')}")
 
-def getAnalyseCollection():   
+
+def _maakVoorbeeld(doc, error):
+    """Beschrijf een record dat niet verwerkt kon worden, voor de meldingen in het run-document."""
+    return {'original_id': str(doc.get('_id')), 'soort': doc.get('soort'), 'projectcd': doc.get('projectcd'),
+            'fout': f"{type(error).__name__}: {error}"[:500]}
+
+
+def toetsVerwerkingsfouten(fase, fouten, totaal, voorbeelden):
+    """Tel de records die een taak van Transform 2 niet kon verwerken en toets ze aan de drempel (issue 54).
+
+    De records staan in de collectie _processing_errors en blijven in
+    Single_Store zoals de harmonisatie ze opleverde. Onder de drempel volgt een
+    waarschuwing, erboven stopt de run: dan is er vrijwel zeker iets
+    systematisch mis (bijv. een fout in het gemeenteprofiel).
+    Drempel: max(AIRFLOW_MAX_VERWERKINGSFOUTEN, AIRFLOW_MAX_VERWERKINGSFOUTEN_PCT % van het aantal records).
+    De uitkomst komt in het run-document onder tellingen.verwerkingsfouten.<fase>.
+
+    Args:
+        fase: 'enhance_attributes' of 'imagedata' (zoals in _processing_errors)
+        fouten: aantal records dat niet verwerkt kon worden
+        totaal: aantal bekeken records
+        voorbeelden: de eerste mislukte records (zie _maakVoorbeeld)
+
+    Raises:
+        foutbeleid.CrucialeFout: boven de drempel
+    """
+    foutbeleid.toetsDrempel(
+        foutbeleid.SOORT_VERWERKINGSFOUTEN, fouten, totaal,
+        config.AIRFLOW_MAX_VERWERKINGSFOUTEN, config.AIRFLOW_MAX_VERWERKINGSFOUTEN_PCT,
+        f"Records die Transform 2 ({fase}) niet kon verwerken (zie _processing_errors)",
+        'AIRFLOW_MAX_VERWERKINGSFOUTEN', details=voorbeelden, telling=f'verwerkingsfouten.{fase}')
+
+
+def getAnalyseCollection():
     myclient = pymongo.MongoClient(str(config.MONGO_URI))
     analyseDb = myclient[str(config.DB_ANALYSE)]
     return analyseDb[config.COLL_ANALYSE]
@@ -81,6 +118,7 @@ def enhanceAllAttributes(incrementeel=False):
 
         count_success = 0
         count_error = 0
+        voorbeelden = []
 
         # Projectcode-correcties uit correcties.yml: fix projectcd na harmonisatie
         from wasstraat.harmonize_functions import laadCorrecties
@@ -217,6 +255,8 @@ def enhanceAllAttributes(incrementeel=False):
                 msg = "Onbekende fout bij het cleanen van de attributen van doc met _id:" + str(doc['_id']) + " met melding: " + str(err)
                 logger.error(msg)
                 _log_processing_error(errorCol, doc, 'enhance_attributes', err)
+                if len(voorbeelden) < MAX_VOORBEELDEN_FOUTEN:
+                    voorbeelden.append(_maakVoorbeeld(doc, err))
 
             # Sla alleen op bij succesvolle transformatie (voorkomt half-getransformeerde data)
             if success:
@@ -229,6 +269,7 @@ def enhanceAllAttributes(incrementeel=False):
                     raise Exception(msg) from e
 
         logger.info(f"enhanceAllAttributes voltooid: {count_success} succesvol, {count_error} fouten")
+        toetsVerwerkingsfouten('enhance_attributes', count_error, count_success + count_error, voorbeelden)
 
     finally:
         myclient.close()
@@ -237,11 +278,20 @@ def enhanceAllAttributes(incrementeel=False):
 def extractImagedataFromFileNames(incrementeel=False):
     """Vul projectcode, materiaal en fotosoort van foto's aan op basis van hun map.
 
+    Een foto die niet bijgewerkt kan worden komt in _processing_errors (fase
+    'imagedata') en telt mee voor de drempel van toetsVerwerkingsfouten; een
+    fout buiten de afzonderlijke foto's laat de taak falen (issue 54; tot dan
+    werd ook die alleen gelogd).
+
     Args:
         incrementeel: als True alleen de Foto-documenten met delta_run van de
             actieve verwerkingsrun bewerken (incrementeel laden)
+
+    Raises:
+        Exception: bij een fout buiten de afzonderlijke foto's
+        foutbeleid.CrucialeFout: als meer foto's mislukken dan de drempel toestaat
     """
-    try:        
+    try:
         col = getAnalyseCollection()
         foto_filter = {'soort': 'Foto'}
         if incrementeel:
@@ -281,6 +331,9 @@ def extractImagedataFromFileNames(incrementeel=False):
           
         # Set missing values in foto's
         lst_foto = list(col.find(foto_filter))
+        errorCol = _get_error_collection(col.database.client)
+        count_error = 0
+        voorbeelden = []
         for foto in lst_foto:
             try:
                 dir_info = file_dict.get(foto.get('directory'))
@@ -301,7 +354,13 @@ def extractImagedataFromFileNames(incrementeel=False):
             except Exception as exp2:
                 filename = foto.get('fileName', 'onbekend')
                 logger.error(f'Error while setting missing values in foto {filename} with message: {str(exp2)} ')
+                count_error += 1
+                _log_processing_error(errorCol, foto, 'imagedata', exp2)
+                if len(voorbeelden) < MAX_VOORBEELDEN_FOUTEN:
+                    voorbeelden.append(_maakVoorbeeld(foto, exp2))
     except Exception as exp1:
         msg = f'Severe error while while setting missing values on fotos: {str(exp1)} '
         logger.error(msg)
         raise Exception(msg) from exp1
+
+    toetsVerwerkingsfouten('imagedata', count_error, len(lst_foto), voorbeelden)

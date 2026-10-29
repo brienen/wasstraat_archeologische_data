@@ -16,7 +16,14 @@
 # specific language governing permissions and limitations
 # under the License.
 
-"""Data Importeren"""
+"""Alleen laden: Single_Store_Clean naar PostgreSQL en Elasticsearch, zonder extractie en transformatie.
+
+Sinds issues 54 en 62 heeft ook deze DAG een run-document (soort laden): Start_Run →
+Load_To_Database_And_Inxdex_Group (LoadToDatabase_postgres → Index_<tabel> → Index_Klaar)
+→ Rond_Run_Af. Markeer_Run_Mislukt zet de run op 'mislukt' als de load faalt; een
+mislukte Index-taak is een waarschuwing. De taak Verwerkingsrapport schrijft na alle andere
+taken het rapport van de run.
+"""
 from datetime import datetime, timedelta
 
 from airflow import DAG
@@ -27,7 +34,9 @@ import shared.config as config
 import shared.fulltext as fulltext
 import shared.database as database
 import wasstraat.loadToDatabase_functions as loadToDatabase
+import wasstraat.verwerkingsrun as verwerkingsrun
 import tasks_load_to_database_and_index
+import tasks_verwerkingsrun
 
 
 
@@ -40,8 +49,10 @@ with DAG(
     start_date=datetime(2021, 1, 1),
     schedule_interval=None,
     catchup=False,
+    max_active_runs=1,
     dagrun_timeout=timedelta(minutes=480),
-    template_searchpath="/opt/airflow"
+    template_searchpath="/opt/airflow",
+    default_args=tasks_verwerkingsrun.getDefaultArgs(),
 ) as dag:
     Start_cycle = DummyOperator(
         task_id='Start_cycle',
@@ -49,6 +60,13 @@ with DAG(
     End_cycle = DummyOperator(
         task_id='End_cycle',
     )
+    Start_Run = tasks_verwerkingsrun.maakStartRun(verwerkingsrun.SOORT_LADEN)
     tg_loadToDatabaseAndIndex = tasks_load_to_database_and_index.getLoadToDatabaseAndIndexTaskGroup()
+    Rond_Run_Af = tasks_verwerkingsrun.maakRondRunAf()
 
-    Start_cycle >> tg_loadToDatabaseAndIndex >> End_cycle
+    Start_cycle >> Start_Run >> tg_loadToDatabaseAndIndex >> Rond_Run_Af >> End_cycle
+
+    Markeer_Run_Mislukt = tasks_verwerkingsrun.maakMarkeerRunMislukt()
+    [Start_Run, tg_loadToDatabaseAndIndex, Rond_Run_Af] >> Markeer_Run_Mislukt
+
+    tasks_verwerkingsrun.voegVerwerkingsrapportToe(dag, End_cycle)

@@ -41,7 +41,7 @@ init: ## Maak .env, config/*.env (met gegenereerde wachtwoorden) en de datamappe
 	@bash init-config.sh
 	@$(lees-env); \
 	mkdir -p "$$INPUT"/{projecten,projectenlijst,magazijnlijst,fotolijst,monsterdatabase,rapporten,referentietabellen} \
-	         "$$OUTPUT/archeomedia" "$$BACKUP"/{postgres,mongo} "$$CONFIG" && \
+	         "$$OUTPUT/archeomedia" "$$OUTPUT/rapporten" "$$BACKUP"/{postgres,mongo} "$$CONFIG" && \
 	chmod -R a+rwX "$$OUTPUT" "$$BACKUP" 2>/dev/null; \
 	echo "✓ Mappen gereed: brondata in $$INPUT, configuratie in $$CONFIG"
 

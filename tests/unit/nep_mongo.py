@@ -3,7 +3,7 @@ Minimale in-memory nabootsing van pymongo voor unit tests (geen mongomock nodig)
 
 Ondersteunt alleen wat de modules voor incrementeel laden en de extractie van
 afbeeldingen gebruiken: find/find_one (met projectie, sortering en limit),
-insert_one/insert_many, update_one met $set en $unset, delete_many,
+insert_one/insert_many, update_one met $set, $unset en $push, delete_many,
 count_documents, estimated_document_count, create_index (unieke, eventueel
 partiële indexen worden gecontroleerd) en aggregate met $match + $group/$sum.
 
@@ -229,6 +229,17 @@ class NepCollectie:
                     _zetWaarde(d, pad, copy.deepcopy(waarde))
                 for pad in update.get('$unset', {}):
                     _verwijderWaarde(d, pad)
+                # $push met een waarde of met {$each, $slice} (meldingen in het run-document, issue 54)
+                for pad, waarde in update.get('$push', {}).items():
+                    lijst = haalOp(d, pad)
+                    lijst = [] if lijst is _ONTBREEKT else lijst
+                    if isinstance(waarde, dict) and '$each' in waarde:
+                        lijst = lijst + copy.deepcopy(list(waarde['$each']))
+                        if '$slice' in waarde:
+                            lijst = lijst[:waarde['$slice']] if waarde['$slice'] >= 0 else lijst[waarde['$slice']:]
+                    else:
+                        lijst = lijst + [copy.deepcopy(waarde)]
+                    _zetWaarde(d, pad, lijst)
                 return NepResultaat(matched_count=1, modified_count=1)
         return NepResultaat(matched_count=0, modified_count=0)
 

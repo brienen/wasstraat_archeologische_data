@@ -100,6 +100,47 @@ try:
 except KeyError:
    logger.error("Cannot read environment variables (ie. POSTGRES_DB, POSTGRES_USER, POSTGRES_PASSWORD) needed to connect to the database. Add them to your .env files")
 
+def _leesGetal(naam, standaard, soort=int):
+   """Lees een niet-negatief getal uit een omgevingsvariabele.
+
+   Omgevingsvariabelen zijn altijd tekst. Een lege, ongeldige of negatieve
+   waarde levert de standaardwaarde op (met een waarschuwing in het log).
+
+   Args:
+      naam: naam van de omgevingsvariabele
+      standaard: waarde als de variabele ontbreekt of ongeldig is
+      soort: int (aantallen) of float (percentages)
+
+   Returns:
+      Het getal
+   """
+   waarde = os.getenv(naam)
+   if waarde is None or not str(waarde).strip():
+      return standaard
+   try:
+      getal = soort(str(waarde).strip().replace(',', '.'))
+   except ValueError:
+      logger.warning(f"Ongeldige waarde '{waarde}' voor {naam}; standaardwaarde {standaard} gebruikt.")
+      return standaard
+   if getal < 0:
+      logger.warning(f"Negatieve waarde '{waarde}' voor {naam}; standaardwaarde {standaard} gebruikt.")
+      return standaard
+   return getal
+
+
+# Foutbeleid (issue 54): drempels waarboven een reeks losse fouten de run alsnog stopt.
+# Drempel = max(aantal, percentage van het totaal), zoals bij de afbeeldingen
+# (AIRFLOW_MAX_MISLUKTE_AFBEELDINGEN). Onleesbare Access-databases (taak Controleer_Databases):
+AIRFLOW_MAX_MISLUKTE_DATABASES = _leesGetal("AIRFLOW_MAX_MISLUKTE_DATABASES", 2, int)
+AIRFLOW_MAX_MISLUKTE_DATABASES_PCT = _leesGetal("AIRFLOW_MAX_MISLUKTE_DATABASES_PCT", 5.0, float)
+# Records die Transform 2 niet kon verwerken (collectie _processing_errors), per taak:
+AIRFLOW_MAX_VERWERKINGSFOUTEN = _leesGetal("AIRFLOW_MAX_VERWERKINGSFOUTEN", 100, int)
+AIRFLOW_MAX_VERWERKINGSFOUTEN_PCT = _leesGetal("AIRFLOW_MAX_VERWERKINGSFOUTEN_PCT", 1.0, float)
+
+# Verwerkingsrapport (issue 62): map voor de rapporten (JSON en Markdown) per run. Is de map
+# niet schrijfbaar, dan schrijft de taak Verwerkingsrapport in AIRFLOW_LOGDIR/rapporten.
+AIRFLOW_OUTPUT_RAPPORTEN = os.getenv("AIRFLOW_OUTPUT_RAPPORTEN") if os.getenv("AIRFLOW_OUTPUT_RAPPORTEN") else "/output/rapporten"
+
 # Gemeenteprofiel: bepaalt hoe bestandsnamen worden geparsed,
 # projectcodes genormaliseerd, en rapportnummers afgeleid.
 # Default: 'delft' voor backwards compatibility.

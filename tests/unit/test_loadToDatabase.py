@@ -441,6 +441,8 @@ class TestLoadAllSequences:
                 patch.object(load, 'migreerSchemaGebruikersdata', side_effect=nepMigratie), \
                 patch.object(load, 'transferToDB'), \
                 patch.object(load, 'bepaalVervallenSleutels', side_effect=logAanroep('bepaalVervallenSleutels', {})), \
+                patch.object(load, 'telLaadRijen', side_effect=logAanroep('telLaadRijen', {'totaal': {}})), \
+                patch.object(load, 'schrijfLoadTellingen', side_effect=logAanroep('schrijfLoadTellingen')), \
                 patch.object(load, 'leesFkConstraints', return_value=[]), \
                 patch.object(load, 'verwijderFkConstraints', side_effect=logAanroep('verwijderFkConstraints')), \
                 patch.object(load, 'bepaalVerwijzingen', side_effect=logAanroep('bepaalVerwijzingen', ([], {}))), \
@@ -494,8 +496,8 @@ class TestLoadAllSequences:
         """Issue 72: FASE 4 herberekent de afgeleide velden na de commit van FASE 3 en commit zelf."""
         log = []
         self.draaiLoadAll(log)
-        assert log[-5:] == [('valideerFkConstraints',), ('commit',), ('herberekenAfgeleideVelden',),
-                            ('commit',), ('close',)]
+        assert log[-6:] == [('valideerFkConstraints',), ('commit',), ('herberekenAfgeleideVelden',),
+                            ('commit',), ('schrijfLoadTellingen',), ('close',)]
 
     def test_schemamigratie_gebruikersdata_eerst(self):
         """Issue 73: de schemamigratie van de gebruikerstabellen draait vóór de rest (eigen transactie)."""
@@ -512,11 +514,12 @@ class TestLoadAllSequences:
         assert log == [('migreerSchemaGebruikersdata',), ('rollback',), ('close',)]
 
     def test_fout_in_afgeleide_velden_rolt_alleen_fase4_terug(self):
+        """Issue 54: een fout in de afgeleide velden is een waarschuwing; de load (al gecommit) slaagt."""
         log = []
-        with pytest.raises(RuntimeError, match='afgeleid kapot'):
-            self.draaiLoadAll(log, afgeleid_fout=RuntimeError('afgeleid kapot'))
-        assert log[-5:] == [('valideerFkConstraints',), ('commit',), ('herberekenAfgeleideVelden',),
-                            ('rollback',), ('close',)]
+        resultaat = self.draaiLoadAll(log, afgeleid_fout=RuntimeError('afgeleid kapot'))
+        assert log[-6:] == [('valideerFkConstraints',), ('commit',), ('herberekenAfgeleideVelden',),
+                            ('rollback',), ('schrijfLoadTellingen',), ('close',)]
+        assert resultaat['afgeleide_velden'] is None
 
     def test_gebruikerstabellen_niet_geleegd_of_geswapt(self):
         """Issue 71: geen TRUNCATE meer en geen enkel statement op een gebruikerstabel (die blijven staan)."""
@@ -547,4 +550,14 @@ class TestLoadAllSequences:
     def test_resultaat_met_tellingen(self):
         log = []
         resultaat = self.draaiLoadAll(log)
-        assert resultaat == {'vervallen': {}, 'gebruikersdata': {}}
+        assert resultaat == {'vervallen': {}, 'gebruikersdata': {}, 'afgeleide_velden': {},
+                             'load': {'totaal': {}, 'fk_niet_hersteld': 0, 'fk_niet_hersteld_namen': [],
+                                      'fk_niet_gevalideerd': []}}
+
+    def test_tellingen_na_vervallen_sleutels_voor_commit_fase1(self):
+        """Issues 54/62: de rijen per tabel worden geteld na bepaalVervallenSleutels, nog in FASE 1."""
+        log = []
+        self.draaiLoadAll(log)
+        positie = {regel[0]: i for i, regel in enumerate(log) if len(regel) == 1}
+        assert positie['bepaalVervallenSleutels'] < positie['telLaadRijen'] < min(
+            i for i, regel in enumerate(log) if regel == ('commit',) and i > positie['telLaadRijen'] - 1)

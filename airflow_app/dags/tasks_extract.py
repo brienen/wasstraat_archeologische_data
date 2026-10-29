@@ -8,7 +8,8 @@ from airflow.operators.dummy import DummyOperator
 from airflow.operators.python import PythonOperator
 
 import shared.config as config
-from wasstraat.image_import import importImages, getAndStoreImageFilenames, controleerAfbeeldingen
+from wasstraat.image_import import importImages, getAndStoreImageFilenames
+from wasstraat.controle_extractie import controleerAfbeeldingen, controleerDatabases
 from wasstraat.extract_referentietabellen import extractAllRefs
 from wasstraat.extract_extra_projects import extractExtraProjects
 from wasstraat.bronbestanden import getLijstbestandPad
@@ -91,7 +92,8 @@ def getExtractTaskGroup(incrementeel=False):
         )
         # Na alle import-taken: tel verwerkte, overgeslagen en mislukte bestanden en faal
         # boven de drempel (issue 70). Zit vóór 'last', dus vóór de transformatie; in de
-        # incrementele cyclus valt de taak daarmee onder Markeer_Run_Mislukt.
+        # cycli valt de taak daarmee onder Markeer_Run_Mislukt. Sinds issue 54 komen de
+        # tellingen en een melding ook in het run-document van de volledige cyclus.
         Controleer_Afbeeldingen = PythonOperator(
             task_id='Controleer_Afbeeldingen',
             python_callable=controleerAfbeeldingen,
@@ -113,6 +115,14 @@ def getExtractTaskGroup(incrementeel=False):
         Controleer_Afbeeldingen >> last
         
         
-        first >> [Extract_Data_From_Projecten, Extract_Data_From_Projectenlijst, Extract_Data_From_Magazijnlijst, Extract_Data_From_Fotolijst, Extract_Data_From_MonsterDB, Extract_Data_From_RapportaneDBs, Extract_Referentietabellen] >> Extract_ExtraProjecten >> last
+        # Na de Access-databases: tel onleesbare en lege databases en overgeslagen tabellen uit
+        # de logs van importMDB.sh, meld ze en faal boven de drempel (issue 54)
+        Controleer_Databases = PythonOperator(
+            task_id='Controleer_Databases',
+            python_callable=controleerDatabases,
+            op_kwargs={'incrementeel': incrementeel},
+        )
+
+        first >> [Extract_Data_From_Projecten, Extract_Data_From_Projectenlijst, Extract_Data_From_Magazijnlijst, Extract_Data_From_Fotolijst, Extract_Data_From_MonsterDB, Extract_Data_From_RapportaneDBs, Extract_Referentietabellen] >> Extract_ExtraProjecten >> Controleer_Databases >> last
         
     return tg1

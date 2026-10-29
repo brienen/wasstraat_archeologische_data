@@ -7,7 +7,8 @@
 #   config/*.env        wachtwoorden en instellingen (gegenereerd door init-config.sh)
 #   wasstraat_config/   harmonisatie-Excel en correcties.yml
 #   data/input/         brondata (Access-databases, foto's, rapporten), alleen-lezen
-#   data/output/        verwerkte media (foto's in drie formaten), geserveerd door Apache
+#   data/output/        verwerkte media (foto's in drie formaten, archeomedia/), geserveerd door
+#                       Apache, en de verwerkingsrapporten per run (rapporten/)
 #   data/backup/        backups van PostgreSQL en MongoDB
 # Jupyter is een ontwikkelvoorziening van de repository en maakt geen deel uit van de live installatie.
 # De versie, mappen en poorten staan in .env (zie .env.example).
@@ -52,6 +53,8 @@ services:
     environment:
       # Gemeenteprofiel: delft of voorbeeld (zie documentatie Gemeenteprofielen)
       WASSTRAAT_GEMEENTE: ${WASSTRAAT_GEMEENTE:-delft}
+      # Versie van de images, vermeld in het verwerkingsrapport (issue 62)
+      WASSTRAAT_VERSION: ${WASSTRAAT_VERSION}
     ports:
       - "${WASSTRAAT_BIND:-0.0.0.0}:${WASSTRAAT_PORT_AIRFLOW:-8080}:8080"
     depends_on:
@@ -74,6 +77,8 @@ services:
       - ${WASSTRAAT_INPUT:-./data/input}/referentietabellen:/input/referentietabellen:ro
       # Verwerkte media en pipelineconfiguratie
       - ${WASSTRAAT_OUTPUT:-./data/output}/archeomedia:/output/archeomedia
+      # Verwerkingsrapporten per run, JSON en Markdown (AIRFLOW_OUTPUT_RAPPORTEN, issue 62)
+      - ${WASSTRAAT_OUTPUT:-./data/output}/rapporten:/output/rapporten
       - ${WASSTRAAT_CONFIG:-./wasstraat_config}:/opt/airflow/config:ro
       # Taaklogs blijven bewaard als de container opnieuw wordt aangemaakt
       - airflow_logs:/opt/airflow/logs

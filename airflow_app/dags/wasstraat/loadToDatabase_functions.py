@@ -43,6 +43,7 @@ import wasstraat.meta as meta
 import wasstraat.archutils as ut
 import wasstraat.delta_transform as delta_transform
 import wasstraat.verwerkingsrun as verwerkingsrun
+import wasstraat.foutbeleid as foutbeleid
 import shared.config as config
 import shared.const as const
 import shared.gebruikersdata as gebruikersdata
@@ -899,7 +900,47 @@ def bepaalVervallenSleutels(cursor, tabellen):
                        f"restore van een andere backup). Gebruikersdata die naar die rijen "
                        f"verwijst wordt losgekoppeld (met markering) en alleen bij een unieke key weer gekoppeld; "
                        f"koppelrijen worden verwijderd. Draai de volledige cyclus om dit te voorkomen.")
+        foutbeleid.meld(foutbeleid.NIVEAU_WAARSCHUWING, foutbeleid.SOORT_SLEUTELS_NIET_STABIEL,
+                        f"Sleutels niet stabiel: rijen die na het laden een primary_key hebben die eerder bij een "
+                        f"andere key hoorde: {hernummerd}. Gebruikersdata die ernaar verwees is losgekoppeld en waar "
+                        f"mogelijk op key teruggekoppeld. Draai de volledige cyclus.",
+                        aantal=sum(hernummerd.values()), details=hernummerd)
     return vervallen
+
+
+def _telRijen(cursor, tabel):
+    """Tel de rijen van een tabel (0 als de telling niets oplevert)."""
+    cursor.execute(f'SELECT COUNT(*) FROM "{tabel}"')
+    rij = cursor.fetchone()
+    return int(rij[0]) if rij and rij[0] is not None else 0
+
+
+def telLaadRijen(cursor, tabellen, vervallen):
+    """Tel per tabel de rijen vóór en na de volledige load (issue 54/62, voor het run-document).
+
+    Vergelijkt de huidige tabel met de nieuw geladen {tabel}_new-tabel:
+    ingevoegd zijn de rijen met een primary_key die er nog niet was,
+    verwijderd de rijen waarvan de primary_key verdwijnt (bepaalVervallenRijen).
+
+    Args:
+        cursor: psycopg2 cursor
+        tabellen: lijst met (tabel, nieuwe_tabel)
+        vervallen: dict uit bepaalVervallenSleutels
+
+    Returns:
+        Dict per tabel met rijen_voor, rijen, ingevoegd, verwijderd en hernummerd, plus 'totaal'
+    """
+    tellingen = {}
+    for tabel, nieuwe_tabel in tabellen:
+        voor = _telRijen(cursor, tabel)
+        na = _telRijen(cursor, nieuwe_tabel)
+        rijen = vervallen.get(tabel) or {}
+        verwijderd = len(rijen.get('verdwenen', []))
+        tellingen[tabel] = {'rijen_voor': voor, 'rijen': na, 'ingevoegd': max(na - voor + verwijderd, 0),
+                            'verwijderd': verwijderd, 'hernummerd': len(rijen.get('hernummerd', []))}
+    velden = ['rijen_voor', 'rijen', 'ingevoegd', 'verwijderd', 'hernummerd']
+    tellingen['totaal'] = {k: sum(t[k] for t in tellingen.values()) for k in velden}
+    return tellingen
 
 
 def koppelGebruikersdataLos(cursor, vervallen, verwijzingen, tellingen):
@@ -943,6 +984,32 @@ def werkGebruikersdataBijNaSwap(cursor, verwijzingen, tellingen):
     logger.info(f"Verwijzingen vanuit gebruikerstabellen bijgewerkt: {tellingen}")
 
 
+def schrijfLoadTellingen(laadtellingen, gebruikers, afgeleid):
+    """Schrijf de tellingen van de volledige load in het run-document van de lopende run (als die er is).
+
+    Zelfde velden als de incrementele load: tellingen.load (per tabel
+    rijen_voor, rijen, ingevoegd, verwijderd en hernummerd, plus totaal,
+    fk_niet_hersteld en fk_niet_gevalideerd), tellingen.gebruikersdata en
+    tellingen.afgeleide_velden (alleen als de herberekening slaagde). Een fout
+    bij het schrijven wordt gelogd: de data is dan al geladen.
+
+    Args:
+        laadtellingen: dict uit telLaadRijen, aangevuld met de FK-tellingen
+        gebruikers: tellingen van de verwijzingen vanuit gebruikerstabellen
+        afgeleid: tellingen van herberekenAfgeleideVelden, of None
+    """
+    try:
+        run = verwerkingsrun.runVanTaak()
+        if run is None:
+            return
+        velden = {'tellingen.load': laadtellingen, 'tellingen.gebruikersdata': gebruikers}
+        if afgeleid is not None:
+            velden['tellingen.afgeleide_velden'] = afgeleid
+        verwerkingsrun.werkRunBij(velden, run_id=run['run_id'])
+    except Exception as err:
+        logger.warning(f"Tellingen van de load niet in het run-document geschreven: {err}")
+
+
 # ============================================================
 # Hoofdfunctie: 3-fase atomic swap
 # ============================================================
@@ -960,7 +1027,15 @@ def loadAll():
             (zetSequence) en valideer FK constraints
     Fase 4: Herbereken de afgeleide velden van de webapplicatie
             (herberekenAfgeleideVelden, issue 72), zodat ze na een volledige
-            cyclus gevuld zijn zonder Flask te herstarten
+            cyclus gevuld zijn zonder Flask te herstarten. Een fout hierin is
+            sinds issue 54 een waarschuwing: de data is dan al geladen.
+
+    Foutbeleid (issue 54): een fout bij het laden of de swap laat de taak
+    falen. Een FK-constraint die na de swap niet hersteld of niet gevalideerd
+    kan worden, hernummerde sleutels en een fout in de afgeleide velden zijn
+    waarschuwingen in de meldingen van het run-document. De tellingen komen,
+    als er een run actief is (volledige cyclus, DAG_Load_Only), in het
+    run-document (schrijfLoadTellingen).
 
     Vooraf, in een eigen transactie: de schemamigratie van de
     gebruikerstabellen (migreerSchemaGebruikersdata, issue 73).
@@ -975,7 +1050,9 @@ def loadAll():
 
     Returns:
         Dict met 'vervallen' (per tabel het aantal verdwenen en hernummerde
-        rijen) en 'gebruikersdata' (tellingen per gebruikerstabel en kolom)
+        rijen), 'gebruikersdata' (tellingen per gebruikerstabel en kolom),
+        'load' (telLaadRijen plus de FK-tellingen) en 'afgeleide_velden'
+        (None als de herberekening mislukte)
     """
     logger.info("Starting Loading data to relational database...")
 
@@ -1033,6 +1110,8 @@ def loadAll():
             # Welke rijen verliezen bij de swap hun primary_key (issue 71)? Hier, buiten de
             # swap-transactie: de vergelijking leest alleen en houdt geen exclusieve locks.
             vervallen = bepaalVervallenSleutels(cursor, temp_tables_created)
+            # Rijen per tabel vóór en na de load (run-document en verwerkingsrapport, issues 54 en 62)
+            laadtellingen = telLaadRijen(cursor, temp_tables_created, vervallen)
 
             conn.commit()
 
@@ -1089,10 +1168,17 @@ def loadAll():
         # alle overige constraints blokkeert (poisoned transaction).
         # ============================================================
         logger.info("FASE 2b: Herstel FK constraints met NOT VALID...")
-        fk_restored, fk_failed = herstelFkConstraints(cursor, fk_constraints)
+        niet_hersteld = []
+        fk_restored, fk_failed = herstelFkConstraints(cursor, fk_constraints, niet_hersteld)
 
         conn.commit()
         logger.info(f"FK constraints hersteld: {fk_restored} OK, {fk_failed} mislukt.")
+        if fk_failed:
+            # De swap is al gecommit; de load gaat door, maar de constraints ontbreken nu (issue 54: waarschuwing)
+            foutbeleid.meld(foutbeleid.NIVEAU_WAARSCHUWING, foutbeleid.SOORT_FK_NIET_HERSTELD,
+                            f"{fk_failed} FK-constraint(s) konden na de swap niet hersteld worden en ontbreken: "
+                            f"{niet_hersteld}. Zie de waarschuwingen in het log van LoadToDatabase_postgres.",
+                            aantal=fk_failed, details=niet_hersteld)
 
         # ============================================================
         # FASE 3: Opruimen (buiten de swap-transactie)
@@ -1112,9 +1198,14 @@ def loadAll():
             logger.info(f"Sequence van {table}.primary_key hersteld (volgende primary_key {volgende}).")
 
         # Valideer de FK constraints alsnog
-        valideerFkConstraints(cursor, fk_constraints)
+        niet_gevalideerd = valideerFkConstraints(cursor, fk_constraints)
 
         conn.commit()
+        if niet_gevalideerd:
+            foutbeleid.meld(foutbeleid.NIVEAU_WAARSCHUWING, foutbeleid.SOORT_FK_NIET_GEVALIDEERD,
+                            f"{len(niet_gevalideerd)} FK-constraint(s) konden niet gevalideerd worden en blijven NOT VALID "
+                            f"(er zijn rijen die naar een niet-bestaande rij verwijzen): {niet_gevalideerd}.",
+                            aantal=len(niet_gevalideerd), details=niet_gevalideerd)
 
         # ============================================================
         # FASE 4: Afgeleide velden van de webapplicatie (issue 72), in een
@@ -1122,12 +1213,28 @@ def loadAll():
         # alleen init.init() van Flask ze, en alleen bij het (her)starten.
         # ============================================================
         logger.info("FASE 4: Afgeleide velden herberekenen...")
-        herberekenAfgeleideVelden(cursor)
-        conn.commit()
+        afgeleid = None
+        try:
+            afgeleid = herberekenAfgeleideVelden(cursor)
+            conn.commit()
+        except Exception as err:
+            # De data is geladen; verouderde afgeleide velden zijn een waarschuwing (issue 54).
+            # init.init() van de webapplicatie is het vangnet en de volgende load herstelt ze.
+            conn.rollback()
+            msg = (f"De afgeleide velden (aantal_fotos, aantal_artefacten, dateringen) konden niet herberekend "
+                   f"worden: {err}. De data is wel geladen; de velden zijn tot de volgende load leeg of verouderd.")
+            logger.error(msg)
+            foutbeleid.meld(foutbeleid.NIVEAU_WAARSCHUWING, foutbeleid.SOORT_AFGELEIDE_VELDEN, msg)
         logger.info("Laden naar database succesvol afgerond.")
+
+        laadtellingen.update({'fk_niet_hersteld': fk_failed, 'fk_niet_hersteld_namen': niet_hersteld,
+                              'fk_niet_gevalideerd': niet_gevalideerd})
+        schrijfLoadTellingen(laadtellingen, gebruikers, afgeleid)
         return {
             'vervallen': {t: {k: len(v) for k, v in rijen.items()} for t, rijen in vervallen.items()},
             'gebruikersdata': gebruikers,
+            'load': laadtellingen,
+            'afgeleide_velden': afgeleid,
         }
 
     except Exception:
@@ -1615,6 +1722,35 @@ def werkTabelBij(cursor, col, table, verwijzingen=None, tellingen_verwijzingen=N
     return tellingen
 
 
+def herberekenAfgeleideVeldenInSavepoint(cursor):
+    """Herbereken de afgeleide velden binnen de upsert-transactie, in een SAVEPOINT (issue 54).
+
+    Een fout in de herberekening draait alleen de herberekening terug: de
+    upsert gaat door en de fout wordt een waarschuwing in het run-document. De
+    webapplicatie ziet dan tot de volgende run verouderde afgeleide velden;
+    de upsert zelf is belangrijker dan die velden. Tot issue 54 draaide een
+    fout hier de hele upsert terug.
+
+    Args:
+        cursor: psycopg2 cursor binnen de transactie van de upsert
+
+    Returns:
+        Tellingen van herberekenAfgeleideVelden, of None bij een fout
+    """
+    cursor.execute('SAVEPOINT afgeleide_velden_sp')
+    try:
+        tellingen = herberekenAfgeleideVelden(cursor)
+    except Exception as err:
+        cursor.execute('ROLLBACK TO SAVEPOINT afgeleide_velden_sp')
+        msg = (f"De afgeleide velden (aantal_fotos, aantal_artefacten, dateringen) konden niet herberekend "
+               f"worden: {err}. De upsert gaat door; de velden zijn tot de volgende run verouderd.")
+        logger.error(msg)
+        foutbeleid.meld(foutbeleid.NIVEAU_WAARSCHUWING, foutbeleid.SOORT_AFGELEIDE_VELDEN, msg)
+        return None
+    cursor.execute('RELEASE SAVEPOINT afgeleide_velden_sp')
+    return tellingen
+
+
 def telDocumenten(col, tabellen):
     """Tel de documenten in Single_Store_Clean van de soorten van de tabellen."""
     return col.count_documents({'soort': {'$in': [t[4:] for t in tabellen]}})
@@ -1709,7 +1845,7 @@ def _upsertAlleTabellen(col, tabellen):
         # verouderd ziet, en vóór het herstel van de FK's: na een ADD CONSTRAINT ... NOT VALID
         # controleert PostgreSQL bij een UPDATE van een rij die deze transactie heeft ingevoegd
         # alle FK's van die rij opnieuw, ook als de verwijzende kolommen niet veranderen.
-        afgeleid = herberekenAfgeleideVelden(cursor)
+        afgeleid = herberekenAfgeleideVeldenInSavepoint(cursor)
 
         niet_hersteld = []
         fk_restored, fk_failed = herstelFkConstraints(cursor, fk_constraints, niet_hersteld)
@@ -1729,11 +1865,17 @@ def _upsertAlleTabellen(col, tabellen):
 
         totaal = {k: sum(t[k] for t in tellingen.values()) for k in ('upsert', 'ingevoegd', 'bijgewerkt', 'verwijderd')}
         resultaat = dict(tellingen, totaal=totaal, fk_niet_hersteld=fk_failed, fk_niet_gevalideerd=niet_gevalideerd)
+        if niet_gevalideerd:
+            foutbeleid.meld(foutbeleid.NIVEAU_WAARSCHUWING, foutbeleid.SOORT_FK_NIET_GEVALIDEERD,
+                            f"{len(niet_gevalideerd)} FK-constraint(s) konden niet gevalideerd worden en blijven NOT VALID "
+                            f"(verwijzingen naar verdwenen rijen tussen Def_-tabellen): {niet_gevalideerd}.",
+                            aantal=len(niet_gevalideerd), details=niet_gevalideerd)
         run = verwerkingsrun.huidigeRun(verplicht=False)
         if run is not None:
-            verwerkingsrun.werkRunBij({'tellingen.load': resultaat, 'tellingen.afgeleide_velden': afgeleid,
-                                       'tellingen.gebruikersdata': gebruikers},
-                                      run_id=run['run_id'])
+            velden = {'tellingen.load': resultaat, 'tellingen.gebruikersdata': gebruikers}
+            if afgeleid is not None:
+                velden['tellingen.afgeleide_velden'] = afgeleid
+            verwerkingsrun.werkRunBij(velden, run_id=run['run_id'])
         logger.info(f"Incrementele load afgerond: {totaal}; niet gevalideerde FK's: {niet_gevalideerd}.")
         return dict(resultaat, afgeleide_velden=afgeleid, gebruikersdata=gebruikers)
 
