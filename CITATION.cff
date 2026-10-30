@@ -1,0 +1,24 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+type: software
+title: "Wasstraat Archeologische Data"
+abstract: "Open-source platform that collects, cleans, links and makes searchable the archaeological data of Dutch municipalities: an Apache Airflow ETL pipeline and a Flask web application, first developed for Archeologie Delft (Municipality of Delft) and generalised for other municipalities with funding from the Innovatiefonds Nederlandse Archeologie (Stichting Reuvens)."
+authors:
+  - family-names: Brienen
+    given-names: Arjen
+    affiliation: "E-Space B.V."
+    orcid: "https://orcid.org/0009-0004-1676-2605"
+version: "1.0.1"
+date-released: "2026-10-30"
+license: EUPL-1.2
+repository-code: "https://github.com/brienen/wasstraat_archeologische_data"
+url: "https://brienen.github.io/wasstraat_archeologische_data/"
+keywords:
+  - archaeology
+  - archaeological data
+  - data quality
+  - data pipeline
+  - ETL
+  - Apache Airflow
+  - cultural heritage
+  - Dutch municipalities
