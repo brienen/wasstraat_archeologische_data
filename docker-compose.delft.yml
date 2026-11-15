@@ -5,10 +5,14 @@ services:
     env_file:
        - ./config/postgres.env
        - ./config/flask.env
+    environment:
+      # Datamap van PostgreSQL. Moet gelijk zijn aan het pad van het volume hieronder,
+      # anders staat de database in de container zelf en verdwijnt die bij opnieuw aanmaken.
+      PGDATA: /data/postgres
     ports:
       - "5432:5432"
     volumes:
-      - wasstraat_postgres_volume:/var/lib/postgresql/data
+      - wasstraat_postgres_volume:/data/postgres
       - ./data/delft/backup/postgres:/backup
     build:
       dockerfile: ./services/postgres/Dockerfile
@@ -29,6 +33,11 @@ services:
       - postgres
       - mongo
       - elasticsearch
+    environment:
+      WASSTRAAT_GEMEENTE: delft
+      # Versie in het verwerkingsrapport; make delft geeft die mee uit config/version.env
+      # (anders config/version.env.example)
+      WASSTRAAT_VERSION: ${WASSTRAAT_VERSION:-}
     volumes:
        - ./data/delft/data/projecten:/input/projecten
        - ./data/delft/data/projecten:/input/images
@@ -39,6 +48,8 @@ services:
        - ./data/delft/data/fotolijst:/input/fotolijst
        - ./data/delft/data/referentietabellen:/input/referentietabellen
        - ./data/delft/output/archeomedia:/output/archeomedia
+       # Verwerkingsrapporten per run (AIRFLOW_OUTPUT_RAPPORTEN, issue 62)
+       - ./data/delft/output/rapporten:/output/rapporten
        - ./data/delft/wasstraat_config:/opt/airflow/config
        - ./airflow_app/dags:/opt/airflow/dags # Deze niet aanpassen
        - ./airflow_app/scripts:/opt/airflow/scripts # Deze niet aanpassen
@@ -71,14 +82,14 @@ services:
       - ./config/postgres.env
       - ./config/mongo.env
       - ./config/redis.env
-    ports:
-      - '5051:5051'
+    # Geen hostpoort: de webapplicatie is bereikbaar via Apache (poort 5052), dat alle
+    # verzoeken behalve /archeomedia doorstuurt naar flask:5051. Voor debuggen geeft
+    # docker-compose.develop.yml Flask wel een hostpoort.
     depends_on:
       - postgres
       - mongo
       - redis
       - elasticsearch
-      - apache
     volumes:
       - ./data/delft/output/archeomedia:/output/archeomedia
 
@@ -113,20 +124,26 @@ services:
       - ./data/delft/output/archeomedia:/output/archeomedia
     environment:
       JUPYTER_ENABLE_LAB: "yes"
-    command: "start-notebook.sh --NotebookApp.token='' --NotebookApp.password=''"
+    # Inloggen met het token uit config/jupyter.env (JUPYTER_PASSWORD)
+    command: ["bash", "-c", "exec start-notebook.py --IdentityProvider.token=\"$$JUPYTER_PASSWORD\""]
     env_file:
+       - ./config/jupyter.env
        - ./config/airflow.env
        - ./config/airflow_db.env
        - ./config/mongo.env
        - ./config/postgres.env
 
+  # Voordeur van de Wasstraat: serveert /archeomedia uit de uitvoermap en stuurt al het
+  # overige door naar Flask (reverse proxy, zie services/apache/httpd.conf)
   apache:
     container_name: wasstraat_apache
     build:
       dockerfile: ./services/apache/Dockerfile
       context: .
+    depends_on:
+      - flask
     volumes:
-      - ./data/delft/output:/usr/local/apache2/htdocs
+      - ./data/delft/output:/usr/local/apache2/htdocs:ro
     ports:
       - '5052:5052'
 

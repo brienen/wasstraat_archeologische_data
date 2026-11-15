@@ -3,6 +3,8 @@ from sqlalchemy import create_engine, inspect, MetaData
 from sqlalchemy.engine import reflection
 
 import shared.config as config
+import shared.const as const
+from shared.logutils import maskeerWachtwoord
 import logging
 logger = logging.getLogger("airflow.task")
 
@@ -12,11 +14,12 @@ def getAllTables():
     logger.info("Starting retrieving tables names from relational database...")
 
     engine = create_engine(config.SQLALCHEMY_DATABASE_URI)
-    logger.info("Connecting to " + config.SQLALCHEMY_DATABASE_URI)
+    logger.info(f"Connecting to {maskeerWachtwoord(config.SQLALCHEMY_DATABASE_URI)}")
 
     metadata = MetaData()
     metadata.reflect(bind=engine)
     dict_tables = metadata.tables.keys()
-    lst_tables = [x for x in list(dict_tables) if x.startswith('Def_')]
+    # Pipelinetabellen (zoals Def_Bronbestand) zijn geen entiteiten en worden niet geïndexeerd
+    lst_tables = [x for x in list(dict_tables) if x.startswith('Def_') and x not in const.PIPELINE_TABELLEN]
     
     return lst_tables

@@ -1,9 +1,14 @@
 # docker-compose.test.yml
-# Standalone testomgeving: MongoDB + PostgreSQL/PostGIS + Airflow + Flask + Redis.
+# Standalone testomgeving: MongoDB + PostgreSQL/PostGIS + Elasticsearch + Airflow + Flask + Redis + Apache.
 # Alle services delen dezelfde PostgreSQL database (airflow_test).
+# Apache is net als in de echte installatie de voordeur: hostpoort 5061 leidt naar apache-test,
+# dat /archeomedia uit het gedeelde mediavolume serveert en al het overige doorstuurt naar
+# flask-test (zonder hostpoort). De Flask smoke tests lopen dus via Apache.
+# Elasticsearch draait zonder hostpoort (9200 is op de host in gebruik door de echte
+# installatie); tests benaderen het via 'docker exec wasstraat_elasticsearch_test curl ...'.
 #
 # Standaard: synthetische data (SY001 + SY002).
-# Voor Delftse data: make integration-delft (gebruikt docker-compose.test-delft.yml override)
+# Voor Delftse data: make integration-delft (gebruikt het aparte docker-compose.delft-test.yml)
 #
 # Gebruik: make integration       (Airflow pipeline tests)
 #          make test-flask         (Flask smoke tests)
@@ -54,14 +59,39 @@ services:
     tmpfs:
       - /data/postgres
 
+  elasticsearch-test:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.17.0
+    container_name: "wasstraat_elasticsearch_test"
+    environment:
+      discovery.type: single-node
+      xpack.security.enabled: "false"
+      ES_JAVA_OPTS: "-Xms512m -Xmx512m"
+      # Geen read-only indexen als de schijf van de Docker-VM vol raakt (alleen testomgeving)
+      cluster.routing.allocation.disk.threshold_enabled: "false"
+    networks:
+      testnet:
+        aliases:
+          - elasticsearch
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fs 'http://localhost:9200/_cluster/health?wait_for_status=yellow&timeout=5s' >/dev/null || exit 1"]
+      interval: 5s
+      timeout: 10s
+      retries: 30
+      start_period: 20s
+
   airflow-test:
     build:
       context: .
       dockerfile: services/airflow/Dockerfile
     container_name: "wasstraat_airflow_test"
     depends_on:
-      - mongo-test
-      - postgres-test
+      mongo-test:
+        condition: service_started
+      postgres-test:
+        condition: service_started
+      # De Index_*-taken van de volledige en de incrementele cyclus hebben Elasticsearch nodig
+      elasticsearch-test:
+        condition: service_healthy
     ports:
       - "8081:8080"
     networks:
@@ -83,7 +113,7 @@ services:
       SECURITY__ADMIN_FIRSTNAME: Test
       SECURITY__ADMIN_LASTNAME: Admin
       SECURITY__ADMIN_EMAIL: test@test.nl
-      # shared.config vereist deze drie, anders KeyError
+      # Ontbreekt een van deze drie, dan logt shared.config een fout
       POSTGRES_DB: airflow_test
       POSTGRES_USER: testuser
       POSTGRES_PASSWORD: testpass
@@ -103,24 +133,11 @@ services:
       COLL_FILENAMES: Filenames
       COLL_STAGING_METAINFO: Kolominformatie
       COLL_STAGING_OUD: Staging_Projecten_Oud
-      COLL_STAGING_NIEUW: Staging_Projecten_Nieuw
       COLL_STAGING_MAGAZIJNLIJST: Staging_Projecten_Magazijnlijst
       COLL_STAGING_PROJECTENLIJST: Staging_Projecten_Projectenlijst
       COLL_STAGING_FOTOLIJST: Staging_Projecten_Fotolijst
       COLL_STAGING_MONSTER: Staging_Projecten_Monster
-      COLL_ANALYSE_FOTO: Def_Fotos
-      COLL_ANALYSE_ARTEFACT: Def_Artefact
-      COLL_ANALYSE_PROJECT: Def_Project
-      COLL_ANALYSE_VONDST: Def_Vondst
-      COLL_ANALYSE_SPOOR: Def_Spoor
-      COLL_ANALYSE_VLAK: Def_Vlak
-      COLL_ANALYSE_PUT: Def_Put
       COLL_ANALYSE_DOOS: Def_Doos
-      COLL_ANALYSE_STANDPLAATS: Def_Standplaats
-      COLL_ANALYSE_STELLING: Def_Stelling
-      COLL_ANALYSE_PLAATSING: Def_Plaatsing
-      COLL_ANALYSE_VINDPLAATS: Def_Vindplaats
-      MONGO_MINPOOLSIZE: "10"
       # Paden
       AIRFLOW_TEMPDIR: /opt/airflow/tmp
       AIRFLOW_LOGDIR: /opt/airflow/logs
@@ -133,18 +150,25 @@ services:
       AIRFLOW_INPUT_MONSTER: /input/monsterdatabase
       AIRFLOW_INPUT_RAPPORTEN: /input/rapporten
       AIRFLOW_OUTPUT_MEDIA: /tmp/archeomedia_test
-      ES_HOST: "http://localhost:9200"
+      # Verwerkingsrapporten (issue 62): in de container; de tests lezen ze met docker exec
+      AIRFLOW_OUTPUT_RAPPORTEN: /tmp/rapporten_test
+      ES_HOST: "http://elasticsearch:9200"
     volumes:
       - ./airflow_app/dags:/opt/airflow/dags
       - ./airflow_app/scripts:/opt/airflow/scripts
       - ./shared:/opt/airflow/dags/shared
       - ./data/synthetic/wasstraat_config:/opt/airflow/config
-      - ./data/synthetic/data/projecten:/input/projecten:ro
+      # Verwerkte media (AIRFLOW_OUTPUT_MEDIA), gedeeld met apache-test
+      - archeomedia-test:/tmp/archeomedia_test
+      # Zonder :ro zodat tests een project kunnen toevoegen (incrementeel laden, SY003)
+      - ./data/synthetic/data/projecten:/input/projecten
       - ./data/synthetic/data/projectenlijst:/input/projectenlijst:ro
       - ./data/synthetic/data/magazijnlijst:/input/magazijnlijst:ro
       - ./data/synthetic/data/fotolijst:/input/fotolijst:ro
       - ./data/synthetic/data/monsterdatabase:/input/monsterdatabase:ro
       - ./data/synthetic/data/referentietabellen:/input/referentietabellen:ro
+      # Rapporten: leeg in de synthetische data, gekoppeld zoals in de andere omgevingen
+      - ./data/synthetic/data/rapporten:/input/rapporten:ro
 
   flask-test:
     build:
@@ -154,10 +178,11 @@ services:
     depends_on:
       - postgres-test
       - redis-test
-    ports:
-      - "5061:5051"
+    # Geen hostpoort: bereikbaar via apache-test op 5061, zoals in de echte installatie
     networks:
-      - testnet
+      testnet:
+        aliases:
+          - flask
     environment:
       POSTGRES_DB: airflow_test
       POSTGRES_USER: testuser
@@ -169,8 +194,10 @@ services:
       CACHE_REDIS_PASSWORD: ""
       REDIS_PASSWORD: ""
       CACHE_DEFAULT_TIMEOUT: "60"
-      ES_HOST: ""
+      ES_HOST: "http://elasticsearch:9200"
       SECRET_KEY: test-secret-key-voor-flask-smoke-tests
+      # Moet overeenkomen met FLASK_ADMIN_PASSWORD in tests/integration/test_flask_smoke.py
+      FLASK_ADMIN_PASSWORD: test-beheerder-wachtwoord
       MONGO_SERVER: mongo
       MONGO_INITDB_ROOT_USERNAME: testroot
       MONGO_INITDB_ROOT_PASSWORD: testpass
@@ -183,24 +210,44 @@ services:
       COLL_FILENAMES: Filenames
       COLL_STAGING_METAINFO: Kolominformatie
       COLL_STAGING_OUD: Staging_Projecten_Oud
-      COLL_STAGING_NIEUW: Staging_Projecten_Nieuw
       COLL_STAGING_MAGAZIJNLIJST: Staging_Projecten_Magazijnlijst
       COLL_STAGING_PROJECTENLIJST: Staging_Projecten_Projectenlijst
       COLL_STAGING_FOTOLIJST: Staging_Projecten_Fotolijst
       COLL_STAGING_MONSTER: Staging_Projecten_Monster
-      COLL_ANALYSE_FOTO: Def_Fotos
-      COLL_ANALYSE_ARTEFACT: Def_Artefact
-      COLL_ANALYSE_PROJECT: Def_Project
-      COLL_ANALYSE_VONDST: Def_Vondst
-      COLL_ANALYSE_SPOOR: Def_Spoor
-      COLL_ANALYSE_VLAK: Def_Vlak
-      COLL_ANALYSE_PUT: Def_Put
       COLL_ANALYSE_DOOS: Def_Doos
-      COLL_ANALYSE_STANDPLAATS: Def_Standplaats
-      COLL_ANALYSE_STELLING: Def_Stelling
-      COLL_ANALYSE_PLAATSING: Def_Plaatsing
-      COLL_ANALYSE_VINDPLAATS: Def_Vindplaats
+    volumes:
+      # Dezelfde media als airflow-test, schrijfbaar op de standaardplek van Flask
+      # (AIRFLOW_OUTPUT_MEDIA): Kantelen Linksom/Rechtsom schrijft de gedraaide bestanden terug
+      - archeomedia-test:/output/archeomedia
+
+  apache-test:
+    build:
+      context: .
+      dockerfile: services/apache/Dockerfile
+    container_name: "wasstraat_apache_test"
+    depends_on:
+      - flask-test
+    ports:
+      - "5061:5052"
+    networks:
+      testnet:
+        aliases:
+          - apache
+    volumes:
+      # De media die airflow-test schrijft, alleen-lezen onder /archeomedia
+      - archeomedia-test:/usr/local/apache2/htdocs/archeomedia:ro
 
 networks:
   testnet:
     driver: bridge
+
+volumes:
+  # Uitvoermap voor media, gedeeld door airflow-test (schrijft), flask-test (kantelt foto's)
+  # en apache-test (serveert).
+  # In het geheugen, met de uid van de airflow-gebruiker zodat die erin kan schrijven.
+  archeomedia-test:
+    driver: local
+    driver_opts:
+      type: tmpfs
+      device: tmpfs
+      o: "uid=50000,gid=0,size=1g"

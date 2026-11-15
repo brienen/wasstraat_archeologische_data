@@ -6,20 +6,28 @@ verifieert daarna de record-aantallen in de drie MongoDB databases:
   - Arch_Staging_Test  (extract-resultaat)
   - Arch_Analyse_Test  (Single_Store + Single_Store_Clean)
 
-Geen PostgreSQL-verificatie — alleen MongoDB.
-Geen afbeeldingen-verificatie — synthetische data bevat geen fotobestanden.
+Daarna DAG_Load_Only (marker load) met verificatie in PostgreSQL.
+Afbeeldingen: na Extract_only heeft geen enkel bestand in Filenames de status
+mislukt of onverwerkt en is de controletaak Controleer_Afbeeldingen geslaagd
+(issue 70); de synthetische objectfoto's van SY002 moeten na Transform 4
+aan hun artefact en vondst gekoppeld zijn (artefactID, vondstID), ook in Def_Bestand.
+De png met alfakanaal en het Word-document van SY001 (issue 82) worden verwerkt:
+drie formaten in de mediamap, het png als RGB-jpg op een witte achtergrond.
 
 Draaien:
   make integration
 """
 import json
 import os
+import re
 import subprocess
 import time
 
 import pytest
 
 pymongo = pytest.importorskip("pymongo")
+
+from wasstraat.loadToDatabase_functions import LOAD_TABELLEN
 
 # ============================================================
 # Configuratie
@@ -39,6 +47,9 @@ DB_FILES = "Arch_Files_Test"
 # Verwachte MINIMUM-aantallen per artefactsoort in Single_Store_Clean.
 # Gebaseerd op synthetische data: SY001 (3 aw, 2 glas) + SY002 (8 aw, 3 glas,
 # 2 bot, 2 metaal, 1 steen, 2 kleipijp, 1 leer, 1 munt).
+# Munt: de tabel MUNTEN EN PENNINGEN heeft kolomnamen met een komma; sinds
+# importMDB.sh de kopregel zelf gequote schrijft, wordt de munt correct
+# geïmporteerd en geharmoniseerd (daarvoor verschoven de velden en was dit 0).
 EXPECTED_MIN_ARTEFACT_COUNTS = {
     "Aardewerk": 11,
     "Glas": 5,
@@ -47,20 +58,24 @@ EXPECTED_MIN_ARTEFACT_COUNTS = {
     "Steen": 1,
     "Kleipijp": 2,
     "Leer": 1,
-    "Munt": 0,
+    "Munt": 1,
 }
 
 # Verwachte MINIMUM-aantallen per soort in Single_Store_Clean.
 # Projecten: 2 (SY001 + SY002)
-# SY001: 3 sporen, 4 vondsten, 2 vullingen
-# SY002: 8 sporen, 12 vondsten, 4 vullingen
-# Monsters: 5 (3x SY001 + 2x SY002), 8 botanie, 4 schelp
+# SY001: 2 putten, 2 vlakken, 3 sporen, 4 vondsten, 2 vullingen
+# SY002: 4 putten, 8 vlakken, 8 sporen, 12 vondsten, 4 vullingen
+# Monsters: 6 (3x SY001 + 2x SY002 + 1x SYNTFOUT, gecorrigeerd naar SY001), 8 botanie, 4 schelp
+# Putten en vlakken hebben geen eigen tabel in de MDB's; Transform5 genereert
+# ze uit de putnr/vlaknr van sporen, vondsten, tekeningen en foto's.
 EXPECTED_MIN_SOORT_COUNTS = {
     "Project": 2,
+    "Put": 6,
+    "Vlak": 10,
     "Spoor": 11,
     "Vondst": 16,
     "Vulling": 6,
-    "Monster": 5,
+    "Monster": 6,
     "Monster_Botanie": 8,
     "Monster_Schelp": 4,
     "DT_Soort_Plant": 5,
@@ -68,6 +83,95 @@ EXPECTED_MIN_SOORT_COUNTS = {
     "DT_Soort_Deel": 4,
     "DT_Soort_Staat": 4,
 }
+
+# Verwachte putnummers en (putnr, vlaknr)-combinaties per project.
+EXPECTED_PUTTEN = {
+    "SY001": {1, 2},
+    "SY002": {1, 2, 3, 4},
+}
+EXPECTED_VLAKKEN = {
+    "SY001": {(1, 1), (2, 1)},
+    "SY002": {(1, 1), (1, 2), (2, 1), (2, 2), (3, 1), (3, 2), (4, 1), (4, 3)},
+}
+
+# Objectfoto's in de synthetische data, in de Delftse naamconventie
+# <project>_P<put>_H<vondst>_<subnr>_<fotonr> in een materiaalmap onder
+# "L Fotos/H (Objectfoto's)". Transform 4 koppelt ze via key_foto1
+# (projectcd + artefactsoort + putnr + vondstnr + subnr) aan precies één
+# artefact van SY002 en via key_vondst aan de vondst.
+EXPECTED_OBJECTFOTO_KOPPELING = {
+    "SY002_P2_H4_1_1.jpg": {"artefactsoort": "Aardewerk", "putnr": 2, "vondstnr": 4, "subnr": 1},
+    "SY002_P4_H11_1_1.jpg": {"artefactsoort": "Munt", "putnr": 4, "vondstnr": 11, "subnr": 1},
+}
+
+
+# Kopieën in de werkmap van SY001 die de pipeline overslaat (paden_overslaan in correcties.yml, issue 84):
+# een kopie van de database en van foto SY001_G001.jpg. Zonder het patroon zou de database als tweede bron
+# worden ingelezen (dubbele artefacten, sporen en vondsten) en de foto twee keer worden verwerkt.
+PATROON_WERKMAP = "SY001/K Overig/werkmap"
+WERKMAP_KOPIEEN = [
+    "/input/projecten/SY001/K Overig/werkmap/opgravingSY001.mdb",
+    "/input/projecten/SY001/K Overig/werkmap/L Fotos/SY001_G001.jpg",
+]
+SY001_DATABASE = "/input/projecten/SY001/C Database/opgravingSY001.mdb"
+
+# Merge-groep met meer dan één bronrij (issue 83): AARDEWERK 1 van SY002 heeft twee rijen met put 1,
+# vondst 1, subnr 2. Ze horen samen één document te vormen, zonder verplaatst exemplaar ernaast.
+MERGE_GROEP_SY002 = {"key_subnr": "PSY002P1V1A2", "artefactsoort": "Aardewerk", "bronrijen": 2}
+# Artefacten die bewust apart blijven en dus dezelfde key mogen hebben: tabellen uit
+# merge_functions.ARTEFACT_NOT_MERGE_TABLES en de projecten uit artefact_niet_mergen in correcties.yml
+ARTEFACT_NIET_MERGEN_TABELLEN = ["ROMEINS AARDEWERK"]
+CORRECTIES_SYNTHETISCH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..",
+                                      "data", "synthetic", "wasstraat_config", "correcties.yml")
+
+
+def leesArtefactNietMergenProjecten():
+    """Lees de projectcodes uit artefact_niet_mergen in de synthetische correcties.yml (leeg als die ontbreekt)."""
+    import yaml
+    with open(CORRECTIES_SYNTHETISCH, encoding="utf-8") as f:
+        correcties = yaml.safe_load(f) or {}
+    return list((correcties.get("artefact_niet_mergen") or {}).get("projectcodes") or [])
+
+
+def artefactKey(doc):
+    """De key van een artefact zoals de load hem in Def_Artefact zet: key, anders key_subnr|artefactsoort."""
+    if doc.get("key"):
+        return doc["key"]
+    if doc.get("key_subnr"):
+        return f"{doc['key_subnr']}|{doc.get('artefactsoort') or ''}"
+    return None
+
+
+# Beschrijving (memo-veld) van spoor 4 van SY002, met een regeleinde (issue 74). In de MDB
+# staat CR LF; mongoimport leest een CR LF binnen een gequote veld in als LF.
+SPOOR4_BESCHRIJVING = "Gemetselde beerput, vierkant\nBinnenwerk met tonvormige bodem"
+
+# Staging-collecties die importMDB.sh vult (met de kolommen table, projectcd, bron, loadtime en mdbfile)
+STAGING_MDB_COLLECTIES = [
+    "Staging_Projecten_Oud", "Staging_Projecten_Projectenlijst", "Staging_Projecten_Magazijnlijst",
+    "Staging_Projecten_Fotolijst", "Staging_Projecten_Monster", "Staging_Rapporten",
+]
+EXTRA_KOLOMMEN = ["table", "projectcd", "bron", "loadtime", "mdbfile"]
+
+# Bestanden die de extractie apart behandelt (issue 82): bestandsnaam -> (fileType, mime_type).
+# Het png heeft een alfakanaal ('cannot write mode RGBA as JPEG'), het Word-document krijgt het
+# documenticoon uit shared/afbeeldingen als voorbeeld (het icoon ontbrak in de invoermap).
+BIJZONDERE_BESTANDEN = {
+    "SY001_G003.png": (".png", "image/jpeg"),
+    "Dagrapport SY001.docx": (".docx", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"),
+}
+MEDIA_IN_CONTAINER = "/tmp/archeomedia_test"
+
+# Controletaak van de extractie van afbeeldingen (issue 70) per DAG die afbeeldingen importeert
+CONTROLETAAK_PER_DAG = {
+    "Extract_only": "Extract_Group.Controleer_Afbeeldingen",
+    "Extract_Transform_Load_Full_Cycle": "Extract_Group.Controleer_Afbeeldingen",
+    "Extract_Transform_Load_Incremental": "Extract_Group.Controleer_Afbeeldingen",
+    "Redo_Images": "Controleer_Afbeeldingen",
+}
+
+# Uitvoer van de laatste 'airflow dags test' per DAG (voor controles op afzonderlijke taken)
+DAG_UITVOER = {}
 
 
 # ============================================================
@@ -96,6 +200,7 @@ def run_dag(dag_id: str, timeout: int = 1800, poll_interval: int = 3) -> str:
     )
 
     t_elapsed = time.time() - t_start
+    DAG_UITVOER[dag_id] = result.stdout + "\n" + result.stderr
 
     if result.returncode != 0:
         # Toon de laatste regels van stdout en stderr voor debugging
@@ -117,7 +222,15 @@ def run_dag(dag_id: str, timeout: int = 1800, poll_interval: int = 3) -> str:
         print(f"  ✓  DAG {dag_id} succesvol")
         return "success"
 
-    # Fallback: als exit code 0 maar geen state=success → waarschuw maar ga door
+    # 'airflow dags test' eindigt ook met exit code 0 als een taak faalt; de eindstatus
+    # staat in de regel 'DagRun Finished: ... state=...'. Retourneer die, zodat een test
+    # kan eisen dat alle taken slagen.
+    eindstatus = re.findall(r"DagRun Finished: .*?state=(\w+)", result.stdout + "\n" + result.stderr)
+    if eindstatus:
+        print(f"  ⏱  {dag_id} duurde {t_elapsed:.1f}s (state={eindstatus[-1]})")
+        return eindstatus[-1]
+
+    # Fallback: als exit code 0 maar geen eindstatus → waarschuw maar ga door
     print(f"  ⏱  {dag_id} duurde {t_elapsed:.1f}s (exit code 0)")
     print(f"  ✓  DAG {dag_id} voltooid")
     return "success"
@@ -244,6 +357,35 @@ def mongo_artefact_counts(db_name, client):
     return {d["_id"]: d["count"] for d in coll.aggregate(pipeline)}
 
 
+def controleerToegevoegdeKolommen(client, db_name):
+    """Controleer de kolommen die importMDB.sh aan elk staging-document toevoegt (issue 74).
+
+    Elk document in de staging-collecties van importMDB.sh heeft een gevuld
+    mdbfile (ook de extra projecten uit Excel), en geen ander tekstveld bevat
+    de waarde van mdbfile of de kolomnamen ",table,projectcd,": dat gebeurde
+    toen sed de kolommen per regel toevoegde en een tekstveld een regeleinde had.
+
+    Returns:
+        Lijst met beschrijvingen van de gevonden fouten (leeg als alles klopt)
+    """
+    db = client[db_name]
+    fouten = []
+    for naam in STAGING_MDB_COLLECTIES:
+        if naam not in db.list_collection_names():
+            continue
+        for doc in db[naam].find({}):
+            mdbfile = doc.get("mdbfile")
+            if not isinstance(mdbfile, str) or not mdbfile:
+                fouten.append(f"{naam} {doc['_id']}: mdbfile leeg of ontbreekt (table={doc.get('table')!r})")
+                continue
+            for veld, waarde in doc.items():
+                if veld in EXTRA_KOLOMMEN or not isinstance(waarde, str):
+                    continue
+                if mdbfile in waarde or ",table,projectcd," in waarde:
+                    fouten.append(f"{naam} {doc['_id']} ({doc.get('table')}): veld {veld!r} bevat de extra kolommen")
+    return fouten
+
+
 def print_all_collections(client, db_name, label=""):
     """Print alle collecties en hun doc-counts in een database."""
     db = client[db_name]
@@ -274,6 +416,19 @@ def _pg_scalar(sql):
 def _pg_table_count(table):
     """Tel het aantal rijen in een PostgreSQL-tabel."""
     return _pg_scalar(f'SELECT COUNT(*) FROM "{table}"')
+
+
+def _pg_tekst(sql):
+    """Voer een SQL-query uit op de test-PostgreSQL en retourneer de eerste waarde als tekst ('' bij NULL)."""
+    cmd = [
+        "docker", "exec", "-e", "PGPASSWORD=testpass", POSTGRES_CONTAINER,
+        "psql", "-U", "testuser", "-h", "localhost", "-d", "airflow_test",
+        "-t", "-A", "-c", sql,
+    ]
+    result = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
+    if result.returncode != 0:
+        raise RuntimeError(f"psql fout: {result.stderr.strip()}")
+    return result.stdout.strip()
 
 
 # ============================================================
@@ -315,6 +470,176 @@ class TestFullPipelineSynthetic:
         """Trigger Extract_only DAG."""
         run_dag("Extract_only", timeout=1200)
 
+    def test_01a_verify_afbeeldingen_status(self, mongo_client):
+        """Na Extract_only is elk bestand in Filenames verwerkt of bewust overgeslagen (issue 70).
+
+        Geen enkel bestand heeft de status mislukt (processed False met fout) of
+        onverwerkt (processed False zonder fout), en de controletaak
+        Extract_Group.Controleer_Afbeeldingen is geslaagd.
+        """
+        col = mongo_client[DB_FILES]["Filenames"]
+        totaal = col.count_documents({})
+        verwerkt = col.count_documents({"processed": True, "overgeslagen": {"$exists": False}})
+        overgeslagen = col.count_documents({"processed": True, "overgeslagen": {"$exists": True}})
+        mislukt = list(col.find({"processed": False, "fout": {"$exists": True}}, {"_id": 0, "filename": 1, "fout": 1}))
+        onverwerkt = col.count_documents({"processed": False, "fout": {"$exists": False}})
+        print(f"\n  Filenames: {totaal} totaal, {verwerkt} verwerkt, {overgeslagen} overgeslagen, "
+              f"{len(mislukt)} mislukt, {onverwerkt} onverwerkt")
+        assert totaal > 0, "Filenames is leeg"
+        assert not mislukt, f"{len(mislukt)} bestanden mislukt: {mislukt[:5]}"
+        assert onverwerkt == 0, f"{onverwerkt} bestanden niet verwerkt (processed False zonder fout)"
+        assert verwerkt + overgeslagen == totaal
+        assert col.count_documents({"processed": True, "verwerkt_op": {"$exists": False}}) == 0, \
+            "Verwerkte of overgeslagen bestanden zonder verwerkt_op"
+
+        uitvoer = DAG_UITVOER.get("Extract_only", "")
+        assert re.search(r"Marking task as SUCCESS\. dag_id=Extract_only, task_id=Extract_Group\.Controleer_Afbeeldingen,",
+                         uitvoer), "Taak Extract_Group.Controleer_Afbeeldingen niet geslaagd in Extract_only"
+        assert f"Controle afbeeldingen: {totaal} bestanden, {verwerkt} verwerkt" in uitvoer
+
+    def test_01b_verify_controletaak_in_dags(self, airflow_ready):
+        """Elke DAG die afbeeldingen importeert controleert ze na alle import-taken en vóór de transformatie.
+
+        Leest de DagBag in de Airflow-container. In de incrementele cyclus moet
+        Markeer_Run_Mislukt stroomafwaarts van de controletaak liggen, zodat een
+        mislukte controle de run op 'mislukt' zet.
+        """
+        script = (
+            "import json\n"
+            "from airflow.models import DagBag\n"
+            "bag = DagBag(include_examples=False)\n"
+            f"taken = {CONTROLETAAK_PER_DAG!r}\n"
+            "uit = {}\n"
+            "for dag_id, taak_id in taken.items():\n"
+            "    dag = bag.get_dag(dag_id)\n"
+            "    if dag is None or not dag.has_task(taak_id):\n"
+            "        uit[dag_id] = None\n"
+            "        continue\n"
+            "    taak = dag.get_task(taak_id)\n"
+            "    uit[dag_id] = {\n"
+            "        'upstream': sorted(taak.upstream_task_ids),\n"
+            "        'downstream': sorted(t.task_id for t in taak.get_flat_relatives(upstream=False)),\n"
+            "        'imports': sorted(t for t in dag.task_ids if t.split('.')[-1].startswith('Extract_Data_From_Fotos_')),\n"
+            "    }\n"
+            "print('RESULTAAT:' + json.dumps(uit))\n"
+        )
+        result = subprocess.run(["docker", "exec", AIRFLOW_CONTAINER, "python", "-c", script],
+                                capture_output=True, text=True, timeout=300)
+        regels = [r for r in result.stdout.split("\n") if r.startswith("RESULTAAT:")]
+        assert result.returncode == 0 and regels, f"DagBag niet gelezen: {result.stderr[-2000:]}"
+        structuur = json.loads(regels[-1][len("RESULTAAT:"):])
+
+        for dag_id, taak_id in CONTROLETAAK_PER_DAG.items():
+            info = structuur.get(dag_id)
+            assert info is not None, f"{dag_id}: taak {taak_id} ontbreekt"
+            print(f"\n  {dag_id}: {taak_id} na {len(info['upstream'])} import-taken")
+            assert info["imports"], f"{dag_id}: geen import-taken gevonden"
+            assert info["upstream"] == info["imports"], (
+                f"{dag_id}: {taak_id} moet direct na alle import-taken komen, upstream is {info['upstream']}")
+        for dag_id in ["Extract_only", "Extract_Transform_Load_Full_Cycle", "Extract_Transform_Load_Incremental"]:
+            assert "Extract_Group.last" in structuur[dag_id]["downstream"]
+        for dag_id in ["Extract_Transform_Load_Full_Cycle", "Extract_Transform_Load_Incremental"]:
+            assert any(t.startswith("Transform1_Harmonize_Group.") for t in structuur[dag_id]["downstream"]), (
+                f"{dag_id}: de transformatie hangt niet af van de controle van de afbeeldingen")
+        assert "Markeer_Run_Mislukt" in structuur["Extract_Transform_Load_Incremental"]["downstream"], (
+            "Markeer_Run_Mislukt bewaakt Controleer_Afbeeldingen niet in de incrementele cyclus")
+
+    def test_01c_verify_bijzondere_bestanden(self, mongo_client):
+        """Het png met alfakanaal en het Word-document van SY001 zijn verwerkt, met drie formaten (issue 82)."""
+        filenames = mongo_client[DB_FILES]["Filenames"]
+        plaatjes = mongo_client[DB_STAGING]["Plaatjes"]
+        controle = {}
+        for naam, (filetype, mime_type) in BIJZONDERE_BESTANDEN.items():
+            entry = filenames.find_one({"filename": {"$regex": re.escape("/" + naam) + "$"}})
+            assert entry is not None, f"{naam} ontbreekt in Filenames"
+            assert entry["processed"] is True and "overgeslagen" not in entry and not entry.get("fout"), (
+                f"{naam} niet verwerkt: {entry}")
+            plaatje = plaatjes.find_one({"fileName": naam})
+            assert plaatje is not None, f"{naam} ontbreekt in Plaatjes"
+            assert plaatje["projectcd"] == "SY001"
+            assert plaatje["fileType"] == filetype and plaatje["mime_type"] == mime_type, plaatje
+            controle[naam] = [plaatje["imageThumbID"], plaatje["imageMiddleID"], plaatje["imageID"]]
+        assert controle["Dagrapport SY001.docx"][2].endswith("/Dagrapport SY001.docx"), "Groot formaat is het document zelf"
+        assert controle["SY001_G003.png"][2].endswith("/SY001_G003.jpg")
+
+        # De formaten in de mediamap van airflow-test: bestaan ze, en is het png een RGB-jpg met wit
+        # waar het bron-png doorzichtig was (rechterhelft)?
+        script = (
+            "import json, os\n"
+            "from PIL import Image\n"
+            f"media = {MEDIA_IN_CONTAINER!r}\n"
+            f"controle = {controle!r}\n"
+            "uit = {}\n"
+            "for naam, paden in controle.items():\n"
+            "    uit[naam] = [os.path.isfile(os.path.join(media, p.lstrip('/'))) for p in paden]\n"
+            "groot = Image.open(os.path.join(media, controle['SY001_G003.png'][2].lstrip('/')))\n"
+            "uit['png_modus'] = groot.mode\n"
+            "uit['png_rechts'] = groot.convert('RGB').getpixel((groot.size[0] - 2, groot.size[1] // 2))\n"
+            "print('RESULTAAT:' + json.dumps(uit))\n"
+        )
+        result = subprocess.run(["docker", "exec", AIRFLOW_CONTAINER, "python", "-c", script],
+                                capture_output=True, text=True, timeout=120)
+        regels = [r for r in result.stdout.split("\n") if r.startswith("RESULTAAT:")]
+        assert result.returncode == 0 and regels, f"Mediamap niet gelezen: {result.stderr[-2000:]}"
+        uitkomst = json.loads(regels[-1][len("RESULTAAT:"):])
+        print(f"\n  Bijzondere bestanden: {uitkomst}")
+        for naam in BIJZONDERE_BESTANDEN:
+            assert uitkomst[naam] == [True, True, True], f"{naam}: niet alle drie formaten in de mediamap"
+        assert uitkomst["png_modus"] == "RGB"
+        assert all(kanaal >= 245 for kanaal in uitkomst["png_rechts"]), (
+            f"Doorzichtig deel van het png is niet wit: {uitkomst['png_rechts']}")
+
+    def test_01d_verify_werkmap_overgeslagen(self, mongo_client):
+        """De kopieën in de werkmap van SY001 worden niet ingelezen en staan als overgeslagen in het log (issue 84).
+
+        De staging bevat geen document uit de kopie van de database, alle
+        staging-documenten van SY001 komen uit de echte database, en Filenames en
+        Plaatjes bevatten de kopie van de foto niet: de aantallen zijn gelijk aan
+        die zonder werkmap.
+        """
+        werkmap = re.compile(re.escape("/K Overig/werkmap/"))
+        staging = mongo_client[DB_STAGING]
+        for coll in STAGING_MDB_COLLECTIES:
+            aantal = staging[coll].count_documents({"mdbfile": werkmap})
+            assert aantal == 0, f"{coll}: {aantal} documenten uit de werkmap van SY001"
+        oud = staging["Staging_Projecten_Oud"]
+        bestanden = oud.distinct("mdbfile", {"projectcd": "SY001"})
+        print(f"\n  Staging SY001: {oud.count_documents({'projectcd': 'SY001'})} documenten uit {bestanden}")
+        assert bestanden == [SY001_DATABASE]
+        assert mongo_client[DB_FILES]["Filenames"].count_documents({"filename": werkmap}) == 0
+        assert staging["Plaatjes"].count_documents({"fullFileName": werkmap}) == 0
+        assert staging["Plaatjes"].count_documents({"fileName": "SY001_G001.jpg"}) == 1
+
+        uitvoer = DAG_UITVOER.get("Extract_only", "")
+        for pad in WERKMAP_KOPIEEN:
+            regel = f"Overgeslagen volgens paden_overslaan (patroon '{PATROON_WERKMAP}'): {pad}"
+            assert regel in uitvoer, f"Logregel ontbreekt in Extract_only: {regel}"
+        assert re.search(r"1 van \d+ MDB/ACCDB-bestand\(en\) in /input/projecten overgeslagen volgens paden_overslaan",
+                         uitvoer), "Telling van de overgeslagen databases ontbreekt in het log"
+        assert re.search(r"1 van \d+ afbeeldingen en rapporten in /input/projecten overgeslagen volgens paden_overslaan",
+                         uitvoer), "Telling van de overgeslagen afbeeldingen ontbreekt in het log"
+
+    def test_01e_verify_registratie_slaat_werkmap_over(self, airflow_ready):
+        """De registratie van bronbestanden (incrementele cyclus) slaat dezelfde kopieën over (issue 84)."""
+        script = (
+            "import json\n"
+            "import wasstraat.bronbestanden as bronbestanden\n"
+            "overgeslagen = {}\n"
+            "gescand = bronbestanden.scanBronbestanden(overgeslagen)\n"
+            "print('RESULTAAT:' + json.dumps({'gescand': sorted(gescand), 'overgeslagen': overgeslagen,\n"
+            "    'velden': bronbestanden.maakOvergeslagenVelden(overgeslagen)}))\n"
+        )
+        result = subprocess.run(["docker", "exec", "-e", "PYTHONPATH=/opt/airflow/dags", AIRFLOW_CONTAINER,
+                                 "python", "-c", script], capture_output=True, text=True, timeout=300)
+        regels = [r for r in result.stdout.split("\n") if r.startswith("RESULTAAT:")]
+        assert result.returncode == 0 and regels, f"scanBronbestanden mislukt: {result.stderr[-2000:]}"
+        uitkomst = json.loads(regels[-1][len("RESULTAAT:"):])
+        print(f"\n  Registratie: {len(uitkomst['gescand'])} bestanden, overgeslagen: {uitkomst['overgeslagen']}")
+        assert SY001_DATABASE in uitkomst["gescand"]
+        assert not [p for p in uitkomst["gescand"] if "/K Overig/werkmap/" in p]
+        assert uitkomst["overgeslagen"] == {"projecten": [WERKMAP_KOPIEEN[0]], "afbeeldingen": [WERKMAP_KOPIEEN[1]]}
+        assert uitkomst["velden"]["tellingen.paden_overgeslagen"] == {"afbeeldingen": 1, "projecten": 1, "totaal": 2}
+
     def test_02_verify_staging(self, mongo_client):
         """Staging-collectie bevat geëxtraheerde tabellen uit de MDB."""
         print_all_collections(mongo_client, DB_STAGING, "Na Extract:")
@@ -324,6 +649,35 @@ class TestFullPipelineSynthetic:
         for table, count in sorted(counts.items(), key=lambda x: -x[1]):
             print(f"    {table}: {count}")
         assert total > 10, f"Te weinig staging-documenten: {total}"
+
+    def test_02a_verify_tekstveld_met_regeleinde(self, mongo_client):
+        """Een tekstveld met een regeleinde komt als één veld in de staging, met de extra kolommen erachter (issue 74).
+
+        Spoor 4 van SY002 heeft een beschrijving (memo-veld) met een regeleinde
+        (CR LF); de CSV-export beslaat voor dat record twee regels. Tot issue 74
+        zette sed de waarden van table, projectcd, bron, loadtime en mdbfile
+        achter elke regel, dus ook midden in de beschrijving.
+        """
+        coll = mongo_client[DB_STAGING]["Staging_Projecten_Oud"]
+        docs = list(coll.find({"table": "SPOREN", "projectcd": "SY002", "SPOORNO": 4}))
+        assert len(docs) == 1, f"Verwacht één staging-document voor spoor 4 van SY002, gevonden {len(docs)}"
+        doc = docs[0]
+        beschrijving = doc.get("BESCHRIJVING")
+        print(f"\n  BESCHRIJVING spoor 4 SY002: {beschrijving!r}")
+        assert isinstance(beschrijving, str) and "\n" in beschrijving, \
+            f"BESCHRIJVING bevat geen regeleinde: {beschrijving!r}"
+        assert beschrijving.replace("\r\n", "\n") == SPOOR4_BESCHRIJVING
+        # De extra kolommen staan op hun plek en de rest van de rij is niet verschoven
+        assert doc["table"] == "SPOREN"
+        assert doc["projectcd"] == "SY002"
+        assert doc["CODENAAM"] == "SY002"
+        assert doc["bron"] == "opgravingSY002"
+        assert doc["mdbfile"].endswith("/SY002/C Database/opgravingSY002.mdb")
+        assert doc.get("INTERPRETATIE") == "Beerput"
+        assert doc.get("DATUM") == "05-06-2024"
+
+        fouten = controleerToegevoegdeKolommen(mongo_client, DB_STAGING)
+        assert not fouten, f"Staging-documenten met ontbrekende of verplaatste extra kolommen: {fouten[:10]}"
 
     # ----------------------------------------------------------
     # Stap 2: Transform (harmonize + enhance + keys + move/merge + refs)
@@ -413,6 +767,92 @@ class TestFullPipelineSynthetic:
         print(f"\n  Sporen: {actual} (verwacht >= {expected})")
         assert actual >= expected
 
+    def test_08_1_verify_spoorbeschrijving_met_regeleinde(self, mongo_client):
+        """De beschrijving met een regeleinde van spoor 4 (SY002) komt ongeschonden in Single_Store_Clean (issue 74)."""
+        coll = mongo_client[DB_ANALYSE]["Single_Store_Clean"]
+        sporen = list(coll.find({"soort": "Spoor", "projectcd": "SY002", "spoornr": 4}))
+        assert len(sporen) == 1, f"Verwacht één spoor 4 van SY002, gevonden {len(sporen)}"
+        beschrijving = sporen[0].get("beschrijving")
+        assert isinstance(beschrijving, str) and beschrijving.replace("\r\n", "\n") == SPOOR4_BESCHRIJVING, \
+            f"beschrijving van spoor 4: {beschrijving!r}"
+
+    def test_08a_verify_putten_per_project(self, mongo_client):
+        """Elk project heeft precies de putten die in de brondata voorkomen."""
+        coll = mongo_client[DB_ANALYSE]["Single_Store_Clean"]
+        putten = list(coll.find({"soort": "Put"}, {"projectcd": 1, "putnr": 1, "key": 1}))
+        print(f"\n  Putten ({len(putten)}): {sorted(p.get('key') or '?' for p in putten)}")
+
+        for projectcd, verwacht in EXPECTED_PUTTEN.items():
+            gevonden = {p.get("putnr") for p in putten if p.get("projectcd") == projectcd}
+            assert gevonden == verwacht, (
+                f"{projectcd}: verwacht putten {sorted(verwacht)}, gevonden {gevonden}. "
+                f"Controleer MOVEANDMERGE_GENERATE_MISSING_PIPELINES voor Put in meta.py."
+            )
+
+    def test_08b_verify_vlakken_per_project(self, mongo_client):
+        """Elk project heeft precies de vlakken die in de brondata voorkomen."""
+        coll = mongo_client[DB_ANALYSE]["Single_Store_Clean"]
+        vlakken = list(coll.find({"soort": "Vlak"}, {"projectcd": 1, "putnr": 1, "vlaknr": 1, "key": 1}))
+        print(f"\n  Vlakken ({len(vlakken)}): {sorted(v.get('key') or '?' for v in vlakken)}")
+
+        for projectcd, verwacht in EXPECTED_VLAKKEN.items():
+            gevonden = {(v.get("putnr"), v.get("vlaknr"))
+                        for v in vlakken if v.get("projectcd") == projectcd}
+            assert gevonden == verwacht, (
+                f"{projectcd}: verwacht vlakken {sorted(verwacht)}, gevonden {gevonden}. "
+                f"Controleer MOVEANDMERGE_GENERATE_MISSING_PIPELINES voor Vlak in meta.py."
+            )
+
+    def test_08c_verify_geen_dubbele_keys(self, mongo_client):
+        """Gegenereerde entiteiten mogen bestaande niet dupliceren (zelfde key)."""
+        coll = mongo_client[DB_ANALYSE]["Single_Store_Clean"]
+        # Records zonder key tellen niet mee: de dozen in de synthetische magazijnlijst
+        # hebben DOOSNO 'D001' enz., dat Transform2 als niet-numeriek verwijdert.
+        dubbel = list(coll.aggregate([
+            {"$match": {"soort": {"$in": ["Put", "Vlak", "Spoor", "Vondst", "Doos"]},
+                        "key": {"$ne": None}}},
+            {"$group": {"_id": {"soort": "$soort", "key": "$key"}, "aantal": {"$sum": 1}}},
+            {"$match": {"aantal": {"$gt": 1}}},
+        ]))
+        print(f"\n  Dubbele keys: {len(dubbel)}")
+        assert not dubbel, (
+            f"Dubbele keys in Single_Store_Clean: {[d['_id'] for d in dubbel]}. "
+            f"De key van een gegenereerd record wijkt af van het bestaande record; "
+            f"controleer MOVEANDMERGE_GENERATE_MISSING_PIPELINES in meta.py."
+        )
+
+    def test_08d_verify_geen_dubbele_artefactkeys(self, mongo_client):
+        """Elke niet-lege key van een artefact komt één keer voor in Single_Store_Clean (issue 83).
+
+        Tot issue 83 verplaatste Transform 5 artefacten die ook werden samengevoegd; bij
+        een groep met meer bronrijen bleven de verplaatste exemplaren naast het
+        samengevoegde document staan. Uitgezonderd zijn artefacten die bewust apart
+        blijven (ARTEFACT_NIET_MERGEN_TABELLEN en artefact_niet_mergen). De
+        merge-groep van SY002 is één document met twee bronrijen.
+        """
+        coll = mongo_client[DB_ANALYSE]["Single_Store_Clean"]
+        niet_mergen = leesArtefactNietMergenProjecten()
+        per_key = {}
+        for doc in coll.find({"soort": "Artefact"}, {"key": 1, "key_subnr": 1, "artefactsoort": 1,
+                                                       "projectcd": 1, "brondata.table": 1}):
+            tabellen = {b.get("table") for b in (doc.get("brondata") or []) if isinstance(b, dict)}
+            if doc.get("projectcd") in niet_mergen or tabellen & set(ARTEFACT_NIET_MERGEN_TABELLEN):
+                continue
+            key = artefactKey(doc)
+            if key:
+                per_key.setdefault(key, []).append(doc["_id"])
+        dubbel = {k: v for k, v in per_key.items() if len(v) > 1}
+        print(f"\n  Artefacten met een key: {len(per_key)}, dubbele keys: {len(dubbel)}")
+        assert not dubbel, f"Dubbele artefactkeys in Single_Store_Clean: {sorted(dubbel)[:10]}"
+
+        groep = list(coll.find({"soort": "Artefact", "key_subnr": MERGE_GROEP_SY002["key_subnr"],
+                                "artefactsoort": MERGE_GROEP_SY002["artefactsoort"]}))
+        print(f"  Merge-groep {MERGE_GROEP_SY002['key_subnr']}: {len(groep)} document(en), "
+              f"{[len(d.get('brondata') or []) for d in groep]} bronrijen")
+        assert len(groep) == 1, f"Merge-groep {MERGE_GROEP_SY002} heeft {len(groep)} documenten, verwacht 1"
+        assert groep[0].get("brondata_count") == MERGE_GROEP_SY002["bronrijen"]
+        assert len(groep[0]["brondata"]) == MERGE_GROEP_SY002["bronrijen"]
+
     def test_09_verify_vondst_count(self, mongo_client):
         """Vondst-documenten in clean-collectie >= verwacht."""
         counts = mongo_soort_counts(DB_ANALYSE, "Single_Store_Clean", mongo_client)
@@ -477,6 +917,70 @@ class TestFullPipelineSynthetic:
             assert key.startswith("P"), (
                 f"Project key '{key}' begint niet met 'P'"
             )
+
+    # ----------------------------------------------------------
+    # Stap 3b: Foto's — Transform 2 en koppeling aan artefacten
+    # ----------------------------------------------------------
+    def test_10d_verify_geen_transform2_fouten_voor_bestanden(self, mongo_client):
+        """Transform 2 slaat geen foto's, tekeningen of rapporten over (_processing_errors).
+
+        Tot 2026-10-21 koos de dispatcher identificeer('Foto', doc) de
+        bestandsnaam-parser identificeer_foto(doc, projectcd); elke foto gaf
+        een TypeError, hield zijn tekstnummers en ongenormaliseerde projectcode
+        en kon in Transform 4 nooit aan een artefact gekoppeld worden.
+        """
+        fouten = list(mongo_client[DB_ANALYSE]["_processing_errors"].find({"fase": "enhance_attributes"}))
+        bestand_fouten = [f for f in fouten if f.get("soort") in ("Foto", "Tekening", "Rapport")]
+        print(f"\n  enhance_attributes-fouten: {len(fouten)}, waarvan voor foto's/tekeningen/rapporten: {len(bestand_fouten)}")
+        for f in bestand_fouten[:5]:
+            print(f"    {f.get('soort')} {f.get('original_id')}: {f.get('error_type')}: {f.get('error_msg')}")
+        assert not bestand_fouten, (
+            f"{len(bestand_fouten)} foto's/tekeningen/rapporten zijn in Transform 2 overgeslagen; "
+            f"controleer de dispatcher identificeer() in profielen/conventie.py")
+
+    def test_10e_verify_objectfotos_genormaliseerd(self, mongo_client):
+        """Objectfoto's in Single_Store_Clean hebben integers voor putnr/vondstnr/subnr en de sleutel key_foto1."""
+        coll = mongo_client[DB_ANALYSE]["Single_Store_Clean"]
+        for bestand, verwacht in EXPECTED_OBJECTFOTO_KOPPELING.items():
+            foto = coll.find_one({"soort": "Bestand", "bestandsoort_XX": "Foto", "fileName": bestand})
+            assert foto is not None, f"Objectfoto {bestand} ontbreekt in Single_Store_Clean"
+            print(f"\n  {bestand}: projectcd={foto.get('projectcd')} putnr={foto.get('putnr')!r} "
+                  f"vondstnr={foto.get('vondstnr')!r} subnr={foto.get('subnr')!r} key_foto1={foto.get('key_foto1')}")
+            assert foto.get("projectcd") == "SY002"
+            assert foto.get("bestandsoort") == "Objectfoto"
+            for veld in ("putnr", "vondstnr", "subnr"):
+                assert foto.get(veld) == verwacht[veld], f"{bestand}: {veld}={foto.get(veld)!r}, verwacht {verwacht[veld]}"
+            verwachte_key = (f"PSY002M{verwacht['artefactsoort']}P{verwacht['putnr']}"
+                             f"V{verwacht['vondstnr']}A{verwacht['subnr']}")
+            assert foto.get("key_foto1") == verwachte_key, (
+                f"{bestand}: key_foto1={foto.get('key_foto1')!r}, verwacht {verwachte_key}. "
+                f"Controleer mergeFotoinfo (FOTO_VELDEN) in merge_functions.py.")
+
+    def test_10f_verify_objectfotos_gekoppeld_aan_artefact(self, mongo_client):
+        """Elke objectfoto verwijst met artefactID en vondstID naar het juiste artefact en de juiste vondst."""
+        coll = mongo_client[DB_ANALYSE]["Single_Store_Clean"]
+        for bestand, verwacht in EXPECTED_OBJECTFOTO_KOPPELING.items():
+            foto = coll.find_one({"soort": "Bestand", "bestandsoort_XX": "Foto", "fileName": bestand})
+            assert foto is not None, f"Objectfoto {bestand} ontbreekt in Single_Store_Clean"
+            assert foto.get("artefactID") is not None, (
+                f"{bestand} heeft geen artefactID; controleer Set_Reference_Images_to_Foto1 (key_foto1) in Transform 4")
+            artefact = coll.find_one({"soort": "Artefact", "ID": foto["artefactID"]})
+            assert artefact is not None, f"{bestand}: artefactID {foto['artefactID']} bestaat niet"
+            print(f"\n  {bestand} → artefact {foto['artefactID']}: {artefact.get('artefactsoort')} "
+                  f"put {artefact.get('putnr')} vondst {artefact.get('vondstnr')} subnr {artefact.get('subnr')}")
+            assert artefact.get("artefactsoort") == verwacht["artefactsoort"]
+            assert (artefact.get("putnr"), artefact.get("vondstnr"), artefact.get("subnr")) == \
+                (verwacht["putnr"], verwacht["vondstnr"], verwacht["subnr"])
+
+            assert foto.get("vondstID") is not None, f"{bestand} heeft geen vondstID (key_vondst)"
+            vondst = coll.find_one({"soort": "Vondst", "ID": foto["vondstID"]})
+            assert vondst is not None, f"{bestand}: vondstID {foto['vondstID']} bestaat niet"
+            assert (vondst.get("putnr"), vondst.get("vondstnr")) == (verwacht["putnr"], verwacht["vondstnr"])
+
+        # Project- en sfeerfoto's (G/F) horen niet bij een vondst en mogen geen artefact krijgen
+        onterecht = coll.count_documents({"soort": "Bestand", "bestandsoort_XX": "Foto",
+                                          "bestandsoort": {"$ne": "Objectfoto"}, "artefactID": {"$exists": True}})
+        assert onterecht == 0, f"{onterecht} foto's die geen objectfoto zijn hebben een artefactID"
 
     # ----------------------------------------------------------
     # Samenvatting
@@ -630,22 +1134,17 @@ class TestFullPipelineSynthetic:
     # ----------------------------------------------------------
     # Stap 5: Load naar PostgreSQL
     # ----------------------------------------------------------
-    # NB: DAG_Load_Only bevat zowel LoadToDatabase_postgres als
-    # Elasticsearch indexering. De Elasticsearch stap faalt in de
-    # test-omgeving (geen ES container). De PostgreSQL load zelf slaagt.
+    # NB: DAG_Load_Only bevat zowel LoadToDatabase_postgres als de
+    # Elasticsearch-indexering (Index_*-taken). De testomgeving heeft een
+    # eigen Elasticsearch-container (elasticsearch-test), dus alle taken
+    # moeten slagen.
     # ----------------------------------------------------------
     @pytest.mark.load
     def test_19_run_load(self, airflow_ready):
-        """Trigger DAG_Load_Only DAG (MongoDB → PostgreSQL).
-
-        De DAG kan falen door Elasticsearch (niet in test-omgeving).
-        We controleren de PostgreSQL resultaten in de volgende tests.
-        """
-        try:
-            run_dag("DAG_Load_Only", timeout=1800)
-        except AssertionError:
-            # DAG faalt door Elasticsearch indexering (verwacht in test)
-            print("  ℹ  DAG gefaald (verwacht: Elasticsearch niet beschikbaar)")
+        """Trigger DAG_Load_Only DAG (MongoDB → PostgreSQL + Elasticsearch)."""
+        assert run_dag("DAG_Load_Only", timeout=1800) == "success", (
+            "DAG_Load_Only niet geslaagd; controleer LoadToDatabase_postgres en de Index_*-taken "
+            "(draait elasticsearch-test?)")
 
     @pytest.mark.load
     def test_20_verify_postgres_project_count(self, airflow_ready):
@@ -697,13 +1196,96 @@ class TestFullPipelineSynthetic:
         )
 
     @pytest.mark.load
+    def test_22a_verify_postgres_putten_vlakken_per_project(self, airflow_ready):
+        """Def_Put en Def_Vlak in PostgreSQL bevatten de putten en vlakken van elk project."""
+        fouten = []
+        print(f"\n  Putten en vlakken per project in PostgreSQL:")
+        for projectcd in EXPECTED_PUTTEN:
+            putten = _pg_scalar(
+                'SELECT COUNT(*) FROM "Def_Put" p JOIN "Def_Project" pr '
+                f"ON p.\"projectID\" = pr.primary_key WHERE pr.projectcd = '{projectcd}'"
+            )
+            vlakken = _pg_scalar(
+                'SELECT COUNT(*) FROM "Def_Vlak" v JOIN "Def_Project" pr '
+                f"ON v.\"projectID\" = pr.primary_key JOIN \"Def_Put\" p "
+                f"ON v.\"putID\" = p.primary_key WHERE pr.projectcd = '{projectcd}'"
+            )
+            print(f"    {projectcd}: {putten} putten, {vlakken} vlakken (met put)")
+            if putten != len(EXPECTED_PUTTEN[projectcd]):
+                fouten.append(f"{projectcd}: {putten} putten, verwacht {len(EXPECTED_PUTTEN[projectcd])}")
+            if vlakken != len(EXPECTED_VLAKKEN[projectcd]):
+                fouten.append(f"{projectcd}: {vlakken} vlakken, verwacht {len(EXPECTED_VLAKKEN[projectcd])}")
+
+        assert not fouten, "\n  ".join(fouten)
+
+    @pytest.mark.load
+    def test_22b_verify_postgres_bestand_gekoppeld_aan_artefact(self, airflow_ready):
+        """Def_Bestand bevat de objectfoto's met een artefactID naar hun artefact (lijst 'Alle artefacten met foto')."""
+        gekoppeld = _pg_scalar(
+            'SELECT COUNT(*) FROM "Def_Bestand" b JOIN "Def_Artefact" a ON b."artefactID" = a.primary_key')
+        print(f"\n  Def_Bestand-rijen met een artefactID: {gekoppeld}")
+        assert gekoppeld >= len(EXPECTED_OBJECTFOTO_KOPPELING), (
+            f"Def_Bestand heeft {gekoppeld} rijen met artefactID, verwacht >= {len(EXPECTED_OBJECTFOTO_KOPPELING)}")
+        for bestand, verwacht in EXPECTED_OBJECTFOTO_KOPPELING.items():
+            soort = _pg_tekst(
+                'SELECT a.artefactsoort FROM "Def_Bestand" b JOIN "Def_Artefact" a ON b."artefactID" = a.primary_key '
+                f"WHERE b.\"fileName\" = '{bestand}'")
+            print(f"  {bestand} → {soort or '-'}")
+            assert soort == verwacht["artefactsoort"], (
+                f"{bestand}: gekoppeld aan artefactsoort {soort!r}, verwacht {verwacht['artefactsoort']}")
+
+    @pytest.mark.load
+    def test_22c_verify_postgres_verwijzingskolommen_volledig(self, mongo_client, airflow_ready):
+        """Elke verwijzingskolom (<soort>ID) in PostgreSQL is even vaak gevuld als het veld in Single_Store_Clean.
+
+        Bewaakt de veldselectie van de load. getFields kijkt naar meta.py plus een
+        steekproef van tien documenten; een verwijzing die pas later in de pipeline
+        wordt gezet (artefactID op foto's, door setReferences) kan in die tien
+        ontbreken. Zonder de kolommen van de doeltabel in de projectie verloor
+        Def_Bestand in de Delftse data alle artefactID's, terwijl Single_Store_Clean
+        er ruim duizend had. Deze test vergelijkt per tabel en per ID-kolom de
+        aantallen, zodat zo'n verlies in de laadstap direct zichtbaar is.
+        """
+        clean = mongo_client[DB_ANALYSE]["Single_Store_Clean"]
+        tabellen = _pg_tekst(
+            "SELECT string_agg(table_name, ',') FROM information_schema.tables "
+            "WHERE table_schema = 'public' AND table_name LIKE 'Def\\_%'")
+        fouten = []
+        print("\n  Verwijzingskolommen: Mongo (veld gevuld) vs PostgreSQL (kolom gevuld)")
+        for table in sorted(t for t in tabellen.split(",") if t):
+            soort = table[4:]
+            if clean.count_documents({"soort": soort}) == 0:
+                continue  # gebruikerstabellen en pipelinetabellen zonder documenten
+            kolommen = _pg_tekst(
+                "SELECT string_agg(column_name, ',') FROM information_schema.columns "
+                f"WHERE table_name = '{table}' AND column_name LIKE '%ID'")
+            for kolom in sorted(k for k in kolommen.split(",") if k):
+                in_mongo = clean.count_documents({"soort": soort, kolom: {"$exists": True, "$ne": None}})
+                in_pg = _pg_scalar(f'SELECT COUNT(*) FROM "{table}" WHERE "{kolom}" IS NOT NULL')
+                status = "✓" if in_mongo == in_pg else "✗"
+                print(f"  {table}.{kolom:<20} mongo {in_mongo:>6}  postgres {in_pg:>6}  {status}")
+                if in_mongo != in_pg:
+                    fouten.append(f"{table}.{kolom}: {in_mongo} gevuld in Single_Store_Clean, {in_pg} in PostgreSQL")
+        assert not fouten, "Verwijzingen gaan verloren in de laadstap:\n  " + "\n  ".join(fouten)
+
+    @pytest.mark.load
+    def test_22d_verify_postgres_artefactkeys_uniek(self, airflow_ready):
+        """Elke key in Def_Artefact komt één keer voor (issue 83; de synthetische data heeft geen uitzonderingen)."""
+        totaal = _pg_scalar('SELECT COUNT(*) FROM "Def_Artefact"')
+        zonder_key = _pg_scalar('SELECT COUNT(*) FROM "Def_Artefact" WHERE key IS NULL')
+        dubbel = _pg_tekst(
+            'SELECT string_agg(key || \' (\' || aantal || \')\', \', \') FROM '
+            '(SELECT key, COUNT(*) AS aantal FROM "Def_Artefact" WHERE key IS NOT NULL '
+            'GROUP BY key HAVING COUNT(*) > 1) d')
+        print(f"\n  Def_Artefact: {totaal} rijen, {zonder_key} zonder key, dubbele keys: {dubbel or '-'}")
+        assert zonder_key == 0, f"{zonder_key} artefacten zonder key in Def_Artefact"
+        assert not dubbel, f"Dubbele keys in Def_Artefact: {dubbel}"
+
+    @pytest.mark.load
     def test_23_verify_postgres_no_empty_def_tables(self, airflow_ready):
         """Geen enkele Def_-tabel uit lst_tables mag 0 rijen hebben."""
-        # NB: Def_Put en Def_Vlak worden niet in de synthetische data
-        # gegenereerd (geen putten/vlakken in de testdata), dus die
-        # zijn verwacht leeg en worden hier uitgesloten.
         lst_tables = [
-            'Def_ABR', 'Def_Project', 'Def_Vondst', 'Def_Spoor',
+            'Def_ABR', 'Def_Project', 'Def_Put', 'Def_Vlak', 'Def_Vondst', 'Def_Spoor',
             'Def_Doos', 'Def_Standplaats', 'Def_Plaatsing',
             'Def_Artefact', 'Def_Bestand', 'Def_Vulling',
             'Def_Monster', 'Def_Monster_Botanie', 'Def_Monster_Schelp',
@@ -727,3 +1309,25 @@ class TestFullPipelineSynthetic:
             f"Lege tabellen in PostgreSQL: {lege_tabellen}. "
             f"Data is niet correct geladen vanuit MongoDB."
         )
+
+    @pytest.mark.load
+    @pytest.mark.parametrize("table", LOAD_TABELLEN)
+    def test_24_verify_postgres_primary_key_sequence(self, airflow_ready, table):
+        """Na DAG_Load_Only heeft primary_key een sequence en default, en nextval > max(primary_key).
+
+        De atomic swap van loadAll dropt de oude tabel met CASCADE; daarmee verdwijnen
+        de sequence en de default van primary_key. FASE 3 herstelt ze (zetSequence),
+        anders kan de webapplicatie geen rijen aanmaken. Geldt voor elke tabel van de
+        load, ook bij de eerste load in een lege database met stabiele sleutels (issue 71).
+        """
+        sequence = _pg_tekst(f"SELECT pg_get_serial_sequence('\"{table}\"', 'primary_key')")
+        default = _pg_tekst(
+            "SELECT column_default FROM information_schema.columns "
+            f"WHERE table_name = '{table}' AND column_name = 'primary_key'")
+        maximum = _pg_scalar(f'SELECT COALESCE(MAX(primary_key), 0) FROM "{table}"')
+        print(f"\n  {table}: sequence={sequence or '-'}, default={default or '-'}, max(primary_key)={maximum}")
+        assert sequence, f"{table}.primary_key heeft geen sequence na de volledige load"
+        assert default.startswith("nextval("), f"{table}.primary_key heeft geen default nextval(...): {default!r}"
+        volgende = _pg_scalar(f"SELECT nextval('{sequence}')")
+        print(f"  {table}: nextval={volgende}")
+        assert volgende > maximum, f"{table}: nextval {volgende} is niet groter dan max(primary_key) {maximum}"

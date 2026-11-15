@@ -44,7 +44,7 @@ Een traditioneel relationeel schema kan deze variatie moeilijk representeren zon
 
 ### Monomorphic Storage Requirements
 
-Dit dilemma werd opgelost door **SingleStore** (NoSQL/MongoDB) als intermediaire opslaglaag te introduceren, die flexibel polymorfische documenten aanvaardt.
+De Wasstraat lost dit op met MongoDB als tussenopslag: de collecties `Single_Store` en `Single_Store_Clean` bevatten documenten van alle soorten, elk met zijn eigen velden. Pas aan het eind gaat de data naar een relationeel model in PostgreSQL, waar artefacten van alle materialen in één tabel staan met overerving per artefactsoort (zie [MongoDB en Single_Store](../componenten/singlestore.md) en [Gegevensmodel](../architectuur/gegevensmodel.md)).
 
 ## Coördinaten en Ruimtelijke Data
 
@@ -83,11 +83,11 @@ Een geunificeerd tekencoderingsschema (UTF-8) met normalisatie is essentieel.
 
 Wasstraat onderhoudt zowel:
 
-- **NoSQL-laag** (SingleStore/MongoDB): flexibel, voor ingest en transformatie
-- **Relationele laag** (PostgreSQL/Oracle): gestructureerd, voor analytics en GIS
+- **Documentlaag** (MongoDB, met `Single_Store`): flexibel, voor inlezen en transformeren
+- **Relationele laag** (PostgreSQL met PostGIS): gestructureerd, voor de webapplicatie, analyses en GIS
 
 !!! danger "Synchronisatieproblemen"
-    Wanneer gegevens in beide systemen opleven, moet consistentie gegarandeerd worden. Race conditions, transactie-failures, en unidirectionele sync kunnen anomalieën veroorzaken.
+    Wanneer gegevens in beide systemen opleven, moet consistentie gegarandeerd worden. De Wasstraat houdt de richting daarom eenzijdig (van MongoDB naar PostgreSQL), laadt in één transactie en houdt de sleutels stabiel tussen runs; gegevens die gebruikers in PostgreSQL invoeren, blijven daarbij staan (zie [Incrementeel laden](../componenten/incrementeel-laden.md)).
 
 ### Change Data Capture
 
@@ -104,9 +104,9 @@ Dit vereist:
 
 De Delft-dataset bevat:
 
-- **40.000 foto's** (elk gigabytes aan BLOB-data)
-- **Honderden miljoen metadata-punten**
-- **Complexe queries** over miljarden documents
+- **Ongeveer 100.000 foto's**, tekeningen en rapporten, samen bijna 1 terabyte
+- **Ruim 1.000 Access-databases** met tienduizenden artefacten, vondsten en monsters
+- **Bronnen die steeds veranderen**: nieuwe opgravingen, gecorrigeerde databases
 
 !!! info "Uitdagingen"
     - Index-keuzes die zoekopdrachten accelereren zonder schrijven te vertragen
@@ -122,7 +122,7 @@ Archaeologists zoeken vaak op onnauwkeurige termen:
 - "Blauwe potscherven" (kleur is subjectief)
 - "Gereedschap, mogelijk Romeins" (onzekerheid in datering)
 
-Fuzzy indexering en full-text search met ranking moet snel werken op miljarden records.
+Full-text search met ranking en onnauwkeurig zoeken moet snel werken over alle records.
 
 ## Data Governance
 
@@ -137,7 +137,7 @@ Voor FAIR-data moet elke analyse:
 Dit vereist:
 
 - Versie-tracking voor alle transformaties
-- Reproduceerbare transformatie-pipelines (Apache Spark, Airflow)
+- Reproduceerbare transformatie-pipelines (Apache Airflow)
 - Metadata-dokumentatie volgende CIDOC CRM
 
 ### Licenties en Attribuering
@@ -152,9 +152,9 @@ Archeologische data komt van diverse uitvoerders met verschillende licenties. De
 
 De technische complexiteit van archeologische data-integratie is aanzienlijk. Wasstraat adresseert deze door:
 
-1. **Polymorfische opslag** via NoSQL
-2. **Metagegevens-gestuurde mapping** voor flexibiliteit
-3. **Crossviews-technologie** voor multi-source queries
-4. **Standaard-aansluiting** (GGM, ABR, CIDOC CRM) voor interoperabiliteit
+1. **Polymorfische opslag** in MongoDB, met een relationeel eindmodel in PostgreSQL
+2. **Configuratie-gestuurde harmonisatie** (harmonisatie-Excel, `correcties.yml`, gemeenteprofielen)
+3. **Stabiele sleutels en herleidbaarheid** tot elk bronbestand
+4. **Aansluiting op standaarden**: de ABR nu, GGM en CIDOC CRM als ambitie (zie [Toekomstvisie](../toekomstvisie.md))
 
 Zie [Doelstellingen](doelstellingen.md) voor hoe Wasstraat deze problemen systematisch oploste.

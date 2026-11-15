@@ -24,6 +24,11 @@ aggr_key_vondst = {'$concat': [ "P", {'$toString': '$projectcd'},
                     {'$concat': ["V", {'$toString': "$vondstnr" }]}]}
 
 
+# Autonummer van de bronrij (Delft: kolom Id, synthetische data: ID). De harmonisatie neemt het
+# niet over als veld, dus zonder terugval op brondata was de key van Monster_Botanie en
+# Monster_Schelp altijd leeg (issue 81).
+aggr_bron_id = {'$ifNull': ["$Id", "$brondata.Id", "$brondata.ID"]}
+
 wasstraat_model = {
   "Put": {
         STAGING_COLLECTION: config.COLL_STAGING_OUD,
@@ -35,7 +40,7 @@ wasstraat_model = {
         ]],
         MOVEANDMERGE_GENERATE_MISSING_PIPELINES: [[
             { '$match': {'putnr': { '$exists': {"$toBool": 1} }, 'projectcd': { '$exists': {"$toBool": 1} }}},
-            { '$match': {'putnr': {"＄ne": 0}}},               
+            { '$match': {'putnr': {"$ne": 0}}},               
             { '$group':{'_id': {"projectcd" : "$projectcd", 'putnr': "$putnr"}}},
             { '$unwind': "$_id"},
             { '$project': {'_id': 0, 'projectcd': "$_id.projectcd", 'putnr': "$_id.putnr"}},       
@@ -53,7 +58,7 @@ wasstraat_model = {
         ]],
         MOVEANDMERGE_GENERATE_MISSING_PIPELINES: [[
             { '$match': {'vlaknr': { '$exists': {"$toBool": 1} }, 'projectcd': { '$exists': {"$toBool": 1} }, 'putnr': { '$exists': {"$toBool": 1} }}},
-            { '$match': {'vlaknr': {"＄ne": 0}}},   
+            { '$match': {'vlaknr': {"$ne": 0}}},   
             { '$group':{'_id': {"projectcd" : "$projectcd", 'putnr': "$putnr", 'vlaknr': "$vlaknr"}}},
             { '$unwind': "$_id"},
             { '$project': {'_id': 0, 'projectcd': "$_id.projectcd", 'putnr': "$_id.putnr", 'vlaknr': "$_id.vlaknr"}},
@@ -78,10 +83,11 @@ wasstraat_model = {
         ]],
         MOVEANDMERGE_GENERATE_MISSING_PIPELINES: [[
             { '$match': {'vlaknr': { '$exists': {"$toBool": 1} }, 'projectcd': { '$exists': {"$toBool": 1} }, 'putnr': { '$exists': {"$toBool": 1} }, 'spoornr': { '$exists': {"$toBool": 1} }}},
-            { '$match': {'spoornr': {"＄ne": 0}}},   
-            { '$group':{'_id': {'projectcd':"$projectcd", 'putnr':"$putnr", 'spoornr':"$spoornr", 'vlaknr':"$vlaknr"}, 'aard': {'$max': "$aard"}}},  
+            { '$match': {'spoornr': {"$ne": 0}}},
+            # Zonder vlaknr: sporen uit de brondata krijgen vlaknrs (meervoud), dus hun key bevat geen vlak
+            { '$group':{'_id': {'projectcd':"$projectcd", 'putnr':"$putnr", 'spoornr':"$spoornr"}, 'aard': {'$max': "$aard"}}},
             { '$unwind': "$_id"},
-            { '$project': {'_id': 0, 'projectcd': "$_id.projectcd", 'putnr': "$_id.putnr", 'spoornr': "$_id.spoornr", 'vlaknr': "$_id.vlaknr"}},
+            { '$project': {'_id': 0, 'projectcd': "$_id.projectcd", 'putnr': "$_id.putnr", 'spoornr': "$_id.spoornr"}},
             { '$addFields': {'brondata.table': 'generated_spoor', 'brondata.projectcd': '$projectcd', 'soort': 'Spoor'}}
         ]]
   },
@@ -194,7 +200,7 @@ wasstraat_model = {
         MOVEANDMERGE_MOVE: True,
         SET_KEYS_PIPELINES: [[ 
             { '$match': { 'soort': "Monster_Schelp" } },
-            { '$addFields': {'key': { '$concat': [ "M", {'$toString': "$monstercd"}, "ID", {'$toString': "$Id"}] }}},
+            { '$addFields': {'key': { '$concat': [ "M", {'$toString': "$monstercd"}, "ID", {'$toString': aggr_bron_id}] }}},
             { '$addFields': {'key_monster': { '$concat': [ "M", {'$toString': "$monstercd"}]}}},
             { '$addFields': {'key_dt_soort_schelp': { '$concat': [ "SCH", "$soort_schelp"]}}}, 
     ]]
@@ -205,7 +211,7 @@ wasstraat_model = {
         MOVEANDMERGE_MOVE: True,
         SET_KEYS_PIPELINES: [[ 
             { '$match': { 'soort': "Monster_Botanie" } },
-            { '$addFields': {'key': { '$concat': [ "M", {'$toString': "$monstercd"}, "ID", {'$toString': "$Id"}] }}},
+            { '$addFields': {'key': { '$concat': [ "M", {'$toString': "$monstercd"}, "ID", {'$toString': aggr_bron_id}] }}},
             { '$addFields': {'key_monster': { '$concat': [ "M", {'$toString': "$monstercd"}]}}},
             { '$addFields': {'key_dt_soort_plant': { '$concat': [ "PL", "$soort_botanie"]}}}, 
             { '$addFields': {'key_dt_soort_deel': { '$concat': [ "DL", "$deel"]}}}, 
@@ -281,10 +287,11 @@ wasstraat_model = {
         ]],
         MOVEANDMERGE_GENERATE_MISSING_PIPELINES: [[
             { '$match': {'putnr': { '$exists': {"$toBool": 1} }, 'projectcd': { '$exists': {"$toBool": 1} }, 'vondstnr': { '$exists': {"$toBool": 1} }}},
-            { '$match': {'vondstnr': {"＄ne": 0}}},   
-            { '$group':{'_id': {"projectcd" : "$projectcd", 'putnr': "$putnr", 'vondstnr': "$vondstnr"}}},
+            { '$match': {'vondstnr': {"$ne": 0}}},
+            # vondstkey_met_putnr meenemen zodat de key gelijk is aan die van bestaande vondsten (aggr_key_vondst)
+            { '$group':{'_id': {"projectcd" : "$projectcd", 'putnr': "$putnr", 'vondstnr': "$vondstnr"}, 'vondstkey_met_putnr': {'$max': "$vondstkey_met_putnr"}}},
             { '$unwind': "$_id"},
-            { '$project': {'_id': 0, 'projectcd': "$_id.projectcd", 'putnr': "$_id.putnr", 'vondstnr': "$_id.vondstnr"}},       
+            { '$project': {'_id': 0, 'projectcd': "$_id.projectcd", 'putnr': "$_id.putnr", 'vondstnr': "$_id.vondstnr", 'vondstkey_met_putnr': 1}},
             { '$addFields': {'brondata.table': 'generated_vondst', 'brondata.projectcd': '$projectcd', 'soort': 'Vondst'}}
         ]]
   },
@@ -382,6 +389,9 @@ wasstraat_model = {
   "Fotokoppel": {
         STAGING_COLLECTION: config.COLL_STAGING_FOTOLIJST,
         HARMONIZE_PIPELINES: 'Fotokoppel',
+        # Geen sleutels; de lege pipeline geeft wel de taken van Transform 4 (ID's en referenties).
+        # setReferenceKeys slaat een lege pipeline over: zonder $match las en schreef hij de hele
+        # Single_Store en overschreef zo de keys van de parallelle taken (issue 88).
         SET_KEYS_PIPELINES: [[]] 
   },
   "Tekening": {
@@ -473,7 +483,7 @@ wasstraat_model = {
         MOVEANDMERGE_GENERATE_MISSING_PIPELINES: [
             [ 
                 { '$match': {'doosnr': { '$exists': {"$toBool": 1} }, 'soort': "Artefact"}},   
-                { '$match': {'doosnr': {"＄ne": 0}}},   
+                { '$match': {'doosnr': {"$ne": 0}}},   
                 { '$group':{'_id': {"projectcd" : "$projectcd", 'doosnr': "$doosnr"}}},
                 { '$unwind': "$_id"},
                 { '$project': {'_id': 0, 'projectcd': "$_id.projectcd", 'doosnr': "$_id.doosnr"}},

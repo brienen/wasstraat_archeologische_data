@@ -1,16 +1,35 @@
 # Import installed packages
 import pymongo
 import shared.config as config
+import wasstraat.verwerkingsrun as verwerkingsrun
 import logging
 
 logger = logging.getLogger("airflow.task")
 
-def dropAll():
-    try: 
-        myclient = pymongo.MongoClient(str(config.MONGO_URI))
+# Collecties in de staging-database die de volledige cyclus laat staan: de run-documenten
+# (issue 54), zodat de run die de cyclus zelf heeft gestart en de geschiedenis van runs en
+# verwerkingsrapporten bewaard blijven
+BEWAARDE_STAGING_COLLECTIES = [verwerkingsrun.COLL_VERWERKINGSRUNS]
 
-        logger.info("Deleting: " + str(config.DB_STAGING))
-        myclient.drop_database(str(config.DB_STAGING))
+
+def dropAll():
+    """Taak Drop_All_Databases: leeg de staging-, bestanden- en analysedatabase van MongoDB.
+
+    De run-documenten (BEWAARDE_STAGING_COLLECTIES) blijven staan. Een fout is
+    cruciaal (issue 54): zonder lege databases zou de extractie bovenop de oude
+    gegevens inlezen en ontstaan dubbele records.
+
+    Raises:
+        Exception: als het legen mislukt
+    """
+    myclient = pymongo.MongoClient(str(config.MONGO_URI))
+    try:
+        stagingdb = myclient[str(config.DB_STAGING)]
+        for naam in stagingdb.list_collection_names():
+            if naam in BEWAARDE_STAGING_COLLECTIES or naam.startswith('system.'):
+                continue
+            logger.info(f"Deleting: {config.DB_STAGING}.{naam}")
+            stagingdb.drop_collection(naam)
 
         logger.info("Deleting: " + str(config.DB_FILES))
         myclient.drop_database(str(config.DB_FILES))
@@ -20,7 +39,8 @@ def dropAll():
 
     except Exception as err:
         msg = "Fout bij het verwijderen van alle databases met melding: " + str(err)
-        logger.error(msg)    
+        logger.error(msg)
+        raise Exception(msg) from err
     finally:
         myclient.close()
 

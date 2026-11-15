@@ -10,7 +10,8 @@ Deze pagina beschrijft hoe je een eerste set proefdata kunt inlezen, transformer
 Zorg dat alle Docker-containers draaien:
 
 ```bash
-make dev    # Of: make app
+make delft  # Eigen data uit data/delft/
+make app    # Of: alleen de synthetische voorbeelddata
 ```
 
 Controleer of alle services actief zijn:
@@ -24,14 +25,15 @@ Je zou minimaal de volgende containers moeten zien:
 - `wasstraat_postgres` (poort 5432)
 - `wasstraat_mongo` (poort 27017)
 - `wasstraat_airflow` (poort 8080)
-- `wasstraat_flask` (poort 5051)
+- `wasstraat_flask` (geen hostpoort, bereikbaar via Apache)
+- `wasstraat_apache` (poort 5052, de voordeur van de webapplicatie)
 - `wasstraat_elasticsearch` (poort 9200)
 
 ## Stap 1: Bronbestanden klaarzetten
 
 ### Locatie van invoerdata
 
-De Airflow-container verwacht invoerdata op specifieke paden. Deze worden via Docker-volumes gemount vanuit de `data/delft/data/` directory:
+De Airflow-container verwacht invoerdata op specifieke paden. Bij `make delft` worden die via Docker-volumes gemount vanuit de `data/delft/data/` directory. De lege mappen staan al in de repository. `make app` gebruikt in plaats daarvan `data/synthetic/data/`.
 
 ```
 data/delft/data/
@@ -68,9 +70,9 @@ Je ziet een overzicht van alle beschikbare DAGs. De belangrijkste voor het eerst
 | DAG | Beschrijving | Gebruik |
 |-----|-------------|---------|
 | `Extract_Transform_Load_Full_Cycle` | Volledige pipeline (extract + transform + load) | Eerste keer, volledige run |
-| `Extract_Only` | Alleen extractie uit bronbestanden | Testen of extractie werkt |
-| `Transform1_Harmonize_Only` | Alleen veldnaam-harmonisatie | Stapsgewijs debuggen |
-| `Load_Only` | Alleen laden naar PostgreSQL | Na handmatige correcties in MongoDB |
+| `Extract_only` | Alleen extractie uit bronbestanden | Testen of extractie werkt |
+| `DAG_Transform1_Harmonize_Only` | Alleen veldnaam-harmonisatie | Stapsgewijs debuggen |
+| `DAG_Load_Only` | Alleen laden naar PostgreSQL | Na handmatige correcties in MongoDB |
 
 ## Stap 3: Volledige ETL-cyclus starten
 
@@ -87,19 +89,23 @@ Je kunt de voortgang volgen in de **Graph**-weergave. Elke stap wordt groen bij 
 Als je stap voor stap wilt werken, kun je de individuele DAGs in volgorde starten:
 
 ```
-1. Extract_Only                      → Laadt ruwe data in MongoDB
-2. Transform1_Harmonize_Only         → Harmoniseert veldnamen
-3. Transform2_Enhance_Attributes_Only → Schoont attributen op
-4. Transform3_Keys_Only              → Genereert unieke sleutels
-5. Transform_Move_Only               → Verplaatst en merged data
-6. Transform4_Refs_Only              → Zet referenties om
-7. Load_Only                         → Laadt naar PostgreSQL + Elasticsearch
+1. Extract_only                          → Laadt ruwe data in MongoDB
+2. DAG_Transform1_Harmonize_Only         → Harmoniseert veldnamen
+3. DAG_Transform2_Enhance_Attributes_Only → Schoont attributen op
+4. DAG_Transform3_Keys_Only              → Genereert unieke sleutels
+5. DAG_Transform_Move_Only               → Verplaatst en merged data
+6. DAG_Transform4_Refs_Only              → Zet referenties om
+7. DAG_Load_Only                         → Laadt naar PostgreSQL + Elasticsearch
 ```
 
 !!! warning "Volgorde is belangrijk"
-    De transformatiestappen moeten in de juiste volgorde worden uitgevoerd. Elke stap bouwt voort op het resultaat van de vorige. De volledige ETL-cyclus DAG handelt deze volgorde automatisch af.
+    De transformatiestappen moeten in de juiste volgorde worden uitgevoerd. Elke stap bouwt voort op het resultaat van de vorige. De volledige ETL-cyclus DAG handelt deze volgorde automatisch af. De losse DAG's hebben geen run-document en geen verwerkingsrapport en registreren de bronbestanden niet; draai daarna weer de volledige cyclus voordat je de incrementele cyclus gebruikt.
 
 ## Stap 4: Verwerking volgen
+
+### Verwerkingsrapport
+
+Elke run van de volledige cyclus, de incrementele cyclus en `DAG_Load_Only` eindigt, ook na een fout, met een verwerkingsrapport in `data/<omgeving>/output/rapporten/` (Markdown en JSON). Het noemt de uitkomst, de taak die een mislukte run stopte, de bronbestanden die niet of maar deels verwerkt zijn (onleesbare databases, overgeslagen tabellen, mislukte foto's, paden uit `paden_overslaan`), de aantallen per tabel en de doorlooptijd per stap. Begin daar bij een proefrun. Zie [Foutbeleid en verwerkingsrapport](../componenten/verwerkingsrapport.md).
 
 ### Airflow task logs
 
@@ -114,22 +120,22 @@ Klik in de Airflow UI op een specifieke task om de logs te bekijken. Hier zie je
 Je kunt de tussenresultaten direct in MongoDB bekijken:
 
 ```bash
-# Verbind met MongoDB in de container
+# Verbind met MongoDB in de container (gebruiker en wachtwoord staan in config/mongo.env)
 docker exec -it wasstraat_mongo mongosh \
-  --username <user> --password <wachtwoord> --authenticationDatabase admin
+  --username root --password <wachtwoord> --authenticationDatabase admin
 
 # Bekijk beschikbare databases
 show dbs
 
 # Bekijk staging-collecties
-use staging
+use Arch_Staging
 show collections
 
 # Tel records per collectie
 db.getCollectionNames().forEach(c => print(c + ": " + db[c].countDocuments()))
 
 # Bekijk een voorbeeld-record
-db.Project.findOne()
+db.Staging_Projecten_Projectenlijst.findOne()
 ```
 
 ### PostgreSQL controleren
@@ -138,7 +144,7 @@ Na de laadstap kun je de definitieve tabellen controleren:
 
 ```bash
 # Verbind met PostgreSQL in de container
-docker exec -it wasstraat_postgres psql -U airflow -d flask
+docker exec -it -u postgres wasstraat_postgres psql -d flask
 
 # Lijst van tabellen
 \dt public."Def_*"
@@ -155,10 +161,10 @@ SELECT 'Def_Vondst', count(*) FROM public."Def_Vondst";
 
 ## Stap 5: Data bekijken in de web-applicatie
 
-Na succesvolle verwerking is de data beschikbaar in de Flask-applicatie:
+Na succesvolle verwerking is de data beschikbaar in de Flask-applicatie, via Apache:
 
 ```
-http://localhost:5051
+http://localhost:5052
 ```
 
 ### Wat je ziet
@@ -184,11 +190,11 @@ curl -s http://localhost:9200/_count | python3 -m json.tool
 
 ### Extractie mislukt
 
-**Probleem**: `Extract_Data_From_Projecten` faalt met `mdb-export` error.
+**Probleem**: een database wordt niet ingelezen: een `ERROR` in het log van `Extract_Data_From_Projecten` en een waarschuwing van `Controleer_Databases`.
 
 **Oorzaak**: Het `.mdb` bestand is mogelijk corrupt of in een niet-ondersteund formaat.
 
-**Oplossing**: Controleer of het bestand een geldig Access 2000/2003 bestand is. De `mdbtools`-suite ondersteunt geen `.accdb` (Access 2007+) bestanden.
+**Oplossing**: Controleer of het bestand een geldig Access 2000/2003 bestand is. De `mdbtools`-suite werkt het best met `.mdb`-bestanden; `.accdb`-bestanden (Access 2007+) worden beperkt ondersteund. Een onleesbare database stopt de run niet: de taak `Controleer_Databases` telt hem als waarschuwing en het verwerkingsrapport noemt hem. Pas boven de drempel (`AIRFLOW_MAX_MISLUKTE_DATABASES`, standaard 2 databases of 5 procent) stopt de run.
 
 ### MongoDB-verbinding faalt
 
@@ -212,7 +218,7 @@ curl -s http://localhost:9200/_count | python3 -m json.tool
 
 **Oorzaak**: De Elasticsearch-index is niet opgebouwd na de Load-stap.
 
-**Oplossing**: Controleer of Elasticsearch draait (`curl localhost:9200`) en herstart eventueel de Load-stap.
+**Oplossing**: Controleer of Elasticsearch draait (`curl localhost:9200`) en draai `DAG_Load_Only`; die laadt en indexeert opnieuw uit `Single_Store_Clean`.
 
 ## Jupyter Notebooks voor Exploratie
 
@@ -229,4 +235,4 @@ De notebook-omgeving heeft toegang tot:
 - De gedeelde configuratie (via `/home/jovyan/shared/`)
 - De Wasstraat-configuratie (via `/home/jovyan/wasstraat_config/`)
 
-Er zijn 68+ bestaande notebooks beschikbaar in de `notebooks/` directory die voorbeelden bevatten van data-exploratie, transformatie-validatie en analyse.
+Log in met het token uit `config/jupyter.env` (variabele `JUPYTER_PASSWORD`). Er zijn ruim 20 notebooks beschikbaar in de `notebooks/` directory met voorbeelden van data-exploratie, transformatie-validatie en analyse.

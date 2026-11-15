@@ -8,7 +8,16 @@ import wasstraat.meta as meta
 import wasstraat.merge_functions as merge_functions
 
 
-def getMoveAndMergeTaskGroup():
+def getMoveAndMergeTaskGroup(incrementeel=False):
+    """Maak de taakgroep voor Transform 5 (verplaatsen en samenvoegen naar Single_Store_Clean).
+
+    Args:
+        incrementeel: als True wordt Single_Store_Clean niet geleegd, verplaatsen
+            de taken alleen de delta-documenten, voegen ze alleen de geraakte
+            sleutels opnieuw samen en genereren ze ontbrekende entiteiten alleen
+            voor de geraakte projecten van de actieve verwerkingsrun (incrementele cyclus)
+    """
+    delta_kwargs = {'incrementeel': True} if incrementeel else {}
 
     tg1 = TaskGroup(group_id='Transform5_Move_And_Merge_Group')
     with tg1:
@@ -17,11 +26,16 @@ def getMoveAndMergeTaskGroup():
         middle2 = DummyOperator(task_id="middle2")
         last = DummyOperator(task_id="last")
 
-        Drop_SingleStoreClean = PythonOperator(
-            task_id='Drop_SingleStoreClean',
-            python_callable=mongoUtils.dropSingleStoreClean
-        )
-        first >> Drop_SingleStoreClean
+        if incrementeel:
+            # Single_Store_Clean blijft staan; alleen de delta wordt bijgewerkt
+            start_move = first
+        else:
+            Drop_SingleStoreClean = PythonOperator(
+                task_id='Drop_SingleStoreClean',
+                python_callable=mongoUtils.dropSingleStoreClean
+            )
+            first >> Drop_SingleStoreClean
+            start_move = Drop_SingleStoreClean
 
         Set_Index_SingleStoreClean = PythonOperator(
             task_id='Set_Index_SingleStoreClean',
@@ -37,9 +51,9 @@ def getMoveAndMergeTaskGroup():
             tsk = PythonOperator(
                 task_id=f'Move_{obj_type}',
                 python_callable=merge_functions.moveSoort,
-                op_kwargs={'soort': obj_type}
+                op_kwargs=dict({'soort': obj_type}, **delta_kwargs)
             )
-            Drop_SingleStoreClean >> tsk >> Set_Index_SingleStoreClean
+            start_move >> tsk >> Set_Index_SingleStoreClean
 
         #obj_types = ['Artefact', 'Vondst'] ## Fix this in meta or in harmonizet
         obj_types = meta.getKeys(meta.MOVEANDMERGE_MERGE)
@@ -47,13 +61,14 @@ def getMoveAndMergeTaskGroup():
             tsk = PythonOperator(
                 task_id=f'Merge_{obj_type}',
                 python_callable=merge_functions.mergeSoort,
-                op_kwargs={'soort': obj_type}
+                op_kwargs=dict({'soort': obj_type}, **delta_kwargs)
             )
             middle1 >> tsk >> middle2
 
         MergeFotoinfo = PythonOperator(
             task_id='MergeFotoinfo',
-            python_callable=merge_functions.mergeFotoinfo
+            python_callable=merge_functions.mergeFotoinfo,
+            op_kwargs=delta_kwargs,
         )
         middle1 >> MergeFotoinfo >> middle2
 
@@ -62,7 +77,7 @@ def getMoveAndMergeTaskGroup():
             tsk = PythonOperator(
                 task_id=f'Generate_Missing_{obj_type}',
                 python_callable=merge_functions.mergeMissing,
-                op_kwargs={'soort': obj_type}
+                op_kwargs=dict({'soort': obj_type}, **delta_kwargs)
             )
             middle2 >> tsk >> last
 

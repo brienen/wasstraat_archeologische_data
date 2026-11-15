@@ -49,7 +49,17 @@ def initSequences():
 
 
 def init():
-    logger.info("Initializing Redundant Data in 6 phases (might take a few minutes)...")
+    """Bereken de afgeleide velden (aantal_fotos, aantal_artefacten, dateringen) opnieuw met de ORM.
+
+    Vangnet: de pipeline berekent deze velden normaal al na elke load, in de
+    volledige én de incrementele cyclus, met set-based SQL en dezelfde uitkomst
+    (airflow_app/dags/wasstraat/loadToDatabase_functions.py,
+    herberekenAfgeleideVelden, issue 72). Let op: de observers van models.py
+    doen mee bij elke flush van een gewijzigd artefact en vullen zo de
+    vondst- en spoordatering in datering_vanaf/_tot in.
+    """
+    logger.info("Afgeleide velden opnieuw berekenen in 6 fasen (vangnet; normaal doet de pipeline dit "
+                "na elke load, zie herberekenAfgeleideVelden). Dit kan enkele minuten duren...")
     db = create_engine(config.SQLALCHEMY_DATABASE_URI)
     try: 
         Session = sessionmaker(bind=db)
@@ -134,20 +144,28 @@ def indexAll() :
 
 
 def initIfNotInit():
+    """Vul bij het starten van Flask zo nodig de afgeleide velden en de zoekindex (vangnet).
+
+    De afgeleide velden worden alleen berekend (init) als geen enkel artefact
+    aantal_fotos > 0 heeft. Normaal heeft de pipeline ze dan al gevuld; init
+    draait alleen nog bij data zonder objectfoto's of een database die is
+    geladen vóór issue 72, en geeft dan dezelfde uitkomst.
+    """
     logger.info("Initializing if...")
     db = create_engine(config.SQLALCHEMY_DATABASE_URI)
     try: 
         Session = sessionmaker(bind=db)
         session = Session()
 
-        # Set aantal foto's per artefact
-        logger.info(f"Setting redundant data, first check...")
+        # Afgeleide velden: normaal al gevuld door de pipeline (herberekenAfgeleideVelden)
+        logger.info(f"Afgeleide velden controleren (normaal gevuld door de pipeline na elke load)...")
         cnt = session.query(Artefact).filter(Artefact.aantal_fotos > 0).count()
         if cnt == 0:
-            logger.info(f"No count of aantal foto's found: initializing count aantal foto's")
+            logger.info(f"Geen artefact met aantal_fotos > 0: afgeleide velden worden als vangnet opnieuw "
+                        f"berekend (data zonder objectfoto's of een load van vóór issue 72).")
             init()
         else:
-            logger.info(f"Count of aantal foto's found: not initializing.")
+            logger.info(f"Afgeleide velden zijn gevuld (door de pipeline): niet opnieuw berekend.")
 
     except Exception as e:
         session.rollback()

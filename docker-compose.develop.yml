@@ -17,6 +17,9 @@ services:
       
   flask:
     entrypoint: bash -c "while true; do sleep 1; done"  # Infinite loop to keep container live doing nothing
+    # Alleen voor debuggen rechtstreeks op Flask; normaal loopt alles via Apache op 5052
+    ports:
+      - "5051:5051"
     environment: 
       - FLASK_APP=app/app.py
       - env=dev

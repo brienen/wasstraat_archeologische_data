@@ -1,1 +1,30 @@
-# Testdata — geen correcties nodig
+# Correcties voor Delftse testdata (DB034)
+#
+# Minimale configuratie: alleen rapportcode-prefixen nodig voor
+# herkenning van DAR/DAN-bestanden in data/test/data/rapporten/.
+
+# Geen projectcode-correcties nodig — DB034 is consistent.
+# projectcode_correcties: []
+
+# Geen brondata-correcties nodig.
+# brondata_correcties: []
+
+# Rapportcode-prefixen voor bestandsclassificatie
+rapportcode_prefixen:
+  - prefix: "DAR"
+    type: "archeologische_rapportage"
+  - prefix: "DAN"
+    type: "archeologische_notitie"
+
+# Paden die de extractie overslaat (issue 84): glob-patronen relatief aan de invoermap, bijvoorbeeld
+# "DC024_Stadskantoor/K Overig/werkmap joris" of "**/werkmap*". De testdata (DB034) heeft geen
+# kopieën van databases, dus er wordt niets overgeslagen.
+paden_overslaan: []
+
+# Voorrang bij de harmonisatie (issue 89): tabelnaam → soort, of een lege waarde voor geen enkele soort.
+# Zoals in de Delftse configuratie (issue 75): de codetabellen van het aardewerk in opgravingDB34.mdb
+# (voorwerpen, 96 rijen, en baksels, 46 rijen) zijn referentiedata en worden niet als artefact
+# geharmoniseerd; ze blijven in de staging staan.
+harmonisatie_voorrang:
+  "AARDEWERK 1&2 VOORWERP":
+  "AARDEWERK 1 BAKSEL":

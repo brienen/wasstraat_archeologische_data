@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="910" viewBox="0 0 1400 910" font-family="Lato, 'Helvetica Neue', Arial, sans-serif" role="img" aria-label="Gegevensmodel in PostgreSQL (database flask)">
+<title>Gegevensmodel in PostgreSQL (database flask)</title>
+<defs>
+<marker id="pijl" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#4d5656"/></marker>
+<marker id="pijlbegin" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#4d5656"/></marker>
+</defs>
+<rect x="0" y="0" width="1400" height="910" fill="#ffffff"/>
+<text x="24" y="34" font-size="19" font-weight="bold" fill="#1c2833">Gegevensmodel in PostgreSQL (database flask)</text>
+<rect x="40" y="62" width="1320" height="46" rx="4" ry="4" fill="#eaf2fb" stroke="#2471a3" stroke-width="1.6"/>
+<text x="700.0" y="82" text-anchor="middle" font-size="13" font-weight="bold" fill="#1c2833">Def_Project</text>
+<text x="700.0" y="99" text-anchor="middle" font-size="11.5" fill="#283747">projectcode, naam, jaar, locatie (PostGIS), aantal_artefacten; vrijwel elke tabel verwijst ernaar met projectID</text>
+<rect x="180" y="150" width="200" height="58" rx="4" ry="4" fill="#eaf2fb" stroke="#2471a3" stroke-width="1.6"/>
+<text x="280.0" y="170" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#1c2833">Def_Vindplaats</text>
+<text x="280.0" y="187" text-anchor="middle" font-size="11.5" fill="#283747">projectcd als tekst</text>
+<rect x="420" y="150" width="200" height="58" rx="4" ry="4" fill="#eaf2fb" stroke="#2471a3" stroke-width="1.6"/>
+<text x="520.0" y="170" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#1c2833">Def_Put</text>
+<text x="520.0" y="187" text-anchor="middle" font-size="11.5" fill="#283747">projectID</text>
+<rect x="1150" y="150" width="200" height="58" rx="4" ry="4" fill="#f2f3f4" stroke="#707b7c" stroke-width="1.6"/>
+<text x="1250.0" y="170" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#1c2833">Def_Bronbestand</text>
+<text x="1250.0" y="187" text-anchor="middle" font-size="11.5" fill="#283747">registratie van bronbestanden</text>
+<rect x="180" y="250" width="200" height="58" rx="4" ry="4" fill="#eaf2fb" stroke="#2471a3" stroke-width="1.6"/>
+<text x="280.0" y="270" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#1c2833">Def_Vlak</text>
+<text x="280.0" y="287" text-anchor="middle" font-size="11.5" fill="#283747">projectID, putID</text>
+<rect x="420" y="250" width="200" height="58" rx="4" ry="4" fill="#eaf2fb" stroke="#2471a3" stroke-width="1.6"/>
+<text x="520.0" y="270" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#1c2833">Def_Spoor</text>
+<text x="520.0" y="287" text-anchor="middle" font-size="11.5" fill="#283747">projectID, putID, vlakID</text>
+<rect x="660" y="250" width="200" height="58" rx="4" ry="4" fill="#eaf2fb" stroke="#2471a3" stroke-width="1.6"/>
+<text x="760.0" y="270" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#1c2833">Def_Vondst</text>
+<text x="760.0" y="287" text-anchor="middle" font-size="11.5" fill="#283747">projectID, putID, spoorID</text>
+<rect x="900" y="250" width="200" height="70" rx="4" ry="4" fill="#eaf2fb" stroke="#2471a3" stroke-width="1.6"/>
+<text x="1000.0" y="270" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#1c2833">Def_Monster</text>
+<text x="1000.0" y="287" text-anchor="middle" font-size="11.5" fill="#283747">projectID, putID, spoorID,</text>
+<text x="1000.0" y="302" text-anchor="middle" font-size="11.5" fill="#283747">vondstID, doosID</text>
+<rect x="1150" y="250" width="200" height="58" rx="4" ry="4" fill="#eaf2fb" stroke="#2471a3" stroke-width="1.6"/>
+<text x="1250.0" y="270" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#1c2833">Def_Monster_Schelp</text>
+<text x="1250.0" y="287" text-anchor="middle" font-size="11.5" fill="#283747">monsterID, dt_soort_schelpID</text>
+<rect x="180" y="360" width="200" height="58" rx="4" ry="4" fill="#eaf2fb" stroke="#2471a3" stroke-width="1.6"/>
+<text x="280.0" y="380" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#1c2833">Def_Vulling</text>
+<text x="280.0" y="397" text-anchor="middle" font-size="11.5" fill="#283747">projectID, putID, spoorID</text>
+<rect x="420" y="360" width="200" height="70" rx="4" ry="4" fill="#eaf2fb" stroke="#2471a3" stroke-width="1.6"/>
+<text x="520.0" y="380" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#1c2833">Def_Bestand</text>
+<text x="520.0" y="397" text-anchor="middle" font-size="11.5" fill="#283747">bestandsoort: foto, tekening,</text>
+<text x="520.0" y="412" text-anchor="middle" font-size="11.5" fill="#283747">rapport; projectID, artefactID</text>
+<rect x="660" y="360" width="200" height="70" rx="4" ry="4" fill="#eaf2fb" stroke="#2471a3" stroke-width="1.6"/>
+<text x="760.0" y="380" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#1c2833">Def_Artefact</text>
+<text x="760.0" y="397" text-anchor="middle" font-size="11.5" fill="#283747">artefactsoort: 14 soorten;</text>
+<text x="760.0" y="412" text-anchor="middle" font-size="11.5" fill="#283747">projectID, putID, vondstID, doosID</text>
+<rect x="900" y="360" width="200" height="70" rx="4" ry="4" fill="#eaf2fb" stroke="#2471a3" stroke-width="1.6"/>
+<text x="1000.0" y="380" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#1c2833">Def_Monster_Botanie</text>
+<text x="1000.0" y="397" text-anchor="middle" font-size="11.5" fill="#283747">monsterID, dt_soort_plantID,</text>
+<text x="1000.0" y="412" text-anchor="middle" font-size="11.5" fill="#283747">dt_soort_deelID, dt_soort_staatID</text>
+<rect x="1150" y="360" width="200" height="58" rx="4" ry="4" fill="#eaf2fb" stroke="#2471a3" stroke-width="1.6"/>
+<text x="1250.0" y="380" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#1c2833">Def_DT_Soort_Schelp</text>
+<text x="1250.0" y="397" text-anchor="middle" font-size="11.5" fill="#283747">referentielijst</text>
+<rect x="180" y="480" width="200" height="58" rx="4" ry="4" fill="#eaf2fb" stroke="#2471a3" stroke-width="1.6"/>
+<text x="280.0" y="500" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#1c2833">Def_Stelling</text>
+<text x="280.0" y="517" text-anchor="middle" font-size="11.5" fill="#283747">magazijnlijst</text>
+<rect x="420" y="480" width="200" height="58" rx="4" ry="4" fill="#eaf2fb" stroke="#2471a3" stroke-width="1.6"/>
+<text x="520.0" y="500" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#1c2833">Def_Doos</text>
+<text x="520.0" y="517" text-anchor="middle" font-size="11.5" fill="#283747">projectID, stellingID</text>
+<rect x="660" y="480" width="200" height="58" rx="4" ry="4" fill="#eaf2fb" stroke="#2471a3" stroke-width="1.6"/>
+<text x="760.0" y="500" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#1c2833">Def_ABR</text>
+<text x="760.0" y="517" text-anchor="middle" font-size="11.5" fill="#283747">ABR-thesaurus; parentID</text>
+<rect x="900" y="480" width="150" height="58" rx="4" ry="4" fill="#eaf2fb" stroke="#2471a3" stroke-width="1.6"/>
+<text x="975.0" y="500" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#1c2833">Def_DT_Soort_Plant</text>
+<text x="975.0" y="517" text-anchor="middle" font-size="11.5" fill="#283747">referentielijst</text>
+<rect x="1070" y="480" width="150" height="58" rx="4" ry="4" fill="#eaf2fb" stroke="#2471a3" stroke-width="1.6"/>
+<text x="1145.0" y="500" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#1c2833">Def_DT_Soort_Deel</text>
+<text x="1145.0" y="517" text-anchor="middle" font-size="11.5" fill="#283747">referentielijst</text>
+<rect x="1240" y="480" width="140" height="58" rx="4" ry="4" fill="#eaf2fb" stroke="#2471a3" stroke-width="1.6"/>
+<text x="1310.0" y="500" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#1c2833">Def_DT_Soort_Staat</text>
+<text x="1310.0" y="517" text-anchor="middle" font-size="11.5" fill="#283747">referentielijst</text>
+<rect x="180" y="580" width="200" height="58" rx="4" ry="4" fill="#eaf2fb" stroke="#2471a3" stroke-width="1.6"/>
+<text x="280.0" y="600" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#1c2833">Def_Standplaats</text>
+<text x="280.0" y="617" text-anchor="middle" font-size="11.5" fill="#283747">stelling, vak, volgletter</text>
+<rect x="420" y="580" width="200" height="58" rx="4" ry="4" fill="#eaf2fb" stroke="#2471a3" stroke-width="1.6"/>
+<text x="520.0" y="600" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#1c2833">Def_Plaatsing</text>
+<text x="520.0" y="617" text-anchor="middle" font-size="11.5" fill="#283747">regel van de magazijnlijst</text>
+<rect x="160" y="700" width="1220" height="120" rx="12" ry="12" fill="#f5eef8" fill-opacity="0.55" stroke="#7d3c98" stroke-width="1.2" stroke-dasharray="4 3"/>
+<text x="172" y="718" font-size="12.5" font-weight="bold" fill="#7d3c98">Gebruikerstabellen: ingevoerd in de webapplicatie, blijven staan bij elke cyclus</text>
+<rect x="180" y="735" width="200" height="70" rx="4" ry="4" fill="#f5eef8" stroke="#7d3c98" stroke-width="1.6"/>
+<text x="280.0" y="755" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#1c2833">Def_Bruikleen</text>
+<text x="280.0" y="772" text-anchor="middle" font-size="11.5" fill="#283747">partijID, artefactID, projectID;</text>
+<text x="280.0" y="787" text-anchor="middle" font-size="11.5" fill="#283747">markering *_verdwenen_key/_op</text>
+<rect x="420" y="735" width="200" height="58" rx="4" ry="4" fill="#f5eef8" stroke="#7d3c98" stroke-width="1.6"/>
+<text x="520.0" y="755" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#1c2833">Def_Partij</text>
+<text x="520.0" y="772" text-anchor="middle" font-size="11.5" fill="#283747">naam, adres, contactpersoon</text>
+<rect x="660" y="735" width="200" height="58" rx="4" ry="4" fill="#f5eef8" stroke="#7d3c98" stroke-width="1.6"/>
+<text x="760.0" y="755" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#1c2833">Def_Conserveringsproject</text>
+<text x="760.0" y="772" text-anchor="middle" font-size="11.5" fill="#283747">uitvoerderID</text>
+<rect x="900" y="735" width="200" height="70" rx="4" ry="4" fill="#fbf7fc" stroke="#7d3c98" stroke-width="1.6" stroke-dasharray="6 4"/>
+<text x="1000.0" y="755" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#1c2833">Def_artefact_conservering</text>
+<text x="1000.0" y="772" text-anchor="middle" font-size="11.5" fill="#283747">conservering_id, artefact_id;</text>
+<text x="1000.0" y="787" text-anchor="middle" font-size="11.5" fill="#283747">markering artefact_verdwenen_*</text>
+<rect x="1150" y="735" width="200" height="70" rx="4" ry="4" fill="#fbf7fc" stroke="#7d3c98" stroke-width="1.6" stroke-dasharray="6 4"/>
+<text x="1250.0" y="755" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#1c2833">Def_artefact_abr</text>
+<text x="1250.0" y="772" text-anchor="middle" font-size="11.5" fill="#283747">artefact_id, abr_materiaal_id</text>
+<text x="1250.0" y="787" text-anchor="middle" font-size="11.5" fill="#283747">(extra ABR-materialen)</text>
+<polyline points="520,150 520,108" fill="none" stroke="#4d5656" stroke-width="1.5" marker-end="url(#pijl)"/>
+<polyline points="420,279 380,279" fill="none" stroke="#4d5656" stroke-width="1.5" marker-end="url(#pijl)"/>
+<polyline points="280,250 280,226 470,226 470,208" fill="none" stroke="#4d5656" stroke-width="1.5" marker-end="url(#pijl)"/>
+<polyline points="520,250 520,208" fill="none" stroke="#4d5656" stroke-width="1.5" marker-end="url(#pijl)"/>
+<polyline points="660,279 620,279" fill="none" stroke="#4d5656" stroke-width="1.5" marker-end="url(#pijl)"/>
+<polyline points="280,360 280,338 450,338 450,308" fill="none" stroke="#4d5656" stroke-width="1.5" marker-end="url(#pijl)"/>
+<polyline points="760,360 760,308" fill="none" stroke="#4d5656" stroke-width="1.5" marker-end="url(#pijl)"/>
+<polyline points="900,285 860,285" fill="none" stroke="#4d5656" stroke-width="1.5" marker-end="url(#pijl)"/>
+<polyline points="1000,360 1000,320" fill="none" stroke="#4d5656" stroke-width="1.5" marker-end="url(#pijl)"/>
+<polyline points="1150,279 1100,279" fill="none" stroke="#4d5656" stroke-width="1.5" marker-end="url(#pijl)"/>
+<polyline points="1250,308 1250,360" fill="none" stroke="#4d5656" stroke-width="1.5" marker-end="url(#pijl)"/>
+<polyline points="620,380 660,380" fill="none" stroke="#4d5656" stroke-width="1.5" marker-end="url(#pijl)"/>
+<polyline points="760,430 760,480" fill="none" stroke="#4d5656" stroke-width="1.5" marker-end="url(#pijl)"/>
+<polyline points="700,430 700,446 540,446 540,480" fill="none" stroke="#4d5656" stroke-width="1.5" marker-end="url(#pijl)"/>
+<polyline points="960,320 960,342 884,342 884,464 590,464 590,480" fill="none" stroke="#4d5656" stroke-width="1.5" marker-end="url(#pijl)"/>
+<polyline points="420,509 380,509" fill="none" stroke="#4d5656" stroke-width="1.5" marker-end="url(#pijl)"/>
+<polyline points="975,430 975,480" fill="none" stroke="#4d5656" stroke-width="1.5" marker-end="url(#pijl)"/>
+<polyline points="1060,430 1140,480" fill="none" stroke="#4d5656" stroke-width="1.5" marker-end="url(#pijl)"/>
+<polyline points="1095,418 1300,480" fill="none" stroke="#4d5656" stroke-width="1.5" marker-end="url(#pijl)"/>
+<polyline points="860,500 885,500 885,524 860,524" fill="none" stroke="#4d5656" stroke-width="1.5" marker-end="url(#pijl)"/>
+<polyline points="420,765 380,765" fill="none" stroke="#4d5656" stroke-width="1.5" marker-end="url(#pijl)"/>
+<polyline points="660,765 620,765" fill="none" stroke="#4d5656" stroke-width="1.5" marker-end="url(#pijl)"/>
+<polyline points="900,765 860,765" fill="none" stroke="#4d5656" stroke-width="1.5" marker-end="url(#pijl)"/>
+<rect x="40" y="836" width="22" height="13" rx="8" ry="8" fill="#eaf2fb" stroke="#2471a3" stroke-width="1.6"/>
+<text x="70" y="847" text-anchor="start" font-size="11" fill="#283747">tabel van de pipeline (LOAD_TABELLEN)</text>
+<rect x="330" y="836" width="22" height="13" rx="8" ry="8" fill="#f5eef8" stroke="#7d3c98" stroke-width="1.6"/>
+<text x="360" y="847" text-anchor="start" font-size="11" fill="#283747">gebruikerstabel</text>
+<rect x="480" y="836" width="22" height="13" rx="8" ry="8" fill="#fbf7fc" stroke="#7d3c98" stroke-width="1.6" stroke-dasharray="6 4"/>
+<text x="510" y="847" text-anchor="start" font-size="11" fill="#283747">koppeltabel</text>
+<rect x="610" y="836" width="22" height="13" rx="8" ry="8" fill="#f2f3f4" stroke="#707b7c" stroke-width="1.6"/>
+<text x="640" y="847" text-anchor="start" font-size="11" fill="#283747">administratie van de pipeline</text>
+<text x="860" y="847" text-anchor="start" font-size="11" fill="#283747">Pijl: verwijzing (foreign key) naar de tabel waar de pijl naar wijst.</text>
+<text x="40" y="872" text-anchor="start" font-size="11" fill="#283747">Verwijzingen naar Def_Project en Def_Put en vanuit de gebruikerstabellen naar Def_Artefact, Def_Project en Def_ABR staan als kolomnaam in de kaders.</text>
+<text x="40" y="888" text-anchor="start" font-size="11" fill="#283747">Verdwijnt zo'n rij uit de brondata, dan wordt de verwijzing losgekoppeld met een markering; koppelrijen van Def_artefact_abr worden verwijderd.</text>
+</svg>

@@ -13,11 +13,16 @@
 #   make test-all         Draai unit + integratietests
 #   make docs             Start MkDocs dev-server
 #
-# Wasstraat draaien:
+# Wasstraat draaien (ontwikkelomgeving, met broncode-volumes):
 #   make app          Start de wasstraat (standaard)
 #   make dev          Start in development mode (met hot-reload)
 #   make stop         Stop alle containers
 #   make backup       Backup Postgres + MongoDB
+#
+# Publiceren (images voor de live installatie uit deploy/):
+#   make publish      Bouw multi-arch images en push naar ghcr.io/brienen
+#   make publish PUSH=0 SERVICE=flask   Alleen lokaal bouwen, één service
+#   make release VERSION=1.2.3 MSG="..."  Versie taggen, pushen en publiceren
 # ============================================================
 
 SHELL := /bin/bash
@@ -36,11 +41,60 @@ PYTEST := $(BIN)/python -m pytest
 DC := docker compose 
 COMPOSE_TEST := $(DC) -p wasstraat-test -f docker-compose.test.yml
 COMPOSE_DELFT := $(DC) -f docker-compose.delft.yml
+COMPOSE_DELFT_TEST := $(DC) -p wasstraat-delft-test -f docker-compose.delft-test.yml
+# MongoDB van de Delftse testomgeving (hostpoort 27118; de synthetische gebruikt 27117), zodat
+# beide testomgevingen tegelijk kunnen draaien. De integratietests lezen MONGO_TEST_URI.
+MONGO_TEST_URI_DELFT := mongodb://testroot:testpass@localhost:27118/
 DT := $(shell date +"%Y-%m-%d_%H-%M-%S")
+PG_CONTAINER ?= wasstraat_postgres
+
+# --- Publicatie van images (GitHub Container Registry) ---
+# 'make publish' bouwt de eigen images voor linux/amd64 en linux/arm64 en pusht ze naar
+# $(REGISTRY)/$(IMAGE_PREFIX)-<service>:<versie> en :latest. Inloggen gebeurt vooraf met
+# 'docker login ghcr.io'. Met PUSH=0 bouwt het alleen lokaal, voor dit platform.
+# Zie docs/deployment/omgevingen.md.
+REGISTRY ?= ghcr.io/brienen
+IMAGE_PREFIX ?= wasstraat
+# Jupyter is een ontwikkelvoorziening en wordt niet gepubliceerd
+IMAGES := airflow flask postgres apache
+SERVICE ?= $(IMAGES)
+PLATFORMS ?= linux/amd64,linux/arm64
+PUSH ?= 1
+NO_CACHE ?= 0
+BUILDER ?= wasstraat
+IMAGE_SOURCE ?= https://github.com/brienen/wasstraat_archeologische_data
+# Versie uit config/version.env; init-config.sh maakt dat bestand aan uit version.env.example
+VERSION ?= $(strip $(shell sed -n 's/^VERSION=//p' config/version.env config/version.env.example 2>/dev/null | head -1))
+ifeq ($(PUSH),1)
+PUBLISH_OPTS := --builder $(BUILDER) --platform $(PLATFORMS) --provenance=false --push
+PUBLISH_DOEL := bouwen voor $(PLATFORMS) en pushen naar $(REGISTRY) (vooraf: docker login ghcr.io)
+else
+PUBLISH_OPTS := --load
+PUBLISH_DOEL := lokaal bouwen voor dit platform, zonder te pushen
+endif
+ifeq ($(NO_CACHE),1)
+PUBLISH_OPTS += --no-cache --pull
+endif
+
+# --- Versie in het verwerkingsrapport (ontwikkelomgeving) ---
+# make app, make delft en make dev geven de versie uit config/version.env (anders
+# config/version.env.example, zie VERSION hierboven) als WASSTRAAT_VERSION mee aan Airflow;
+# de compose-bestanden zetten die in de Airflow-container.
+VERSIE_ENV := WASSTRAAT_VERSION=$(VERSION)
 
 # --- Init-config: genereer .env uit .env.example als ze nog niet bestaan ---
 define init-config
 	@if [ -f init-config.sh ]; then bash init-config.sh; fi
+endef
+
+# --- Wacht tot PostgreSQL en MongoDB verbindingen accepteren (max. 60 s per database) ---
+# Nodig direct na 'make start': de containers draaien dan al, maar de databases nog niet.
+define wacht-op-databases
+	@echo "➜ Wachten tot PostgreSQL en MongoDB klaar zijn..."
+	@for i in $$(seq 1 60); do docker exec -u postgres wasstraat_postgres pg_isready -q 2>/dev/null && break; sleep 1; done; \
+	docker exec -u postgres wasstraat_postgres pg_isready -q 2>/dev/null || { echo "✗ PostgreSQL is niet bereikbaar" >&2; exit 1; }
+	@for i in $$(seq 1 60); do docker exec wasstraat_mongo mongosh --quiet --eval 'db.adminCommand({ping: 1}).ok' >/dev/null 2>&1 && break; sleep 1; done; \
+	docker exec wasstraat_mongo mongosh --quiet --eval 'db.adminCommand({ping: 1}).ok' >/dev/null 2>&1 || { echo "✗ MongoDB is niet bereikbaar" >&2; exit 1; }
 endef
 
 # ============================================================
@@ -74,7 +128,7 @@ test-quick: install ## Draai unit tests (korte output)
 .PHONY: integration
 integration: install ## Draai volledige integratietests: Extract + Transform + Load + Flask
 	@echo "➜ Test-omgeving starten (synthetische data)..."
-	$(COMPOSE_TEST) up -d mongo-test postgres-test redis-test airflow-test flask-test
+	$(COMPOSE_TEST) up -d mongo-test postgres-test redis-test elasticsearch-test airflow-test flask-test apache-test
 	@echo "➜ Stap 1: Extract + Transform + Load pipeline..."
 	$(PYTEST) tests/integration/ \
 		-v -s -m "(integration or load) and not delft" --tb=short; \
@@ -101,7 +155,7 @@ integration-keep: install ## Zelfde als integration maar laat containers draaien
 .PHONY: integration-pipeline
 integration-pipeline: install ## Draai alleen Extract + Transform (zonder Load en Flask)
 	@echo "➜ Test-omgeving starten (synthetische data)..."
-	$(COMPOSE_TEST) up -d mongo-test postgres-test airflow-test flask-test
+	$(COMPOSE_TEST) up -d mongo-test postgres-test elasticsearch-test airflow-test flask-test apache-test
 	$(PYTEST) tests/integration/ \
 		-v -s -m "integration and not delft and not load" --tb=short; \
 	EXIT=$$?; \
@@ -112,7 +166,7 @@ integration-pipeline: install ## Draai alleen Extract + Transform (zonder Load e
 .PHONY: integration-load
 integration-load: install ## Draai Extract + Transform + Load (zonder Flask)
 	@echo "➜ Test-omgeving starten (inclusief Load)..."
-	$(COMPOSE_TEST) up -d mongo-test postgres-test airflow-test flask-test
+	$(COMPOSE_TEST) up -d mongo-test postgres-test elasticsearch-test airflow-test flask-test apache-test
 	$(PYTEST) tests/integration/test_full_pipeline_synthetic_data.py \
 		-v -s -m "integration or load" --tb=short; \
 	EXIT=$$?; \
@@ -121,22 +175,38 @@ integration-load: install ## Draai Extract + Transform + Load (zonder Flask)
 	exit $$EXIT
 
 .PHONY: integration-delft
-integration-delft: install ## Draai integratietests met echte Delftse data
-	@echo "➜ Delft test-omgeving starten..."
-	$(COMPOSE_DELFT) up -d
-	@echo "➜ Wachten tot services klaar zijn..."
-	$(PYTEST) tests/integration/ \
-		-v -s -m delft --tb=short; \
+integration-delft: install ## Draai volledige Delft-integratietests: Extract + Transform + Load + Flask
+	@echo "➜ Delft test-omgeving starten (data/test, project DB034)..."
+	$(COMPOSE_DELFT_TEST) up -d mongo-test postgres-test redis-test elasticsearch-test airflow-test flask-test apache-test
+	@echo "➜ Stap 1: Extract + Transform + Load pipeline..."
+	MONGO_TEST_URI=$(MONGO_TEST_URI_DELFT) $(PYTEST) tests/integration/ \
+		-v -s -m "(delft or delft_load) and not delft_flask" --tb=short; \
+	PIPE_EXIT=$$?; \
+	echo "➜ Stap 2: Flask smoke tests (vereist geladen PostgreSQL)..."; \
+	MONGO_TEST_URI=$(MONGO_TEST_URI_DELFT) $(PYTEST) tests/integration/ \
+		-v -s -m delft_flask --tb=short; \
+	FLASK_EXIT=$$?; \
+	echo "➜ Delft test-omgeving opruimen..."; \
+	$(COMPOSE_DELFT_TEST) down -v; \
+	if [ $$PIPE_EXIT -ne 0 ]; then exit $$PIPE_EXIT; fi; \
+	exit $$FLASK_EXIT
+
+.PHONY: integration-delft-pipeline
+integration-delft-pipeline: install ## Draai alleen Delft Extract + Transform (zonder Load en Flask)
+	@echo "➜ Delft test-omgeving starten (data/test, project DB034)..."
+	$(COMPOSE_DELFT_TEST) up -d mongo-test postgres-test elasticsearch-test airflow-test
+	MONGO_TEST_URI=$(MONGO_TEST_URI_DELFT) $(PYTEST) tests/integration/ \
+		-v -s -m "delft and not delft_load and not delft_flask" --tb=short; \
 	EXIT=$$?; \
 	echo "➜ Delft test-omgeving opruimen..."; \
-	$(COMPOSE_DELFT) down -v; \
+	$(COMPOSE_DELFT_TEST) down -v; \
 	exit $$EXIT
 
 .PHONY: test-flask
 test-flask: install ## Draai Flask smoke tests (NB: vereist geladen PostgreSQL, gebruik 'make integration')
 	@echo "➜ Flask test-omgeving starten..."
 	@echo "⚠  Let op: Flask tests vereisen geladen data. Gebruik 'make integration' voor de volledige suite."
-	$(COMPOSE_TEST) up -d postgres-test redis-test flask-test
+	$(COMPOSE_TEST) up -d postgres-test redis-test elasticsearch-test flask-test apache-test
 	@echo "➜ Wachten tot Flask klaar is..."
 	$(PYTEST) tests/integration/ \
 		-v -s -m flask_smoke --tb=short; \
@@ -155,6 +225,7 @@ test-all: test integration ## Draai unit tests + volledige integratie (Extract�
 .PHONY: synthetic
 synthetic: install ## Genereer synthetische voorbeelddata (MDB-bestanden)
 	@echo "➜ Synthetische data genereren..."
+	$(BIN)/pip install -r data/synthetic/generatie/requirements-synthetic.txt --quiet
 	JAVA_HOME=$$(brew --prefix openjdk 2>/dev/null || echo "/usr/lib/jvm/java-21-openjdk") \
 	PATH="$$(brew --prefix openjdk 2>/dev/null || echo "/usr/lib/jvm/java-21-openjdk")/bin:$$PATH" \
 	$(BIN)/python data/synthetic/generatie/generate_synthetic_data.py
@@ -187,35 +258,24 @@ build-force: ## Bouw alle Docker images opnieuw van de grond af aan (geen cache)
 	$(init-config)
 	$(DC) build --no-cache --pull postgres airflow flask jupyter apache
 
+.PHONY: constraints
+constraints: ## Leg nieuwe pakketversies vast voor Flask, Jupyter en Airflow (daarna: make test-all)
+	bash scripts/leg_pakketversies_vast.sh
+
 .PHONY: app
 app: ## Start de wasstraat (alle services, synthetische data)
 	$(init-config)
-	$(DC) up -d
+	$(VERSIE_ENV) $(DC) up -d
 
 .PHONY: delft
 delft: ## Start de wasstraat met Delftse data
 	$(init-config)
-	$(COMPOSE_DELFT) up -d
+	$(VERSIE_ENV) $(COMPOSE_DELFT) up -d
 
 .PHONY: dev
 dev: ## Start in development mode (met hot-reload volumes)
 	$(init-config)
-	$(DC) -f docker-compose.yml -f docker-compose.develop.yml up -d
-
-.PHONY: example
-example: ## Start met voorbeelddata
-	$(init-config)
-	$(DC) -f docker-compose.yml -f docker-compose.example.yml up -d
-
-.PHONY: acc
-acc: ## Start in acceptatie-omgeving
-	$(init-config)
-	$(DC) -f docker-compose.yml -f docker-compose.acc.yml up -d
-
-.PHONY: prod
-prod: ## Start in productie-omgeving
-	$(init-config)
-	$(DC) -f docker-compose.yml -f docker-compose.prod.yml up -d
+	$(VERSIE_ENV) $(DC) -f docker-compose.yml -f docker-compose.develop.yml up -d
 
 .PHONY: stop
 stop: ## Stop alle containers
@@ -242,9 +302,10 @@ ps: ## Toon status van alle services
 # ============================================================
 
 .PHONY: backup
-backup: ## Backup Postgres + MongoDB (naar backup/)
+backup: ## Backup Postgres + MongoDB (naar data/<omgeving>/backup/)
 	@echo "Backing up met timestamp $(DT)..."
 	$(DC) stop flask airflow
+	$(wacht-op-databases)
 	docker exec -u postgres -w /backup wasstraat_postgres bash -c \
 		"pg_dump -v -F t -f postgres_$(DT).tar flask"
 	docker exec -w /backup wasstraat_mongo bash -c \
@@ -254,7 +315,7 @@ backup: ## Backup Postgres + MongoDB (naar backup/)
 	docker exec -w /backup wasstraat_mongo bash -c \
 		"mongodump --uri mongodb://\$$MONGO_INITDB_ROOT_USERNAME:\$$MONGO_INITDB_ROOT_PASSWORD@localhost:27017/\$$DB_ANALYSE?authSource=admin --out mongo_$(DT)"
 	$(DC) start flask airflow
-	@echo "✓ Backup gereed: backup/postgres_$(DT).tar + backup/mongo_$(DT)/"
+	@echo "✓ Backup gereed in data/<omgeving>/backup/: postgres/postgres_$(DT).tar + mongo/mongo_$(DT)/"
 
 .PHONY: restore
 restore: ## Restore backup (gebruik: make restore TS=2025-01-15_10-30-00)
@@ -263,6 +324,7 @@ ifndef TS
 endif
 	@echo "Restoring backup van $(TS)..."
 	$(DC) stop flask airflow
+	$(wacht-op-databases)
 	docker exec -u postgres -w /backup wasstraat_postgres bash -c \
 		"pg_restore -Ft -c -v -d flask < postgres_$(TS).tar"
 	docker exec -w /backup wasstraat_mongo bash -c \
@@ -271,9 +333,10 @@ endif
 	@echo "✓ Restore gereed."
 
 .PHONY: export
-export: ## Exporteer Postgres tabellen naar CSV (backup/)
+export: ## Exporteer Postgres tabellen naar CSV (data/<omgeving>/backup/)
 	@echo "Exporting Postgres data naar CSV met timestamp $(DT)..."
 	$(DC) stop flask airflow
+	$(wacht-op-databases)
 	docker exec -u postgres -w /backup wasstraat_postgres bash -c "mkdir -p postgres_$(DT)"
 	@for table in Def_Vulling Def_Conserveringsproject Def_artefact_conservering \
 		Def_DT_Soort_Plant Def_Project Def_Put Def_Spoor Def_Vondst Def_Plaatsing \
@@ -286,30 +349,61 @@ export: ## Exporteer Postgres tabellen naar CSV (backup/)
 			"psql -t -d flask -c \"COPY public.\\\"$$table\\\" TO '/backup/postgres_$(DT)/$$table.csv' DELIMITER ';' CSV HEADER QUOTE '\"' ESCAPE '\"'; \""; \
 	done
 	$(DC) start flask airflow
-	@echo "✓ Export gereed: backup/postgres_$(DT)/"
+	@echo "✓ Export gereed in data/<omgeving>/backup/postgres/postgres_$(DT)/"
+
+.PHONY: migrate-postgres-data
+migrate-postgres-data: ## Eenmalig bij bestaande installaties: zet PostgreSQL-data in het volume (eerst 'make stop')
+	bash scripts/postgres/migreer_data_naar_volume.sh $(PG_CONTAINER)
 
 # ============================================================
-# Release (handmatig — gebruik met zorg)
+# Publicatie en release
 # ============================================================
+
+.PHONY: publish
+publish: ## Bouw en push images naar ghcr.io (opties: SERVICE=flask PUSH=0 NO_CACHE=1 VERSION=1.2.3)
+	@test -n "$(VERSION)" || { echo "✗ Geen versie gevonden; zet VERSION=x.y.z in config/version.env" >&2; exit 1; }
+	@for s in $(SERVICE); do \
+		test -f services/$$s/Dockerfile || { echo "✗ Onbekende service '$$s' (kies uit: $(IMAGES))" >&2; exit 1; }; \
+	done
+	@if [ "$(PUSH)" = "1" ]; then \
+		docker buildx inspect $(BUILDER) >/dev/null 2>&1 || \
+		{ echo "➜ Multi-arch builder '$(BUILDER)' aanmaken..."; docker buildx create --name $(BUILDER) --driver docker-container >/dev/null; }; \
+	fi
+	@echo "➜ Images $(VERSION): $(PUBLISH_DOEL)"
+	@for s in $(SERVICE); do \
+		echo "➜ $(REGISTRY)/$(IMAGE_PREFIX)-$$s:$(VERSION)"; \
+		docker buildx build $(PUBLISH_OPTS) \
+			-f services/$$s/Dockerfile \
+			-t $(REGISTRY)/$(IMAGE_PREFIX)-$$s:$(VERSION) \
+			-t $(REGISTRY)/$(IMAGE_PREFIX)-$$s:latest \
+			--label org.opencontainers.image.source=$(IMAGE_SOURCE) \
+			--label org.opencontainers.image.version=$(VERSION) \
+			--label org.opencontainers.image.licenses=EUPL-1.2 \
+			. || exit 1; \
+	done
+	@echo "✓ Klaar: $(SERVICE) ($(VERSION))"
 
 .PHONY: release
-release: ## Release bouwen en pushen (gebruik: make release VERSION=1.2.3 MSG="Release notes")
-ifndef VERSION
+release: ## Versie vastleggen, committen, taggen, pushen en images publiceren (gebruik: make release VERSION=1.2.3 MSG="Release notes")
+ifneq ($(origin VERSION),command line)
 	$(error Geef een versie op, bijv: make release VERSION=1.2.3 MSG="Nieuwe features")
 endif
 ifndef MSG
 	$(error Geef een message op, bijv: make release VERSION=1.2.3 MSG="Nieuwe features")
 endif
+	@echo "VERSION=$(VERSION)" > config/version.env.example
 	@echo "VERSION=$(VERSION)" > config/version.env
-	git tag -a $(VERSION) -m "$(MSG)"
-	git add .
+	@sed -i.bak 's/^WASSTRAAT_VERSION=.*/WASSTRAAT_VERSION=$(VERSION)/' deploy/.env.example && rm -f deploy/.env.example.bak
+	@# Versiebadge in de README meenemen
+	@sed -i.bak -E 's/badge\/version-[0-9.]+-blue/badge\/version-$(VERSION)-blue/' README.md && rm -f README.md.bak
+	@# Alleen de versiebestanden stagen (geen 'git add .': dat zou ongetrackte bestanden meenemen)
+	git add config/version.env.example deploy/.env.example README.md
 	git commit -m "$(MSG)"
-	git push --all
-	git push --tags
-	docker login
-	docker buildx build --no-cache --platform linux/amd64,linux/arm64 \
-		--builder mybuilder -f ./services/flask/Dockerfile \
-		-t brienen/wasstraat_flask:$(VERSION) --push .
+	git tag -a $(VERSION) -m "$(MSG)"
+	@# Alleen de huidige branch en de nieuwe tag pushen (geen 'git push --all': dat publiceert alle lokale branches)
+	git push origin HEAD
+	git push origin $(VERSION)
+	$(MAKE) publish VERSION=$(VERSION)
 
 # ============================================================
 # Opschonen

@@ -4,14 +4,18 @@ De repository bevat **synthetische voorbeelddata** in `data/synthetic/data/` —
 
 ## Twee voorbeeldprojecten
 
-| Project | Beschrijving | Putten | Sporen | Vondsten | Artefacten | Datering |
-|---------|-------------|--------|--------|----------|------------|----------|
-| **SY001** | Klein project (Marktstraat 10, Voorburg) | 2 | 3 | 4 | 5 (aardewerk, glas) | 1600-1750 |
-| **SY002** | Groot project (Kerkplein, Leiden) | 4 | 8 | 12 | 20 (8 materiaalsoorten) | 1200-1800 |
+| Project | Beschrijving | Putten | Vlakken | Sporen | Vondsten | Artefacten | Datering |
+|---------|-------------|--------|---------|--------|----------|------------|----------|
+| **SY001** | Klein project (Marktstraat 10, Voorburg) | 2 | 2 | 3 | 4 | 5 (aardewerk, glas) | 1600-1750 |
+| **SY002** | Groot project (Kerkplein, Leiden) | 4 | 8 | 8 | 12 | 22 (8 materiaalsoorten, uit 23 bronregels) | 1200-1800 |
 
-SY002 bevat een breed scala aan materiaalsoorten: aardewerk, glas, been, metaal, leer, steen, kleipijp en munten. Beide projecten bevatten ook depot- en fotometadata.
+De aantallen zijn wat na een volledige run in PostgreSQL staat; in totaal zijn dat 27 artefacten (ook in `Single_Store_Clean`). De projectdatabases hebben geen PUT- of VLAK-tabel: de pipeline leidt putten en vlakken af uit de put- en vlaknummers van sporen, vondsten, tekeningen en foto's (zie [Transformatie](../componenten/transformatie.md#ontbrekende-entiteiten-aanvullen)).
 
-Daarnaast bevat de synthetische data een **monsterdatabase** met 5 grondmonsters (3× SY001, 2× SY002), 8 botanische determinaties, 4 schelpdeterminaties en bijbehorende referentietabellen (plantensoorten, schelpsoorten, deeltypen, conserveringstoestanden).
+SY002 bevat een breed scala aan materiaalsoorten: aardewerk, glas, been, metaal, leer, steen, kleipijp en munten. De munt en een aardewerkscherf uit vondst 11 hebben hetzelfde artefactnummer, maar worden niet samengevoegd: ze hebben een andere artefactsoort. In de tabel `AARDEWERK 1` staan twee scherven zonder subnummer (ze worden elk een eigen artefact en houden hun nummer via de hulpsleutel uit hun bronrij) en twee regels met hetzelfde subnummer (put 1, vondst 1, subnummer 2), die samen één artefact worden. Zo leveren 23 bronregels 22 artefacten op. Beide projecten bevatten ook depot- en fotometadata.
+
+De synthetische data bevat ook testgevallen voor de configuratie en de extractie: een monster met een foute projectcode die `brondata_correcties` en `projectcode_correcties` corrigeren, een werkmap `SY001/K Overig/werkmap/` met kopieën die `paden_overslaan` overslaat, een png met alfakanaal en een Word-document (dat het documenticoon krijgt), en een memo-veld met een regeleinde. Zie `data/synthetic/README.md`.
+
+Daarnaast bevat de synthetische data een **monsterdatabase** met 6 grondmonsters (3× SY001, 2× SY002 en 1 met de foute projectcode `SYNTFOUT`, die `correcties.yml` naar SY001 vertaalt), 8 botanische determinaties, 4 schelpdeterminaties en bijbehorende referentietabellen (plantensoorten, schelpsoorten, deeltypen, conserveringstoestanden).
 
 ## Bestandsstructuur
 
@@ -22,14 +26,21 @@ data/synthetic/data/
 ├── projecten/
 │   ├── SY001/
 │   │   ├── C Database/opgravingSY001.mdb    # Projectdatabase
+│   │   ├── D Velddocumenten/                # Word-document (dagrapport)
+│   │   ├── K Overig/werkmap/                # Kopieën die paden_overslaan overslaat
 │   │   └── L Fotos/                         # Foto's
 │   └── SY002/
 │       ├── C Database/opgravingSY002.mdb
-│       └── L Fotos/
+│       └── L Fotos/                         # Project- en sfeerfoto's (G/F), tekening (B)
+│           └── H (Objectfoto's)/            # Objectfoto's per materiaal, bijv.
+│               ├── Aardewerk/SY002_P2_H4_1_1.jpg    # put 2, vondst 4, subnr 1 → artefact
+│               └── Munt/SY002_P4_H11_1_1.jpg
 ├── projectenlijst/projectenlijst.mdb         # Projectenlijst
 ├── magazijnlijst/MAGAZIJN.mdb               # Depotdata
 ├── fotolijst/Digifotos.mdb                  # Fotocatalogus
-└── monsterdatabase/MONSTERS.mdb             # Monsterdata (botanie + schelpen)
+├── monsterdatabase/MONSTERS.mdb             # Monsterdata (botanie + schelpen)
+├── referentietabellen/                      # ABR-thesaurus en bestandenlijst (Excel)
+└── rapporten/                               # Leeg; docker-compose.yml koppelt deze map niet
 ```
 
 ## Gebruik bij testen
@@ -58,7 +69,7 @@ Gemeenten die hun eigen opgravingsdata willen verwerken, kunnen hun bestanden or
 
 De Wasstraat doorzoekt elke directory **recursief** op `.mdb` en `.accdb` bestanden. In `projecten/` moet je per opgraving een subdirectory aanmaken — de directorynaam bepaalt de projectcode.
 
-Plaats de bestanden in `data/<omgeving>/data/` en configureer optioneel een `correcties.yml` in `data/<omgeving>/wasstraat_config/` voor projectcode-correcties. Zie [Aan de slag](../aan-de-slag.md) voor gedetailleerde instructies.
+Plaats de bestanden in `data/<omgeving>/data/` en configureer optioneel een `correcties.yml` in `data/<omgeving>/wasstraat_config/` voor correcties en over te slane kopieën. Zie [Aan de slag](../aan-de-slag.md) en [Configuratie](../componenten/configuratie.md) voor gedetailleerde instructies.
 
 ## Data opnieuw genereren
 
@@ -70,6 +81,6 @@ make synthetic
 
 Vereisten voor regeneratie:
 
-- Java JRE (voor Jackcess MDB-schrijver)
-- Python packages uit `data/synthetic/generatie/requirements-synthetic.txt`
+- Java JRE (voor Jackcess MDB-schrijver): `brew install openjdk` op macOS, of een OpenJDK 21 in `/usr/lib/jvm/java-21-openjdk` op Linux
+- Python packages uit `data/synthetic/generatie/requirements-synthetic.txt` (installeert `make synthetic` zelf in de `.venv`)
 - Jackcess JARs (al aanwezig in `data/synthetic/generatie/jars/`)

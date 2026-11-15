@@ -28,7 +28,7 @@ from airflow.operators.dummy import DummyOperator
 from airflow.operators.python import PythonOperator
 
 import shared.config as config
-from wasstraat.image_import import importImages, getAndStoreImageFilenames
+from wasstraat.image_import import importImages, getAndStoreImageFilenames, controleerAfbeeldingen
 
 
 with DAG(
@@ -46,6 +46,12 @@ with DAG(
         task_id='End_Extract_only',
     )
     
+    # Na alle import-taken: tel verwerkte, overgeslagen en mislukte bestanden en faal boven de drempel (issue 70)
+    Controleer_Afbeeldingen = PythonOperator(
+        task_id='Controleer_Afbeeldingen',
+        python_callable=controleerAfbeeldingen,
+    )
+
     i=0
     while i < 5:
         tsk = PythonOperator(
@@ -56,6 +62,7 @@ with DAG(
             retry_delay=timedelta(minutes=1)
 
         )
-        first >> tsk >> last
+        first >> tsk >> Controleer_Afbeeldingen
         i += 1
+    Controleer_Afbeeldingen >> last
 

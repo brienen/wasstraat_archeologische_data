@@ -15,8 +15,13 @@ Gebruik:
   python data/synthetic/generate_synthetic_data.py
 """
 
+import io
 import os
+import shutil
+import struct
 import sys
+import zipfile
+import zlib
 import msaccessdb
 
 # JPype wordt pas geïmporteerd in startJvm() zodat tests zonder Java kunnen draaien
@@ -73,6 +78,7 @@ def maakMdbBestand(pad):
 # Mapping van SQL-types naar Jackcess DataType enum waarden
 TYPE_MAP = {
     "VARCHAR": "TEXT",
+    "MEMO": "MEMO",
     "INTEGER": "LONG",
     "DOUBLE": "DOUBLE",
     "COUNTER": "LONG",
@@ -83,7 +89,7 @@ def jackcessDataType(sql_type):
     """Vertaal een SQL-type string naar een Jackcess DataType enum waarde.
 
     Args:
-        sql_type: SQL type string zoals 'VARCHAR(50)', 'INTEGER', 'DOUBLE'
+        sql_type: SQL type string zoals 'VARCHAR(50)', 'MEMO', 'INTEGER', 'DOUBLE'
 
     Returns:
         Jackcess DataType enum waarde
@@ -203,7 +209,8 @@ KOLOMMEN_SPOREN = [
     ("VERBANDEN (muur)", "VARCHAR(100)"),
     ("FOTONUMMER(S)", "VARCHAR(50)"),
     ("PROFIEL", "VARCHAR(50)"),
-    ("BESCHRIJVING", "VARCHAR(255)"),
+    # Memo-veld (lange tekst), zoals in de echte databases; kan regeleinden bevatten
+    ("BESCHRIJVING", "MEMO"),
     ("INTERPRETATIE", "VARCHAR(200)"),
     ("PER", "VARCHAR(20)"),
     ("FASE", "VARCHAR(20)"),
@@ -211,6 +218,9 @@ KOLOMMEN_SPOREN = [
     ("DATUM", "VARCHAR(20)"),
     ("DETERM", "VARCHAR(100)"),
 ]
+
+# Beschrijving van spoor 4 van SY002 (memo-veld met een regeleinde)
+BESCHRIJVING_MET_REGELEINDE = "Gemetselde beerput, vierkant\r\nBinnenwerk met tonvormige bodem"
 
 KOLOMMEN_VULLINGEN = [
     ("CODENAAM", "VARCHAR(20)"),
@@ -887,7 +897,9 @@ def dataGrootProject():
         (code, 1, 1, 1, "Kuil", "DGr", "", "", "", "", "", "Ovaal", "", "", "", "", "", "", "", "", "", "Donkergrijze kuil met hk-inclusies", "Afvalkuil", "", "", "1200-1400", "01-06-2024", ""),
         (code, 1, 1, 2, "Laag", "LBr", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "Ophogingslaag met puin", "Ophogingslaag", "", "", "1400-1600", "01-06-2024", ""),
         (code, 1, 2, 3, "Muur", "", "", "", "", "", "", "Lineair", "24x11x5", "O-W", "", "", "", "", "S4", "", "", "Bakstenen muur, kruisverband", "Buitenmuur", "", "", "1400-1600", "03-06-2024", ""),
-        (code, 2, 1, 4, "Beerput", "DGr-Zw", "", "", "", "", "", "Vierkant", "24x11x5", "", "", "", "", "", "", "", "", "Gemetselde beerput, vierkant", "Beerput", "", "", "1500-1700", "05-06-2024", ""),
+        # Beschrijving met een regeleinde (Access: CR LF), zoals memo-velden in de echte databases.
+        # De CSV-export beslaat voor dit record twee regels; issue 74.
+        (code, 2, 1, 4, "Beerput", "DGr-Zw", "", "", "", "", "", "Vierkant", "24x11x5", "", "", "", "", "", "", "", "", BESCHRIJVING_MET_REGELEINDE, "Beerput", "", "", "1500-1700", "05-06-2024", ""),
         (code, 2, 2, 5, "Kuil", "Br", "", "", "", "", "", "Rond", "", "", "S4", "", "", "", "", "", "", "Bruine kuil naast beerput", "Afvalkuil", "", "", "1650-1750", "07-06-2024", ""),
         (code, 3, 1, 6, "Greppel", "LGr", "", "", "", "", "", "Lineair", "", "N-Z", "", "", "", "", "", "", "", "Ondiepe greppel", "Perceelsgreppel", "", "", "1300-1500", "10-06-2024", ""),
         (code, 3, 2, 7, "Kuil", "DGr-Br", "", "", "", "", "", "Ovaal", "", "", "", "S6", "", "", "", "", "", "Grote kuil onder greppel", "Extractiekuil", "", "", "1200-1350", "11-06-2024", ""),
@@ -903,7 +915,7 @@ def dataGrootProject():
         (code, 3, 6, 1, "Zand", "Lichtgrijs", "Fijn", "7, 8"),
     ])
 
-    # Aardewerk: 8 stuks
+    # Aardewerk: 11 stuks (waarvan twee zonder subnummer en één met een dubbel subnummer, issue 81)
     kol = [k[0] for k in KOLOMMEN_AARDEWERK]
     tabellen["AARDEWERK 1"] = (kol, [
         (code, 1, 1, 1, "Grijsbakkend", "", "Rand", "Kogelpot", "", "", 16, None, "", None, "", "", "", "", "", "", "", "", "", "", "", "", "1200", "1350", "", "", "", "", "D003", "", "", "", "", "", "", "", ""),
@@ -914,6 +926,15 @@ def dataGrootProject():
         (code, 3, 7, 1, "Proto-steengoed", "", "Wand", "Kan", "", "", None, None, "", None, "", "", "", "", "", "", "", "", "", "", "", "", "1200", "1300", "", "", "", "", "D005", "", "", "", "", "", "", "", ""),
         (code, 3, 9, 1, "Grijsbakkend", "", "Bodem", "Kogelpot", "", "", None, 12, "", None, "", "", "", "", "", "", "", "", "", "", "", "", "1200", "1350", "", "", "", "", "D005", "", "", "", "", "", "", "", ""),
         (code, 4, 11, 1, "Roodbakkend", "", "Oor", "Kan", "", "", None, None, "", None, "Loodglazuur", "", "", "", "", "", "", "", "", "", "", "", "1550", "1700", "", "", "", "", "D006", "", "", "", "", "", "", "", ""),
+        # Issue 81: twee scherven zonder subnummer, zoals in de Delftse determinatietabellen. Ze
+        # hebben geen natuurlijke key en krijgen een hulpsleutel uit hun bronrij (tabel en ID).
+        (code, 3, 7, None, "Grijsbakkend", "", "Wand", "Kogelpot", "", "", None, None, "", None, "", "", "", "", "", "", "", "", "", "", "", "", "1200", "1350", "", "", "", "", "D005", "", "", "", "", "", "", "", ""),
+        (code, 4, 12, None, "Roodbakkend", "", "Wand", "Grape", "", "", None, None, "", None, "Loodglazuur", "", "", "", "", "", "", "", "", "", "", "", "1500", "1650", "", "", "", "", "D006", "", "", "", "", "", "", "", ""),
+        # Issue 81: hetzelfde subnummer als de tweede rij (put 1, vondst 1, subnr 2). De merge voegt
+        # beide rijen samen tot één artefact met twee bronrijen (PSY002P1V1A2|Aardewerk). Tot issue 83
+        # werd de eerste rij daarnaast ook verplaatst, zodat de key twee keer voorkwam, zoals bij
+        # 6.949 Delftse artefacten.
+        (code, 1, 1, 2, "Grijsbakkend", "", "Wand", "Kogelpot", "", "", None, None, "", None, "", "", "", "", "Radstempel", "", "", "", "", "", "", "", "1250", "1400", "", "", "", "", "D003", "", "", "", "", "", "", "", ""),
     ])
 
     # Glas: 3 stuks
@@ -1341,6 +1362,11 @@ def genereerFotos():
 
     Plaatst 1x1 pixel JPEG's in de directorystructuur die importMDB.sh
     en getImageNamesFromDir verwachten: <project>/L Fotos/<bestandsnaam>.jpg
+
+    Objectfoto's volgen de Delftse conventie: <project>_P<put>_H<vondst>_<subnr>_<fotonr>
+    in een materiaalmap onder "H (Objectfoto's)". De pipeline leidt het
+    artefactsoort uit de mapnaam af en koppelt de foto via projectcd,
+    artefactsoort, putnr, vondstnr en subnr (key_foto1) aan het artefact.
     """
     fotos = {
         "SY001": [
@@ -1356,8 +1382,10 @@ def genereerFotos():
             "SY002_G005.jpg",
             "SY002_F001.jpg",
             "SY002_F002.jpg",
-            "SY002_H4_1.jpg",   # Objectfoto vondst 4 (H-type)
-            "SY002_H11_1.jpg",  # Objectfoto vondst 11 (munt)
+            # Objectfoto put 2, vondst 4, subnr 1: de grape (AARDEWERK 1)
+            os.path.join("H (Objectfoto's)", "Aardewerk", "SY002_P2_H4_1_1.jpg"),
+            # Objectfoto put 4, vondst 11, subnr 1: de duit (MUNTEN EN PENNINGEN)
+            os.path.join("H (Objectfoto's)", "Munt", "SY002_P4_H11_1_1.jpg"),
             "SY002_B001.tif",   # Tekening (B-type, als .tif)
         ],
     }
@@ -1365,14 +1393,117 @@ def genereerFotos():
     count = 0
     for project, bestanden in fotos.items():
         fotos_dir = os.path.join(OUTPUT_DIR, "projecten", project, "L Fotos")
-        os.makedirs(fotos_dir, exist_ok=True)
         for bestand in bestanden:
             pad = os.path.join(fotos_dir, bestand)
+            os.makedirs(os.path.dirname(pad), exist_ok=True)
             with open(pad, "wb") as f:
                 f.write(MINIMAL_JPEG)
             count += 1
 
     print(f"  {count} synthetische fotobestanden aangemaakt")
+
+
+# Bestanden die de extractie apart moet behandelen (issue 82), relatief aan data/projecten:
+# een png met alfakanaal (moet op een witte achtergrond als jpg) en een Word-document
+# (krijgt het documenticoon uit shared/afbeeldingen als voorbeeld).
+RGBA_PNG = os.path.join("SY001", "L Fotos", "SY001_G003.png")
+WORD_DOCUMENT = os.path.join("SY001", "D Velddocumenten", "Dagrapport SY001.docx")
+
+
+def maakRgbaPng(breedte=40, hoogte=20):
+    """Maak een klein png met alfakanaal (RGBA), zonder Pillow.
+
+    De linkerhelft is dekkend roodbruin, de rechterhelft volledig doorzichtig.
+
+    Returns:
+        De inhoud van het png-bestand (bytes)
+    """
+    dekkend = bytes((180, 60, 40, 255)) * (breedte // 2)
+    doorzichtig = bytes((0, 0, 0, 0)) * (breedte - breedte // 2)
+    pixels = b"".join(b"\x00" + dekkend + doorzichtig for _ in range(hoogte))
+
+    def blok(soort, data):
+        return struct.pack(">I", len(data)) + soort + data + struct.pack(">I", zlib.crc32(soort + data) & 0xFFFFFFFF)
+
+    kop = struct.pack(">IIBBBBB", breedte, hoogte, 8, 6, 0, 0, 0)  # 8 bits per kanaal, kleurtype 6 = RGBA
+    return b"\x89PNG\r\n\x1a\n" + blok(b"IHDR", kop) + blok(b"IDAT", zlib.compress(pixels, 9)) + blok(b"IEND", b"")
+
+
+def maakDocx(tekst):
+    """Maak een minimaal Word-document (.docx) met één alinea, zonder extra pakketten.
+
+    De tijdstempels in het zip-bestand liggen vast, zodat opnieuw genereren hetzelfde bestand geeft.
+
+    Returns:
+        De inhoud van het docx-bestand (bytes)
+    """
+    onderdelen = [
+        ("[Content_Types].xml",
+         '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n'
+         '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'
+         '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>'
+         '<Default Extension="xml" ContentType="application/xml"/>'
+         '<Override PartName="/word/document.xml" '
+         'ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>'
+         '</Types>'),
+        ("_rels/.rels",
+         '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n'
+         '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+         '<Relationship Id="rId1" '
+         'Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" '
+         'Target="word/document.xml"/></Relationships>'),
+        ("word/document.xml",
+         '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n'
+         '<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">'
+         f'<w:body><w:p><w:r><w:t>{tekst}</w:t></w:r></w:p></w:body></w:document>'),
+    ]
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, "w") as docx:
+        for naam, inhoud in onderdelen:
+            info = zipfile.ZipInfo(naam, date_time=(1980, 1, 1, 0, 0, 0))
+            info.compress_type = zipfile.ZIP_DEFLATED
+            docx.writestr(info, inhoud)
+    return buffer.getvalue()
+
+
+def bijzondereBestanden():
+    """Inhoud van de bestanden die de extractie apart moet behandelen (issue 82).
+
+    Returns:
+        Dict met pad (relatief aan data/projecten) -> inhoud (bytes)
+    """
+    return {
+        RGBA_PNG: maakRgbaPng(),
+        WORD_DOCUMENT: maakDocx("Dagrapport SY001: synthetisch Word-document voor de Wasstraat."),
+    }
+
+
+def genereerBijzondereBestanden():
+    """Schrijf een png met alfakanaal en een Word-document in project SY001."""
+    for pad, inhoud in bijzondereBestanden().items():
+        volledig = os.path.join(OUTPUT_DIR, "projecten", pad)
+        os.makedirs(os.path.dirname(volledig), exist_ok=True)
+        with open(volledig, "wb") as f:
+            f.write(inhoud)
+    print(f"  {len(bijzondereBestanden())} bijzondere bestanden aangemaakt (png met alfakanaal, Word-document)")
+
+
+# Kopieën in een werkmap van SY001 (issue 84), relatief aan data/projecten: bron -> kopie. De pipeline
+# slaat ze over via paden_overslaan in data/synthetic/wasstraat_config/correcties.yml; zonder dat
+# patroon zou de kopie van de database als aparte bron worden ingelezen en de foto twee keer verwerkt.
+WERKMAP_KOPIEEN = {
+    os.path.join("SY001", "C Database", "opgravingSY001.mdb"): os.path.join("SY001", "K Overig", "werkmap", "opgravingSY001.mdb"),
+    os.path.join("SY001", "L Fotos", "SY001_G001.jpg"): os.path.join("SY001", "K Overig", "werkmap", "L Fotos", "SY001_G001.jpg"),
+}
+
+
+def genereerWerkmapKopieen():
+    """Kopieer de database en een foto van SY001 naar een werkmap die de pipeline overslaat (issue 84)."""
+    for bron, kopie in WERKMAP_KOPIEEN.items():
+        volledig = os.path.join(OUTPUT_DIR, "projecten", kopie)
+        os.makedirs(os.path.dirname(volledig), exist_ok=True)
+        shutil.copyfile(os.path.join(OUTPUT_DIR, "projecten", bron), volledig)
+    print(f"  {len(WERKMAP_KOPIEEN)} kopieën in de werkmap van SY001 (paden_overslaan)")
 
 
 def genereerAlles():
@@ -1447,6 +1578,8 @@ def genereerAlles():
     # Foto's
     print("\n[7/7] Synthetische fotobestanden")
     genereerFotos()
+    genereerBijzondereBestanden()
+    genereerWerkmapKopieen()
 
     print("\n" + "=" * 60)
     print("Klaar! Bestanden gegenereerd in:")

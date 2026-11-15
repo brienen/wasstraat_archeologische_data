@@ -73,7 +73,6 @@ mock_config.MONGO_ANALYSE_URI = "mongodb://test:test@localhost:27017/test_analys
 mock_config.MONGO_SERVER = "localhost"
 mock_config.MONGO_INITDB_ROOT_USERNAME = "test"
 mock_config.MONGO_INITDB_ROOT_PASSWORD = "test"
-mock_config.MONGO_MINPOOLSIZE = 50
 mock_config.DB_STAGING = "test_staging"
 mock_config.DB_FILES = "test_files"
 mock_config.DB_ANALYSE = "test_analyse"
@@ -92,18 +91,7 @@ mock_config.COLL_STAGING_FOTOLIJST = "Staging_Projecten_Fotolijst"
 mock_config.COLL_STAGING_MONSTER = "Staging_Projecten_Monster"
 mock_config.COLL_STAGING_REFERENTIETABELLEN = "Staging_Referentietabellen"
 mock_config.COLL_STAGING_RAPPORTEN = "Staging_Rapporten"
-mock_config.COLL_ANALYSE_FOTO = "Def_Fotos"
-mock_config.COLL_ANALYSE_ARTEFACT = "Def_Artefact"
-mock_config.COLL_ANALYSE_PROJECT = "Def_Project"
-mock_config.COLL_ANALYSE_VONDST = "Def_Vondst"
-mock_config.COLL_ANALYSE_SPOOR = "Def_Spoor"
-mock_config.COLL_ANALYSE_VLAK = "Def_Vlak"
-mock_config.COLL_ANALYSE_PUT = "Def_Put"
 mock_config.COLL_ANALYSE_DOOS = "Def_Doos"
-mock_config.COLL_ANALYSE_STANDPLAATS = "Def_Standplaats"
-mock_config.COLL_ANALYSE_STELLING = "Def_Stelling"
-mock_config.COLL_ANALYSE_PLAATSING = "Def_Plaatsing"
-mock_config.COLL_ANALYSE_VINDPLAATS = "Def_Vindplaats"
 
 # PostgreSQL
 mock_config.POSTGRES_DB = "test_db"
@@ -131,6 +119,14 @@ mock_config.AIRFLOW_INPUT_FOTOLIJST = "/input/fotolijst"
 mock_config.AIRFLOW_INPUT_MONSTER = "/input/monsterdatabase"
 mock_config.AIRFLOW_INPUT_RAPPORTEN = "/input/rapporten"
 mock_config.AIRFLOW_OUTPUT_MEDIA = "/output/archeomedia"
+# Verwerkingsrapport (issue 62) en drempels van het foutbeleid (issues 54 en 70), standaardwaarden uit shared/config.py
+mock_config.AIRFLOW_OUTPUT_RAPPORTEN = os.getenv("AIRFLOW_OUTPUT_RAPPORTEN", "/tmp/wasstraat_test/rapporten")
+mock_config.AIRFLOW_MAX_MISLUKTE_AFBEELDINGEN = 10
+mock_config.AIRFLOW_MAX_MISLUKTE_AFBEELDINGEN_PCT = 1.0
+mock_config.AIRFLOW_MAX_MISLUKTE_DATABASES = 2
+mock_config.AIRFLOW_MAX_MISLUKTE_DATABASES_PCT = 5.0
+mock_config.AIRFLOW_MAX_VERWERKINGSFOUTEN = 100
+mock_config.AIRFLOW_MAX_VERWERKINGSFOUTEN_PCT = 1.0
 mock_config.AIRFLOW_CORRECTIES_CONFIG = os.getenv(
     "AIRFLOW_CORRECTIES_CONFIG",
     os.path.join(_project_root, "data", "test", "wasstraat_config", "correcties.yml")
@@ -141,7 +137,8 @@ mock_config.ES_HOST = "http://localhost:9200"
 
 # Overige
 mock_config.IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".gif", ".png", ".tif", ".psd", ".pdf", ".jp2", ".doc", ".docx"]
-mock_config.FILE_WORD_ICON = "/input/fotolijst/microsoft-word-logo.jpg"
+# Het documenticoon hoort bij de code (issue 82), net als de standaard in shared/config.py
+mock_config.FILE_WORD_ICON = os.path.join(_project_root, "shared", "afbeeldingen", "document.png")
 mock_config.FILE_ABREXCEL = "/input/referentietabellen/abr_versie_01122018.xlsx"
 mock_config.FILE_EXTRA_PROJECTS = "/input/projectenlijst/Extra_projecten_tabel_OPGRAVINGEN.xlsx"
 mock_config.FILE_IMPORT_FILES_EXCEL = "/input/referentietabellen/Alle Bestanden Archeologisch Depot.xlsx"
@@ -157,3 +154,19 @@ _const_path = os.path.join(_project_root, "shared", "const.py")
 with open(_const_path) as f:
     exec(f.read(), _const_mod.__dict__)
 sys.modules["shared.const"] = _const_mod
+
+# Laad de echte logutils (geen env vars nodig); 'shared' is hierboven een gewone module
+# zonder pakketpad, dus registreer de submodule zelf
+_logutils_mod = types.ModuleType("shared.logutils")
+_logutils_path = os.path.join(_project_root, "shared", "logutils.py")
+with open(_logutils_path) as f:
+    exec(f.read(), _logutils_mod.__dict__)
+sys.modules["shared.logutils"] = _logutils_mod
+
+# Laad de echte gebruikersdata-module (issue 73: verwijzingen vanuit gebruikerstabellen en de
+# schemamigratie; alleen standaardbibliotheek), op dezelfde manier als logutils
+_gebruikersdata_mod = types.ModuleType("shared.gebruikersdata")
+_gebruikersdata_path = os.path.join(_project_root, "shared", "gebruikersdata.py")
+with open(_gebruikersdata_path) as f:
+    exec(f.read(), _gebruikersdata_mod.__dict__)
+sys.modules["shared.gebruikersdata"] = _gebruikersdata_mod

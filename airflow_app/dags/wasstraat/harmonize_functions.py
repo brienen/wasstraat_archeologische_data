@@ -8,18 +8,31 @@ import yaml
 import pandas as pd
 import numpy as np
 import wasstraat.harmonizer as harmonizer
+import wasstraat.harmonisatie_voorrang as harmonisatie_voorrang
 
 # Import app code
 # Absolute imports for Hydrogen (Jupyter Kernel) compatibility
 import shared.config as config
 import shared.const as const
 import wasstraat.mongoUtils as mongoUtil
+import wasstraat.verwerkingsrun as verwerkingsrun
+import wasstraat.delta_transform as delta_transform
+import wasstraat.foutbeleid as foutbeleid
+from wasstraat.profielen import get_profiel
 
 import logging
 logger = logging.getLogger("airflow.task")
 
 
 _correcties_cache = None
+
+# Sectie in correcties.yml met de prefixen van rapportcodes (ParseFotobestanden)
+SECTIE_RAPPORTCODE_PREFIXEN = 'rapportcode_prefixen'
+# Toegestane waarden van type in rapportcode_prefixen en de bestandsoort die erbij hoort
+RAPPORT_TYPES = {
+    'archeologische_rapportage': const.RAPP_ARCHEOLOGISCHE_RAPPORTAGE,
+    'archeologische_notitie': const.RAPP_ARCHEOLOGISCHE_NOTITIE,
+}
 
 def laadCorrecties():
     """Laad het correctiebestand (YAML) en cache het resultaat.
@@ -53,6 +66,63 @@ def laadCorrecties():
     _correcties_cache = result
     logger.info(f"Correctiebestand geladen: {pad}")
     return _correcties_cache
+
+
+def _meldOngeldigeRapportcodeRegel(regel, reden, melden):
+    """Log een ongeldige regel uit rapportcode_prefixen als fout en meld hem in het run-document."""
+    msg = (f"Ongeldige regel in {SECTIE_RAPPORTCODE_PREFIXEN} (correcties.yml): {regel!r} — {reden}. "
+           f"De regel wordt overgeslagen: bestanden met dit prefix worden niet als rapport herkend.")
+    logger.error(msg)
+    if melden:
+        foutbeleid.meld(foutbeleid.NIVEAU_WAARSCHUWING, foutbeleid.SOORT_CONFIGURATIE_ONGELDIG, msg,
+                        details={'bestand': 'correcties.yml', 'sectie': SECTIE_RAPPORTCODE_PREFIXEN,
+                                 'regel': str(regel)[:500]})
+
+
+def leesRapportcodePrefixen(correcties, melden=False):
+    """Lees en controleer de sectie rapportcode_prefixen uit correcties.yml.
+
+    Elke regel heeft een ``prefix`` (tekst, bijv. ``DAR``) en een ``type``:
+    een van de sleutels van RAPPORT_TYPES (``archeologische_rapportage`` of
+    ``archeologische_notitie``; hoofdletters en spaties eromheen maken niet
+    uit). Een regel zonder prefix of type, of met een onbekend type, wordt met
+    een foutmelding in het log overgeslagen; met ``melden`` komt er ook een
+    waarschuwing in het run-document (foutbeleid.SOORT_CONFIGURATIE_ONGELDIG).
+    Tot issue 87 werd elk ander type stil een notitie.
+
+    Args:
+        correcties: dict uit laadCorrecties() (of None)
+        melden: als True ongeldige regels ook in het run-document melden
+
+    Returns:
+        Lijst met dicts met prefix (tekst), type en bestandsoort, in de volgorde van het bestand
+    """
+    sectie = (correcties or {}).get(SECTIE_RAPPORTCODE_PREFIXEN)
+    if sectie is None:
+        return []
+    if not isinstance(sectie, list):
+        _meldOngeldigeRapportcodeRegel(sectie, f"de sectie is geen lijst maar {type(sectie).__name__}", melden)
+        return []
+    toegestaan = ', '.join(RAPPORT_TYPES)
+    regels = []
+    for regel in sectie:
+        if not isinstance(regel, dict):
+            _meldOngeldigeRapportcodeRegel(regel, "verwacht een regel met prefix en type", melden)
+            continue
+        prefix = regel.get('prefix')
+        if prefix is None or isinstance(prefix, (dict, list, bool)) or not str(prefix).strip():
+            _meldOngeldigeRapportcodeRegel(regel, "prefix ontbreekt of is leeg", melden)
+            continue
+        soort = regel.get('type')
+        if soort is None:
+            _meldOngeldigeRapportcodeRegel(regel, f"type ontbreekt (toegestaan: {toegestaan})", melden)
+            continue
+        sleutel = str(soort).strip().lower()
+        if sleutel not in RAPPORT_TYPES:
+            _meldOngeldigeRapportcodeRegel(regel, f"onbekend type {soort!r} (toegestaan: {toegestaan})", melden)
+            continue
+        regels.append({'prefix': str(prefix).strip(), 'type': sleutel, 'bestandsoort': RAPPORT_TYPES[sleutel]})
+    return regels
 
 
 def fixProjectNames():
@@ -111,11 +181,16 @@ def fixProjectNames():
         myclient.close()
 
 
-def fixMonsterProjectcds():
+def fixMonsterProjectcds(incrementeel=False):
     """
     Method to fix the old projectnames that are being used in the Monsterdatabase. Unknown projectcodes are set to "Unknowm"
 
     Old projectnames are matched with the data from DeltIT Opgravingen, where both old and new values are found.
+
+    Args:
+        incrementeel: als True alleen de Monster-documenten met delta_run van de
+            actieve verwerkingsrun aanpassen (incrementeel laden); de projecten
+            om mee te vergelijken blijven alle Project-documenten
     """
     
     try:
@@ -124,17 +199,21 @@ def fixMonsterProjectcds():
         analyseDb = myclient[str(config.DB_ANALYSE)]
         analyseCol = analyseDb[config.COLL_ANALYSE]
 
+        monster_filter = {'soort': 'Monster'}
+        if incrementeel:
+            monster_filter[delta_transform.VELD_DELTA_RUN] = verwerkingsrun.huidigeRun()['run_id']
+
         # Early return als er geen Monster-records in de database zitten
-        monster_count = analyseCol.count_documents({'soort': 'Monster'})
+        monster_count = analyseCol.count_documents(monster_filter)
         if monster_count == 0:
             logger.info("Geen Monster-records gevonden in Single_Store — overslaan.")
             return
 
         # Fisrt set all projeccd to Unknown
-        analyseCol.update_many({'soort': 'Monster'}, { "$set": { "projectcd": None } })
+        analyseCol.update_many(monster_filter, { "$set": { "projectcd": None } })
 
         #Then get all Monsters with an old code
-        df_monsters = pd.DataFrame(list(analyseCol.find({'soort': 'Monster', 'brondata.PROJECT': {'$exists': True}}, {'projectcd':0})))
+        df_monsters = pd.DataFrame(list(analyseCol.find(dict(monster_filter, **{'brondata.PROJECT': {'$exists': True}}), {'projectcd':0})))
 
         if df_monsters.empty or 'project' not in df_monsters.columns:
             logger.info("Geen Monster-records met brondata.PROJECT gevonden — overslaan.")
@@ -177,25 +256,67 @@ def fixMonsterProjectcds():
 
 
 
-def harmonize(collection, strOrAggr):
+def harmonize(collection, strOrAggr, incrementeel=False, soort=None):
+    """Harmoniseer de documenten van een staging-collectie naar Single_Store.
+
+    Selecteren meer pipelines dezelfde tabel, dan harmoniseert alleen de
+    pipeline met voorrang hem (issue 89, harmonisatie_voorrang.bepaalVoorrang):
+    de andere pipelines krijgen vooraan ``{$match: {table: {$nin: [...]}}}``.
+    In de incrementele cyclus komt de delta-$match daar nog vóór.
+
+    Args:
+        collection: staging-collectie
+        strOrAggr: naam van het object in de harmonisatie-Excel, of een lijst met één pipeline
+        incrementeel: als True alleen de documenten uit de nieuwe en gewijzigde
+            bronbestanden van de actieve verwerkingsrun harmoniseren en die
+            documenten het veld delta_run geven (incrementeel laden)
+        soort: soort van de taak (Harmonize_<soort>); zonder soort wordt hij
+            afgeleid uit strOrAggr (harmonisatie_voorrang.bepaalSoort)
+    """
+    if incrementeel:
+        run = verwerkingsrun.huidigeRun()
+        padfilter = delta_transform.getStagingDeltaFilter(collection, run)
+        if padfilter is None:
+            logger.info(f"Incrementeel: geen nieuwe of gewijzigde bronbestanden voor collectie {collection} — overslaan.")
+            return
+
     if type(strOrAggr) == str:
-        pipeline = harmonizer.getHarmonizeAggr(str(strOrAggr)) 
+        pipeline = harmonizer.getHarmonizeAggr(str(strOrAggr))
     else:
         pipeline = strOrAggr[0]
+    if soort is None:
+        soort = harmonisatie_voorrang.bepaalSoort(strOrAggr)
 
-    try: 
-        logger.info("Calling aggregation with pipeline: " + str(pipeline))
+    myclient = None
+    try:
         myclient = pymongo.MongoClient(str(config.MONGO_URI))
         stagingdb = myclient[str(config.DB_STAGING)]
         stagingcollection = stagingdb[collection]
+
+        # Voorrang (issue 89): tabellen die een andere pipeline harmoniseert, overslaan
+        if soort is not None:
+            voorrang = harmonisatie_voorrang.bepaalVoorrang(soort, collection, stagingcollection, laadCorrecties())
+            pipeline = harmonisatie_voorrang.pasUitsluitingToe(pipeline, voorrang['uitsluiten'])
+        else:
+            logger.warning(f"Soort van de harmonisatie op {collection} onbekend — geen voorrang bepaald.")
+
+        if incrementeel:
+            # Altijd een kopie: de pipeline uit meta.py of de harmonizer mag niet veranderen
+            pipeline = delta_transform.maakDeltaHarmonizePipeline(pipeline, padfilter, run['run_id'])
+            if pipeline is None:
+                logger.info(f"Incrementeel: pipeline voor {strOrAggr if type(strOrAggr) == str else collection} schrijft niets — overslaan.")
+                return
+
+        logger.info("Calling aggregation with pipeline: " + str(pipeline))
         stagingcollection.aggregate(pipeline)
 
     except Exception as err:
         msg = "Onbekende fout bij het aanroepen van een aggregation met melding: " + str(err)
-        logger.error(msg)    
+        logger.error(msg)
         raise Exception(msg) from err
     finally:
-        myclient.close()
+        if myclient is not None:
+            myclient.close()
 
 
 
@@ -207,7 +328,21 @@ Parse alle filenames of imported files, and split them into:
 
 Also set projectcd, vondstnr, artefactnr and subnummer
 '''
-def parseFotobestanden():   
+def _bewaarFotodocument(analyseCol, _id, doc, delta_run=None):
+    """Schrijf een geparst Plaatjes-document naar Single_Store; bij een incrementele run met delta_run.
+
+    Args:
+        analyseCol: Single_Store-collectie
+        _id: _id van het Plaatjes-document
+        doc: document om te schrijven
+        delta_run: run-id van de verwerkingsrun, of None in de volledige cyclus
+    """
+    if delta_run:
+        doc[delta_transform.VELD_DELTA_RUN] = delta_run
+    analyseCol.replace_one({"_id": _id}, doc, upsert=True)
+
+
+def parseFotobestanden(incrementeel=False):   
     try: 
         myclient = pymongo.MongoClient(str(config.MONGO_URI))
         stagingDb = myclient[str(config.DB_STAGING)]
@@ -215,17 +350,35 @@ def parseFotobestanden():
         stagingCol = stagingDb[config.COLL_PLAATJES]
         analyseCol = analyseDb[config.COLL_ANALYSE]
 
-        #extract projectinfo from filename
-        for doc in stagingCol.find():
+        # Incrementeel laden: alleen de nieuwe en gewijzigde afbeeldingen van de actieve run
+        delta_run = None
+        if incrementeel:
+            run = verwerkingsrun.huidigeRun()
+            paden = verwerkingsrun.getDeltaPaden('afbeeldingen', run=run)
+            if not paden:
+                logger.info("Incrementeel: geen nieuwe of gewijzigde afbeeldingen — overslaan.")
+                return
+            delta_run = run['run_id']
+            docs = delta_transform.zoekOpPaden(stagingCol, 'fullFileName', paden)
+        else:
+            docs = stagingCol.find()
 
-            # Get projectcd from fullfilename
-            matchObj = re.match( r'^([a-z0-9]+).*', doc['fileName'], re.M|re.I)
-            if matchObj:
-                projectcd = matchObj.group(1)
-                if not re.match( r'^(DB|DC).*', projectcd, re.M|re.I): # if it does not start with DB or DC then use start of directory
-                    matchObjDir = re.match( r'^/((?:DB|DC)\d+).*', doc['directory'], re.M|re.I)
-                    if matchObjDir:
-                        projectcd = matchObjDir.group(1)
+        # Eén keer per taak: het gemeenteprofiel (faalt direct bij een onbekend profiel) en de
+        # rapportcode-prefixen uit correcties.yml (ongeldige regels gemeld en overgeslagen, issue 87)
+        profiel = get_profiel()
+        rapport_prefixen = leesRapportcodePrefixen(laadCorrecties(), melden=True)
+        rapport_regex = None
+        prefix_bestandsoort = {}
+        if rapport_prefixen:
+            prefix_patroon = '|'.join(p['prefix'] for p in rapport_prefixen)
+            rapport_regex = re.compile(r'^(' + prefix_patroon + r')\s*([0-9]{2,3}).*', re.M | re.I)
+            prefix_bestandsoort = {p['prefix'].upper(): p['bestandsoort'] for p in rapport_prefixen}
+
+        #extract projectinfo from filename
+        for doc in docs:
+
+            # Get projectcd from fullfilename (via gemeenteprofiel)
+            projectcd = profiel.extract_projectcode_uit_bestandsnaam(doc['fileName'], doc.get('directory', ''))
 
 
 
@@ -241,133 +394,34 @@ def parseFotobestanden():
                     doc['soort'] = 'Rapport' 
                     doc['fototype'] = 'R' 
                     doc['bestandsoort'] = const.RAPP_OVERIGE_RAPPORTAGE
-                    analyseCol.replace_one({"_id": doc['_id']}, doc, upsert=True)
+                    _bewaarFotodocument(analyseCol, doc['_id'], doc, delta_run)
                     continue
 
 
-                # Objectfoto's extraheren (Bevatten altijd een _H en beginnen met projectcode)
-                matchObj = re.match( r'^([a-zA-Z0-9]+)(_B?P([0-9Xx]+))?_H([a-zA-Z0-9]+)(_([a-zA-Z0-9]+))?_([0-9Xx]+)\.[a-z]{3}$', doc['fileName'], re.M|re.I)
-                if matchObj:
-                    doc['projectcd'] = projectcd
-                    if matchObj.group(3) is not None: doc['putnr'] = matchObj.group(3).lstrip("0")
-                    doc['vondstnr'] = matchObj.group(4).lstrip("0")
-                    if matchObj.group(6) is not None: doc['subnr'] = matchObj.group(6).lstrip("0")
-                    if matchObj.group(7) is not None: doc['fotonr'] = matchObj.group(7).lstrip("0")
-                    doc['fototype'] = 'H'
-                    doc['soort'] = 'Foto' 
-                    doc['bestandsoort'] = const.FOTO_OBJECTFOTO
-
-                    strFN = str(doc['fullFileName']).lower()
-                    if 'aardewerk' in strFN or 'pijpaard' in strFN:
-                        doc['artefactsoort'] = const.ARTF_AARDEWERK
-                    elif 'bot' in strFN and 'menselijk' in strFN:
-                        doc['artefactsoort'] = const.ARTF_MENSELIJK_BOT
-                    elif 'bot' in strFN and 'dierlijk' in strFN:
-                        doc['artefactsoort'] = const.ARTF_DIELRIJK_BOT
-                    elif 'glas' in strFN:
-                        doc['artefactsoort'] = const.ARTF_GLAS
-                    elif 'leer' in strFN:
-                        doc['artefactsoort'] = const.ARTF_LEER
-                    elif 'steen' in strFN:
-                        doc['artefactsoort'] = const.ARTF_STEEN
-                    elif 'kleipijp' in strFN:
-                        doc['artefactsoort'] = const.ARTF_KLEIPIJP
-                    elif 'hout/' in strFN:
-                        doc['artefactsoort'] = const.ARTF_HOUT
-                    elif 'bouwaardewerk' in strFN:
-                        doc['artefactsoort'] = const.ARTF_BOUWAARDEWERK
-                    elif 'metaal' in strFN:
-                        doc['artefactsoort'] = const.ARTF_METAAL
-                    elif 'munt' in strFN:
-                        doc['artefactsoort'] = const.ARTF_MUNT
-                    elif 'schelp' in strFN:
-                        doc['artefactsoort'] = const.ARTF_SCHELP
-                    elif 'textiel' in strFN:
-                        doc['artefactsoort'] = const.ARTF_TEXTIEL
-                    else:
-                        doc['artefactsoort'] = const.ARTF_ONBEKEND
-
-                    analyseCol.replace_one({"_id": doc['_id']}, doc, upsert=True)
+                # Per-entiteit identificatie via gemeenteprofiel
+                # Probeer achtereenvolgens: foto, tekening
+                parsed = profiel.identificeer_foto(doc, projectcd)
+                if parsed is not None:
+                    _bewaarFotodocument(analyseCol, doc['_id'], parsed, delta_run)
                     continue
 
-
-                # Match Tekeningen
-                matchObj = re.match( r'^([a-zA-Z0-9]+)_([ABCDEPT])([a-zA-Z0-9]+)(_LZW)?\.[a-z]{3}$', doc['fileName'], re.M|re.I) 
-                if matchObj:
-                    doc['projectcd'] = projectcd
-                    try:
-                        doc['tekeningcd'] = matchObj.group(2) + str(int(matchObj.group(3))).zfill(3)
-                    except:
-                        doc['tekeningcd'] = matchObj.group(2) + matchObj.group(3)
-
-                    doc['soort'] = 'Tekening' 
-                    
-                    tektype = matchObj.group(2)
-                    doc['fototype'] = tektype
-                    if tektype == 'A':
-                        doc['bestandsoort'] = const.TEK_BOUWTEKENING
-                    elif tektype == 'B':
-                        doc['bestandsoort'] = const.TEK_VELDTEKENING
-                    elif tektype == 'C':
-                        doc['bestandsoort'] = const.TEK_OVERZICHTSTEKENING
-                    elif tektype == 'D':
-                        doc['bestandsoort'] = const.TEK_OBJECTTEKENING
-                    elif tektype == 'E':
-                        doc['bestandsoort'] = const.TEK_UITWERKINGSTEKENING
-                    elif tektype == 'P':
-                        doc['bestandsoort'] = const.TEK_VELDTEKENING_PUBL
-                    elif tektype == 'T':
-                        doc['bestandsoort'] = const.TEK_OBJECTTEKENING_PUBL
-                    else:
-                        doc['bestandsoort'] = const.TEK_OVERIGE
-
-                    analyseCol.replace_one({"_id": doc['_id']}, doc, upsert=True)
-                    continue
-
-
-
-                # Match projectFoto's
-                matchObj = re.match( r'^([a-zA-Z0-9]+)_([FG])([a-zA-Z0-9]+).*\.[a-z]{3}$', doc['fileName'], re.M|re.I)
-                if matchObj:
-                    doc['projectcd'] = projectcd       
-                    doc['fotonr'] = matchObj.group(3).lstrip("0")
-                    doc['soort'] = 'Foto' 
-                    
-                    fototype = matchObj.group(2)
-                    doc['fototype'] = fototype
-                    if fototype == 'F':
-                        doc['bestandsoort'] = const.FOTO_SFEERFOTO
-                    elif fototype == 'G':
-                        doc['bestandsoort'] = const.FOTO_OPGRAVINGSFOTO
-                    else:
-                        doc['bestandsoort'] = const.FOTO_OVERIGE
-
-                    analyseCol.replace_one({"_id": doc['_id']}, doc, upsert=True)
+                parsed = profiel.identificeer_tekening(doc, projectcd)
+                if parsed is not None:
+                    _bewaarFotodocument(analyseCol, doc['_id'], parsed, delta_run)
                     continue
 
 
                 # Rapporten: bestanden waarvan de naam begint met een rapportcode-prefix
-                rapport_prefixen_raw = laadCorrecties().get('rapportcode_prefixen', [])
-                # Filter ongeldige entries (ontbrekende prefix/type)
-                rapport_prefixen = [p for p in rapport_prefixen_raw if isinstance(p, dict) and 'prefix' in p and 'type' in p]
-                if rapport_prefixen:
-                    prefix_patroon = '|'.join(str(p['prefix']) for p in rapport_prefixen)
-                    prefix_type_map = {str(p['prefix']).upper(): p['type'] for p in rapport_prefixen}
-                    matchObj = re.match(r'^(' + prefix_patroon + r')\s*([0-9]{2,3}).*', doc['fileName'], re.M|re.I)
-                    if matchObj:
-                        doc['rapportnr'] = matchObj.group(1) + str(int(matchObj.group(2))).zfill(3)
-                        doc['key'] = 'R' + doc['rapportnr']
-                        doc['soort'] = 'Rapport'
-                        doc['fototype'] = 'R'
-                        # Bepaal bestandsoort op basis van het prefix-type uit de configuratie
-                        matched_prefix = matchObj.group(1).upper()
-                        rapport_type = prefix_type_map.get(matched_prefix, 'archeologische_rapportage')
-                        if rapport_type == 'archeologische_rapportage':
-                            doc['bestandsoort'] = const.RAPP_ARCHEOLOGISCHE_RAPPORTAGE
-                        else:
-                            doc['bestandsoort'] = const.RAPP_ARCHEOLOGISCHE_NOTITIE
-                        analyseCol.replace_one({"_id": doc['_id']}, doc, upsert=True)
-                        continue
+                matchObj = rapport_regex.match(doc['fileName']) if rapport_regex is not None else None
+                if matchObj:
+                    doc['rapportnr'] = matchObj.group(1) + str(int(matchObj.group(2))).zfill(3)
+                    doc['key'] = 'R' + doc['rapportnr']
+                    doc['soort'] = 'Rapport'
+                    doc['fototype'] = 'R'
+                    # Bestandsoort volgens het type van het prefix in de configuratie
+                    doc['bestandsoort'] = prefix_bestandsoort.get(matchObj.group(1).upper(), const.RAPP_ARCHEOLOGISCHE_RAPPORTAGE)
+                    _bewaarFotodocument(analyseCol, doc['_id'], doc, delta_run)
+                    continue
 
 
 
@@ -380,7 +434,7 @@ def parseFotobestanden():
                     doc['fototype'] = 'T'
                     doc['tekeningcd'] = doc['fullFileName']
 
-                    analyseCol.replace_one({"_id": doc['_id']}, doc, upsert=True)
+                    _bewaarFotodocument(analyseCol, doc['_id'], doc, delta_run)
                     continue
 
 
@@ -389,7 +443,7 @@ def parseFotobestanden():
                 doc['fototype'] = 'N' 
                 doc['soort'] = 'Bestand' 
                 doc['bestandsoort'] = const.BESTAND_OVERIGE
-                analyseCol.replace_one({"_id": doc['_id']}, doc, upsert=True)
+                _bewaarFotodocument(analyseCol, doc['_id'], doc, delta_run)
 
             except Exception as err:
                 msg = f"Unknown error while collecting image {doc['fileName']} with message: " + str(err)

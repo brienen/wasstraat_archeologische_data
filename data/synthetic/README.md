@@ -11,13 +11,17 @@ Gemeenten die hun eigen data willen verwerken, kunnen deze voorbeeldstructuur al
 - 2 vullingen, 7 tekeningen, 3 foto's
 - 3 monsters (2 met botanische determinaties, 1 zoölogisch)
 - 1 monster met opzettelijk foute projectcode (SYNTFOUT) — test voor correctiemechanisme
+- 1 foto als png met alfakanaal (`L Fotos/SY001_G003.png`) en 1 Word-document (`D Velddocumenten/Dagrapport SY001.docx`) — test voor de extractie: het png komt op een witte achtergrond als jpg in de mediamap, het Word-document krijgt het documenticoon uit `shared/afbeeldingen/document.png` als voorbeeld
+- Een werkmap `K Overig/werkmap/` met een kopie van de database en van foto `SY001_G001.jpg` — test voor `paden_overslaan` in `correcties.yml` (issue 84): de extractie slaat ze over, de aantallen veranderen niet
 - Datering: 1600-1750
 
 ### SY002 — Groot project (Kerkplein, Leiden)
-- 4 putten, 8 sporen, 12 vondsten, 20 artefacten (8 materiaalsoorten)
+- 4 putten, 8 sporen, 12 vondsten, 23 artefactregels (8 materiaalsoorten)
+- In AARDEWERK 1 twee scherven zonder subnummer en een tweede regel met hetzelfde subnummer als een bestaande (put 1, vondst 1, subnr 2) — test voor de hulpsleutel uit de bronrij (issue 81): rijen zonder natuurlijke key of met een dubbele key houden hun `primary_key`. De twee regels met subnr 2 vormen samen één artefact met twee bronrijen (merge-groep, issue 83)
 - 4 vullingen, 10 foto's
 - 2 monsters (uit beerput en greppel, met botanische en schelpdeterminaties)
 - Materiaalsoorten: aardewerk, glas, been, metaal, leer, steen, kleipijp, munten
+- De beschrijving van spoor 4 (een memo-veld, zoals in de echte databases) bevat een regeleinde — test voor tekstvelden die in de CSV-export meer regels beslaan
 - Datering: 1200-1800
 
 ## Structuur
@@ -28,7 +32,9 @@ data/synthetic/
 │   ├── projecten/                                     # Opgravingsdatabases + foto's
 │   │   ├── SY001/
 │   │   │   ├── C Database/opgravingSY001.mdb          #   Projectdatabase (putten, sporen, vondsten, artefacten)
-│   │   │   └── L Fotos/                               #   Foto's (sfeer-, opgravinqs- en objectfoto's)
+│   │   │   ├── D Velddocumenten/                      #   Word-document (dagrapport)
+│   │   │   ├── K Overig/werkmap/                      #   Kopieën die de pipeline overslaat (paden_overslaan)
+│   │   │   └── L Fotos/                               #   Foto's (sfeer-, opgravings- en objectfoto's, één png met alfakanaal)
 │   │   └── SY002/
 │   │       ├── C Database/opgravingSY002.mdb
 │   │       └── L Fotos/
@@ -43,10 +49,10 @@ data/synthetic/
 │   ├── referentietabellen/                            # Standaardtabellen
 │   │   ├── abr_versie_01122018.xlsx                   #   ABR-thesaurus (perioden, materialen)
 │   │   └── Alle Bestanden Archeologisch Depot.xlsx    #   Depotinventarisatie
-│   └── rapporten/                                     # Rapporten (leeg in synthetische data)
+│   └── rapporten/                                     # Rapporten (leeg in synthetische data, alleen .gitkeep)
 ├── wasstraat_config/                                  # Pipeline-configuratie
 │   ├── Wasstraat_Config_HarmonizeV3.xlsx              #   Harmonisatie-mapping (veldnamen per objecttype)
-│   └── correcties.yml                                 #   Datacorrecties (projectcodes, rapportprefixen)
+│   └── correcties.yml                                 #   Datacorrecties (projectcodes, rapportprefixen, paden_overslaan)
 ├── generatie/                                         # Alles voor (her)generatie
 │   ├── generate_synthetic_data.py                     #   Generator-script
 │   ├── requirements-synthetic.txt                     #   Python dependencies
@@ -85,15 +91,16 @@ volumes:
   - ./data/synthetic/data/fotolijst:/input/fotolijst
   - ./data/synthetic/data/monsterdatabase:/input/monsterdatabase
   - ./data/synthetic/data/referentietabellen:/input/referentietabellen
+  - ./data/synthetic/data/rapporten:/input/rapporten
 ```
 
-Om de synthetische data met de volledige Wasstraat-applicatie te gebruiken, pas je dezelfde volume-mappings toe in je eigen docker-compose override.
+De volledige Wasstraat-applicatie gebruikt deze data standaard: `make app` start alle services met `docker-compose.yml`, dat dezelfde mappen koppelt.
 
 ## Opnieuw genereren
 
 Vereisten:
-- Java JRE (`brew install openjdk` op macOS)
-- Python packages: `pip install -r generatie/requirements-synthetic.txt`
+- Java JRE (`brew install openjdk` op macOS, of een OpenJDK 21 in `/usr/lib/jvm/java-21-openjdk` op Linux)
+- Python packages uit `generatie/requirements-synthetic.txt` (installeert `make synthetic` zelf in de `.venv`)
 - Jackcess JARs in `generatie/jars/` (al aanwezig in de repo)
 
 ```bash

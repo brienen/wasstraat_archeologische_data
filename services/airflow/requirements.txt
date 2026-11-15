@@ -23,7 +23,8 @@ passlib[bcrypt]>=1.7.4,<2
 pdf2image>=1.17,<2
 elasticsearch>=8.17,<9
 roman>=4.2,<5
-opentelemetry-api>=1.29,<2
+# De basisimage levert 1.27 (constraints van Airflow 2.10.5); de pipeline gebruikt het niet zelf
+opentelemetry-api>=1.27,<2
 
 # Development
 debugpy>=1.8,<2

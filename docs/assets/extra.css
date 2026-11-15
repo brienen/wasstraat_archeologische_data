@@ -49,3 +49,24 @@ img:hover { opacity: 0.85; }
     pointer-events: none;
     transition: opacity 0.3s;
 }
+
+/* Semantische footer met credits voor E-Space en Arjen Brienen */
+.wasstraat-footer {
+    margin-top: 2.5rem;
+    padding-top: 1rem;
+    font-size: 0.9rem;
+    color: #555;
+    line-height: 1.5;
+}
+.wasstraat-footer hr {
+    border: none;
+    border-top: 1px solid #ddd;
+    margin-bottom: 1rem;
+}
+.wasstraat-footer p {
+    margin: 0.25rem 0;
+}
+.wasstraat-footer strong { color: #2980b9; }
+.wasstraat-footer a { color: #2980b9; text-decoration: none; }
+.wasstraat-footer a:hover { text-decoration: underline; }
+.wasstraat-copyright { color: #888; }

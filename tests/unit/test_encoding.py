@@ -497,17 +497,18 @@ class TestMdbExportEncoding:
         assert 'TOTAL_TABLES_ENCODING_FAILED' in content, \
             "importMDB.sh moet encoding-fouten tellen"
 
-    def test_script_validates_utf8_after_sed(self):
-        """Verifieer dat importMDB.sh UTF-8 valideert na sed-bewerkingen."""
+    def test_script_validates_utf8_after_kolommen_toevoegen(self):
+        """Verifieer dat importMDB.sh UTF-8 valideert na het toevoegen van de kolommen (csv_kolommen.py)."""
         project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
         script_path = os.path.join(project_root, "airflow_app", "scripts", "importMDB.sh")
 
         with open(script_path, 'r') as f:
             content = f.read()
 
-        # Zoek naar de post-sed validatie
-        assert 'na sed-bewerking' in content, \
-            "importMDB.sh moet UTF-8 valideren na sed-bewerkingen"
+        # De validatie staat na de aanroep van csv_kolommen.py
+        assert 'na het toevoegen van de kolommen geen geldig UTF-8' in content, \
+            "importMDB.sh moet UTF-8 valideren na het toevoegen van de kolommen"
+        assert content.index('csv_kolommen.py') < content.index('na het toevoegen van de kolommen geen geldig UTF-8')
 
 
 # ============================================================

@@ -1,0 +1,122 @@
+{
+ "beschrijving": "Echte inhoud van de kolom brondata (str() van de bronrijen uit MongoDB) uit de backup van de Delftse productie-installatie van 22 oktober 2026, voor de tests van leesBrondataTekst en getBronsleutel (issue 88). Namen van personen zijn vervangen; bronsleutel is de verwachte hulpsleutel.",
+ "teksten": [
+  {
+   "naam": "stelling",
+   "tabel": "Def_Stelling",
+   "beschrijving": "Stelling uit de tabel stellingen (geen autonummer: hash over de inhoud)",
+   "key": "SA",
+   "aantal_bronrijen": 1,
+   "bronsleutel": "magazijnlijst/MAGAZIJN.mdb:stellingen:#12645fbcdd4ba1bf",
+   "tekst": "[{'_id': ObjectId('6ad87718a307a40b60ecdb13'), 'stelling': 'A', 'inhoud': 'AARDEWERK', 'table': 'stellingen', 'projectcd': 'MAGAZIJN', 'bron': 'opgravingMAGAZIJN', 'loadtime': '2026-10-21T08:25:59+00:00', 'mdbfile': '/input/magazijnlijst/MAGAZIJN.mdb'}]"
+  },
+  {
+   "naam": "standplaats_magazijnlijst",
+   "tabel": "Def_Standplaats",
+   "beschrijving": "Standplaats uit de magazijnlijst (autonummer ID; de key SxVyLz komt vaker voor)",
+   "key": null,
+   "aantal_bronrijen": 1,
+   "bronsleutel": "magazijnlijst/MAGAZIJN.mdb:magazijnlijst:254",
+   "tekst": "[{'_id': ObjectId('6ad87718223f3e6ff8f8c851'), 'ID': 254, 'UIT': 0, 'PROJECT': 'Specials Algemeen 1', 'table': 'magazijnlijst', 'projectcd': 'MAGAZIJN', 'bron': 'opgravingMAGAZIJN', 'loadtime': '2026-10-21T08:25:59+00:00', 'mdbfile': '/input/magazijnlijst/MAGAZIJN.mdb'}]"
+  },
+  {
+   "naam": "standplaats_doosnr",
+   "tabel": "Def_Standplaats",
+   "beschrijving": "Standplaats uit de tabel doosnr (geen autonummer)",
+   "key": null,
+   "aantal_bronrijen": 1,
+   "bronsleutel": "magazijnlijst/MAGAZIJN.mdb:doosnr:#7516eedca17776bd",
+   "tekst": "[{'_id': ObjectId('6ad8771740aecb6e664ef104'), 'CODE': 'DC29', 'DOOSNO': 523, 'Expr1': 'DC29-523', 'UIT': 0, 'PROJECT': 'Hoogheemraadschap van Delfland I', 'CODENAAM': 'DL88', 'INHOUD': 'Waar is de doos???!!!!!!!', 'table': 'doosnr', 'projectcd': 'MAGAZIJN', 'bron': 'opgravingMAGAZIJN', 'loadtime': '2026-10-21T08:25:59+00:00', 'mdbfile': '/input/magazijnlijst/MAGAZIJN.mdb'}]"
+  },
+  {
+   "naam": "spoor_sporen",
+   "tabel": "Def_Spoor",
+   "beschrijving": "Spoor uit SPOREN (autonummer; haakjes in kolomnamen, '÷' en een komma-lijst)",
+   "key": "PDB034P10S1",
+   "aantal_bronrijen": 1,
+   "bronsleutel": "projecten/DB034_Koningsveld IV/C Database/opgravingDB34.mdb:SPOREN:248",
+   "tekst": "[{'_id': ObjectId('6ad87749e07a43b0680fe441'), 'ID': 248, 'CODENAAM': 'KVIV', 'PUTNO': 10, 'VLAKNO': '1,2,3', 'SPOORNO': 1, 'AARD': 'begraving, graftombe', 'HB': '68 ÷ NAP', 'LB': 300, 'BB': 110, 'HO': '121 ÷ NAP', 'STEENFORMAAT': '28x14x7', 'RICHTING SPOOR': 'OW', 'JONGER DAN': 168, 'VERBANDEN (muur)': 'wild verband', 'FOTONUMMER(S)': '5536-5541, 5548, 5551, 5559-5562', 'BESCHRIJVING': 'Zie tekening C11. Skelet is niet getekend. C5, C6, C11', 'DATUM': '5-5-2003', 'DETERM': 'XX', 'table': 'SPOREN', 'projectcd': 'DB034', 'bron': 'opgravingDB034', 'loadtime': '2026-10-21T08:25:59+00:00', 'mdbfile': '/input/projecten/DB034_Koningsveld IV/C Database/opgravingDB34.mdb'}]"
+  },
+  {
+   "naam": "spoor_zonder_autonummer",
+   "tabel": "Def_Spoor",
+   "beschrijving": "Spoor uit SPOOR van DC024 (geen autonummer; datum als tekst)",
+   "key": "PDC024P3S1",
+   "aantal_bronrijen": 1,
+   "bronsleutel": "projecten/DC024_Stadskantoor/C Database/DC24_STADSKANTOOR.mdb:SPOOR:#130bee9196d99b37",
+   "tekst": "[{'_id': ObjectId('6ad87763bb6a6d812a9b96b8'), 'SPOOR': 1, 'PUT': 3, 'VLAK': 0, 'PROFIEL': 0, 'VORM': 'rechth', 'DIEPTE': 0, 'GECOUPEERD': 0, 'TEKCOUPE': 0, 'AFGEWERKT': 0, 'INTERPRET': 'MR', 'PROJECT': 'DC24', 'GEBRUIKER': 'xx', 'GEWIJZIGD': '03/25/14 22:02:00', 'INGEVOERD': '04/04/13 12:49:00', 'VORMCOUPE': '-', 'DATERING': '-', 'COUPENR': '-', 'MB': 0, 'table': 'SPOOR', 'projectcd': 'DC024', 'bron': 'opgravingDC024', 'loadtime': '2026-10-21T08:25:59+00:00', 'mdbfile': '/input/projecten/DC024_Stadskantoor/C Database/DC24_STADSKANTOOR.mdb', 'project': 'DC024'}]"
+  },
+  {
+   "naam": "vulling",
+   "tabel": "Def_Vulling",
+   "beschrijving": "Vulling uit VULLINGEN (autonummer)",
+   "key": "PDB034P10S100V0",
+   "aantal_bronrijen": 1,
+   "bronsleutel": "projecten/DB034_Koningsveld IV/C Database/opgravingDB34.mdb:VULLINGEN:295",
+   "tekst": "[{'_id': ObjectId('6ad877487f481a23cc167ccd'), 'ID': 295, 'CODENAAM': 'KVIV', 'PUTNO': 10, 'SPOORNO': 100, 'VULLINGNO': 0, 'table': 'VULLINGEN', 'projectcd': 'DB034', 'bron': 'opgravingDB034', 'loadtime': '2026-10-21T08:25:59+00:00', 'mdbfile': '/input/projecten/DB034_Koningsveld IV/C Database/opgravingDB34.mdb'}]"
+  },
+  {
+   "naam": "project_nan_false",
+   "tabel": "Def_Project",
+   "beschrijving": "Project uit een Excel-lijst: nan, False en een backslash in een pad",
+   "key": "PDB332",
+   "aantal_bronrijen": 1,
+   "bronsleutel": "projectenlijst/Extra_projecten_tabel_OPGRAVINGEN.xlsx:OPGRAVINGEN:#d3f72465d462e33a",
+   "tekst": "[{'_id': ObjectId('6ad877a9baef3ada5d6ac7c9'), 'CODE': 'DB332', 'WAARNEMING': nan, 'TOPONIEM': 'Kinderboerderij Tantfhof', 'OPGRAVING': 'BO', 'UITVOERDER': nan, 'CODENAAM': nan, 'KAARTBLAD': '37E', 'XCOORD': nan, 'YCOORD': nan, 'KADASTRAAL': nan, 'JAAR': nan, 'LOKATIE': 'H:\\\\GEMEENTES\\\\PLAATS\\\\Opgravingen\\\\NAAM\\\\opgravingCODE.mdb', 'VONDSTENLIJST': False, 'SPOREN': False, 'DIAOPGRAVING': False, 'DIAVOORWERP': False, 'TEKENINGEN': False, 'ROMEINS AARDEWERK': False, 'AARDEWERK 1': False, 'AARDEWERK 2': False, 'KLEIPIJPEN': False, 'TERRA COTTA': False, 'GLAS': False, 'BEEN': False, 'BOT': False, 'HOORN': False, 'IVOOR': False, 'HOUT': False, 'METAAL': False, 'MUNTEN EN PENNINGEN': False, 'STEEN': False, 'LEER': False, 'TEXTIEL': False, 'MODERN': False, 'BIOLOGISCH': False, 'SPECIAL': False, 'TREFWOORDEN': nan, 'IJZ': False, 'ROM': False, 'MIDDELEEUWS OF LATER': False, 'VME': False, 'LME': False, 'LMEA': False, 'LMEB': False, 'NT': False, 'VROEGSTE DATUM': nan, 'LAATSTE DATUM': nan, 'table': 'OPGRAVINGEN', 'mdbfile': '/input/projectenlijst/Extra_projecten_tabel_OPGRAVINGEN.xlsx'}]"
+  },
+  {
+   "naam": "monster_samengevoegd_lang",
+   "tabel": "Def_Monster",
+   "beschrijving": "Samengevoegd monster met vier bronrijen (3 kB): aanhalingstekens, \\r en een regeleinde in een memo",
+   "key": "MDC154_p1_v1",
+   "aantal_bronrijen": 4,
+   "bronsleutel": "monsterdatabase/MONSTERS.accdb:Monster_gegevens:109;monsterdatabase/MONSTERS.accdb:Monster_gegevens:1562;monsterdatabase/MONSTERS.accdb:Monster_waardering:109;monsterdatabase/MONSTERS.accdb:Monster_waardering:1573",
+   "tekst": "[{'_id': ObjectId('6ad87718cd299679ce4a24b9'), 'Id': 109, 'MONSTERCODE': 'DC154_p1_v1', 'B zaden-cultuur onverkoold': 50, 'B zaden-kaf onverkoold': 5, 'B zaden-wild onverkoold': 5, 'C textiel': 5, 'D hout': 5, 'D houtskool': 5, 'Z bot-groot O': 5, 'Z eierschaal/vel O': 5, 'Z insekten O': 5, 'Z visgraat/bot O': 5, 'Z viswervel O': 5, 'Z vliegepop O': 5, 'C lakzegel': 5, 'table': 'Monster_waardering', 'projectcd': 'MONSTERS', 'bron': 'opgravingMONSTERS', 'loadtime': '2026-10-21T08:25:59+00:00', 'mdbfile': '/input/monsterdatabase/MONSTERS.accdb'}, {'_id': ObjectId('6ad8771824397756e328fa48'), 'Id': 109, 'PROJECT': 'DC154', 'PUTNO': 1, 'VONDSTNO': 1, 'MONSTERCODE': 'DC154_p1_v1', 'DET': 'X. Determinator', 'DATUM_DET': '10/25/11 00:00:00', 'SPOORNO': 1, 'DOOSNO': 25, 'VONDSTOMST': 'Spit', 'GRONDSOORT': 'beermonster (MA)', 'GEZEEFD_VOL': 1, 'ZEEFMAAT': 0.5, 'REST_VOL': 3.5, 'DATUM_ZEVEN': '10/24/11 00:00:00', 'OPMERKINGEN': \"beermonster, veel gemeniral. Ribes vruchten + kelk, veel graan fragmenten ( m ), en papier fragmenten met letter's. veel Riber velletjes.\", 'KARAKTERISERING': 'A/B:', 'R analysewaardig ZO': '-', 'R analysewaardig BO': '+', 'R concentratie ZO': '-', 'R concentratie BO': '+', 'R conservering ZO': '-', 'R conservering BO': '+', 'R diversiteit ZO': '-', 'R diversiteit BO': '+', 'table': 'Monster_gegevens', 'projectcd': 'MONSTERS', 'bron': 'opgravingMONSTERS', 'loadtime': '2026-10-21T08:25:59+00:00', 'mdbfile': '/input/monsterdatabase/MONSTERS.accdb'}, {'_id': ObjectId('6ad8771824397756e328fdea'), 'Id': 1562, 'PROJECT': 'Poppesteeg', 'PUTNO': 1, 'VONDSTNO': 1, 'MONSTERCODE': 'DC154_p1_v1', 'DET': 'Y. Determinator', 'DATUM_DET': '10/25/11 00:00:00', 'SPOORNO': 1, 'DOOSNO': 25, 'VONDSTOMST': 'spit', 'GRONDSOORT': 'Beermonser', 'GEZEEFD_VOL': 1, 'ZEEFMAAT': 0.5, 'REST_VOL': 3.5, 'DATUM_ZEVEN': '10/24/11 00:00:00', 'OPMERKINGEN': 'Beer zaden : veel gemin. ,Ribesvruchten +kelk, veel graan fragment mini , veel papie frag met letters er op', 'KARAKTERISERING': 'A/B\\r,Monster_gegevens,MONSTERS,opgravingMONSTERS,2026-10-21T08:25:59+00:00,/input/monsterdatabase/MONSTERS.accdb\\nhierin zitten uitgezochte zaden v1 +3. veel zemelen', 'R analysewaardig ZO': '-', 'R analysewaardig BO': '+', 'R concentratie ZO': '-', 'R concentratie BO': '+', 'R conservering ZO': 'slecht', 'R conservering BO': '+', 'R diversiteit ZO': '-', 'R diversiteit BO': '+', 'table': 'Monster_gegevens', 'projectcd': 'MONSTERS', 'bron': 'opgravingMONSTERS', 'loadtime': '2026-10-21T08:25:59+00:00', 'mdbfile': '/input/monsterdatabase/MONSTERS.accdb'}, {'_id': ObjectId('6ad87718cd299679ce4a2708'), 'Id': 1573, 'MONSTERCODE': 'DC154_p1_v1', 'B zaden-cultuur onverkoold': 25, 'B zaden-wild onverkoold': 5, 'C steenkool': 5, 'C overig': 'papier fragmenten', 'D hout': 5, 'D houtskool': 5, 'Z eierschaal/vel O': 5, 'Z visgraat/bot O': 5, 'Z viswervel O': 5, 'table': 'Monster_waardering', 'projectcd': 'MONSTERS', 'bron': 'opgravingMONSTERS', 'loadtime': '2026-10-21T08:25:59+00:00', 'mdbfile': '/input/monsterdatabase/MONSTERS.accdb'}]"
+  },
+  {
+   "naam": "artefact_samengevoegd",
+   "tabel": "Def_Artefact",
+   "beschrijving": "Samengevoegd artefact met twee bronrijen uit AARDEWERK 1 en AARDEWERK 3 (kolomnamen die met een cijfer beginnen)",
+   "key": "PDC026P3V313A2|Aardewerk",
+   "aantal_bronrijen": 2,
+   "bronsleutel": "projecten/DC026_Oude en Nieuwe Gasthuis/C Database/opgravingDC26.mdb:AARDEWERK 1:2;projecten/DC026_Oude en Nieuwe Gasthuis/C Database/opgravingDC26.mdb:AARDEWERK 3:2050",
+   "tekst": "[{'_id': ObjectId('6ad8777b30e5f7752760f430'), 'ID': 2050, 'CODENAAM': 'ONG86', 'PUTNO': 3, 'VONDSTNO': 313, 'SUBNO': 2, '4b': 'bodemfragment grijsbakkend aardewerk', '5a': 'grijsbakkend aardewerk', '5b': 'grijs', '5f': 'gedraaid', '6a': 11, '7a': 'kan?', '7b': 'drinkgerei/schenkgerei', '10a': 227, '11': 'X', '12': 0, '13': 0, 'table': 'AARDEWERK 3', 'projectcd': 'DC026', 'bron': 'opgravingDC026', 'loadtime': '2026-10-21T08:25:59+00:00', 'mdbfile': '/input/projecten/DC026_Oude en Nieuwe Gasthuis/C Database/opgravingDC26.mdb'}, {'_id': ObjectId('6ad8777b959185540af70284'), 'ID': 2, 'CODENAAM': 'ONG86', 'PUTNO': 3, 'VONDSTNO': 313, 'SUBNO': 2, '4b': 'bodemfragment grijsbakkend aardewerk', '5a': 'grijsbakkend aardewerk', '5b': 'grijs', '5f': 'gedraaid', '6a': 11, '7a': 'kan?', '7b': 'drinkgerei/schenkgerei', '10a': 227, '11': 'X', '12': 0, '13': 0, 'table': 'AARDEWERK 1', 'projectcd': 'DC026', 'bron': 'opgravingDC026', 'loadtime': '2026-10-21T08:25:59+00:00', 'mdbfile': '/input/projecten/DC026_Oude en Nieuwe Gasthuis/C Database/opgravingDC26.mdb'}]"
+  },
+  {
+   "naam": "artefact_zonder_autonummer",
+   "tabel": "Def_Artefact",
+   "beschrijving": "Artefact uit ARTF_GLS (geen autonummer; float 0.0)",
+   "key": "PDC112V31A0S0|Glas",
+   "aantal_bronrijen": 1,
+   "bronsleutel": "projecten/DC112_Vermeerschool Voldergracht 21/C Database/DC112 - VOL21/DC112.mdb:ARTF_GLS:#be03df72ce4a69d4",
+   "tekst": "[{'_id': ObjectId('6ad877877260d7bff4740bf0'), 'ARTEFACT': 223, 'SPLIT_ID': 0, 'OPMERKING': '-', 'AANTAL': 0, 'GEWICHT': 0.0, 'SUBNO': 0, 'RANDDIA': 75, 'RANDPER': 0, 'DIAGR': 0, 'HOOGTE': 0, 'FRAGM': 0, 'GLSSOORT': '-', 'KLEUR': '-', 'VORMB': '-', 'VORMOS': '-', 'VORMC': '-', 'VERSIERING': '-', 'table': 'ARTF_GLS', 'projectcd': 'DC112', 'bron': 'opgravingDC112', 'loadtime': '2026-10-21T08:25:59+00:00', 'mdbfile': '/input/projecten/DC112_Vermeerschool Voldergracht 21/C Database/DC112 - VOL21/DC112.mdb'}]"
+  },
+  {
+   "naam": "vondst_samengevoegd",
+   "tabel": "Def_Vondst",
+   "beschrijving": "Samengevoegde vondst met drie bronrijen uit drie databases van DC097",
+   "key": "PDC097P1V1",
+   "aantal_bronrijen": 3,
+   "bronsleutel": "projecten/DC097_Ipse/C Database/HHD2.mdb:VONDSTENLIJST:1;projecten/DC097_Ipse/C Database/dc79a1.mdb:VONDSTENLIJST:1;projecten/DC097_Ipse/C Database/opgravingDC97.mdb:VONDSTENLIJST:1",
+   "tekst": "[{'_id': ObjectId('6ad87784f491cfb547b38c01'), 'ID': 1, 'CODENAAM': 'IPSE03', 'PUTNO': 1, 'VLAKNO': 1, 'VONDSTNO': 1, 'SPOORNO': 10, 'VONDSTOMSTH': 'beerput', 'INHOUD': 'aw, bot', 'DATUM': '07-07-03', 'table': 'VONDSTENLIJST', 'projectcd': 'DC097', 'bron': 'opgravingDC097', 'loadtime': '2026-10-21T08:25:59+00:00', 'mdbfile': '/input/projecten/DC097_Ipse/C Database/dc79a1.mdb'}, {'_id': ObjectId('6ad877813a9fcb4ffbee915e'), 'ID': 1, 'CODENAAM': 'IPSE03', 'PUTNO': 1, 'VLAKNO': 1, 'VONDSTNO': 1, 'SPOORNO': 10, 'VONDSTOMSTH': 'beerput', 'INHOUD': 'aw, bot', 'DATUM': '07-07-03', 'table': 'VONDSTENLIJST', 'projectcd': 'DC097', 'bron': 'opgravingDC097', 'loadtime': '2026-10-21T08:25:59+00:00', 'mdbfile': '/input/projecten/DC097_Ipse/C Database/HHD2.mdb'}, {'_id': ObjectId('6ad87784cb6d63542b44812a'), 'ID': 1, 'CODENAAM': 'IPSE03', 'PUTNO': 1, 'VLAKNO': 1, 'VONDSTNO': 1, 'SPOORNO': 10, 'VONDSTOMSTH': 'beerput', 'INHOUD': 'aw, bot', 'DATUM': '07-07-03', 'table': 'VONDSTENLIJST', 'projectcd': 'DC097', 'bron': 'opgravingDC097', 'loadtime': '2026-10-21T08:25:59+00:00', 'mdbfile': '/input/projecten/DC097_Ipse/C Database/opgravingDC97.mdb'}]"
+  },
+  {
+   "naam": "plaatsing",
+   "tabel": "Def_Plaatsing",
+   "beschrijving": "Plaatsing uit de magazijnlijst (zonder natuurlijke key)",
+   "key": null,
+   "aantal_bronrijen": 1,
+   "bronsleutel": "magazijnlijst/MAGAZIJN.mdb:magazijnlijst:1",
+   "tekst": "[{'_id': ObjectId('6ad87718223f3e6ff8f8c7d6'), 'ID': 1, 'UIT': 0, 'STELLING': 'F', 'VAKNO': 125, 'CODE': 'DC29', 'PROJECT': 'Hoogheemraadschap van Delfland I', 'DOOSNO': 1, 'CODENAAM': 'DL88', 'table': 'magazijnlijst', 'projectcd': 'MAGAZIJN', 'bron': 'opgravingMAGAZIJN', 'loadtime': '2026-10-21T08:25:59+00:00', 'mdbfile': '/input/magazijnlijst/MAGAZIJN.mdb'}]"
+  },
+  {
+   "naam": "monster_botanie",
+   "tabel": "Def_Monster_Botanie",
+   "beschrijving": "Botaniedeterminatie (autonummer Id)",
+   "key": null,
+   "aantal_bronrijen": 1,
+   "bronsleutel": "monsterdatabase/MONSTERS.accdb:Monster_botanie_determinatie:1",
+   "tekst": "[{'_id': ObjectId('6ad877186bf28ea488ecb8a0'), 'Id': 1, 'MONSTERCODE': 'ALT_p62_v26', 'SOORT': 'ATRIPP/P', 'DEEL': 'SEE', 'STAAT': 'o', 'AANTAL': 50, 'table': 'Monster_botanie_determinatie', 'projectcd': 'MONSTERS', 'bron': 'opgravingMONSTERS', 'loadtime': '2026-10-21T08:25:59+00:00', 'mdbfile': '/input/monsterdatabase/MONSTERS.accdb'}]"
+  }
+ ]
+}

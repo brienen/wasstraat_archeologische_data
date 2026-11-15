@@ -16,18 +16,28 @@
 # specific language governing permissions and limitations
 # under the License.
 
-"""Data Importeren"""
+"""Losse DAG voor Transform 2 (attributen normaliseren) op de bestaande Single_Store.
+
+Bedoeld voor stapsgewijs debuggen van de configuratie en het gemeenteprofiel:
+na DAG_Transform1_Harmonize_Only (die Single_Store opnieuw opbouwt) normaliseert
+deze DAG de inhoud (projectcodes, nummers, dateringen, coördinaten, gegevens
+uit de bestandsnamen van foto's), zodat je het resultaat in MongoDB kunt
+bekijken voordat Transform 3, 5 en 4 en de load volgen. Daarna komen
+DAG_Transform3_Keys_Only, DAG_Transform_Move_Only (die Single_Store_Clean
+leegt en opnieuw vult) en DAG_Transform4_Refs_Only.
+
+De DAG raakt alleen Single_Store en _processing_errors. Tot issue 87 leegde
+hij eerst ook Single_Store_Clean (en Single_Store_Doos), een overblijfsel dat
+voor Transform 2 niet nodig is: daarna had DAG_Load_Only niets meer om te
+laden. Geen run-document en geen verwerkingsrapport; draai na stapsgewijs
+werken weer de volledige cyclus voordat je de incrementele cyclus gebruikt.
+"""
 from datetime import datetime, timedelta
 
 from airflow import DAG
 from airflow.operators.dummy import DummyOperator
-from airflow.operators.python import PythonOperator
 
-import shared.config as config
-import tasks_transform3_keys
-import tasks_transform1_harmonize
 import tasks_transform2_attributes
-import wasstraat.mongoUtils as mongoUtils
 
 
 with DAG(
@@ -42,15 +52,10 @@ with DAG(
         task_id='Start_cycle',
     )
 
-    Drop_SingleStoreClean = PythonOperator(
-        task_id='Drop_SingleStoreClean',
-        python_callable=mongoUtils.dropSingleStoreClean
-    )
-
     End_cycle = DummyOperator(
         task_id='End_cycle',
     )
     tg_enhanceAttrs = tasks_transform2_attributes.getEnhanceAttributesGroup()
 
 
-    Start_cycle >> Drop_SingleStoreClean >> tg_enhanceAttrs >> End_cycle 
+    Start_cycle >> tg_enhanceAttrs >> End_cycle

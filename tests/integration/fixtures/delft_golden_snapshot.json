@@ -1,0 +1,264 @@
+{
+  "beschrijving": "Golden snapshot Delft testdata (DB034) - opnieuw vastgelegd op 2026-10-29 na issue 75 (codetabellen als referentiedata): de codetabellen AARDEWERK 1&2 VOORWERP (96 rijen, kolommen CODE en VOORWERP) en AARDEWERK 1 BAKSEL (46 rijen, CODE en BAKSEL) uit opgravingDB34.mdb staan in harmonisatie_voorrang van data/test/wasstraat_config/correcties.yml met een lege waarde en worden niet meer als aardewerk geharmoniseerd; ze blijven in Staging_Projecten_Oud. Daardoor: Artefact in Single_Store 6336 -> 6194, Artefact in Single_Store_Clean 6075 -> 5933 en Aardewerk 4656 -> 4514 (telkens -142 = 96 + 46). Alle andere tellingen en voorbeeldkeys zijn gelijk. Issue 85 (kolommen van Spijkeranalyse Koningsveld op het blad Artefact) en issue 86 (RAAP-tabel ARTEFACT geladen met een artefactsoort uit de materiaalcode, tussenversies van DC097 in paden_overslaan) raken de testdata niet: de spijkeranalyse, RAAP-databases en DC097 zitten er niet in. Eerder: Golden snapshot Delft testdata (DB034) - opnieuw gegenereerd op 2026-10-29 na issue 83 (move/merge van artefacten): een artefact wordt in Transform 5 verplaatst of samengevoegd, niet meer allebei. In opgravingDB34.mdb hebben 261 rijen in AARDEWERK 1 een rij in CATALOGUS AW1 met dezelfde put, vondst en subnummer; die groepen van twee bronrijen werden samengevoegd, maar het verplaatste exemplaar uit de andere tabel bleef ernaast staan met dezelfde key. Nu is elke groep één artefact: Artefact 6336 -> 6075 en Aardewerk 4917 -> 4656 (beide -261); Single_Store en alle andere tellingen en voorbeeldkeys zijn gelijk. Issue 84 (paden_overslaan) verandert hier niets: de testdata heeft geen werkmap. Daarvoor (2026-10-21): herstel van de foto-identificatie in Transform 2 (Put 278 -> 275, Vondst 3091 -> 3060, genormaliseerde sleutels van Bestand: PDB034... in plaats van PDB34...), de kopregel-fix in importMDB.sh (tabel MUNTEN EN PENNINGEN: +50 munten) en de sed-escape-fix (tabel AARDEWERK 1&2 VOORWERP: +96 aardewerk zonder sleutel).",
+  "testdata": "data/test/ (project DB034 Koningsveld IV)",
+  "soort_counts_clean": {
+    "Fotokoppel": 31469,
+    "Monster_Botanie": 21381,
+    "Standplaats": 8675,
+    "Artefact": 5933,
+    "Plaatsing": 5902,
+    "ABR": 4838,
+    "Doos": 4443,
+    "Vondst": 3060,
+    "Monster": 1613,
+    "Monster_Schelp": 1191,
+    "Project": 1049,
+    "DT_Soort_Plant": 1016,
+    "Fotobeschrijving": 747,
+    "Bestand": 531,
+    "Spoor": 457,
+    "Vulling": 425,
+    "Put": 275,
+    "DT_Soort_Schelp": 124,
+    "DT_Soort_Deel": 75,
+    "Vindplaats": 37,
+    "Stelling": 22,
+    "Vlak": 12,
+    "DT_Soort_Staat": 4
+  },
+  "soort_counts_store": {
+    "Fotokoppel": 31469,
+    "Monster_Botanie": 21381,
+    "Standplaats": 8675,
+    "Artefact": 6194,
+    "Plaatsing": 5902,
+    "ABR": 4838,
+    "Doos": 4442,
+    "Monster": 3270,
+    "Vondst": 1478,
+    "Monster_Schelp": 1191,
+    "Project": 1049,
+    "DT_Soort_Plant": 1016,
+    "Rapport": 842,
+    "Fotobeschrijving": 747,
+    "Spoor": 456,
+    "Vulling": 425,
+    "DT_Soort_Schelp": 124,
+    "Foto": 96,
+    "DT_Soort_Deel": 75,
+    "Tekening": 65,
+    "Vindplaats": 37,
+    "Stelling": 22,
+    "DT_Soort_Staat": 4
+  },
+  "artefact_subtypes": {
+    "Aardewerk": 4514,
+    "Metaal": 629,
+    "Hout": 294,
+    "Menselijk_Bot": 273,
+    "Steen": 146,
+    "Munt": 50,
+    "Glas": 20,
+    "Leer": 7
+  },
+  "key_samples": {
+    "Project": [
+      {
+        "key": "PDB001",
+        "projectcd": "DB001"
+      },
+      {
+        "key": "PDB002",
+        "projectcd": "DB002"
+      },
+      {
+        "key": "PDB003",
+        "projectcd": "DB003"
+      },
+      {
+        "key": "PDB004",
+        "projectcd": "DB004"
+      },
+      {
+        "key": "PDB005",
+        "projectcd": "DB005"
+      }
+    ],
+    "Put": [
+      {
+        "key": "PDB001P12",
+        "projectcd": "DB001"
+      },
+      {
+        "key": "PDB001P5",
+        "projectcd": "DB001"
+      },
+      {
+        "key": "PDB001P7",
+        "projectcd": "DB001"
+      },
+      {
+        "key": "PDB003P1",
+        "projectcd": "DB003"
+      },
+      {
+        "key": "PDB004P62",
+        "projectcd": "DB004"
+      }
+    ],
+    "Vlak": [
+      {
+        "key": "PDB034P10V1",
+        "projectcd": "DB034"
+      },
+      {
+        "key": "PDB034P10V2",
+        "projectcd": "DB034"
+      },
+      {
+        "key": "PDB034P10V3",
+        "projectcd": "DB034"
+      },
+      {
+        "key": "PDB034P10V4",
+        "projectcd": "DB034"
+      },
+      {
+        "key": "PDB034P10V5",
+        "projectcd": "DB034"
+      }
+    ],
+    "Spoor": [
+      {
+        "key": "PDB034P10S1",
+        "projectcd": "DB034"
+      },
+      {
+        "key": "PDB034P10S10",
+        "projectcd": "DB034"
+      },
+      {
+        "key": "PDB034P10S100",
+        "projectcd": "DB034"
+      },
+      {
+        "key": "PDB034P10S101",
+        "projectcd": "DB034"
+      },
+      {
+        "key": "PDB034P10S102",
+        "projectcd": "DB034"
+      }
+    ],
+    "Vondst": [
+      {
+        "key": "PDB001P0V1",
+        "projectcd": "DB001"
+      },
+      {
+        "key": "PDB001P12V12",
+        "projectcd": "DB001"
+      },
+      {
+        "key": "PDB001P5V7",
+        "projectcd": "DB001"
+      },
+      {
+        "key": "PDB001P7V7",
+        "projectcd": "DB001"
+      },
+      {
+        "key": "PDB003V1",
+        "projectcd": "DB003"
+      }
+    ],
+    "Monster": [
+      {
+        "key": "MALT_p62_v26",
+        "projectcd": "DB004"
+      },
+      {
+        "key": "MALT_p62_v30",
+        "projectcd": "DB004"
+      },
+      {
+        "key": "MALT_p65_v100",
+        "projectcd": "DB004"
+      },
+      {
+        "key": "MALT_p65_v101",
+        "projectcd": "DB004"
+      },
+      {
+        "key": "MALT_p65_v2",
+        "projectcd": "DB004"
+      }
+    ],
+    "Doos": [
+      {
+        "key": "PDB001D1",
+        "projectcd": "DB001"
+      },
+      {
+        "key": "PDB001D10",
+        "projectcd": "DB001"
+      },
+      {
+        "key": "PDB001D11",
+        "projectcd": "DB001"
+      },
+      {
+        "key": "PDB001D12",
+        "projectcd": "DB001"
+      },
+      {
+        "key": "PDB001D13",
+        "projectcd": "DB001"
+      }
+    ],
+    "Standplaats": [
+      {
+        "key": "SA",
+        "projectcd": "DB04"
+      },
+      {
+        "key": "SA",
+        "projectcd": "DB04"
+      },
+      {
+        "key": "SA",
+        "projectcd": "DB04"
+      },
+      {
+        "key": "SA",
+        "projectcd": "DB04"
+      },
+      {
+        "key": "SA",
+        "projectcd": "DB04"
+      }
+    ],
+    "Bestand": [
+      {
+        "key": "PDAR143Tdefinitief",
+        "projectcd": "DAR143"
+      },
+      {
+        "key": "PDB034P10V1025S2",
+        "projectcd": "DB034"
+      },
+      {
+        "key": "PDB034P10V127S1",
+        "projectcd": "DB034"
+      },
+      {
+        "key": "PDB034P10V230S1",
+        "projectcd": "DB034"
+      },
+      {
+        "key": "PDB034P10V230S1",
+        "projectcd": "DB034"
+      }
+    ]
+  }
+}

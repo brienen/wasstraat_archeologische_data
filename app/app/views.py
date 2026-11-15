@@ -19,9 +19,10 @@ from validators import ABRCompare_Artefactsoort, ABRCompare_SUBArtefactsoort
 import foto_util as foto_util
 import util
 import shared.const as const
+import shared.gebruikersdata as gebruikersdata
 
 from flask_appbuilder.actions import action
-from flask import redirect, request, url_for
+from flask import flash, redirect, request, url_for
 import flask_appbuilder.hooks as hooks
 from wtforms import widgets
 import wtforms.validators as validators
@@ -81,16 +82,26 @@ class ArtefactLineChartView(GroupByChartView):
 
 class ArchBruikleenView(WSModelView):
     datamodel = WSSQLAInterface(Bruikleen)
-    list_columns = ["project", "artefact", "partij", "datum_uitgeleend", 'datum_retour']
+    list_columns = ["project", "artefact", "partij", "datum_uitgeleend", 'datum_retour', 'verdwenen']
     list_title="Bruiklenen"
     search_exclude_columns = ['artefact']
+    new_label_columns = {
+        'verdwenen': 'Verdwenen uit de brondata',
+        'artefact_verdwenen_key': 'Verdwenen artefact (key)',
+        'artefact_verdwenen_op': 'Artefact verdwenen op',
+        'project_verdwenen_key': 'Verdwenen project (key)',
+        'project_verdwenen_op': 'Project verdwenen op',
+    }
+    label_columns = {**new_label_columns, **WSModelViewMixin.label_columns}
 
-    show_fieldsets = [
-        ("Bruikleenvelden", {"fields": ["project", "artefact", "partij", "datum_uitgeleend", 'datum_retour']}),
-        flds_migratie_info
-    ]
-    edit_fieldsets = show_fieldsets
-    add_fieldsets = show_fieldsets
+    flds_bruikleen = ("Bruikleenvelden", {"fields": ["project", "artefact", "partij", "datum_uitgeleend", 'datum_retour']})
+    # Markering van de laadstap als het artefact of project uit de brondata verdwijnt (issue 73);
+    # alleen tonen, de laadstap vult en wist hem
+    flds_verdwenen = ("Verdwenen uit de brondata", {"fields": [
+        'artefact_verdwenen_key', 'artefact_verdwenen_op', 'project_verdwenen_key', 'project_verdwenen_op']})
+    show_fieldsets = [flds_bruikleen, flds_verdwenen, flds_migratie_info]
+    edit_fieldsets = [flds_bruikleen, flds_migratie_info]
+    add_fieldsets = edit_fieldsets
     add_form_extra_fields = {
         "artefact": fieldDefinitionFactory('artefact', datamodel),
         }
@@ -115,6 +126,26 @@ class ArchBruikleenView(WSModelView):
             self.edit_form_extra_fields = self.add_form_extra_fields
 
         return None
+
+    def _controleerKoppelingen(self, item):
+        """Eis een project en een artefact, behalve als de laadstap de verwijzing heeft losgekoppeld (issue 73).
+
+        artefactID en projectID mogen in de database leeg zijn, zodat een bruikleen blijft
+        bestaan als zijn artefact of project uit de brondata verdwijnt. Kiest de gebruiker
+        weer een artefact of project, dan vervalt de markering.
+        """
+        for relatie, naam in (('project', 'een project'), ('artefact', 'een artefact')):
+            if getattr(item, relatie) is not None:
+                setattr(item, f'{relatie}_verdwenen_key', None)
+                setattr(item, f'{relatie}_verdwenen_op', None)
+            elif getattr(item, f'{relatie}_verdwenen_op') is None:
+                raise ValueError(f"Kies {naam} voor de bruikleen.")
+
+    def pre_add(self, item):
+        self._controleerKoppelingen(item)
+
+    def pre_update(self, item):
+        self._controleerKoppelingen(item)
 
     
 class ArchPartijView(WSModelView):
@@ -175,31 +206,55 @@ class ArchBestandView(WSModelView):
     search_exclude_columns = ['imageID', 'imageMiddleID', 'imageThumbID']
 
 
-    @action("5linkskantelen", "Kantelen Linksom", "Geselecteerde foto's linksom kantelen?", "fa-rocket")
+    # Bevestigingsteksten zonder apostrof: Flask-AppBuilder 3.x zette de tekst van de knoppen op de
+    # detailpagina in een onclick-attribuut, waar "foto's" de JavaScript afbrak en de knop niets
+    # deed (issue 34). Sinds 4.x staat de tekst in een script-blok; de apostrof blijft weg.
+    @action("5linkskantelen", "Kantelen Linksom", "Geselecteerde bestanden linksom kantelen?", "fa-rocket")
     def linkskantelen(self, items):
-        if isinstance(items, list):
-            for foto in items:
-                foto = foto_util.rotateBestand(foto, 90)
-                self.datamodel.edit(foto, raise_exception=True)
+        return self.kantel(items, 90)
 
-            self.update_redirect()
-        else:
-            foto = foto_util.rotateBestand(items, 90)
-            self.datamodel.edit(foto)
-        return redirect(self.get_redirect())
-
-    @action("6rechtskantelen", "Kantelen Rechtsom", "Geselecteerde foto's rechtsom kantelen?", "fa-rocket")
+    @action("6rechtskantelen", "Kantelen Rechtsom", "Geselecteerde bestanden rechtsom kantelen?", "fa-rocket")
     def rechtskantelen(self, items):
-        if isinstance(items, list):
-            for foto in items:
-                foto = foto_util.rotateBestand(foto, -90)
-                self.datamodel.edit(foto, raise_exception=True)
+        return self.kantel(items, -90)
 
+    def kantel(self, items, graden):
+        """
+        Kantel één bestand (detailpagina) of een selectie (lijst) en meld het resultaat (issue 34).
+
+        Een bestand dat niet gekanteld kan worden (geen afbeelding, Word-document, ontbreekt in
+        de mediamap, geen schrijfrechten) wordt gemeld en overgeslagen; de rest gaat door.
+
+        Args:
+            items: Eén bestand (actie op de detailpagina) of een lijst (actie op de lijst).
+            graden: 90 voor linksom, -90 voor rechtsom.
+
+        Returns:
+            Redirect naar de detailpagina van het bestand, of terug naar de lijst.
+        """
+        bestanden = items if isinstance(items, list) else [items]
+        gekanteld = 0
+        mislukt = []
+        for bestand in bestanden:
+            try:
+                if foto_util.rotateBestand(bestand, graden) and not self.datamodel.edit(bestand):
+                    mislukt.append(f'{bestand.fileName}: gekanteld, maar de nieuwe paden zijn niet opgeslagen')
+                    continue
+                gekanteld += 1
+            except foto_util.KantelFout as err:
+                mislukt.append(str(err))
+            except Exception as err:
+                logging.getLogger(__name__).exception(f'Kantelen van {bestand.imageID} mislukt')
+                mislukt.append(f'{bestand.fileName}: {err}')
+        richting = 'linksom' if graden > 0 else 'rechtsom'
+        if gekanteld:
+            flash(f'{gekanteld} {"bestand" if gekanteld == 1 else "bestanden"} {richting} gekanteld', 'success')
+        if mislukt:
+            flash('Niet gekanteld: ' + '; '.join(mislukt), 'danger')
+        if isinstance(items, list):
             self.update_redirect()
-        else:
-            foto = foto_util.rotateBestand(items, -90)
-            self.datamodel.edit(foto)
-        return redirect(self.get_redirect())
+            return redirect(self.get_redirect())
+        # Terug naar de detailpagina, zodat de gekantelde afbeelding meteen te zien is
+        return redirect(url_for(f'{self.__class__.__name__}.show', pk=str(items.primary_key)))
 
 
     view_mapper = dict()
@@ -946,16 +1001,34 @@ class ConserveringsprojectView(WSModelView):
     related_views = [ArchArtefactView]
     search_exclude_columns = ['artefacten', 'uuid', 'herkomst', 'brondata']
 
+    label_columns = {'verdwenen_artefacten': 'Verdwenen artefacten', **WSModelViewMixin.label_columns}
+
+    flds_conservering = ("Conserveringsprojectvelden", {"fields": ["korte_omschrijving", "omschrijving", "begindatum", 'einddatum', 'uitvoerder']})
+    # Artefacten die uit de brondata zijn verdwenen (issue 73); alleen tonen
     show_fieldsets = [
-        ("Conserveringsprojectvelden", {"fields": ["korte_omschrijving", "omschrijving", "begindatum", 'einddatum', 'uitvoerder']}),
+        flds_conservering,
+        ("Verdwenen uit de brondata", {"fields": ['verdwenen_artefacten']}),
         flds_migratie_info
     ]
-    edit_fieldsets = show_fieldsets
-    add_fieldsets = show_fieldsets
+    edit_fieldsets = [flds_conservering, flds_migratie_info]
+    add_fieldsets = edit_fieldsets
 
 
 
 db.create_all()
+
+# Schemamigratie van de gebruikerstabellen (issue 73): db.create_all() maakt alleen ontbrekende
+# tabellen aan en voegt geen kolommen toe aan bestaande tabellen (Def_Bruikleen,
+# Def_artefact_conservering). De laadstap van de pipeline voert dezelfde migratie uit; hier
+# gebeurt het bij het starten, zodat de webapplicatie niet op een ontbrekende kolom stuit.
+try:
+    _verbinding = db.engine.raw_connection()
+    try:
+        gebruikersdata.migreerSchemaInTransactie(_verbinding, lock_timeout='10s')
+    finally:
+        _verbinding.close()
+except Exception as err:
+    logging.getLogger(__name__).error(f"Schemamigratie van de gebruikerstabellen mislukt: {err}")
 
 appbuilder.add_view(ABRMaterialenView,"Materialen uit ABR",icon="fa-dashboard",category="Beheer")
 appbuilder.add_view(ABRArtefactsoortenView,"Artefactsoorten uit ABR",icon="fa-dashboard",category="Beheer")

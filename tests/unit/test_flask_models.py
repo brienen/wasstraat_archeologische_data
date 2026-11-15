@@ -136,3 +136,81 @@ class TestModelImports:
         import models
         model_cls = getattr(models, model_name, None)
         assert model_cls is not None, f"Model {model_name} niet gevonden"
+
+
+@pytest.mark.unit
+class TestVerdwenenUitBrondata:
+    """Issue 73: bruikleen en conservering blijven bestaan als hun artefact of project verdwijnt."""
+
+    def test_schema_past_bij_verwijzingen_van_de_laadstap(self):
+        """Elke verwijzing met beleid LOSKOPPELEN is nullable en heeft de kolommen van de markering.
+
+        De laadstap migreert bestaande tabellen naar dit schema (shared/gebruikersdata.migreerSchema);
+        een nieuwe database krijgt het via db.create_all() uit models.py.
+        """
+        import models
+        import shared.gebruikersdata as gebruikersdata
+        from sqlalchemy import DateTime, Text
+        types = {'TEXT': Text, 'TIMESTAMP': DateTime}
+        for verwijzing in gebruikersdata.VERWIJZINGEN:
+            tabel = models.Model.metadata.tables[verwijzing['tabel']]
+            kolom = tabel.c[verwijzing['kolom']]
+            assert [fk.column.table.name for fk in kolom.foreign_keys] == [verwijzing['doel']]
+            if verwijzing['beleid'] != gebruikersdata.LOSKOPPELEN:
+                continue
+            assert kolom.nullable, f"{verwijzing['tabel']}.{verwijzing['kolom']} moet leeg kunnen zijn"
+            for naam, sql_type in gebruikersdata.getMarkeringKolommen(verwijzing):
+                assert naam in tabel.c, f"{verwijzing['tabel']} mist de kolom {naam}"
+                assert isinstance(tabel.c[naam].type, types[sql_type]) and tabel.c[naam].nullable
+
+    def test_partij_blijft_verplicht(self):
+        import models
+        assert not models.Bruikleen.__table__.c.partijID.nullable
+
+    def test_tekst_verdwenen(self):
+        import datetime
+        import models
+        op = datetime.datetime(2026, 10, 22, 14, 3)
+        assert models.tekstVerdwenen('Artefact', 'PSY003P1V1A1|Glas', op) == \
+            'Artefact PSY003P1V1A1|Glas verdwenen op 22-10-2026'
+        assert models.tekstVerdwenen('Artefact', None, op) == 'Artefact (key onbekend) verdwenen op 22-10-2026'
+        assert models.tekstVerdwenen('Project', None, None) == ''
+
+    def test_bruikleen_zonder_artefact(self):
+        import datetime
+        import models
+        op = datetime.datetime(2026, 10, 22)
+        bruikleen = models.Bruikleen(datum_uitgeleend=datetime.date(2026, 10, 1),
+                                     artefact_verdwenen_key='PSY003P1V1A1|Glas', artefact_verdwenen_op=op,
+                                     project_verdwenen_key='PSY003', project_verdwenen_op=op)
+        assert bruikleen.verdwenen() == ('Artefact PSY003P1V1A1|Glas verdwenen op 22-10-2026; '
+                                       'Project PSY003 verdwenen op 22-10-2026')
+        assert repr(bruikleen).startswith('Artefact PSY003P1V1A1|Glas verdwenen op 22-10-2026 aan: ')
+        assert models.Bruikleen(datum_uitgeleend=datetime.date(2026, 10, 1)).verdwenen() == ''
+
+    def test_markering_bij_verwijderen_in_de_webapplicatie(self):
+        """modelevents.markeerBruiklenen vult de markering als een gebruiker een artefact of project verwijdert.
+
+        Alleen de functie wordt geladen: modelevents registreert bij het importeren een
+        listener op alle sessies, die andere tests zou beïnvloeden.
+        """
+        import ast
+        import datetime
+        import models
+        pad = os.path.join(os.path.dirname(__file__), '..', '..', 'app', 'app', 'modelevents.py')
+        with open(pad) as f:
+            boom = ast.parse(f.read())
+        functie = next(n for n in boom.body if isinstance(n, ast.FunctionDef) and n.name == 'markeerBruiklenen')
+        ns = {'Artefact': models.Artefact, 'datetime': datetime}
+        exec(compile(ast.Module(body=[functie], type_ignores=[]), pad, 'exec'), ns)
+
+        bruikleen = models.Bruikleen(datum_uitgeleend=datetime.date(2026, 10, 1))
+        artefact = models.Artefact(key='PSY001P1V1A1|Glas', bruiklenen=[bruikleen])
+        ns['markeerBruiklenen'](artefact)
+        assert bruikleen.artefact_verdwenen_key == 'PSY001P1V1A1|Glas'
+        assert isinstance(bruikleen.artefact_verdwenen_op, datetime.datetime)
+        assert bruikleen.project_verdwenen_key is None
+
+        project = models.Project(key='PSY001', bruiklenen=[bruikleen])
+        ns['markeerBruiklenen'](project)
+        assert bruikleen.project_verdwenen_key == 'PSY001'

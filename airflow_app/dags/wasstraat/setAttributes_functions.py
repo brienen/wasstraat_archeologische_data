@@ -8,13 +8,21 @@ from datetime import datetime
 from wasstraat.rijksdriehoek import rd_to_wgs
 import wasstraat.archutils as ut
 import wasstraat.mongoUtils as mongoUtil
+import wasstraat.verwerkingsrun as verwerkingsrun
+import wasstraat.delta_transform as delta_transform
+import wasstraat.foutbeleid as foutbeleid
+import wasstraat.artefactsoort_materiaal as artefactsoort_materiaal
 
 # Import app code
 # Absolute imports for Hydrogen (Jupyter Kernel) compatibility
 import shared.config as config
 import shared.const as const
+from wasstraat.profielen import get_profiel
 import logging
 logger = logging.getLogger("airflow.task")
+
+# Aantal mislukte records dat als voorbeeld in de melding van het run-document komt
+MAX_VOORBEELDEN_FOUTEN = 10
 
 
 def _get_error_collection(myclient):
@@ -38,7 +46,40 @@ def _log_processing_error(error_col, doc, fase, error):
     except Exception:
         logger.warning(f"Kon verwerkingsfout niet registreren voor doc {doc.get('_id')}")
 
-def getAnalyseCollection():   
+
+def _maakVoorbeeld(doc, error):
+    """Beschrijf een record dat niet verwerkt kon worden, voor de meldingen in het run-document."""
+    return {'original_id': str(doc.get('_id')), 'soort': doc.get('soort'), 'projectcd': doc.get('projectcd'),
+            'fout': f"{type(error).__name__}: {error}"[:500]}
+
+
+def toetsVerwerkingsfouten(fase, fouten, totaal, voorbeelden):
+    """Tel de records die een taak van Transform 2 niet kon verwerken en toets ze aan de drempel (issue 54).
+
+    De records staan in de collectie _processing_errors en blijven in
+    Single_Store zoals de harmonisatie ze opleverde. Onder de drempel volgt een
+    waarschuwing, erboven stopt de run: dan is er vrijwel zeker iets
+    systematisch mis (bijv. een fout in het gemeenteprofiel).
+    Drempel: max(AIRFLOW_MAX_VERWERKINGSFOUTEN, AIRFLOW_MAX_VERWERKINGSFOUTEN_PCT % van het aantal records).
+    De uitkomst komt in het run-document onder tellingen.verwerkingsfouten.<fase>.
+
+    Args:
+        fase: 'enhance_attributes' of 'imagedata' (zoals in _processing_errors)
+        fouten: aantal records dat niet verwerkt kon worden
+        totaal: aantal bekeken records
+        voorbeelden: de eerste mislukte records (zie _maakVoorbeeld)
+
+    Raises:
+        foutbeleid.CrucialeFout: boven de drempel
+    """
+    foutbeleid.toetsDrempel(
+        foutbeleid.SOORT_VERWERKINGSFOUTEN, fouten, totaal,
+        config.AIRFLOW_MAX_VERWERKINGSFOUTEN, config.AIRFLOW_MAX_VERWERKINGSFOUTEN_PCT,
+        f"Records die Transform 2 ({fase}) niet kon verwerken (zie _processing_errors)",
+        'AIRFLOW_MAX_VERWERKINGSFOUTEN', details=voorbeelden, telling=f'verwerkingsfouten.{fase}')
+
+
+def getAnalyseCollection():
     myclient = pymongo.MongoClient(str(config.MONGO_URI))
     analyseDb = myclient[str(config.DB_ANALYSE)]
     return analyseDb[config.COLL_ANALYSE]
@@ -59,7 +100,14 @@ def setDateringFields(doc, field):
     return doc
 
 
-def enhanceAllAttributes():
+def enhanceAllAttributes(incrementeel=False):
+    """Normaliseer de attributen van de documenten in Single_Store.
+
+    Args:
+        incrementeel: als True alleen de documenten met delta_run van de actieve
+            verwerkingsrun bewerken (incrementeel laden); de projectcode-correcties
+            uit correcties.yml blijven op de hele collectie werken
+    """
     try:
         myclient = pymongo.MongoClient(str(config.MONGO_URI))
         filesdb = myclient[str(config.DB_FILES)]
@@ -71,6 +119,7 @@ def enhanceAllAttributes():
 
         count_success = 0
         count_error = 0
+        voorbeelden = []
 
         # Projectcode-correcties uit correcties.yml: fix projectcd na harmonisatie
         from wasstraat.harmonize_functions import laadCorrecties
@@ -87,18 +136,37 @@ def enhanceAllAttributes():
                 logger.error(f"  Ongeldige projectcode_correctie #{i}: {fix} — {e}. Overslaan.")
                 continue
 
+        # Incrementeel laden: alleen de documenten die in deze run (opnieuw) zijn geharmoniseerd
+        doc_filter = {}
+        if incrementeel:
+            doc_filter = {delta_transform.VELD_DELTA_RUN: verwerkingsrun.huidigeRun()['run_id']}
+
+        # Gemeenteprofiel één keer laden, buiten de lus: een onbekend profiel (WASSTRAAT_GEMEENTE) laat de
+        # taak direct falen in plaats van elk document als verwerkingsfout te tellen (issue 87)
+        profiel = get_profiel()
+
         #loop over all docs in Collection
-        for doc in analyseCol.find():
+        for doc in analyseCol.find(doc_filter):
             success = False
 
             try:
-                # Set all projectcd to capital letters and remove zeros in number
-                if 'projectcd' in doc and doc['projectcd']:
-                    matchObj = re.match( r'([a-zA-Z]+)-?([0-9]*)', doc['projectcd'], re.M|re.I)
-                    if matchObj:
-                        deel1 = matchObj.group(1).upper()
-                        deel2 = "" if (matchObj.group(2) == '' or matchObj.group(2) is None) else str(pd.to_numeric(matchObj.group(2))).zfill(3)
-                        doc['projectcd'] = deel1 + deel2
+                # Identificeer: normaliseer en valideer identificerende velden
+                # via gemeenteprofiel (projectcd, tekeningcd, rapportnr, integers, artefactsoort)
+                soort = doc.get('soort', '')
+
+                # Tekst-cleaning vóór identificatie (nodig voor tekeningcd, typevoorwerp)
+                if 'typevoorwerp' in doc:
+                    doc['typevoorwerp'] = ut.sanitize_text(doc['typevoorwerp'], 'typevoorwerp', doc.get('_id')).title()
+                if 'tekeningcd' in doc:
+                    doc['tekeningcd'] = ut.sanitize_text(doc['tekeningcd'], 'tekeningcd', doc.get('_id')).replace('!', '').replace('-', '')
+
+                if 'brondata' in doc and 'table' in doc['brondata']:
+                    if 'spijker' in str(doc['brondata']['table']).lower():
+                        doc['typevoorwerp'] = 'Spijker'
+
+                # Per-entiteit identificatie: de dispatcher kiest de methode per soort
+                # (voor Foto, Tekening en Rapport de _db-variant, niet de bestandsnaam-parser)
+                doc = profiel.identificeer(soort, doc)
 
                 #@set projectname
                 if 'projectnaam' in doc:
@@ -118,26 +186,6 @@ def enhanceAllAttributes():
                 if 'functievoorwerp' in doc:
                     doc['functievoorwerp'] = ut.sanitize_text(doc['functievoorwerp'], 'functievoorwerp', doc.get('_id')).title()
 
-                #clean Type Voorwerp
-                if 'typevoorwerp' in doc:
-                    doc['typevoorwerp'] = ut.sanitize_text(doc['typevoorwerp'], 'typevoorwerp', doc.get('_id')).title()
-
-                if 'brondata' in doc and 'table' in doc['brondata']:
-                    if 'spijker' in str(doc['brondata']['table']).lower():
-                        doc['typevoorwerp'] = 'Spijker'
-
-                #clean Type Voorwerp
-                if 'soort' in doc and doc['soort'] == 'Artefact' and not 'artefactsoort' in doc and 'typevoorwerp' in doc:
-                    if doc['typevoorwerp'] == 'Kleipijp':
-                        doc['artefactsoort'] = 'Kleipijp'
-                    matchObj = re.match( r'^[a-z]{1,2}(_|-)', doc['typevoorwerp'], re.M|re.I)
-                    if matchObj:
-                        doc['artefactsoort'] = 'Aardewerk'
-                    matchObj = re.match( r'^gl(_|-)', doc['typevoorwerp'], re.M|re.I)
-                    if matchObj:
-                        doc['artefactsoort'] = 'Glas'
-
-
                 #clean namen en soorten
                 if 'nederlandse_naam' in doc:
                     doc['nederlandse_naam'] = ut.sanitize_text(doc['nederlandse_naam'], 'nederlandse_naam', doc.get('_id')).title()
@@ -146,38 +194,7 @@ def enhanceAllAttributes():
                 if 'soort_schelp' in doc:
                     doc['soort_schelp'] = ut.sanitize_text(doc['soort_schelp'], 'soort_schelp', doc.get('_id')).title()
 
-                #clean tekeningcode
-                if 'tekeningcd' in doc:
-                    doc['tekeningcd'] = ut.sanitize_text(doc['tekeningcd'], 'tekeningcd', doc.get('_id')).replace('!', '').replace('-', '')
-                    matchObj = re.match( r'^([A-Z])([0-9]+)$', doc['tekeningcd'], re.M|re.I)
-                    if matchObj:
-                        doc['tekeningcd'] = matchObj.group(1) + str(int(matchObj.group(2))).zfill(3)
-
-                #clean Type Voorwerp
-                if 'rapportnr' in doc:
-                    doc['rapportnr'] = str(doc['rapportnr']).replace(' ', '')
-                    if str(doc['rapportnr']).isdigit(): # Some DAR-numbers do not contain DAR in front of code
-                        if 'DARnr' in doc['brondata'].keys():
-                            doc['rapportnr'] = 'DAR' + str(int(doc['rapportnr'])).zfill(3)
-                        elif 'DANnr' in doc['brondata'].keys():
-                            doc['rapportnr'] = 'DAN' + str(int(doc['rapportnr'])).zfill(3)
-                        else:
-                            doc['rapportnr'] = ''
-                    else:
-                        matchObj = re.match( r'^(DAN|DAR)\s*([0-9]+)$', doc['rapportnr'], re.M|re.I)
-                        if matchObj:
-                            doc['rapportnr'] =  matchObj.group(1) + str(int(matchObj.group(2))).zfill(3)
-
-
-
-                ut.convertToInt(doc, 'putnr', True)
-                ut.convertToInt(doc, 'vondstnr', True)
-                ut.convertToInt(doc, 'spoornr', True)
-                ut.convertToInt(doc, 'vlaknr', False)
-                ut.convertToInt(doc, 'artefactnr', True)
-                ut.convertToInt(doc, 'subnr', True)
-                ut.convertToInt(doc, 'doosnr', True)
-                ut.convertToInt(doc, 'fotonr', False)
+                # Niet-identificerende integer-conversies (identificerende worden door profiel.identificeer() gedaan)
                 ut.convertToInt(doc, 'fotosubnr', False)
                 ut.convertToInt(doc, 'volgnr', False)
                 ut.convertToInt(doc, 'lengte', True)
@@ -242,6 +259,8 @@ def enhanceAllAttributes():
                 msg = "Onbekende fout bij het cleanen van de attributen van doc met _id:" + str(doc['_id']) + " met melding: " + str(err)
                 logger.error(msg)
                 _log_processing_error(errorCol, doc, 'enhance_attributes', err)
+                if len(voorbeelden) < MAX_VOORBEELDEN_FOUTEN:
+                    voorbeelden.append(_maakVoorbeeld(doc, err))
 
             # Sla alleen op bij succesvolle transformatie (voorkomt half-getransformeerde data)
             if success:
@@ -255,14 +274,37 @@ def enhanceAllAttributes():
 
         logger.info(f"enhanceAllAttributes voltooid: {count_success} succesvol, {count_error} fouten")
 
+        # Artefacten zonder artefactsoort met een ABR-materiaalcode (RAAP-tabel ARTEFACT, issue 86)
+        artefactsoort_materiaal.zetArtefactsoortUitMateriaalcode(analyseCol, doc_filter)
+
+        toetsVerwerkingsfouten('enhance_attributes', count_error, count_success + count_error, voorbeelden)
+
     finally:
         myclient.close()
         
 
-def extractImagedataFromFileNames():
-    try:        
+def extractImagedataFromFileNames(incrementeel=False):
+    """Vul projectcode, materiaal en fotosoort van foto's aan op basis van hun map.
+
+    Een foto die niet bijgewerkt kan worden komt in _processing_errors (fase
+    'imagedata') en telt mee voor de drempel van toetsVerwerkingsfouten; een
+    fout buiten de afzonderlijke foto's laat de taak falen (issue 54; tot dan
+    werd ook die alleen gelogd).
+
+    Args:
+        incrementeel: als True alleen de Foto-documenten met delta_run van de
+            actieve verwerkingsrun bewerken (incrementeel laden)
+
+    Raises:
+        Exception: bij een fout buiten de afzonderlijke foto's
+        foutbeleid.CrucialeFout: als meer foto's mislukken dan de drempel toestaat
+    """
+    try:
         col = getAnalyseCollection()
-        foto_docs = list(col.find({'soort': 'Foto'}, projection={'directory':1}))
+        foto_filter = {'soort': 'Foto'}
+        if incrementeel:
+            foto_filter[delta_transform.VELD_DELTA_RUN] = verwerkingsrun.huidigeRun()['run_id']
+        foto_docs = list(col.find(foto_filter, projection={'directory':1}))
         if not foto_docs:
             logger.info("Geen Foto-records gevonden — overslaan.")
             return
@@ -296,7 +338,10 @@ def extractImagedataFromFileNames():
             file_dict.update({dr: dr_dict})
           
         # Set missing values in foto's
-        lst_foto = list(col.find({'soort': 'Foto'}))
+        lst_foto = list(col.find(foto_filter))
+        errorCol = _get_error_collection(col.database.client)
+        count_error = 0
+        voorbeelden = []
         for foto in lst_foto:
             try:
                 dir_info = file_dict.get(foto.get('directory'))
@@ -317,7 +362,13 @@ def extractImagedataFromFileNames():
             except Exception as exp2:
                 filename = foto.get('fileName', 'onbekend')
                 logger.error(f'Error while setting missing values in foto {filename} with message: {str(exp2)} ')
+                count_error += 1
+                _log_processing_error(errorCol, foto, 'imagedata', exp2)
+                if len(voorbeelden) < MAX_VOORBEELDEN_FOUTEN:
+                    voorbeelden.append(_maakVoorbeeld(foto, exp2))
     except Exception as exp1:
         msg = f'Severe error while while setting missing values on fotos: {str(exp1)} '
         logger.error(msg)
         raise Exception(msg) from exp1
+
+    toetsVerwerkingsfouten('imagedata', count_error, len(lst_foto), voorbeelden)

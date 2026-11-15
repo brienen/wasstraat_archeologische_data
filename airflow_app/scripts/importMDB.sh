@@ -1,18 +1,28 @@
 #!/bin/bash
 
-if [ $# -ne 2 ]
+if [ $# -ne 2 ] && [ $# -ne 3 ]
 then
-    echo "Aanroepen met Dir en Collection"
+    echo "Aanroepen met Dir en Collection, optioneel gevolgd door een lijstbestand"
     exit 1
 fi
 
-WORKDIR=$AIRFLOW_TEMPDIR
+# Optioneel derde argument: lijstbestand met de te verwerken MDB/ACCDB-bestanden,
+# één pad per regel (geschreven door Bepaal_Delta van de incrementele cyclus).
+# Zonder derde argument worden alle bestanden in de input-directory verwerkt.
+LIJSTBESTAND="${3:-}"
+
+# Map van dit script: csv_kolommen.py staat ernaast
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Werkmap en logmap, met dezelfde standaardwaarden als shared/config.py
+WORKDIR="${AIRFLOW_TEMPDIR:-/opt/airflow/tmp}"
+LOGDIR="${AIRFLOW_LOGDIR:-/opt/airflow/logs}"
 DATABASE=$DB_STAGING
 
 timestamp=`date --iso-8601=seconds`
 Collection="$2"
-LOG=${AIRFLOW_LOGDIR}/${Collection}.log
-ERRORLOG=${AIRFLOW_LOGDIR}/${Collection}_encoding_errors.log
+LOG=${LOGDIR}/${Collection}.log
+ERRORLOG=${LOGDIR}/${Collection}_encoding_errors.log
 
 echo Loading from "$1" to collection "$Collection" in database "$DATABASE" and logging to "$LOG"
 # Setting logging to log files, including error log
@@ -161,6 +171,42 @@ if changed:
 " 2>&1
 }
 
+# Functie: exporteer een Access-tabel naar CSV met een correct gequote kopregel
+# mdb-export (1.0.0) zet de kolomnamen in de kopregel niet tussen aanhalingstekens.
+# Een kolomnaam met een komma (bijv. "FORMAAT IN MM, HORIZONTAAL") telt dan als
+# twee velden, waardoor de kopregel meer velden heeft dan de rijen en mongoimport
+# (--headerline) alle waarden verschuift, inclusief de velden die dit script
+# achteraan toevoegt (table, projectcd, bron, loadtime, mdbfile).
+# Daarom schrijven we de kopregel zelf: de kolomnamen komen tab-gescheiden uit
+# mdb-export (kolomnamen bevatten geen tabs) en worden met Python's csv.writer
+# gequote waar nodig (komma, aanhalingsteken, newline). De data volgt daaronder
+# via mdb-export -H (zonder kopregel), met de gewone quoting van mdb-export.
+# Bytes die (nog) geen geldig UTF-8 zijn blijven ongewijzigd (surrogateescape);
+# convert_to_utf8 converteert daarna het hele bestand.
+# Retourneert 0 bij succes, 1 als er geen kopregel gelezen kon worden
+# (het CSV-bestand is dan leeg en wordt verderop als lege tabel overgeslagen).
+export_table_to_csv() {
+    local MDBFILE="$1"
+    local TABLE_NAME="$2"
+    local CSV_FILE="$3"
+
+    if ! mdb-export -d $'\t' -Q "$MDBFILE" "$TABLE_NAME" 2>/dev/null | head -1 | python3 -c '
+import csv, io, sys
+
+regel = sys.stdin.buffer.read().decode("utf-8", "surrogateescape").rstrip("\r\n")
+if not regel:
+    sys.exit(1)
+uit = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="surrogateescape", newline="")
+csv.writer(uit, quoting=csv.QUOTE_MINIMAL, lineterminator="\n").writerow(regel.split("\t"))
+uit.flush()
+' > "$CSV_FILE"; then
+        : > "$CSV_FILE"
+        return 1
+    fi
+
+    mdb-export -H "$MDBFILE" "$TABLE_NAME" >> "$CSV_FILE"
+}
+
 # Functie: genereer metainfo JSON op een robuuste manier
 # Vervangt de fragiele sed-pipeline door een Python-script dat altijd
 # geldige JSON produceert, zelfs bij onverwachte mdb-prop output.
@@ -227,6 +273,30 @@ print()  # newline aan het eind
 
 DB_STAGING_URI=mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@${MONGO_SERVER}
 
+if [ -n "$LIJSTBESTAND" ]; then
+    # Incrementeel: verwerk alleen de paden uit het lijstbestand
+    if [ ! -f "$LIJSTBESTAND" ]; then
+        echo "ERROR: Lijstbestand '$LIJSTBESTAND' bestaat niet." | tee -a "$ERRORLOG"
+        exit 1
+    fi
+    MDB_FILES=()
+    while IFS= read -r REGEL || [ -n "$REGEL" ]; do
+        REGEL="${REGEL%$'\r'}"
+        [ -z "$REGEL" ] && continue
+        if [ ! -f "$REGEL" ]; then
+            echo "WARNING: Bestand '$REGEL' uit lijstbestand bestaat niet, overgeslagen." | tee -a "$ERRORLOG"
+            continue
+        fi
+        MDB_FILES+=("$REGEL")
+    done < "$LIJSTBESTAND"
+
+    if [ ${#MDB_FILES[@]} -eq 0 ]; then
+        echo "INFO: Lijstbestand '$LIJSTBESTAND' bevat geen bestanden, niets te verwerken."
+    else
+        echo "INFO: ${#MDB_FILES[@]} MDB/ACCDB-bestand(en) uit lijstbestand '$LIJSTBESTAND'."
+    fi
+else
+
 # Controleer of de input-directory bestaat
 if [ ! -d "$1" ]; then
     echo "INFO: Input-directory '$1' bestaat niet, overgeslagen."
@@ -258,13 +328,42 @@ fi
 
 echo "INFO: ${#MDB_FILES[@]} MDB/ACCDB-bestand(en) gevonden in '$1'."
 
+fi
+
+# Bestanden overslaan volgens paden_overslaan in correcties.yml (issue 84), bijvoorbeeld kopieën van
+# databases in een werkmap. Het filter staat in Python (paden_overslaan.py naast dit script, met de
+# logica in wasstraat/paden_overslaan.py), dezelfde selectie als bij de registratie van bronbestanden
+# en de afbeeldingen. Per overgeslagen bestand komt er een regel in het log, gevolgd door een telling.
+# Gaat het filteren mis, dan stopt het script: zonder filter zouden de kopieën stil worden ingelezen.
+if [ ${#MDB_FILES[@]} -gt 0 ]; then
+    GEFILTERD="$WORKDIR/paden_overslaan_${Collection}_$$.lst"
+    if ! printf '%s\0' "${MDB_FILES[@]}" | python3 "$SCRIPT_DIR/paden_overslaan.py" "$1" > "$GEFILTERD"; then
+        echo "ERROR: Filteren van de bestanden met paden_overslaan (correcties.yml) mislukt, niets verwerkt." | tee -a "$ERRORLOG"
+        rm -f "$GEFILTERD"
+        exit 1
+    fi
+    AANTAL_VOOR_FILTER=${#MDB_FILES[@]}
+    mapfile -d '' -t MDB_FILES < "$GEFILTERD"
+    rm -f "$GEFILTERD"
+    if [ ${#MDB_FILES[@]} -lt $AANTAL_VOOR_FILTER ]; then
+        echo "INFO: $((AANTAL_VOOR_FILTER - ${#MDB_FILES[@]})) MDB/ACCDB-bestand(en) overgeslagen volgens paden_overslaan, ${#MDB_FILES[@]} te verwerken."
+    fi
+fi
+
 for mdbfile in "${MDB_FILES[@]}"
 do
 	TOTAL_FILES=$((TOTAL_FILES + 1))
+	# Projectcode: het begin van de eerste map onder de invoermap (of van de bestandsnaam)
+	# in hoofdletters en cijfers. Per bestand opnieuw bepaald: begint de map anders (zoals
+	# 'werkmap'), dan blijft de projectcode leeg en erft het bestand niet die van het vorige.
+	PROJECT=""
 	PROJECT_R=${mdbfile#$1"/"}
 	PROJECT_L=${PROJECT_R%%/*}
 	[[ $PROJECT_L =~ ^([A-Z0-9]+).* ]] && PROJECT=${BASH_REMATCH[1]}
     echo "Processing $mdbfile file for project $PROJECT ..."
+	if [ -z "$PROJECT" ]; then
+		echo "INFO: Geen projectcode af te leiden uit '$PROJECT_L' (begint niet met hoofdletters of cijfers); projectcd blijft leeg voor $mdbfile"
+	fi
 
 	# Controleer of het MDB-bestand leesbaar is voordat we tabellen proberen te lezen
 	if ! mdb-tables -d , "$mdbfile" > /dev/null 2>&1; then
@@ -281,7 +380,10 @@ do
 		TOTAL_TABLES=$((TOTAL_TABLES + 1))
 	   	CSV="$WORKDIR"/opgraving"$PROJECT"."$TABLE".csv
 	    echo Reading "$TABLE" into "$CSV" and loading into Mongo database "$DATABASE" collection "$Collection"
-	    mdb-export "$mdbfile" "$TABLE" > "$CSV"
+		# Kopregel zelf schrijven (correct gequote), data via mdb-export -H
+		if ! export_table_to_csv "$mdbfile" "$TABLE" "$CSV"; then
+			echo "WARNING: Geen kopregel gelezen voor tabel '$TABLE' in bestand '$mdbfile', tabel overgeslagen" | tee -a "$ERRORLOG"
+		fi
 
 		# Encoding-conversie van CSV naar gevalideerd UTF-8
 		CONTEXT="tabel '$TABLE' in bestand '$mdbfile'"
@@ -294,21 +396,31 @@ do
 			TOTAL_TABLES_ENCODING_FAILED=$((TOTAL_TABLES_ENCODING_FAILED + 1))
 		fi
 
-		LENGTE=`wc -l < $CSV`
-		let LENGTE=$LENGTE-1 # To correct for the header
+		echo Reading data
+		# Voeg de kolommen table, projectcd, bron, loadtime en mdbfile toe: de
+		# kolomnamen achter de kopregel, de waarden achter elk datarecord.
+		# csv_kolommen.py leest de export met de csv-module, zodat een record met een
+		# tekstveld (memo) met een regeleinde, dat in de CSV meer regels beslaat, de
+		# waarden aan het einde van het record krijgt en niet midden in het tekstveld
+		# (issue 74; sed deed dit per regel). De tekst van de records blijft verder
+		# ongewijzigd. Het script schrijft het aantal datarecords naar stdout; dat is
+		# LENGTE (ook de teller in de metainfo). Waarden met een komma of
+		# aanhalingsteken komen tussen aanhalingstekens; mongoimport leest gequote en
+		# ongequote waarden hetzelfde in (een getal blijft een getal, tekst blijft tekst).
+		if ! LENGTE=$(python3 "$SCRIPT_DIR/csv_kolommen.py" "$CSV" "$TABLE" "$PROJECT" "opgraving$PROJECT" "$timestamp" "$mdbfile"); then
+			echo "ERROR: Kolommen toevoegen gefaald voor $CONTEXT, tabel overgeslagen" | tee -a "$ERRORLOG"
+			rm -f "$CSV"
+			continue
+		fi
 		echo Length of tabel $CSV in file $mdbfile is: $LENGTE
-		if [ $LENGTE -lt 1 ]; then # on empty CSV stop loop and continue to next cycle
+		if [ "$LENGTE" -lt 1 ]; then # on empty CSV stop loop and continue to next cycle
 			rm "$CSV"
 			continue
-    	fi
+		fi
 
-		echo Reading data
-		sed -i s/$/,"$TABLE","$PROJECT",opgraving"$PROJECT","$timestamp","${mdbfile//\//\\/}"/ "$CSV"
-		sed -i 1s/,"$TABLE","$PROJECT",opgraving"$PROJECT","$timestamp","${mdbfile//\//\\/}"/,table,projectcd,bron,loadtime,mdbfile/ "$CSV"
-
-		# Valideer dat CSV na sed-bewerking nog steeds geldig UTF-8 is
+		# Valideer dat de CSV na het toevoegen van de kolommen nog steeds geldig UTF-8 is
 		if ! iconv -f UTF-8 -t UTF-8 "$CSV" > /dev/null 2>&1; then
-			echo "WARNING: CSV is na sed-bewerking geen geldig UTF-8 meer voor $CONTEXT" | tee -a "$ERRORLOG"
+			echo "WARNING: CSV is na het toevoegen van de kolommen geen geldig UTF-8 meer voor $CONTEXT" | tee -a "$ERRORLOG"
 			# Forceer UTF-8 met TRANSLIT als noodmaatregel
 			iconv -f UTF-8 -t UTF-8//IGNORE < "$CSV" > "${CSV}.clean" 2>/dev/null && mv "${CSV}.clean" "$CSV"
 		fi

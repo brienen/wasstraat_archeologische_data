@@ -7,6 +7,7 @@ Test dat de generieke correctielogica correct werkt:
 - Rapportcode-prefixen dynamisch matchen
 - Merge-uitzonderingen laden
 - Image-filterpatronen uitbreiden
+- Paden overslaan (issue 84) en voorrang bij de harmonisatie (issue 89)
 
 Mockt pymongo zodat er geen live database nodig is.
 """
@@ -531,3 +532,289 @@ class TestImageFilterPatronen:
 
         # DAR is een hoofdletter-prefix, wordt case-sensitive gematcht
         assert any(p[0].isupper() for p in patronen if p == 'DAR')
+
+
+# ============================================================
+# Klasse 7: Paden overslaan (issue 84)
+# ============================================================
+
+class TestPadenOverslaan:
+    """Test de sectie paden_overslaan: glob-patronen voor bestanden die de extractie overslaat.
+
+    De patronen worden via laadCorrecties() gelezen (dezelfde cache als de
+    andere secties); foutieve waarden worden gelogd en overgeslagen, zonder
+    dat de rest van het bestand verloren gaat.
+    """
+
+    def setup_method(self):
+        import wasstraat.harmonize_functions as hf
+        hf._correcties_cache = None
+
+    def teardown_method(self):
+        import wasstraat.harmonize_functions as hf
+        hf._correcties_cache = None
+
+    def _laad(self, tmp_path, inhoud):
+        import wasstraat.harmonize_functions as hf
+        import wasstraat.paden_overslaan as po
+        yml_file = tmp_path / "correcties.yml"
+        yml_file.write_text(inhoud, encoding="utf-8")
+        with patch.object(hf.config, 'AIRFLOW_CORRECTIES_CONFIG', str(yml_file)):
+            return [tekst for tekst, _ in po.laadPatronenUitConfig()], hf.laadCorrecties()
+
+    def test_sectie_wordt_geladen(self, tmp_path):
+        patronen, correcties = self._laad(tmp_path, (
+            'projectcode_correcties:\n  - patroon: "SCHE"\n    projectcode: "DC039"\n'
+            'paden_overslaan:\n  - "DC024_Stadskantoor/K Overig/werkmap joris"\n  - "**/kopie*"\n'))
+        assert patronen == ["DC024_Stadskantoor/K Overig/werkmap joris", "**/kopie*"]
+        assert correcties['projectcode_correcties'][0]['projectcode'] == "DC039"
+
+    def test_ontbrekende_sectie(self, tmp_path):
+        assert self._laad(tmp_path, 'artefact_niet_mergen:\n  projectcodes: ["DC112"]\n')[0] == []
+
+    def test_lege_sectie(self, tmp_path):
+        assert self._laad(tmp_path, 'paden_overslaan:\n')[0] == []
+        import wasstraat.harmonize_functions as hf
+        hf._correcties_cache = None
+        assert self._laad(tmp_path, 'paden_overslaan: []\n')[0] == []
+
+    def test_tekst_in_plaats_van_lijst(self, tmp_path, caplog):
+        import logging
+        with caplog.at_level(logging.ERROR, logger="airflow.task"):
+            patronen, correcties = self._laad(tmp_path, 'paden_overslaan: "SY001/K Overig"\nartefact_niet_mergen:\n  projectcodes: ["DC112"]\n')
+        assert patronen == []
+        assert correcties['artefact_niet_mergen'] == {'projectcodes': ['DC112']}
+        assert "geen lijst" in caplog.text
+
+    def test_foutieve_elementen(self, tmp_path, caplog):
+        import logging
+        with caplog.at_level(logging.WARNING, logger="airflow.task"):
+            patronen, _ = self._laad(tmp_path, (
+                'paden_overslaan:\n  - 12\n  - ""\n  - patroon: "x"\n  - "[]"\n  - "SY001/K Overig"\n'))
+        assert patronen == ["SY001/K Overig"]
+        assert caplog.text.count("Ongeldig patroon in paden_overslaan") == 4
+
+    def test_ongeldige_yaml_geeft_geen_patronen(self, tmp_path):
+        assert self._laad(tmp_path, 'paden_overslaan: [\n  - "kapot"\n')[0] == []
+
+
+# ============================================================
+# Klasse 8: Voorrang bij de harmonisatie (issue 89)
+# ============================================================
+
+class TestHarmonisatieVoorrang:
+    """Test de sectie harmonisatie_voorrang: tabelnaam → soort, of leeg voor geen enkele soort.
+
+    De sectie wordt via laadCorrecties() gelezen (dezelfde cache als de andere
+    secties) en door harmonisatie_voorrang.leesVoorrangInstellingen
+    gecontroleerd; foute regels worden gelogd en overgeslagen, zonder dat de
+    rest van het bestand verloren gaat. De werking (besluiten, uitsluiting,
+    waarschuwing) staat in tests/unit/test_harmonisatie_voorrang.py.
+    """
+
+    def setup_method(self):
+        import wasstraat.harmonize_functions as hf
+        hf._correcties_cache = None
+
+    def teardown_method(self):
+        import wasstraat.harmonize_functions as hf
+        hf._correcties_cache = None
+
+    def _laad(self, tmp_path, inhoud):
+        import wasstraat.harmonize_functions as hf
+        import wasstraat.harmonisatie_voorrang as hv
+        yml_file = tmp_path / "correcties.yml"
+        yml_file.write_text(inhoud, encoding="utf-8")
+        with patch.object(hf.config, 'AIRFLOW_CORRECTIES_CONFIG', str(yml_file)):
+            hf._correcties_cache = None
+            correcties = hf.laadCorrecties()
+        return hv.leesVoorrangInstellingen(correcties), correcties
+
+    def test_sectie_wordt_geladen(self, tmp_path):
+        instellingen, correcties = self._laad(tmp_path, (
+            'projectcode_correcties:\n  - patroon: "SCHE"\n    projectcode: "DC039"\n'
+            'harmonisatie_voorrang:\n  AW1DeterminatiesJohan: Aardewerk\n  "METAAL OPPERVLAK":\n'
+            '  CODES: ""\n  Spijkers: " Metaal "\n'))
+        assert instellingen == {'AW1DeterminatiesJohan': 'Aardewerk', 'METAAL OPPERVLAK': None, 'CODES': None,
+                                'Spijkers': 'Metaal'}
+        assert correcties['projectcode_correcties'][0]['projectcode'] == "DC039"
+
+    def test_delftse_correcties(self):
+        """De Delftse configuratie: AW1DeterminatiesJohan door Aardewerk; elke andere regel een bekende soort of leeg.
+
+        Een lege waarde betekent: door geen enkele soort (bijvoorbeeld de
+        codetabellen van het aardewerk, issue 75).
+        """
+        import wasstraat.harmonize_functions as hf
+        import wasstraat.harmonisatie_voorrang as hv
+        pad = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
+                           'data', 'delft', 'wasstraat_config', 'correcties.yml')
+        with patch.object(hf.config, 'AIRFLOW_CORRECTIES_CONFIG', pad):
+            instellingen = hv.leesVoorrangInstellingen(hf.laadCorrecties())
+        assert instellingen.get('AW1DeterminatiesJohan') == 'Aardewerk'
+        soorten = set(hv.getHarmonizeSoorten())
+        onbekend = {tabel: soort for tabel, soort in instellingen.items() if soort is not None and soort not in soorten}
+        assert not onbekend, f"Regels in harmonisatie_voorrang met een onbekende soort: {onbekend}"
+
+    def test_ontbrekende_of_lege_sectie(self, tmp_path):
+        assert self._laad(tmp_path, 'artefact_niet_mergen:\n  projectcodes: ["DC112"]\n')[0] == {}
+        assert self._laad(tmp_path, 'harmonisatie_voorrang:\n')[0] == {}
+        assert self._laad(tmp_path, 'harmonisatie_voorrang: {}\n')[0] == {}
+
+    def test_lijst_in_plaats_van_dictionary(self, tmp_path, caplog):
+        import logging
+        with caplog.at_level(logging.ERROR, logger="airflow.task"):
+            instellingen, correcties = self._laad(tmp_path, (
+                'harmonisatie_voorrang:\n  - AW1DeterminatiesJohan: Aardewerk\n'
+                'artefact_niet_mergen:\n  projectcodes: ["DC112"]\n'))
+        assert instellingen == {}
+        assert correcties['artefact_niet_mergen'] == {'projectcodes': ['DC112']}
+        assert "geen dictionary" in caplog.text
+
+    def test_foutieve_regels_worden_overgeslagen(self, tmp_path, caplog):
+        import logging
+        with caplog.at_level(logging.ERROR, logger="airflow.task"):
+            instellingen, _ = self._laad(tmp_path, (
+                'harmonisatie_voorrang:\n  2005: Aardewerk\n  yes: Glas\n  LIJST: [Aardewerk, Glas]\n'
+                '  GETAL: 12\n  AW1DeterminatiesJohan: Aardewerk\n'))
+        assert instellingen == {'AW1DeterminatiesJohan': 'Aardewerk'}
+        assert caplog.text.count("Ongeldige tabelnaam in harmonisatie_voorrang") == 2
+        assert caplog.text.count("Ongeldige soort in harmonisatie_voorrang") == 2
+
+    def test_ongeldige_yaml_geeft_geen_instellingen(self, tmp_path):
+        assert self._laad(tmp_path, 'harmonisatie_voorrang: {\n  AW1: "kapot\n')[0] == {}
+
+    def test_zonder_correcties(self):
+        import wasstraat.harmonisatie_voorrang as hv
+        assert hv.leesVoorrangInstellingen(None) == {} and hv.leesVoorrangInstellingen({}) == {}
+
+    def test_sjabloon_voor_de_live_installatie(self):
+        """deploy/: een lege sectie met een voorbeeld als commentaar."""
+        pad = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
+                           'deploy', 'wasstraat_config', 'correcties.yml')
+        with open(pad, encoding='utf-8') as f:
+            assert yaml.safe_load(f)['harmonisatie_voorrang'] == {}
+
+
+# ============================================================
+# Klasse 9: Controle van rapportcode_prefixen (issue 87)
+# ============================================================
+
+class TestRapportcodePrefixenControle:
+    """Een onbekend type in rapportcode_prefixen wordt gemeld en overgeslagen, niet stil een notitie.
+
+    Toegestaan: archeologische_rapportage en archeologische_notitie
+    (harmonize_functions.RAPPORT_TYPES).
+    """
+
+    def test_geldige_regels(self):
+        import shared.const as const
+        from wasstraat.harmonize_functions import leesRapportcodePrefixen
+        regels = leesRapportcodePrefixen({'rapportcode_prefixen': [
+            {'prefix': 'DAR', 'type': 'archeologische_rapportage'},
+            {'prefix': ' DAN ', 'type': ' Archeologische_Notitie '}]})
+        assert regels == [
+            {'prefix': 'DAR', 'type': 'archeologische_rapportage', 'bestandsoort': const.RAPP_ARCHEOLOGISCHE_RAPPORTAGE},
+            {'prefix': 'DAN', 'type': 'archeologische_notitie', 'bestandsoort': const.RAPP_ARCHEOLOGISCHE_NOTITIE}]
+
+    def test_zonder_sectie(self):
+        from wasstraat.harmonize_functions import leesRapportcodePrefixen
+        assert leesRapportcodePrefixen({}) == [] and leesRapportcodePrefixen(None) == []
+
+    def test_onbekend_type_wordt_overgeslagen_en_gemeld(self, caplog):
+        import logging
+        import wasstraat.foutbeleid as foutbeleid
+        import wasstraat.harmonize_functions as hf
+        meldingen = []
+        with patch.object(foutbeleid, 'meld', lambda *a, **k: meldingen.append((a, k))), \
+                caplog.at_level(logging.ERROR, logger="airflow.task"):
+            regels = hf.leesRapportcodePrefixen({'rapportcode_prefixen': [
+                {'prefix': 'DAR', 'type': 'archeologische_rapportage'},
+                {'prefix': 'RAP', 'type': 'rapport'}]}, melden=True)
+        assert [r['prefix'] for r in regels] == ['DAR']
+        assert "onbekend type 'rapport'" in caplog.text
+        assert "toegestaan: archeologische_rapportage, archeologische_notitie" in caplog.text
+        assert len(meldingen) == 1
+        (niveau, soort, tekst), kwargs = meldingen[0]
+        assert (niveau, soort) == (foutbeleid.NIVEAU_WAARSCHUWING, foutbeleid.SOORT_CONFIGURATIE_ONGELDIG)
+        assert 'RAP' in tekst and kwargs['details']['sectie'] == 'rapportcode_prefixen'
+
+    def test_zonder_melden_alleen_het_log(self, caplog):
+        import logging
+        import wasstraat.foutbeleid as foutbeleid
+        import wasstraat.harmonize_functions as hf
+        meldingen = []
+        with patch.object(foutbeleid, 'meld', lambda *a, **k: meldingen.append((a, k))), \
+                caplog.at_level(logging.ERROR, logger="airflow.task"):
+            assert hf.leesRapportcodePrefixen({'rapportcode_prefixen': [{'prefix': 'RAP', 'type': 'x'}]}) == []
+        assert meldingen == [] and "onbekend type 'x'" in caplog.text
+
+    @pytest.mark.parametrize('regel, reden', [
+        ({'prefix': 'DAR'}, 'type ontbreekt'),
+        ({'type': 'archeologische_notitie'}, 'prefix ontbreekt'),
+        ({'prefix': '  ', 'type': 'archeologische_notitie'}, 'prefix ontbreekt'),
+        ('DAR', 'verwacht een regel met prefix en type'),
+    ])
+    def test_onvolledige_regel(self, regel, reden, caplog):
+        import logging
+        from wasstraat.harmonize_functions import leesRapportcodePrefixen
+        with caplog.at_level(logging.ERROR, logger="airflow.task"):
+            assert leesRapportcodePrefixen({'rapportcode_prefixen': [regel]}) == []
+        assert reden in caplog.text
+
+    def test_sectie_geen_lijst(self, caplog):
+        import logging
+        from wasstraat.harmonize_functions import leesRapportcodePrefixen
+        with caplog.at_level(logging.ERROR, logger="airflow.task"):
+            assert leesRapportcodePrefixen({'rapportcode_prefixen': {'prefix': 'DAR', 'type': 'x'}}) == []
+        assert "geen lijst" in caplog.text
+
+    @pytest.mark.parametrize('omgeving', ['delft', 'synthetic', 'test'])
+    def test_configuraties_in_de_repo_zijn_geldig(self, omgeving, caplog):
+        import logging
+        from wasstraat.harmonize_functions import leesRapportcodePrefixen
+        pad = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
+                           'data', omgeving, 'wasstraat_config', 'correcties.yml')
+        with open(pad, encoding='utf-8') as f:
+            correcties = yaml.safe_load(f) or {}
+        with caplog.at_level(logging.ERROR, logger="airflow.task"):
+            regels = leesRapportcodePrefixen(correcties)
+        assert "Ongeldige regel in rapportcode_prefixen" not in caplog.text
+        assert len(regels) == len(correcties.get('rapportcode_prefixen') or [])
+
+    def test_parse_fotobestanden_slaat_onbekend_type_over(self, monkeypatch):
+        """ParseFotobestanden: DAR wordt een rapportage, DAN een notitie, RAP (onbekend type) geen rapport.
+
+        De controle gebeurt één keer per taak, niet per bestand.
+        """
+        import shared.config as config
+        import shared.const as const
+        import wasstraat.foutbeleid as foutbeleid
+        import wasstraat.harmonize_functions as hf
+        from wasstraat.profielen.voorbeeld import VoorbeeldProfiel
+        from tests.unit.test_delta_transform import UitgebreideClient
+
+        client = UitgebreideClient()
+        monkeypatch.setattr(hf.pymongo, 'MongoClient', lambda *a, **k: client)
+        monkeypatch.setattr(hf, 'get_profiel', lambda: VoorbeeldProfiel())
+        monkeypatch.setattr(hf, '_correcties_cache', {'rapportcode_prefixen': [
+            {'prefix': 'DAR', 'type': 'archeologische_rapportage'},
+            {'prefix': 'DAN', 'type': 'archeologische_notitie'},
+            {'prefix': 'RAP', 'type': 'rapportage'}]})
+        meldingen = []
+        monkeypatch.setattr(foutbeleid, 'meld', lambda *a, **k: meldingen.append(a))
+        namen = ['DAR045 rapport.pdf', 'DAN12_notitie.pdf', 'RAP012.pdf', 'RAP013.pdf']
+        client[config.DB_STAGING][config.COLL_PLAATJES].insert_many(
+            [{'_id': i, 'fileName': naam, 'fullFileName': '/rapporten/' + naam, 'fileType': '.pdf', 'directory': '/rapporten'}
+             for i, naam in enumerate(namen)])
+
+        hf.parseFotobestanden()
+
+        docs = {d['fileName']: d for d in client[config.DB_ANALYSE][config.COLL_ANALYSE].find({})}
+        assert (docs['DAR045 rapport.pdf']['soort'], docs['DAR045 rapport.pdf']['bestandsoort']) == (
+            'Rapport', const.RAPP_ARCHEOLOGISCHE_RAPPORTAGE)
+        assert docs['DAR045 rapport.pdf']['rapportnr'] == 'DAR045'
+        assert (docs['DAN12_notitie.pdf']['soort'], docs['DAN12_notitie.pdf']['bestandsoort']) == (
+            'Rapport', const.RAPP_ARCHEOLOGISCHE_NOTITIE)
+        assert docs['RAP012.pdf']['soort'] != 'Rapport' and docs['RAP013.pdf']['soort'] != 'Rapport'
+        assert len(meldingen) == 1 and meldingen[0][1] == foutbeleid.SOORT_CONFIGURATIE_ONGELDIG

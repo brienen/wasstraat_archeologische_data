@@ -1,0 +1,242 @@
+# docker-compose.delft-test.yml
+# Test-omgeving voor Delftse testdata (DB034 project uit data/test/).
+#
+# Structureel identiek aan docker-compose.test.yml, maar mount data/test/
+# in plaats van data/synthetic/. Hierdoor draaien de Delft-integratietests
+# in dezelfde geïsoleerde omgeving als de synthetische tests.
+# Eigen hostpoorten (MongoDB 27118, Airflow 8082, Apache 5062; synthetisch: 27117, 8081,
+# 5061), zodat beide testomgevingen tegelijk kunnen draaien. Bewaakt door
+# tests/unit/test_testomgevingen_poorten.py.
+#
+# Gebruik: make integration-delft
+
+services:
+  mongo-test:
+    image: mongo:7.0
+    container_name: "wasstraat_mongo_delft_test"
+    # Eigen hostpoort (synthetisch: 27117), zodat beide testomgevingen tegelijk kunnen draaien
+    ports:
+      - "27118:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: testroot
+      MONGO_INITDB_ROOT_PASSWORD: testpass
+    networks:
+      testnet-delft:
+        aliases:
+          - mongo
+    tmpfs:
+      - /data/db
+
+  redis-test:
+    image: redis:7.2-alpine
+    container_name: "wasstraat_redis_delft_test"
+    networks:
+      testnet-delft:
+        aliases:
+          - redis
+
+  postgres-test:
+    build:
+      context: .
+      dockerfile: services/postgres/Dockerfile
+    container_name: "wasstraat_postgres_delft_test"
+    environment:
+      POSTGRES_DB: airflow_test
+      POSTGRES_USER: testuser
+      POSTGRES_PASSWORD: testpass
+      FLASK_PGUSER: testuser
+      FLASK_PGPASSWORD: testpass
+      FLASK_PGDATABASE: airflow_test
+      PGDATA: /data/postgres
+      PASSWORD_AUTHENTICATION: md5
+    networks:
+      testnet-delft:
+        aliases:
+          - postgres
+    tmpfs:
+      - /data/postgres
+
+  elasticsearch-test:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.17.0
+    container_name: "wasstraat_elasticsearch_delft_test"
+    environment:
+      discovery.type: single-node
+      xpack.security.enabled: "false"
+      ES_JAVA_OPTS: "-Xms512m -Xmx512m"
+      # Geen read-only indexen als de schijf van de Docker-VM vol raakt (alleen testomgeving)
+      cluster.routing.allocation.disk.threshold_enabled: "false"
+    # Geen hostpoort: 9200 op de host is van de echte installatie; tests gebruiken
+    # 'docker exec wasstraat_elasticsearch_delft_test curl ...'
+    networks:
+      testnet-delft:
+        aliases:
+          - elasticsearch
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fs 'http://localhost:9200/_cluster/health?wait_for_status=yellow&timeout=5s' >/dev/null || exit 1"]
+      interval: 5s
+      timeout: 10s
+      retries: 30
+      start_period: 20s
+
+  airflow-test:
+    build:
+      context: .
+      dockerfile: services/airflow/Dockerfile
+    container_name: "wasstraat_airflow_delft_test"
+    depends_on:
+      mongo-test:
+        condition: service_started
+      postgres-test:
+        condition: service_started
+      # De Index_*-taken van DAG_Load_Only en de cycli hebben Elasticsearch nodig
+      elasticsearch-test:
+        condition: service_healthy
+    ports:
+      - "8082:8080"
+    networks:
+      - testnet-delft
+    environment:
+      # Airflow metadata
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__CORE__LOAD_EXAMPLES: "False"
+      AIRFLOW__SCHEDULER__MIN_FILE_PROCESS_INTERVAL: "10"
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: "postgresql+psycopg2://testuser:testpass@postgres:5432/airflow_test"
+      DB__HOST: postgres
+      DB__PORT: "5432"
+      DB__USERNAME: testuser
+      DB__PASSWORD: testpass
+      DB__NAME: airflow_test
+      PGPASSWORD: testpass
+      SECURITY__ADMIN_USERNAME: admin
+      SECURITY__ADMIN_PASSWORD: admin
+      SECURITY__ADMIN_FIRSTNAME: Test
+      SECURITY__ADMIN_LASTNAME: Admin
+      SECURITY__ADMIN_EMAIL: test@test.nl
+      # Ontbreekt een van deze drie, dan logt shared.config een fout
+      POSTGRES_DB: airflow_test
+      POSTGRES_USER: testuser
+      POSTGRES_PASSWORD: testpass
+      FLASK_PGUSER: testuser
+      FLASK_PGPASSWORD: testpass
+      FLASK_PGDATABASE: airflow_test
+      # MongoDB
+      MONGO_SERVER: mongo
+      MONGO_INITDB_ROOT_USERNAME: testroot
+      MONGO_INITDB_ROOT_PASSWORD: testpass
+      DB_STAGING: Arch_Staging_Test
+      DB_FILES: Arch_Files_Test
+      DB_ANALYSE: Arch_Analyse_Test
+      COLL_ANALYSE: Single_Store
+      COLL_ANALYSE_CLEAN: Single_Store_Clean
+      COLL_PLAATJES: Plaatjes
+      COLL_FILENAMES: Filenames
+      COLL_STAGING_METAINFO: Kolominformatie
+      COLL_STAGING_OUD: Staging_Projecten_Oud
+      COLL_STAGING_MAGAZIJNLIJST: Staging_Projecten_Magazijnlijst
+      COLL_STAGING_PROJECTENLIJST: Staging_Projecten_Projectenlijst
+      COLL_STAGING_FOTOLIJST: Staging_Projecten_Fotolijst
+      COLL_STAGING_MONSTER: Staging_Projecten_Monster
+      COLL_ANALYSE_DOOS: Def_Doos
+      # Paden
+      AIRFLOW_TEMPDIR: /opt/airflow/tmp
+      AIRFLOW_LOGDIR: /opt/airflow/logs
+      AIRFLOW_WASSTRAAT_CONFIG: /opt/airflow/config/Wasstraat_Config_HarmonizeV3.xlsx
+      AIRFLOW_INPUT_PROJECTEN: /input/projecten
+      AIRFLOW_INPUT_IMAGES: /input/projecten
+      AIRFLOW_INPUT_PROJECTENLIJST: /input/projectenlijst
+      AIRFLOW_INPUT_MAGAZIJNLIJST: /input/magazijnlijst
+      AIRFLOW_INPUT_FOTOLIJST: /input/fotolijst
+      AIRFLOW_INPUT_MONSTER: /input/monsterdatabase
+      AIRFLOW_INPUT_RAPPORTEN: /input/rapporten
+      AIRFLOW_OUTPUT_MEDIA: /output/archeomedia
+      # Verwerkingsrapporten (issue 62): in de container; de tests lezen ze met docker exec
+      AIRFLOW_OUTPUT_RAPPORTEN: /tmp/rapporten_test
+      ES_HOST: "http://elasticsearch:9200"
+    volumes:
+      - ./airflow_app/dags:/opt/airflow/dags
+      - ./airflow_app/scripts:/opt/airflow/scripts
+      - ./shared:/opt/airflow/dags/shared
+      - ./data/test/wasstraat_config:/opt/airflow/config
+      # Verwerkte media (AIRFLOW_OUTPUT_MEDIA), gedeeld met apache-test
+      - archeomedia-delft-test:/output/archeomedia
+      - ./data/test/data/projecten:/input/projecten:ro
+      - ./data/test/data/projectenlijst:/input/projectenlijst:ro
+      - ./data/test/data/magazijnlijst:/input/magazijnlijst:ro
+      - ./data/test/data/fotolijst:/input/fotolijst:ro
+      - ./data/test/data/monsterdatabase:/input/monsterdatabase:ro
+      - ./data/test/data/referentietabellen:/input/referentietabellen:ro
+      - ./data/test/data/rapporten:/input/rapporten:ro
+
+  flask-test:
+    build:
+      context: .
+      dockerfile: services/flask/Dockerfile
+    container_name: "wasstraat_flask_delft_test"
+    depends_on:
+      - postgres-test
+      - redis-test
+    # Geen hostpoort: bereikbaar via apache-test op 5062, zoals in de echte installatie
+    networks:
+      testnet-delft:
+        aliases:
+          - flask
+    environment:
+      POSTGRES_DB: airflow_test
+      POSTGRES_USER: testuser
+      POSTGRES_PASSWORD: testpass
+      FLASK_PGUSER: testuser
+      FLASK_PGPASSWORD: testpass
+      FLASK_PGDATABASE: airflow_test
+      CACHE_REDIS_HOST: redis
+      CACHE_REDIS_PASSWORD: ""
+      REDIS_PASSWORD: ""
+      CACHE_DEFAULT_TIMEOUT: "60"
+      ES_HOST: "http://elasticsearch:9200"
+      SECRET_KEY: test-secret-key-voor-delft-tests
+      MONGO_SERVER: mongo
+      MONGO_INITDB_ROOT_USERNAME: testroot
+      MONGO_INITDB_ROOT_PASSWORD: testpass
+      DB_STAGING: Arch_Staging_Test
+      DB_FILES: Arch_Files_Test
+      DB_ANALYSE: Arch_Analyse_Test
+      COLL_ANALYSE: Single_Store
+      COLL_ANALYSE_CLEAN: Single_Store_Clean
+      COLL_PLAATJES: Plaatjes
+      COLL_FILENAMES: Filenames
+      COLL_STAGING_METAINFO: Kolominformatie
+      COLL_STAGING_OUD: Staging_Projecten_Oud
+      COLL_STAGING_MAGAZIJNLIJST: Staging_Projecten_Magazijnlijst
+      COLL_STAGING_PROJECTENLIJST: Staging_Projecten_Projectenlijst
+      COLL_STAGING_FOTOLIJST: Staging_Projecten_Fotolijst
+      COLL_STAGING_MONSTER: Staging_Projecten_Monster
+      COLL_ANALYSE_DOOS: Def_Doos
+
+  apache-test:
+    build:
+      context: .
+      dockerfile: services/apache/Dockerfile
+    container_name: "wasstraat_apache_delft_test"
+    depends_on:
+      - flask-test
+    ports:
+      - "5062:5052"
+    networks:
+      testnet-delft:
+        aliases:
+          - apache
+    volumes:
+      # De media die airflow-test schrijft, alleen-lezen onder /archeomedia
+      - archeomedia-delft-test:/usr/local/apache2/htdocs/archeomedia:ro
+
+networks:
+  testnet-delft:
+    driver: bridge
+
+volumes:
+  # Uitvoermap voor media, gedeeld door airflow-test (schrijft) en apache-test (serveert).
+  # Op schijf, niet in tmpfs: de Delftse testdata bevat circa 5 GB aan rapporten die de
+  # extractie integraal naar de mediamap kopieert, en een vol tmpfs laat de verwerking van
+  # de overige bestanden stil mislukken. Het volume wordt gemount op /output/archeomedia,
+  # dat in de Airflow-image bestaat met de airflow-gebruiker als eigenaar; een leeg named
+  # volume neemt die rechten over, zodat airflow-test erin kan schrijven.
+  archeomedia-delft-test:

@@ -9,7 +9,15 @@ import wasstraat.references_functions as references_functions
 import wasstraat.meta as meta
 
 
-def getSetKeysTaskGroup():
+def getSetKeysTaskGroup(incrementeel=False):
+    """Maak de taakgroep voor Transform 3 (sleutels).
+
+    Args:
+        incrementeel: als True berekenen de taken alleen de sleutels van de
+            documenten met delta_run van de actieve verwerkingsrun en bekijken de
+            projectbrede stappen alleen de geraakte projecten (incrementele cyclus)
+    """
+    delta_kwargs = {'incrementeel': True} if incrementeel else {}
 
     tg1 = TaskGroup(group_id='Transform3_Set_Keys_Group')
     with tg1:
@@ -21,10 +29,12 @@ def getSetKeysTaskGroup():
         setAndVondstUniqueInProject = PythonOperator(
             task_id='Set_Artefactnr_Unique',
             python_callable=references_functions.setAndVondstUniqueInProject,
+            op_kwargs=delta_kwargs,
         )
         mergeRAAPArtefacts = PythonOperator(
             task_id='mergeRAAPArtefacts',
             python_callable=references_functions.mergeRAAPArtefacts,
+            op_kwargs=delta_kwargs,
         )
         Set_Index_SingleStore = PythonOperator(
             task_id='Set_Index_SingleStore',
@@ -39,11 +49,11 @@ def getSetKeysTaskGroup():
             tsk = PythonOperator(
                 task_id=f'Set_ReferenceKeys_{obj_type}',
                 python_callable=references_functions.setReferenceKeys,
-                op_kwargs={'pipeline': meta.getReferenceKeysPipeline(obj_type), 'soort': obj_type}
+                op_kwargs=dict({'pipeline': meta.getReferenceKeysPipeline(obj_type), 'soort': obj_type}, **delta_kwargs)
             )
             if (obj_type == 'Artefact'):
                 setAndVondstUniqueInProject >> mergeRAAPArtefacts >> tsk >> Set_Index_SingleStore
-            else:    
+            else:
                 setAndVondstUniqueInProject >> tsk >> Set_Index_SingleStore
 
 

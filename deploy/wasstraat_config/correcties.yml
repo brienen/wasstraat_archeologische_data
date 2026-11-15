@@ -1,0 +1,43 @@
+# Correcties voor de eigen brondata (optioneel). De pipeline leest dit bestand bij elke run;
+# fouten in dit bestand worden gelogd en overgeslagen. Haal het hekje weg voor de regels
+# die je nodig hebt. Documentatie:
+# https://brienen.github.io/wasstraat_archeologische_data/aan-de-slag/#5b-correcties-configureren-optioneel
+
+# Projectcode-correcties: regex op het veld projectcd, na harmonisatie (Transform2).
+projectcode_correcties: []
+#  - patroon: "OUDECODE"
+#    projectcode: "AB001"
+
+# Brondata-correcties: op ruwe velden in de staging-collecties, vóór harmonisatie (Transform1).
+brondata_correcties: []
+#  - collectie: COLL_STAGING_MONSTER
+#    zoek_veld: PROJECT
+#    patroon: "OUDECODE"
+#    waarde: "AB001"
+
+# Projecten waarvan artefacten niet samengevoegd worden
+#artefact_niet_mergen:
+#  projectcodes: ["AB001"]
+
+# Prefixen van rapportcodes voor de classificatie van rapporten
+#rapportcode_prefixen:
+#  - prefix: "DAR"
+#    type: "archeologische_rapportage"
+#  - prefix: "DAN"
+#    type: "archeologische_notitie"
+
+# Bestanden en mappen die de extractie overslaat, zoals kopieën van databases in een werkmap.
+# Glob-patronen relatief aan de invoermap (de projectmap), hoofdletterongevoelig; * staat voor een deel
+# van één naam, ** voor nul of meer mappen, en een patroon dat een map aanwijst geldt voor alles daaronder.
+paden_overslaan: []
+#  - "AB001_Voorbeeldproject/K Overig/werkmap"
+#  - "**/oude kopie*"
+
+# Voorrang bij de harmonisatie: welke soort een Access-tabel harmoniseert als de patronen van meer dan
+# één soort in de harmonisatie-Excel hem selecteren. Tabelnaam (precies) → soort, of een lege waarde
+# voor geen enkele soort (bijvoorbeeld een codetabel). Zonder instelling kiest de voorrangsregel en
+# meldt de run een waarschuwing met de kandidaten.
+harmonisatie_voorrang: {}
+#harmonisatie_voorrang:
+#  ABDeterminaties: Aardewerk     # door Aardewerk, niet door Artefact
+#  "METAAL OPPERVLAK":            # codetabel: door geen enkele soort

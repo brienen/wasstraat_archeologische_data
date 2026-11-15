@@ -372,3 +372,192 @@ class TestInsertBatch:
         count = insertBatch(cursor, 'Def_Test', ['naam'], [])
         assert count == 0
         mock_execute_values.assert_not_called()
+
+
+
+# ============================================================
+# TestLoadAllSequences
+# ============================================================
+
+@pytest.mark.unit
+class TestLoadAllSequences:
+    """loadAll herstelt in FASE 3 de sequence van primary_key van elke tabel (zetSequence).
+
+    CREATE TABLE ... LIKE INCLUDING DEFAULTS kopieert de default nextval(...) van
+    de oude tabel; die sequence verdwijnt met DROP TABLE <tabel>_old CASCADE en
+    de default dus ook. PostgreSQL, MongoDB en het laden zelf worden nagebootst;
+    alleen de volgorde van de statements en aanroepen wordt gecontroleerd.
+    """
+
+    @staticmethod
+    def draaiLoadAll(log, zet_sequence=None, afgeleid_fout=None, migratie_fout=None):
+        """Draai loadAll met een nagebootste verbinding; statements en aanroepen komen in log."""
+        import wasstraat.loadToDatabase_functions as load
+
+        class Cursor:
+            def execute(self, sql, params=None):
+                log.append(('sql', sql))
+
+        class Conn:
+            def cursor(self):
+                return Cursor()
+
+            def commit(self):
+                log.append(('commit',))
+
+            def rollback(self):
+                log.append(('rollback',))
+
+            def close(self):
+                log.append(('close',))
+
+        def logZetSequence(cursor, table):
+            log.append(('zetSequence', table))
+            return zet_sequence(cursor, table) if zet_sequence else 1
+
+        def nepValideer(cursor, fk_constraints):
+            log.append(('valideerFkConstraints',))
+            return []
+
+        def nepAfgeleid(cursor):
+            log.append(('herberekenAfgeleideVelden',))
+            if afgeleid_fout:
+                raise afgeleid_fout
+            return {}
+
+        def nepMigratie(conn, lock_timeout='30s'):
+            log.append(('migreerSchemaGebruikersdata',))
+            if migratie_fout:
+                raise migratie_fout
+            return []
+
+        def logAanroep(naam, resultaat=None):
+            def aanroep(*args, **kwargs):
+                log.append((naam,))
+                return resultaat
+            return aanroep
+
+        with patch.object(load, 'getPgConnection', return_value=Conn()), \
+                patch.object(load, 'migreerSchemaGebruikersdata', side_effect=nepMigratie), \
+                patch.object(load, 'transferToDB'), \
+                patch.object(load, 'bepaalVervallenSleutels', side_effect=logAanroep('bepaalVervallenSleutels', {})), \
+                patch.object(load, 'telLaadRijen', side_effect=logAanroep('telLaadRijen', {'totaal': {}})), \
+                patch.object(load, 'schrijfLoadTellingen', side_effect=logAanroep('schrijfLoadTellingen')), \
+                patch.object(load, 'leesFkConstraints', return_value=[]), \
+                patch.object(load, 'verwijderFkConstraints', side_effect=logAanroep('verwijderFkConstraints')), \
+                patch.object(load, 'bepaalVerwijzingen', side_effect=logAanroep('bepaalVerwijzingen', ([], {}))), \
+                patch.object(load, 'koppelGebruikersdataLos', side_effect=logAanroep('koppelGebruikersdataLos')), \
+                patch.object(load, 'werkGebruikersdataBijNaSwap', side_effect=logAanroep('werkGebruikersdataBijNaSwap')), \
+                patch.object(load, 'herstelFkConstraints', return_value=(0, 0)), \
+                patch.object(load, 'valideerFkConstraints', side_effect=nepValideer), \
+                patch.object(load, 'zetSequence', side_effect=logZetSequence), \
+                patch.object(load, 'herberekenAfgeleideVelden', side_effect=nepAfgeleid):
+            return load.loadAll()
+
+    def test_zetSequence_voor_elke_tabel(self):
+        from wasstraat.loadToDatabase_functions import LOAD_TABELLEN
+        log = []
+        self.draaiLoadAll(log)
+        tabellen = [regel[1] for regel in log if regel[0] == 'zetSequence']
+        assert tabellen == list(LOAD_TABELLEN)
+
+    def test_na_opruimen_old_en_voor_laatste_commit(self):
+        """zetSequence draait na de DROP van alle _old-tabellen, in de transactie van FASE 3."""
+        log = []
+        self.draaiLoadAll(log)
+        drops_old = [i for i, regel in enumerate(log)
+                     if regel[0] == 'sql' and regel[1].startswith('DROP TABLE IF EXISTS "')
+                     and regel[1].endswith('_old" CASCADE')]
+        renames = [i for i, regel in enumerate(log) if regel[0] == 'sql' and 'RENAME TO' in regel[1]]
+        # De DROP's van FASE 3 zijn die na de swap (de laatste RENAME)
+        drops_fase3 = [i for i in drops_old if i > max(renames)]
+        posities = [i for i, regel in enumerate(log) if regel[0] == 'zetSequence']
+        laatste_commit = max(i for i, regel in enumerate(log) if regel[0] == 'commit')
+        assert drops_fase3
+        assert min(posities) > max(drops_fase3)
+        assert max(posities) < laatste_commit
+        # Zelfde transactie: geen commit tussen het opruimen en het herstellen van de sequences
+        assert ('commit',) not in log[min(drops_fase3):max(posities)]
+
+    def test_fout_bij_sequence_rolt_fase3_terug(self):
+        """Een fout in zetSequence valt onder de bestaande foutafhandeling: rollback en doorgeven."""
+        def kapot(cursor, table):
+            if table == 'Def_Vondst':
+                raise RuntimeError('sequence kapot')
+            return 1
+
+        log = []
+        with pytest.raises(RuntimeError, match='sequence kapot'):
+            self.draaiLoadAll(log, zet_sequence=kapot)
+        fout = log.index(('zetSequence', 'Def_Vondst'))
+        assert log[fout + 1:] == [('rollback',), ('close',)]
+
+    def test_afgeleide_velden_na_fase3_in_eigen_transactie(self):
+        """Issue 72: FASE 4 herberekent de afgeleide velden na de commit van FASE 3 en commit zelf."""
+        log = []
+        self.draaiLoadAll(log)
+        assert log[-6:] == [('valideerFkConstraints',), ('commit',), ('herberekenAfgeleideVelden',),
+                            ('commit',), ('schrijfLoadTellingen',), ('close',)]
+
+    def test_schemamigratie_gebruikersdata_eerst(self):
+        """Issue 73: de schemamigratie van de gebruikerstabellen draait vóór de rest (eigen transactie)."""
+        log = []
+        self.draaiLoadAll(log)
+        assert log[0] == ('migreerSchemaGebruikersdata',)
+        # Daarna pas het opruimen van restanten van een vorige run (eerste statement van loadAll)
+        assert log[1][0] == 'sql' and log[1][1].startswith('DROP TABLE IF EXISTS "')
+
+    def test_fout_in_schemamigratie_laadt_niets(self):
+        log = []
+        with pytest.raises(RuntimeError, match='migratie kapot'):
+            self.draaiLoadAll(log, migratie_fout=RuntimeError('migratie kapot'))
+        assert log == [('migreerSchemaGebruikersdata',), ('rollback',), ('close',)]
+
+    def test_fout_in_afgeleide_velden_rolt_alleen_fase4_terug(self):
+        """Issue 54: een fout in de afgeleide velden is een waarschuwing; de load (al gecommit) slaagt."""
+        log = []
+        resultaat = self.draaiLoadAll(log, afgeleid_fout=RuntimeError('afgeleid kapot'))
+        assert log[-6:] == [('valideerFkConstraints',), ('commit',), ('herberekenAfgeleideVelden',),
+                            ('rollback',), ('schrijfLoadTellingen',), ('close',)]
+        assert resultaat['afgeleide_velden'] is None
+
+    def test_gebruikerstabellen_niet_geleegd_of_geswapt(self):
+        """Issue 71: geen TRUNCATE meer en geen enkel statement op een gebruikerstabel (die blijven staan)."""
+        from wasstraat.loadToDatabase_functions import GEBRUIKERS_TABELLEN
+        log = []
+        self.draaiLoadAll(log)
+        statements = [regel[1] for regel in log if regel[0] == 'sql']
+        assert not [s for s in statements if 'TRUNCATE' in s.upper()]
+        for tabel in GEBRUIKERS_TABELLEN:
+            assert not [s for s in statements if f'"{tabel}' in s], f"{tabel} wordt door loadAll aangeraakt"
+
+    def test_gebruikersdata_rond_de_rename_in_de_swaptransactie(self):
+        """Issue 71: loskoppelen na het verwijderen van de FK's en vóór de rename, terugkoppelen na de
+        laatste rename, alles in de transactie van de swap; de vervallen sleutels vóór de commit van FASE 1."""
+        log = []
+        self.draaiLoadAll(log)
+        positie = {regel[0]: i for i, regel in enumerate(log) if len(regel) == 1}
+        renames = [i for i, regel in enumerate(log) if regel[0] == 'sql' and 'RENAME TO' in regel[1]]
+        creates = [i for i, regel in enumerate(log) if regel[0] == 'sql' and regel[1].startswith('CREATE TABLE')]
+        commits = [i for i, regel in enumerate(log) if regel[0] == 'commit']
+        assert max(creates) < positie['bepaalVervallenSleutels'] < min(c for c in commits if c > max(creates))
+        assert positie['verwijderFkConstraints'] < positie['bepaalVerwijzingen'] < positie['koppelGebruikersdataLos']
+        assert positie['koppelGebruikersdataLos'] < min(renames)
+        assert max(renames) < positie['werkGebruikersdataBijNaSwap']
+        # Geen commit tussen het loskoppelen en het terugkoppelen (één transactie met de swap)
+        assert not [c for c in commits if positie['koppelGebruikersdataLos'] < c < positie['werkGebruikersdataBijNaSwap']]
+
+    def test_resultaat_met_tellingen(self):
+        log = []
+        resultaat = self.draaiLoadAll(log)
+        assert resultaat == {'vervallen': {}, 'gebruikersdata': {}, 'afgeleide_velden': {},
+                             'load': {'totaal': {}, 'fk_niet_hersteld': 0, 'fk_niet_hersteld_namen': [],
+                                      'fk_niet_gevalideerd': []}}
+
+    def test_tellingen_na_vervallen_sleutels_voor_commit_fase1(self):
+        """Issues 54/62: de rijen per tabel worden geteld na bepaalVervallenSleutels, nog in FASE 1."""
+        log = []
+        self.draaiLoadAll(log)
+        positie = {regel[0]: i for i, regel in enumerate(log) if len(regel) == 1}
+        assert positie['bepaalVervallenSleutels'] < positie['telLaadRijen'] < min(
+            i for i, regel in enumerate(log) if regel == ('commit',) and i > positie['telLaadRijen'] - 1)

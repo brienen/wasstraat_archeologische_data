@@ -1,78 +1,51 @@
-# Architectuurdiagrammen
+# Diagrammen
 
-Deze pagina biedt een overzicht van alle architectuurdiagrammen die zijn opgesteld voor het Wasstraat Archeologische Data-platform. De diagrammen zijn beschikbaar in [draw.io](https://www.diagrams.net/) formaat en kunnen direct worden geopend en bewerkt.
+Deze pagina bundelt de diagrammen van de documentatie. Vier ervan beschrijven de Wasstraat zoals die nu is gebouwd; het semantische model is een toekomstbeeld.
 
-## Beschikbare diagrammen
+## Huidige architectuur
 
-### 1. Systeemarchitectuur
+| Diagram | Bestand | Staat op | Toont |
+|---------|---------|----------|-------|
+| Systeemarchitectuur | `assets/images/systeem-architectuur.svg` | [Systeemarchitectuur](architectuur/systeem.md) | De services (Apache als voordeur, Flask, Airflow, PostgreSQL met PostGIS, MongoDB, Elasticsearch, Redis), de mappen op de host en de gegevensstromen ertussen |
+| Verwerkingspipeline | `assets/images/dataflow-pipeline.svg` | [Verwerkingspipeline](architectuur/dataflow.md) | De stappen van de volledige cyclus met hun taken in Airflow, de invoer en configuratie per stap, de gegevens die elke stap schrijft, het foutbeleid en de incrementele cyclus |
+| Componentenmodel | `assets/images/componenten-model.svg` | [Componentenmodel](architectuur/componenten.md) | De code per image: DAG's, taakgroepen, de modules in `wasstraat/`, de importscripts, `shared/` en de webapplicatie |
+| Gegevensmodel | `assets/images/gegevensmodel.svg` | [Gegevensmodel](architectuur/gegevensmodel.md) | De tabellen in PostgreSQL met hun verwijzingen: de tabellen van de pipeline, de gebruikerstabellen en de registratie van bronbestanden |
 
-**Bestand:** `assets/diagrams/systeem-architectuur.drawio`
+![Systeemarchitectuur](assets/images/systeem-architectuur.svg)
 
-Het systeemarchitectuurdiagram toont de volledige opbouw van het platform in drie hoofdlagen:
+![Verwerkingspipeline](assets/images/dataflow-pipeline.svg)
 
-- **Bronbestanden** — de diverse invoerformaten (Excel, CSV, Word, PDF, Access, dBase, foto's, GIS-bestanden, XML/XMI)
-- **Wasstraat Core** — het verwerkingshart met extractie, ruwe opslag (MongoDB/SingleStore), transformatie, definitieve opslag (PostgreSQL/Oracle), en ondersteunende modules (Crossviews, Validatie, Configuratie, Zoeken, Handmatige Schoning, Monitoring)
-- **Uitvoer** — de diverse outputkanalen (Website, GIS-export, Data Warehouse, Linked Open Data)
+![Componentenmodel](assets/images/componenten-model.svg)
 
-Daarnaast worden de externe standaarden en referenties weergegeven: ABR Thesaurus, CIDOC CRM/CRMarchaeo, GGM, DANS e-Depot, Archis/RCE en FAIR-principes.
+![Gegevensmodel](assets/images/gegevensmodel.svg)
 
-### 2. Dataflow Pipeline
+Klik op een diagram om het te vergroten; met scrollen zoom je in.
 
-**Bestand:** `assets/diagrams/dataflow-pipeline.drawio`
+### Kleuren
 
-Dit diagram beschrijft de zevenledige dataverwerkingspipeline:
+| Kleur | Betekenis |
+|-------|-----------|
+| Geel | Mappen en bestanden op de host: brondata, configuratie, uitvoer, gedeelde code |
+| Groen | Verwerking in Airflow |
+| Blauw | De webapplicatie, en in het gegevensmodel de tabellen van de pipeline |
+| Oranje | Opslag: MongoDB, PostgreSQL, Elasticsearch, Redis |
+| Paars | Run-document en foutbeleid, en in het gegevensmodel de gebruikerstabellen (gestippeld: koppeltabellen) |
+| Grijs | Gebruikers, en in het gegevensmodel de administratie van de pipeline |
 
-| Fase | Naam | Beschrijving |
-|------|------|-------------|
-| 1 | Ingest | Ontvangen van eenmalige en periodieke bronnen |
-| 2 | Extractie | Formatdetectie, encoding-afhandeling, parsing en veldherkenning |
-| 3 | Ruwe Opslag | Bewaren in MongoDB/SingleStore met polymorf metadateringsmodel |
-| 4 | Transformatie | ABR-harmonisatie, spellingnormalisatie, sleutel-/locatieharmonisatie, deduplicatie |
-| 5 | Validatie | Datalogicavalidatie en cachemechanisme |
-| 6 | Definitieve Opslag | Gestructureerde opslag in PostgreSQL/Oracle (GGM-compatibel) |
-| 7 | Uitvoer | Website, GIS-export, Data Warehouse, Linked Open Data |
+### Diagrammen bijwerken
 
-De Crossviews Engine en het handmatige schoningsproces zijn als parallelle processen weergegeven.
+De vier SVG-bestanden worden gemaakt door het script `docs/assets/diagrams/genereer_diagrammen.py`. Het gebruikt alleen de standaardbibliotheek van Python, beschrijft elk diagram als een lijst kaders en pijlen en controleert na het schrijven of elk bestand geldige XML is. Pas bij een wijziging in de architectuur het script aan en maak de diagrammen opnieuw:
 
-### 3. Componentenmodel
+```bash
+python3 docs/assets/diagrams/genereer_diagrammen.py
+```
 
-**Bestand:** `assets/diagrams/componenten-model.drawio`
+Bewerk de SVG-bestanden niet met de hand; de volgende keer dat het script draait, gaan die wijzigingen verloren. Het script zelf wordt niet in de gebouwde site opgenomen (`exclude_docs` in `mkdocs.yml`).
 
-Het componentenmodel visualiseert de functionele indeling in vier lagen:
+## Toekomstbeeld: semantisch model
 
-- **Verwerkingslaag** — Extractie → Mapping → Transformatie → Validatie, aangevuld met Crossviews en Zoek & Indexering
-- **Opslaglaag** — MongoDB (schema-vrij), PostgreSQL (relationeel/GGM) en Oracle (optioneel/enterprise)
-- **Beheer & Configuratie** — Configuratiemodule (gemeenteprofielen, mappings) en Monitoring (logging, procesvoortgang, foutafhandeling)
-- **Presentatielaag** — Website (Django + Vue/Vuetify), REST API, GIS-export, Data Warehouse en Linked Open Data
+**Bestanden:** `assets/images/semantisch-model.svg`, bron `assets/diagrams/semantisch-model.drawio` (te openen met [draw.io](https://www.diagrams.net/))
 
-De infrastructuurlaag (Docker, Kubernetes, Airflow, Celery, Luigi, Spark) vormt de basis. Het toekomstige UML-Transformer-component is met een stippellijn aangegeven.
+Dit diagram toont de semantische inbedding die de Wasstraat nastreeft: de CIDOC CRM-familie (CRM, CRMarchaeo, CRMsci, CRMba, CRMgeo), de groepen van semantische referentiedatamodellen, de Nederlandse standaarden (ABR, GGM, Archis, DANS e-Depot) en internationale kaders (ARIADNE, FAIR, Linked Open Data). Het beschrijft geen bestaande functionaliteit: de Wasstraat gebruikt nu alleen de ABR-thesaurus. Zie [Toekomstvisie](toekomstvisie.md).
 
-### 4. Semantisch Model
-
-**Bestand:** `assets/diagrams/semantisch-model.drawio`
-
-Dit diagram toont de semantische architectuur van het platform:
-
-- **CIDOC CRM-familie** — de hiërarchie van CRM-core, CRMarchaeo, CRMsci, CRMba en CRMgeo
-- **22 Semantische Referentie Data Modellen (SRDMs)** — de modelleringsgroepen voor vondsten, structuren, locaties, documentatie, actoren en analyse
-- **Nederlandse standaarden** — ABR Thesaurus, GGM, Archis/RCE en DANS e-Depot
-- **Internationale standaarden** — ARIADNE, FAIR-principes en Linked Open Data
-
-Alle elementen convergeren naar de centrale Wasstraat-node, die als integratielaag fungeert.
-
-## Gebruik van de diagrammen
-
-De `.drawio`-bestanden kunnen worden geopend met:
-
-- [draw.io Desktop](https://github.com/jgraph/drawio-desktop/releases) (offline)
-- [draw.io Online](https://app.diagrams.net/) (browser)
-- De draw.io-extensie voor VS Code
-
-!!! tip "Kleurcodering"
-    Alle diagrammen hanteren een consistente kleurcodering:
-
-    - **Groen** — Verwerkingscomponenten (extractie, transformatie)
-    - **Rood** — Opslagcomponenten (databases)
-    - **Blauw** — In- en uitvoercomponenten
-    - **Geel** — Ondersteunende componenten (crossviews, validatie, zoeken)
-    - **Paars** — Handmatige/beheerprocessen en externe standaarden
+![Semantisch model (toekomstbeeld)](assets/images/semantisch-model.svg)

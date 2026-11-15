@@ -12,13 +12,20 @@ projectcode_correcties:
 # Nodig als brondata afwijkende projectcodes bevat die niet matchen met de projectenlijst.
 brondata_correcties:
   - collectie: COLL_STAGING_MONSTER
-    veld: PROJECT
+    zoek_veld: PROJECT
     patroon: "SYNTFOUT"
     waarde: "SY001"
 
 # Projecten waarvan artefacten niet gemerged mogen worden
 #artefact_niet_mergen:
 #  projectcodes: ["DC112"]
+
+# Paden die de extractie overslaat (issue 84): glob-patronen relatief aan de invoermap (de projectmap,
+# in de testomgeving ook de map met afbeeldingen), hoofdletterongevoelig; een patroon dat een map
+# aanwijst geldt voor alles daaronder. De werkmap van SY001 bevat een kopie van de database en van een
+# foto; de integratietest controleert dat die worden overgeslagen en de aantallen niet veranderen.
+paden_overslaan:
+  - "SY001/K Overig/werkmap"
 
 # Rapportcode-prefixen voor bestandsclassificatie
 #rapportcode_prefixen:

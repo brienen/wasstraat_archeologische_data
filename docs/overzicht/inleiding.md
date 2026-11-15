@@ -31,10 +31,10 @@ Dit is niet alleen arbeidsintensief, maar leidt ook tot verlies van archeologisc
 
 De gemeente Delft illustreert deze problematiek in groot:
 
-- **1.000+ opgravingen** gedocumenteerd sinds 2019
-- **40.000+ foto's** verspreid over verschillende archiefsystemen
-- **Honderden vondstlijsten** in heterogene Excel-formaten
-- **Talrijke rapport documenten** van verschillende uitvoerders
+- **Ruim 1.000 opgravingen**, elk met een eigen Access-database met vondstlijsten, sporen en determinaties
+- **Ongeveer 100.000 foto's** en tekeningen, verspreid over de projectmappen
+- **Duizenden rapporten** van verschillende uitvoerders
+- **Bijna 1 terabyte** aan bestanden in totaal
 
 Al deze gegevens bevonden zich in **duizenden losse bestanden**, zonder centraal inzicht, zonder mogelijkheid om vragen als "Welke munten zijn gevonden in het centrum?" snel en volledig te beantwoorden.
 
