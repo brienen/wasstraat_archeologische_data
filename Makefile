@@ -36,6 +36,8 @@ PYTHON := $(shell command -v python3.11 2>/dev/null \
 VENV := .venv
 BIN := $(VENV)/bin
 PYTEST := $(BIN)/python -m pytest
+# Zelfde versie als in .github/workflows/docs.yml, zodat de lokale build gelijk is aan de gepubliceerde site
+MKDOCS_VERSIE := 1.6.1
 
 # --- Docker Compose ---
 DC := docker compose 
@@ -236,12 +238,12 @@ synthetic: install ## Genereer synthetische voorbeelddata (MDB-bestanden)
 
 .PHONY: docs
 docs: install ## Start MkDocs dev-server (localhost:8000)
-	@$(BIN)/pip install mkdocs --quiet 2>/dev/null || true
+	@$(BIN)/pip install "mkdocs==$(MKDOCS_VERSIE)" --quiet 2>/dev/null || true
 	$(BIN)/mkdocs serve
 
 .PHONY: docs-build
 docs-build: install ## Bouw statische documentatie
-	@$(BIN)/pip install mkdocs --quiet 2>/dev/null || true
+	@$(BIN)/pip install "mkdocs==$(MKDOCS_VERSIE)" --quiet 2>/dev/null || true
 	$(BIN)/mkdocs build
 
 # ============================================================
@@ -396,14 +398,22 @@ endif
 	@sed -i.bak 's/^WASSTRAAT_VERSION=.*/WASSTRAAT_VERSION=$(VERSION)/' deploy/.env.example && rm -f deploy/.env.example.bak
 	@# Versiebadge in de README meenemen
 	@sed -i.bak -E 's/badge\/version-[0-9.]+-blue/badge\/version-$(VERSION)-blue/' README.md && rm -f README.md.bak
+	@# Versie en releasedatum in CITATION.cff (citatie op GitHub en metadata voor Zenodo)
+	@sed -i.bak -E -e 's/^version: .*/version: "$(VERSION)"/' -e "s/^date-released: .*/date-released: \"$$(date +%Y-%m-%d)\"/" CITATION.cff && rm -f CITATION.cff.bak
 	@# Alleen de versiebestanden stagen (geen 'git add .': dat zou ongetrackte bestanden meenemen)
-	git add config/version.env.example deploy/.env.example README.md
+	git add config/version.env.example deploy/.env.example README.md CITATION.cff
 	git commit -m "$(MSG)"
 	git tag -a $(VERSION) -m "$(MSG)"
 	@# Alleen de huidige branch en de nieuwe tag pushen (geen 'git push --all': dat publiceert alle lokale branches)
 	git push origin HEAD
 	git push origin $(VERSION)
 	$(MAKE) publish VERSION=$(VERSION)
+	@# GitHub-release bij de tag, pas na het publiceren van de images; Zenodo archiveert alleen bij een gepubliceerde release
+	@if command -v gh > /dev/null; then \
+		gh release create $(VERSION) --verify-tag --title "$(VERSION)" --notes "$(MSG)"; \
+	else \
+		echo "⚠ gh ontbreekt: maak de release met de hand aan op https://github.com/brienen/wasstraat_archeologische_data/releases/new?tag=$(VERSION)"; \
+	fi
 
 # ============================================================
 # Opschonen

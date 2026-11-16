@@ -175,7 +175,7 @@ make test-all         # Unit + integratietests
 make publish                      # Bouw alle images voor linux/amd64 en linux/arm64 en push naar ghcr.io/brienen
 make publish SERVICE=flask        # Eén image
 make publish PUSH=0               # Alleen lokaal bouwen, om deploy/ te testen
-make release VERSION=1.2.3 MSG="Release notes"   # Versie vastleggen, taggen, pushen en publiceren
+make release VERSION=1.2.3 MSG="Release notes"   # Versie vastleggen, taggen, pushen, publiceren en GitHub-release maken
 ```
 
 Inloggen op de registry gebeurt vooraf met `docker login ghcr.io`. Zie [Omgevingen](https://brienen.github.io/wasstraat_archeologische_data/deployment/omgevingen/#publicatie-van-images).
@@ -217,6 +217,8 @@ De volledige technische documentatie is beschikbaar als [MkDocs-site](https://br
 make docs       # Start MkDocs dev-server op localhost:8000
 make docs-build # Bouw statische site
 ```
+
+Na elke push naar `main` die de documentatie raakt, publiceert de workflow `.github/workflows/docs.yml` de site opnieuw.
 
 De documentatie bevat:
 
