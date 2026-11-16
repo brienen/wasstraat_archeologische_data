@@ -1,0 +1,49 @@
+{
+  "title": "Wasstraat Archeologische Data",
+  "upload_type": "software",
+  "access_right": "open",
+  "license": "EUPL-1.2",
+  "creators": [
+    {
+      "name": "Brienen, Arjen",
+      "affiliation": "E-Space B.V.",
+      "orcid": "0009-0004-1676-2605"
+    }
+  ],
+  "contributors": [
+    {
+      "name": "Gemeente Delft, Archeologie Delft",
+      "type": "DataCollector"
+    },
+    {
+      "name": "Stichting Reuvens, Innovatiefonds Nederlandse Archeologie",
+      "type": "Sponsor"
+    }
+  ],
+  "description": "<p>Wasstraat Archeologische Data (\"data washing street for archaeological data\") is an open-source platform that collects, cleans, links and makes searchable the archaeological data of Dutch municipalities. Source material such as Access databases, Excel sheets, photographs, reports and GIS files is imported, standardised and stored in structured form. The platform consists of an Apache Airflow ETL pipeline and a Flask web application, backed by PostgreSQL, MongoDB, Elasticsearch and Redis, and runs with Docker Compose.</p><p>The platform was first developed for Archeologie Delft (Municipality of Delft), covering more than a thousand excavations, and has been generalised into a configurable system for other Dutch municipalities in the project <em>Innovatie Wasstraat Archeologische Data</em>, funded by the Innovatiefonds Nederlandse Archeologie of Stichting Reuvens and carried out by E-Space B.V.</p><p>Documentation: <a href=\"https://brienen.github.io/wasstraat_archeologische_data/\">brienen.github.io/wasstraat_archeologische_data</a>.</p>",
+  "keywords": [
+    "archaeology",
+    "archaeological data",
+    "data quality",
+    "data pipeline",
+    "ETL",
+    "Apache Airflow",
+    "cultural heritage",
+    "Dutch municipalities",
+    "open source"
+  ],
+  "language": "nld",
+  "related_identifiers": [
+    {
+      "identifier": "https://brienen.github.io/wasstraat_archeologische_data/",
+      "relation": "isDocumentedBy",
+      "resource_type": "other"
+    },
+    {
+      "identifier": "https://github.com/brienen/wasstraat_archeologische_data",
+      "relation": "isSupplementTo",
+      "resource_type": "software"
+    }
+  ],
+  "notes": "Funded by the Innovatiefonds Nederlandse Archeologie (Stichting Reuvens). Developed by E-Space B.V. for the Municipality of Delft (Archeologie Delft)."
+}
