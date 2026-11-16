@@ -4,7 +4,9 @@ Unit tests voor de live installatie uit gepubliceerde images (deploy/) en 'make 
 De map deploy/ moet zelfstandig bruikbaar zijn zonder de rest van de repository.
 Daarom bevat die kopieën van init-config.sh, config/*.env.example en de
 harmonisatie-Excel; deze tests bewaken dat die kopieën gelijk blijven aan het
-origineel en dat het compose-bestand alleen gepubliceerde images gebruikt.
+origineel en dat het compose-bestand alleen gepubliceerde images gebruikt. Daarnaast
+bewaken ze het release-doel, de versie in CITATION.cff en de workflow die de
+documentatiesite publiceert.
 """
 import filecmp
 import glob
@@ -86,6 +88,16 @@ class TestDeployKopieen:
         assert versie and deploy_versie == versie, (
             f"deploy/.env.example heeft WASSTRAAT_VERSION={deploy_versie}, config/version.env.example VERSION={versie}"
         )
+
+    def test_citation_versie_gelijk_aan_version_env_example(self):
+        """CITATION.cff (citatie op GitHub, metadata voor Zenodo) noemt de huidige versie."""
+        versie = leesVariabele(os.path.join(PROJECT_ROOT, "config", "version.env.example"), "VERSION")
+        with open(os.path.join(PROJECT_ROOT, "CITATION.cff"), encoding="utf-8") as f:
+            citatie = yaml.safe_load(f)
+        assert str(citatie.get("version")) == versie, (
+            f"CITATION.cff heeft version={citatie.get('version')}, config/version.env.example VERSION={versie}"
+        )
+        assert citatie.get("date-released"), "CITATION.cff mist date-released"
 
     def test_datamappen_aanwezig(self):
         for map_ in ("projecten", "projectenlijst", "magazijnlijst", "fotolijst",
@@ -256,6 +268,16 @@ class TestPublish:
         assert "publish VERSION=9.9.9" in resultaat.stdout
         assert "WASSTRAAT_VERSION=9.9.9" in resultaat.stdout
 
+    def test_release_werkt_citation_bij_en_maakt_github_release(self):
+        resultaat = self.draaiMake("release", "VERSION=9.9.9", "MSG=test")
+        assert resultaat.returncode == 0, resultaat.stderr
+        assert 's/^version: .*/version: "9.9.9"/' in resultaat.stdout
+        assert "s/^date-released: .*/" in resultaat.stdout
+        assert re.search(r"^git add .*\bCITATION\.cff\b", resultaat.stdout, re.M), resultaat.stdout
+        assert "gh release create 9.9.9 --verify-tag" in resultaat.stdout
+        # De GitHub-release komt pas na het publiceren van de images
+        assert resultaat.stdout.index("publish VERSION=9.9.9") < resultaat.stdout.index("gh release create")
+
     def test_airflow_image_bevat_code_en_scripts(self):
         with open(os.path.join(PROJECT_ROOT, "services", "airflow", "Dockerfile"), encoding="utf-8") as f:
             dockerfile = f.read()
@@ -268,3 +290,39 @@ class TestPublish:
             regels = {r.strip() for r in f if r.strip() and not r.startswith("#")}
         for map_ in ("data", "notebooks", "docs", "deploy"):
             assert map_ in regels, f"{map_} hoort in .dockerignore"
+
+
+@pytest.mark.unit
+class TestDocsWorkflow:
+    """De workflow die de MkDocs-site bij een push naar main naar gh-pages publiceert."""
+
+    @pytest.fixture
+    def workflow(self):
+        with open(os.path.join(PROJECT_ROOT, ".github", "workflows", "docs.yml"), encoding="utf-8") as f:
+            return yaml.safe_load(f)
+
+    def stappen(self, workflow):
+        return [stap.get("run", "") for stap in workflow["jobs"]["publiceren"]["steps"]]
+
+    def test_draait_bij_push_naar_main_op_documentatie(self, workflow):
+        # PyYAML leest de sleutel 'on' als True (YAML 1.1)
+        triggers = workflow.get("on", workflow.get(True))
+        assert triggers["push"]["branches"] == ["main"]
+        for pad in ("docs/**", "mkdocs.yml", "overrides/**"):
+            assert pad in triggers["push"]["paths"], pad
+        assert "workflow_dispatch" in triggers
+
+    def test_mag_naar_gh_pages_schrijven(self, workflow):
+        assert workflow["permissions"]["contents"] == "write"
+
+    def test_publiceert_strikt_met_behoud_van_geschiedenis(self, workflow):
+        stappen = self.stappen(workflow)
+        assert "git fetch origin gh-pages:gh-pages" in stappen
+        assert "mkdocs gh-deploy --strict" in stappen
+        assert not any("--force" in stap for stap in stappen)
+
+    def test_zelfde_mkdocs_versie_als_makefile(self, workflow):
+        with open(os.path.join(PROJECT_ROOT, "Makefile"), encoding="utf-8") as f:
+            makefile_versie = re.search(r"^MKDOCS_VERSIE := (\S+)$", f.read(), re.M).group(1)
+        installaties = [stap for stap in self.stappen(workflow) if "pip install" in stap]
+        assert installaties == [f'pip install "mkdocs=={makefile_versie}"']

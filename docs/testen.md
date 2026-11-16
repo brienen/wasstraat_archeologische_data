@@ -31,6 +31,7 @@ tests/
     ├── conftest.py                           # Volgorde: test_delft_referentie.py na de pipeline-tests
     ├── fixtures/delft_golden_snapshot.json   # Referentie-uitkomst van de Delftse testdata
     ├── snapshot_mongodb.py                   # Hulpmiddel om een referentie-uitkomst vast te leggen
+    ├── testomgeving.py                       # Hulpmodule: actief gemeenteprofiel van de testomgeving, uitvoer van psql
     ├── test_delft_referentie.py              # Delftse uitkomst tegen de referentie-uitkomst
     ├── test_full_pipeline.py                 # Pipeline met directe MongoDB-seeding
     ├── test_full_pipeline_synthetic_data.py  # Volledige pipeline via Airflow (synthetische data)
@@ -92,6 +93,25 @@ Het target:
 7. Draait de Flask smoke tests via Apache tegen de geladen database, inclusief de media uit het gedeelde mediavolume
 8. Ruimt de containers en volumes op
 
+### Een ander gemeenteprofiel
+
+De synthetische testomgeving draait standaard met het [gemeenteprofiel](componenten/gemeenteprofielen.md) `delft`, omdat de bestandsnamen van de synthetische data de Delftse naamconventie volgen (`SY002_P2_H4_1_1.jpg`, `SY001_G001.jpg`, `SY002_B001.tif`). Met `GEMEENTE` draai je dezelfde suite met een ander profiel:
+
+```bash
+make integration GEMEENTE=voorbeeld
+```
+
+`GEMEENTE` werkt bij alle doelen van de synthetische testomgeving die Airflow starten (`integration`, `integration-keep`, `integration-pipeline`, `integration-load`). Het Makefile geeft de waarde als `WASSTRAAT_GEMEENTE` door aan `airflow-test` in `docker-compose.test.yml`. De pipelinetests lezen het actieve profiel uit die container (`tests/integration/testomgeving.py`, ook als de testomgeving al draaide) en kiezen daarmee hun verwachtingen voor bestanden. Alle andere verwachtingen gelden voor elk profiel: de aantallen per soort, de sleutels, de incrementele cyclus, gebruikersdata, Elasticsearch en de verwerkingsrapporten.
+
+| Verwachting voor bestanden | Profiel dat de Delftse bestandsnamen ontleedt (`delft`) | Ander profiel (`voorbeeld`) |
+|----------------------------|----------------------------------------------------------|------------------------------|
+| Elk bestand verwerkt en gekoppeld aan het project van zijn map | ja | ja |
+| Indeling naar soort (`bestandsoort`) | sfeerfoto, opgravingsfoto, objectfoto, veldtekening | elke afbeelding `Bestand_Overige` |
+| Objectfoto gekoppeld aan vondst en artefact; `aantal_fotos` | ja, twee artefacten met foto | nee, geen artefact met foto |
+| Put en vondst aangemaakt uit de naam van een objectfoto (stap e van de incrementele test) | ja | nee |
+
+De tests die alleen voor één van beide gelden, slaan zichzelf met een toelichting over: met `delft` is dat `test_10h_verify_bestanden_zonder_herkenning_van_bestandsnamen`, met een ander profiel zijn het de drie objectfototests (`test_10e`, `test_10f` en `test_22b`). Welke profielen de Delftse bestandsnamen ontleden staat als vaste lijst in `testomgeving.py` (`PROFIELEN_MET_DELFTSE_BESTANDSNAMEN`); `tests/unit/test_testomgeving_profiel.py` controleert per profiel uit `PROFIELEN` dat de lijst klopt, zodat een nieuw profiel daar bewust wordt ingedeeld. De Delftse testomgeving (`make integration-delft`) staat vast op `delft`.
+
 ### Elasticsearch in de testomgeving
 
 Beide testomgevingen hebben een eigen Elasticsearch (`elasticsearch-test`; container `wasstraat_elasticsearch_test` in `docker-compose.test.yml` en `wasstraat_elasticsearch_delft_test` in `docker-compose.delft-test.yml`; image `docker.elastic.co/elasticsearch/elasticsearch:8.17.0`, zonder beveiliging, single-node, 512 MB heap). Airflow en Flask bereiken die via `ES_HOST=http://elasticsearch:9200`. Airflow start pas als Elasticsearch gezond is (healthcheck met `depends_on: condition: service_healthy`). De Index_*-taken van de volledige cyclus, van `DAG_Load_Only` en van de incrementele cyclus slagen daardoor ook in de testomgeving; `test_full_pipeline_synthetic_data.py` en `test_full_pipeline_delft_data.py` eisen dat `DAG_Load_Only` volledig slaagt, en de Delftse test vergelijkt daarna per geïndexeerde tabel het aantal documenten in Elasticsearch met het aantal rijen in PostgreSQL.
@@ -115,7 +135,7 @@ De Flask smoke tests (`tests/integration/test_flask_smoke.py`, marker `flask_smo
 | c | Geen | Run afgerond, alle bronbestanden ongewijzigd, niets ingevoegd, bijgewerkt of verwijderd, aantallen en sleutels gelijk, bruikleen aanwezig, Elasticsearch gelijk; elke rij van elke tabel heeft dezelfde `primary_key` |
 | c2 | De registratie van `opgravingSY002.mdb` krijgt een andere vingerafdruk (SQL), zodat de database ongewijzigd opnieuw wordt verwerkt | Alle documenten van SY002 hebben een nieuw `_id`; Transform 4 deelt geen nieuw nummer uit (artefacten zonder subnr en de dubbele key `PSY002P1V1A2|Aardewerk` via de hulpsleutel), niets ingevoegd of verwijderd, elke rij van elke tabel heeft dezelfde `primary_key`, key en hulpsleutel, de bruikleen blijft gekoppeld |
 | d | Project SY003 als kopie van SY002 (`opgravingSY003.mdb`, foto's `SY003_*`); daarna een tweede bruikleen (SQL) voor een artefact van SY003 dat in stap e verdwijnt | SY003 heeft evenveel rijen als SY002, nieuwe `primary_key`s boven het oude maximum, SY001/SY002 ongewijzigd, bruikleen en zijn artefact ongewijzigd, Elasticsearch gelijk aan de tabellen |
-| e | Database van SY003 vervangen door die van SY001, één foto verwijderd | SY003 volgt SY001 (4 vondsten, plus de put en vondst die Transform 5 aanmaakt voor de objectfoto `SY003_P4_H11_1_1.jpg`), geen rij meer voor de verwijderde foto, geen achtergebleven rijen, verdwenen id's ook uit Elasticsearch; de bruikleen van het verdwenen artefact bestaat nog met `artefactID` leeg, de key in `artefact_verdwenen_key` en een tijdstip binnen de run in `artefact_verdwenen_op`, de bruikleen uit stap b is ongemoeid en geen enkele FK is `NOT VALID` (`pg_constraint.convalidated`) |
+| e | Database van SY003 vervangen door die van SY001, één foto verwijderd | SY003 volgt SY001 (4 vondsten, plus de put en vondst die Transform 5 aanmaakt voor de objectfoto `SY003_P4_H11_1_1.jpg`; alleen met een profiel dat bestandsnamen ontleedt), geen rij meer voor de verwijderde foto, geen achtergebleven rijen, verdwenen id's ook uit Elasticsearch; de bruikleen van het verdwenen artefact bestaat nog met `artefactID` leeg, de key in `artefact_verdwenen_key` en een tijdstip binnen de run in `artefact_verdwenen_op`, de bruikleen uit stap b is ongemoeid en geen enkele FK is `NOT VALID` (`pg_constraint.convalidated`) |
 | e2 | Database van SY003 weer die van SY002 | Het artefact keert terug met dezelfde key (nieuwe `primary_key`); de bruikleen is er weer aan gekoppeld en de markering is leeg (`tellingen.gebruikersdata`: één teruggekoppeld), FK's geldig |
 | f | SY003 verwijderd | Geen SY003-rijen meer in PostgreSQL en Elasticsearch, `Def_Bronbestand` op `verwijderd`, alle sleutels en aantallen gelijk aan stap a; de bruikleen van het SY003-artefact is weer losgekoppeld en bestaat nog, FK's geldig |
 | g | Een onleesbare foto in SY003, met drempel 0 voor mislukte afbeeldingen | `Extract_Group.Controleer_Afbeeldingen` faalt direct (zonder herhaling), `Markeer_Run_Mislukt` zet de run op `mislukt`, PostgreSQL is ongewijzigd; het rapport noemt de taak die de run stopte en de foto |
@@ -271,6 +291,7 @@ Alle bestanden staan in `tests/unit/`.
 | `test_deploy.py` | De live installatie in `deploy/`: kopieën gelijk aan het origineel, alleen images, alleen-lezen mounts, `PGDATA`, poorten, `make publish` |
 | `test_elasticsearch_testomgeving.py` | Een eigen Elasticsearch zonder hostpoort in beide testomgevingen |
 | `test_testomgevingen_poorten.py` | De hostpoorten van de twee testomgevingen overlappen niet (onderling en met een installatie); de Makefile en de integratietests gebruiken de juiste MongoDB-poort |
+| `test_testomgeving_profiel.py` | Het gemeenteprofiel van de synthetische testomgeving is instelbaar met `GEMEENTE` (standaard `delft`), de Delftse staat vast op `delft`; de lijst met profielen die de Delftse bestandsnamen ontleden klopt met de profielen zelf; `actiefProfiel` en de parser `splitsPsqlUitvoer` van de integratietests (ook met een lege eerste waarde) |
 | `test_pakketversies.py` | Vastgelegde pakketversies en robuuste builds (`constraints.txt`, `pip check`, apt-retries, `make constraints`) |
 | `test_jupyter_image.py` | De pakketten van de Jupyter-image |
 | `test_synthetic_data.py`, `test_synthetic_monster_data.py` | Structuur van de synthetische Access-databases en monsterdata |

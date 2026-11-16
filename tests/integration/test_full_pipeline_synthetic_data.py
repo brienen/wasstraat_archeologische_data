@@ -11,6 +11,10 @@ Afbeeldingen: na Extract_only heeft geen enkel bestand in Filenames de status
 mislukt of onverwerkt en is de controletaak Controleer_Afbeeldingen geslaagd
 (issue 70); de synthetische objectfoto's van SY002 moeten na Transform 4
 aan hun artefact en vondst gekoppeld zijn (artefactID, vondstID), ook in Def_Bestand.
+Dat laatste geldt voor een gemeenteprofiel dat de Delftse bestandsnamen ontleedt
+(de standaard, delft). Met een ander profiel (make integration GEMEENTE=voorbeeld)
+eisen de tests dat elk bestand verwerkt en aan zijn project gekoppeld is, zonder
+indeling naar soort en zonder koppeling aan een artefact; zie testomgeving.py.
 De png met alfakanaal en het Word-document van SY001 (issue 82) worden verwerkt:
 drie formaten in de mediamap, het png als RGB-jpg op een witte achtergrond.
 
@@ -27,7 +31,10 @@ import pytest
 
 pymongo = pytest.importorskip("pymongo")
 
+import shared.const as const
 from wasstraat.loadToDatabase_functions import LOAD_TABELLEN
+
+from tests.integration import testomgeving
 
 # ============================================================
 # Configuratie
@@ -103,6 +110,8 @@ EXPECTED_OBJECTFOTO_KOPPELING = {
     "SY002_P2_H4_1_1.jpg": {"artefactsoort": "Aardewerk", "putnr": 2, "vondstnr": 4, "subnr": 1},
     "SY002_P4_H11_1_1.jpg": {"artefactsoort": "Munt", "putnr": 4, "vondstnr": 11, "subnr": 1},
 }
+# Velden die alleen een profiel met herkenning van bestandsnamen uit de naam van een foto afleidt
+VELDEN_UIT_BESTANDSNAAM = ["putnr", "vondstnr", "subnr", "fotonr", "key_foto1", "artefactID", "vondstID"]
 
 
 # Kopieën in de werkmap van SY001 die de pipeline overslaat (paden_overslaan in correcties.yml, issue 84):
@@ -429,6 +438,20 @@ def _pg_tekst(sql):
     if result.returncode != 0:
         raise RuntimeError(f"psql fout: {result.stderr.strip()}")
     return result.stdout.strip()
+
+
+def alleenMetHerkenningVanBestandsnamen():
+    """Sla de test over als het actieve gemeenteprofiel de Delftse bestandsnamen niet ontleedt."""
+    if not testomgeving.herkentBestandsnamen():
+        pytest.skip(f"Het profiel {testomgeving.actiefProfiel()} ontleedt geen bestandsnamen: "
+                    f"geen indeling naar soort en geen koppeling aan vondst of artefact")
+
+
+def alleenZonderHerkenningVanBestandsnamen():
+    """Sla de test over als het actieve gemeenteprofiel de Delftse bestandsnamen wel ontleedt."""
+    if testomgeving.herkentBestandsnamen():
+        pytest.skip(f"Het profiel {testomgeving.actiefProfiel()} ontleedt bestandsnamen: "
+                    f"de objectfototests gelden")
 
 
 # ============================================================
@@ -940,6 +963,7 @@ class TestFullPipelineSynthetic:
 
     def test_10e_verify_objectfotos_genormaliseerd(self, mongo_client):
         """Objectfoto's in Single_Store_Clean hebben integers voor putnr/vondstnr/subnr en de sleutel key_foto1."""
+        alleenMetHerkenningVanBestandsnamen()
         coll = mongo_client[DB_ANALYSE]["Single_Store_Clean"]
         for bestand, verwacht in EXPECTED_OBJECTFOTO_KOPPELING.items():
             foto = coll.find_one({"soort": "Bestand", "bestandsoort_XX": "Foto", "fileName": bestand})
@@ -958,6 +982,7 @@ class TestFullPipelineSynthetic:
 
     def test_10f_verify_objectfotos_gekoppeld_aan_artefact(self, mongo_client):
         """Elke objectfoto verwijst met artefactID en vondstID naar het juiste artefact en de juiste vondst."""
+        alleenMetHerkenningVanBestandsnamen()
         coll = mongo_client[DB_ANALYSE]["Single_Store_Clean"]
         for bestand, verwacht in EXPECTED_OBJECTFOTO_KOPPELING.items():
             foto = coll.find_one({"soort": "Bestand", "bestandsoort_XX": "Foto", "fileName": bestand})
@@ -981,6 +1006,50 @@ class TestFullPipelineSynthetic:
         onterecht = coll.count_documents({"soort": "Bestand", "bestandsoort_XX": "Foto",
                                           "bestandsoort": {"$ne": "Objectfoto"}, "artefactID": {"$exists": True}})
         assert onterecht == 0, f"{onterecht} foto's die geen objectfoto zijn hebben een artefactID"
+
+    def test_10g_verify_bestanden_gekoppeld_aan_project(self, mongo_client):
+        """Elk bestand is verwerkt en aan zijn project gekoppeld, bij elk gemeenteprofiel.
+
+        De projectcode komt uit de map van het bestand en niet uit zijn naam; ook een profiel
+        zonder herkenning van bestandsnamen koppelt een foto, tekening of rapport dus aan het project.
+        """
+        coll = mongo_client[DB_ANALYSE]["Single_Store_Clean"]
+        bestanden = list(coll.find({"soort": "Bestand"}))
+        namen = {b.get("fileName") for b in bestanden}
+        print(f"\n  Bestanden in Single_Store_Clean: {len(bestanden)} (profiel {testomgeving.actiefProfiel()})")
+        ontbrekend = [naam for naam in list(EXPECTED_OBJECTFOTO_KOPPELING) + list(BIJZONDERE_BESTANDEN) if naam not in namen]
+        assert not ontbrekend, f"Bestanden ontbreken in Single_Store_Clean: {ontbrekend}"
+        zonder_project = sorted(str(b.get("fileName")) for b in bestanden if b.get("projectID") is None)
+        assert not zonder_project, f"Bestanden zonder projectID: {zonder_project}"
+        projecten = {p["ID"]: p.get("projectcd") for p in coll.find({"soort": "Project"})}
+        verkeerd = sorted(str(b.get("fileName")) for b in bestanden
+                          if projecten.get(b["projectID"]) != b.get("projectcd"))
+        assert not verkeerd, f"Bestanden gekoppeld aan een ander project dan hun projectcode: {verkeerd}"
+
+    def test_10h_verify_bestanden_zonder_herkenning_van_bestandsnamen(self, mongo_client):
+        """Een profiel dat geen bestandsnamen ontleedt deelt afbeeldingen niet in en koppelt ze niet aan een artefact.
+
+        De afbeeldingen krijgen de bestandsoort Bestand_Overige en geen put, vondst of artefact; wie
+        dat wel wil, heeft een profiel nodig dat de eigen naamconventie ontleedt (zoals profielen/delft.py).
+        """
+        alleenZonderHerkenningVanBestandsnamen()
+        coll = mongo_client[DB_ANALYSE]["Single_Store_Clean"]
+        for bestand in EXPECTED_OBJECTFOTO_KOPPELING:
+            foto = coll.find_one({"soort": "Bestand", "fileName": bestand})
+            assert foto is not None, f"{bestand} ontbreekt in Single_Store_Clean"
+            print(f"\n  {bestand}: bestandsoort={foto.get('bestandsoort')} projectcd={foto.get('projectcd')}")
+            assert foto.get("projectcd") == "SY002"
+            assert foto.get("bestandsoort") == const.BESTAND_OVERIGE
+            afgeleid = [veld for veld in VELDEN_UIT_BESTANDSNAAM if foto.get(veld) is not None]
+            assert not afgeleid, f"{bestand} heeft velden uit de bestandsnaam: {afgeleid}"
+        afbeeldingen = list(coll.find({"soort": "Bestand", "mime_type": {"$regex": "^image/"}}))
+        assert len(afbeeldingen) >= len(EXPECTED_OBJECTFOTO_KOPPELING), "Geen afbeeldingen in Single_Store_Clean"
+        ingedeeld = sorted(f"{b.get('fileName')}: {b.get('bestandsoort')}" for b in afbeeldingen
+                           if b.get("bestandsoort") != const.BESTAND_OVERIGE)
+        assert not ingedeeld, f"Afbeeldingen met een bestandsoort uit de bestandsnaam: {ingedeeld}"
+        gekoppeld = coll.count_documents({"soort": "Bestand", "$or": [{"artefactID": {"$exists": True}},
+                                                                      {"vondstID": {"$exists": True}}]})
+        assert gekoppeld == 0, f"{gekoppeld} bestanden met een artefactID of vondstID"
 
     # ----------------------------------------------------------
     # Samenvatting
@@ -1221,6 +1290,7 @@ class TestFullPipelineSynthetic:
     @pytest.mark.load
     def test_22b_verify_postgres_bestand_gekoppeld_aan_artefact(self, airflow_ready):
         """Def_Bestand bevat de objectfoto's met een artefactID naar hun artefact (lijst 'Alle artefacten met foto')."""
+        alleenMetHerkenningVanBestandsnamen()
         gekoppeld = _pg_scalar(
             'SELECT COUNT(*) FROM "Def_Bestand" b JOIN "Def_Artefact" a ON b."artefactID" = a.primary_key')
         print(f"\n  Def_Bestand-rijen met een artefactID: {gekoppeld}")
@@ -1233,6 +1303,25 @@ class TestFullPipelineSynthetic:
             print(f"  {bestand} → {soort or '-'}")
             assert soort == verwacht["artefactsoort"], (
                 f"{bestand}: gekoppeld aan artefactsoort {soort!r}, verwacht {verwacht['artefactsoort']}")
+
+    @pytest.mark.load
+    def test_22b1_verify_postgres_bestand_gekoppeld_aan_project(self, airflow_ready):
+        """Elke rij van Def_Bestand verwijst naar het project van zijn projectcode, bij elk gemeenteprofiel.
+
+        Zonder herkenning van bestandsnamen heeft bovendien geen enkel bestand een artefact.
+        """
+        bestanden = _pg_table_count("Def_Bestand")
+        gekoppeld = _pg_scalar(
+            'SELECT COUNT(*) FROM "Def_Bestand" b JOIN "Def_Project" p ON b."projectID" = p.primary_key '
+            'WHERE p.projectcd = b.projectcd')
+        print(f"\n  Def_Bestand: {bestanden} rijen, {gekoppeld} gekoppeld aan het project van hun projectcode")
+        assert bestanden > 0, "Def_Bestand is leeg"
+        assert gekoppeld == bestanden, f"{bestanden - gekoppeld} bestanden zonder (het juiste) project"
+        if not testomgeving.herkentBestandsnamen():
+            met_artefact = _pg_scalar('SELECT COUNT(*) FROM "Def_Bestand" WHERE "artefactID" IS NOT NULL')
+            assert met_artefact == 0, (
+                f"{met_artefact} bestanden met een artefactID, terwijl het profiel "
+                f"{testomgeving.actiefProfiel()} geen bestandsnamen ontleedt")
 
     @pytest.mark.load
     def test_22c_verify_postgres_verwijzingskolommen_volledig(self, mongo_client, airflow_ready):

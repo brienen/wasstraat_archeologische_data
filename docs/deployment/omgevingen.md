@@ -56,7 +56,7 @@ Overschrijft instellingen voor lokale ontwikkeling:
 
 ### `docker-compose.test.yml` en `docker-compose.delft-test.yml` — Testomgevingen
 
-Zelfstandige testomgevingen voor `make integration` en `make integration-delft`, met eigen containernamen, een eigen projectnaam (`wasstraat-test`, `wasstraat-delft-test`), eigen hostpoorten (Airflow 8081 en 8082, Apache 5061 en 5062, MongoDB 27117 en 27118) en MongoDB en PostgreSQL in het geheugen. Ze kunnen naast een installatie en naast elkaar draaien; `tests/unit/test_testomgevingen_poorten.py` bewaakt dat de hostpoorten niet overlappen. Zie [Testen](../testen.md).
+Zelfstandige testomgevingen voor `make integration` en `make integration-delft`, met eigen containernamen, een eigen projectnaam (`wasstraat-test`, `wasstraat-delft-test`), eigen hostpoorten (Airflow 8081 en 8082, Apache 5061 en 5062, MongoDB 27117 en 27118) en MongoDB en PostgreSQL in het geheugen. Ze kunnen naast een installatie en naast elkaar draaien; `tests/unit/test_testomgevingen_poorten.py` bewaakt dat de hostpoorten niet overlappen. De synthetische testomgeving draait standaard met het gemeenteprofiel `delft` en met `GEMEENTE=<profiel>` met een ander profiel (`make integration GEMEENTE=voorbeeld`); de Delftse staat vast op `delft`. Zie [Testen](../testen.md).
 
 ## Starten en Stoppen
 
@@ -273,6 +273,24 @@ Na de eerste publicatie zijn de vier packages **privé**. Zet ze op publiek, zod
 make release VERSION=1.1.0 MSG="Incrementeel laden en installatie met images"
 ```
 
-Dit schrijft het versienummer naar `config/version.env.example` (in de repository), `config/version.env` (lokaal, genegeerd door git) en `deploy/.env.example` (de standaardversie voor nieuwe installaties), staget alleen `config/version.env.example` en `deploy/.env.example`, commit die met het bericht uit `MSG`, maakt de geannoteerde git-tag `1.1.0` op die commit, pusht alleen de huidige branch (`git push origin HEAD`) en de nieuwe tag, en roept `make publish` aan. Andere wijzigingen in de werkmap gaan dus niet mee in de releasecommit; commit die vooraf. De map `deploy/` van de tag is daarmee precies wat gebruikers ophalen; `tests/unit/test_deploy.py` bewaakt dat `deploy/.env.example` en `config/version.env.example` dezelfde versie noemen.
+Dit doet achter elkaar:
+
+1. Het versienummer schrijven naar `config/version.env.example` (in de repository), `config/version.env` (lokaal, genegeerd door git), `deploy/.env.example` (de standaardversie voor nieuwe installaties), de versiebadge in `README.md` en `CITATION.cff` (`version` en `date-released`, met de datum van vandaag).
+2. Alleen die vier bestanden in de repository stagen en committen met het bericht uit `MSG`. Andere wijzigingen in de werkmap gaan dus niet mee in de releasecommit; commit die vooraf.
+3. De geannoteerde git-tag `1.1.0` op die commit zetten en alleen de huidige branch (`git push origin HEAD`) en de nieuwe tag pushen.
+4. `make publish` aanroepen.
+5. Een GitHub-release bij de tag aanmaken met `gh release create`, met `MSG` als toelichting. Pas een gepubliceerde release laat Zenodo de versie archiveren (metadata uit `.zenodo.json` en `CITATION.cff`). Zonder de GitHub CLI (`gh`) meldt het doel waar je de release met de hand aanmaakt. Faalt `make publish`, dan stopt het doel vóór de release: publiceer de images opnieuw en maak de release daarna met `gh release create <versie> --verify-tag --title <versie> --notes "..."`.
+
+De map `deploy/` van de tag is daarmee precies wat gebruikers ophalen. `tests/unit/test_deploy.py` bewaakt dat `deploy/.env.example`, `config/version.env.example` en `CITATION.cff` dezelfde versie noemen.
 
 Controleer vóór een release dat `make test-all` slaagt en test de images met `make publish PUSH=0` in een installatie uit `deploy/`. Een `latest`-tag wijst altijd naar de laatst gepubliceerde versie; installaties horen een versienummer te gebruiken.
+
+## Publicatie van de documentatie
+
+De documentatie staat openbaar op <https://brienen.github.io/wasstraat_archeologische_data/>. GitHub Pages serveert daar de branch `gh-pages`, die de workflow `.github/workflows/docs.yml` vult: bij elke push naar `main` die `docs/`, `mkdocs.yml` of `overrides/` raakt, bouwt die de site met `mkdocs gh-deploy --strict` en zet hem als nieuwe commit op `gh-pages`. Een waarschuwing in de build laat de workflow falen en de site blijft dan zoals hij was. Handmatig starten kan in GitHub onder *Actions* → *Documentatie publiceren* → *Run workflow*.
+
+De workflow gebruikt dezelfde MkDocs-versie als `make docs` en `make docs-build` (`MKDOCS_VERSIE` in het `Makefile`); `tests/unit/test_deploy.py` bewaakt dat. Wijzigingen in een andere branch komen pas online na de merge naar `main`. Wil je toch met de hand publiceren, gebruik dan dezelfde versie:
+
+```bash
+.venv/bin/pip install "mkdocs==1.6.1" && .venv/bin/mkdocs gh-deploy --strict
+```

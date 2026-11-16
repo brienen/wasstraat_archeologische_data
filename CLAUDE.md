@@ -128,6 +128,7 @@ make delft            # Start alle services met eigen data uit data/delft/
 # Testen
 make test             # Unit tests (tests/unit/)
 make integration      # Volledige suite: Extract → Transform → Load → Flask smoke tests
+make integration GEMEENTE=voorbeeld # Dezelfde suite met een ander gemeenteprofiel (standaard delft)
 make integration-pipeline # Alleen Extract + Transform (zonder Load en Flask)
 make integration-load # Extract + Transform + Load (zonder Flask)
 make integration-delft # Integratietests met Delftse data (indien aanwezig)
@@ -144,7 +145,7 @@ make docs-build       # Bouw statische site
 # Publiceren (images voor deploy/)
 make publish          # Bouw alle images multi-arch en push naar ghcr.io/brienen/wasstraat-<service>:<versie> en :latest
 make publish SERVICE=flask PUSH=0   # Eén image, alleen lokaal bouwen
-make release VERSION=1.2.3 MSG="..."  # Versie vastleggen, committen, taggen, pushen en publiceren
+make release VERSION=1.2.3 MSG="..."  # Versie vastleggen (ook CITATION.cff), committen, taggen, pushen, publiceren en GitHub-release maken
 
 # Onderhoud
 make backup           # Backup PostgreSQL + MongoDB
@@ -165,6 +166,7 @@ make clean            # Verwijder .venv en caches
 - **Fixtures:** `conftest.py` mockt externe dependencies (MongoDB URI, config, etc.)
 - **Draai altijd `make test-all` na wijzigingen** om regressies te vangen
 - **Testomgevingen naast elkaar:** de synthetische testomgeving gebruikt MongoDB-hostpoort 27117, Airflow 8081 en Apache 5061, de Delftse 27118, 8082 en 5062 (bewaakt door `tests/unit/test_testomgevingen_poorten.py`); `make integration-delft` zet `MONGO_TEST_URI` op 27118
+- **Gemeenteprofiel van de testomgeving:** de synthetische testomgeving draait standaard met het profiel `delft` (de synthetische bestandsnamen volgen de Delftse conventie); `GEMEENTE=<profiel>` bij de make-doelen geeft `WASSTRAAT_GEMEENTE` door aan `airflow-test`, de Delftse testomgeving staat vast op `delft`. De pipelinetests lezen het actieve profiel uit de container (`tests/integration/testomgeving.py`: `actiefProfiel`, `herkentBestandsnamen`) en kiezen daarmee alleen hun verwachtingen voor bestanden: zonder herkenning van bestandsnamen is elk bestand aan zijn project gekoppeld, elke afbeelding `Bestand_Overige`, geen foto aan een artefact gekoppeld en maakt een objectfoto geen put of vondst aan. Rijen van `Def_Bestand` per project selecteren de tests op de kolom `projectcd`, omdat een afbeelding dan geen `key` heeft. `pgRijen` gebruikt `testomgeving.splitsPsqlUitvoer` (geen `strip()` op de hele uitvoer: een lege eerste waarde moet blijven staan). Bewaakt door `tests/unit/test_testomgeving_profiel.py`, dat ook eist dat `PROFIELEN_MET_DELFTSE_BESTANDSNAMEN` klopt met elk profiel uit `PROFIELEN`
 - **Delftse referentie-uitkomst:** `make integration-delft` eindigt met `tests/integration/test_delft_referentie.py`, dat de aantallen per soort, de artefactsoorten en de voorbeeldsleutels vergelijkt met `tests/integration/fixtures/delft_golden_snapshot.json`; verandert de Delftse uitkomst bewust, leg de referentie dan opnieuw vast met `tests/integration/snapshot_mongodb.py referentie <fixture> "<verklaring>"` zolang de testomgeving draait (de make-targets ruimen hem aan het eind op)
 
 ## Datamodel (kernentiteiten)
@@ -240,13 +242,15 @@ De repository is de ontwikkelomgeving; gebruikers installeren de Wasstraat vanui
 - **Apache is de voordeur** (eis van 2026-10-21), in de ontwikkelomgeving, `deploy/` en de testomgevingen: Apache (poort 5052) serveert `/archeomedia` rechtstreeks uit de uitvoermap en stuurt alle overige verzoeken door naar `http://flask:5051/` (`services/apache/httpd.conf`: `ProxyPass`, `ProxyPreserveHost On`, `X-Forwarded-Proto` via `setifempty`, `retry=0`). Flask heeft geen hostpoort (alleen `docker-compose.develop.yml` geeft 5051 voor debuggen) en gebruikt `ProxyFix(x_for=1, x_proto=1, x_host=1)` in `app/app/app.py`; geen `x_port`, want de hostpoort kan afwijken van 5052. De webapplicatie verwijst naar foto's met relatieve paden `/archeomedia/...`, dus rechtstreeks op Flask blijven foto's leeg. In `docker-compose.test.yml` is `apache-test` (hostpoort 5061) de voordeur van de Flask smoke tests; het mediavolume `archeomedia-test` (tmpfs, uid 50000) wordt gedeeld door `airflow-test` en `apache-test`. In `docker-compose.delft-test.yml` is dat volume een gewoon schijfvolume op `/output/archeomedia`: de Delftse rapporten (circa 5 GB) passen niet in tmpfs en een vol volume laat bestanden stil onverwerkt. De Airflow-image maakt `/output/archeomedia` aan met airflow als eigenaar, zodat een leeg named volume daar schrijfbaar is. Bewaakt door `tests/unit/test_apache_voordeur.py`.
 - `deploy/docker-compose.yml` heeft alleen `image:`-regels met `${WASSTRAAT_VERSION}` uit `deploy/.env`; brondata en `wasstraat_config` zijn alleen-lezen gemount. `deploy/init-config.sh`, `deploy/config/*.env.example` (alleen de zes die de compose gebruikt) en de harmonisatie-Excel zijn kopieën; `tests/unit/test_deploy.py` bewaakt dat ze gelijk blijven aan het origineel en dat `deploy/.env.example` dezelfde versie heeft als `config/version.env.example`. Wijzig je het origineel, kopieer het dan ook naar `deploy/`.
 - `.dockerignore` houdt `data/`, `notebooks/`, `docs/` en `deploy/` buiten de buildcontext; geen Dockerfile kopieert daaruit.
+- `make release` schrijft de versie ook in `CITATION.cff` (`version`, `date-released`) en maakt na `make publish` een GitHub-release bij de tag (`gh release create`); pas een gepubliceerde release laat Zenodo de versie archiveren (`.zenodo.json`). `tests/unit/test_deploy.py` eist dat `CITATION.cff` dezelfde versie heeft als `config/version.env.example`.
+- **Documentatiesite:** `.github/workflows/docs.yml` publiceert de MkDocs-site met `mkdocs gh-deploy --strict` naar `gh-pages` (GitHub Pages, `https://brienen.github.io/wasstraat_archeologische_data/`) bij elke push naar `main` die `docs/`, `mkdocs.yml` of `overrides/` raakt; wijzigingen in de werkbranch komen dus pas na de merge online. De MkDocs-versie staat als `MKDOCS_VERSIE` in het `Makefile` en moet gelijk zijn aan die in de workflow (bewaakt door `test_deploy.py`).
 
 ## Belangrijke aandachtspunten
 
 - `app/app/models.py` (62 KB) bevat 100+ SQLAlchemy-modellen — wees voorzichtig met wijzigingen
 - De custom `fab_addon_geoalchemy/` extensie is project-specifiek
 - `shared/config.py` leest environment-variabelen — wijzig nooit `.env` bestanden direct; alle paden en drempels (ook `AIRFLOW_MAX_MISLUKTE_AFBEELDINGEN` / `_PCT`) hebben daar een standaardwaarde, ja/nee-instellingen gaan via `_leesBool`, en een ontbrekende `POSTGRES_*`-variabele geeft een foutmelding zonder de overige instellingen over te slaan (issue 87)
-- `make app`, `make delft` en `make dev` geven `WASSTRAAT_VERSION` uit `config/version.env` (anders `version.env.example`) mee aan Airflow, zodat het verwerkingsrapport ook in de ontwikkelomgeving een versie heeft; `make release` werkt ook de versiebadge in `README.md` bij
+- `make app`, `make delft` en `make dev` geven `WASSTRAAT_VERSION` uit `config/version.env` (anders `version.env.example`) mee aan Airflow, zodat het verwerkingsrapport ook in de ontwikkelomgeving een versie heeft; `make release` werkt ook de versiebadge in `README.md` en `CITATION.cff` bij
 - `shared/const.py` bevat alle constanten en enums voor het hele project
 - De Airflow DAGs hebben een strikte verwerkingsvolgorde — verander deze niet zonder overleg
 - Documentatie staat in `docs/` als MkDocs Markdown — houd deze synchroon met codewijzigingen; `docs/componenten/configuratie.md` is het naslagwerk voor alle configuratie (omgevingsvariabelen, `correcties.yml`, harmonisatie-Excel, profielen, `deploy/`), `mkdocs.yml` heeft een `validation`-blok en `.venv/bin/mkdocs build --strict` moet zonder waarschuwingen slagen; de diagrammen komen uit `docs/assets/diagrams/genereer_diagrammen.py`

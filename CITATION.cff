@@ -8,8 +8,8 @@ authors:
     given-names: Arjen
     affiliation: "E-Space B.V."
     orcid: "https://orcid.org/0009-0004-1676-2605"
-version: "1.0.1"
-date-released: "2026-10-30"
+version: "1.2.1"
+date-released: "2026-10-29"
 license: EUPL-1.2
 repository-code: "https://github.com/brienen/wasstraat_archeologische_data"
 url: "https://brienen.github.io/wasstraat_archeologische_data/"

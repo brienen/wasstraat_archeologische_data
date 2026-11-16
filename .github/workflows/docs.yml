@@ -1,0 +1,50 @@
+name: Documentatie publiceren
+
+# Publiceert de MkDocs-site naar de branch gh-pages, die GitHub Pages serveert op
+# https://brienen.github.io/wasstraat_archeologische_data/. Draait bij elke push naar
+# main die de documentatie raakt; handmatig starten kan via 'Run workflow'.
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'docs/**'
+      - 'mkdocs.yml'
+      - 'overrides/**'
+      - '.github/workflows/docs.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+# Nooit twee publicaties tegelijk naar gh-pages
+concurrency:
+  group: docs-gh-pages
+  cancel-in-progress: false
+
+jobs:
+  publiceren:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      # Zelfde versie als MKDOCS_VERSIE in het Makefile
+      - name: MkDocs installeren
+        run: pip install "mkdocs==1.6.1"
+
+      # De gh-pages-commit krijgt de naam van wie naar main pushte
+      - name: Git-identiteit instellen
+        run: |
+          git config user.name "${{ github.actor }}"
+          git config user.email "${{ github.actor_id }}+${{ github.actor }}@users.noreply.github.com"
+
+      # Met de bestaande gh-pages lokaal is de push een gewone fast-forward en blijft de geschiedenis staan
+      - name: Bestaande gh-pages ophalen
+        run: git fetch origin gh-pages:gh-pages
+
+      - name: Bouwen en publiceren
+        run: mkdocs gh-deploy --strict
