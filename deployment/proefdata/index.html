@@ -148,12 +148,12 @@
           <a href="../.." class="icon icon-home"> Wasstraat Archeologische Data
         </a><div role="search">
   <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
-      <input type="text" name="q" placeholder="Doorzoek documentatie" aria-label="Doorzoek documentatie" title="Typ hier uw zoekterm" />
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
   </form>
 </div>
       </div>
 
-      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigatiemenu">
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <ul>
                 <li class="toctree-l1"><a class="reference internal" href="../..">Home</a>
                 </li>
@@ -294,7 +294,7 @@
     </nav>
 
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
-      <nav class="wy-nav-top" role="navigation" aria-label="Mobiel navigatiemenu">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
           <a href="../..">Wasstraat Archeologische Data</a>
         
@@ -302,7 +302,7 @@
       <div class="wy-nav-content">
         <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
   <ul class="wy-breadcrumbs">
-    <li><a href="../.." class="icon icon-home" aria-label="Documentatie"></a></li>
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
           <li class="breadcrumb-item">Deployment</li>
       <li class="breadcrumb-item active">Proefdata inlezen</li>
     <li class="wy-breadcrumbs-aside">
@@ -321,13 +321,13 @@
 </div>
 <h2 id="vereisten">Vereisten<a class="headerlink" href="#vereisten" title="Permanent link">&para;</a></h2>
 <p>Zorg dat alle Docker-containers draaien:</p>
-<div class="codehilite"><pre><span></span><code>make<span class="w"> </span>delft<span class="w">  </span><span class="c1"># Eigen data uit data/delft/</span>
-make<span class="w"> </span>app<span class="w">    </span><span class="c1"># Of: alleen de synthetische voorbeelddata</span>
-</code></pre></div>
+<pre class="codehilite"><code class="language-bash">make delft  # Eigen data uit data/delft/
+make app    # Of: alleen de synthetische voorbeelddata
+</code></pre>
 
 <p>Controleer of alle services actief zijn:</p>
-<div class="codehilite"><pre><span></span><code>make<span class="w"> </span>ps
-</code></pre></div>
+<pre class="codehilite"><code class="language-bash">make ps
+</code></pre>
 
 <p>Je zou minimaal de volgende containers moeten zien:</p>
 <ul>
@@ -341,15 +341,15 @@ make<span class="w"> </span>app<span class="w">    </span><span class="c1"># Of:
 <h2 id="stap-1-bronbestanden-klaarzetten">Stap 1: Bronbestanden klaarzetten<a class="headerlink" href="#stap-1-bronbestanden-klaarzetten" title="Permanent link">&para;</a></h2>
 <h3 id="locatie-van-invoerdata">Locatie van invoerdata<a class="headerlink" href="#locatie-van-invoerdata" title="Permanent link">&para;</a></h3>
 <p>De Airflow-container verwacht invoerdata op specifieke paden. Bij <code>make delft</code> worden die via Docker-volumes gemount vanuit de <code>data/delft/data/</code> directory. De lege mappen staan al in de repository. <code>make app</code> gebruikt in plaats daarvan <code>data/synthetic/data/</code>.</p>
-<div class="codehilite"><pre><span></span><code><span class="n">data</span><span class="o">/</span><span class="n">delft</span><span class="o">/</span><span class="n">data</span><span class="o">/</span>
-<span class="err">├──</span><span class="w"> </span><span class="n">projecten</span><span class="o">/</span><span class="w">          </span><span class="p">#</span><span class="w"> </span><span class="n">Projectdatabases</span><span class="w"> </span><span class="p">(</span><span class="n">MDB</span><span class="o">-</span><span class="n">bestanden</span><span class="p">)</span>
-<span class="err">├──</span><span class="w"> </span><span class="n">projectenlijst</span><span class="o">/</span><span class="w">     </span><span class="p">#</span><span class="w"> </span><span class="n">Projectenlijst</span><span class="w"> </span><span class="n">administratie</span>
-<span class="err">├──</span><span class="w"> </span><span class="n">magazijnlijst</span><span class="o">/</span><span class="w">      </span><span class="p">#</span><span class="w"> </span><span class="n">Depot</span><span class="o">-</span><span class="n">registratie</span>
-<span class="err">├──</span><span class="w"> </span><span class="n">fotolijst</span><span class="o">/</span><span class="w">          </span><span class="p">#</span><span class="w"> </span><span class="n">Foto</span><span class="o">-</span><span class="n">metadata</span><span class="w"> </span><span class="n">database</span>
-<span class="err">├──</span><span class="w"> </span><span class="n">monsterdatabase</span><span class="o">/</span><span class="w">    </span><span class="p">#</span><span class="w"> </span><span class="n">Monster</span><span class="o">-</span><span class="n">registratie</span>
-<span class="err">├──</span><span class="w"> </span><span class="n">rapporten</span><span class="o">/</span><span class="w">          </span><span class="p">#</span><span class="w"> </span><span class="n">Rapportendatabases</span>
-<span class="err">└──</span><span class="w"> </span><span class="n">referentietabellen</span><span class="o">/</span><span class="w"> </span><span class="p">#</span><span class="w"> </span><span class="n">ABR</span><span class="o">-</span><span class="n">codes</span><span class="w"> </span><span class="n">en</span><span class="w"> </span><span class="n">standaardtabellen</span>
-</code></pre></div>
+<pre class="codehilite"><code>data/delft/data/
+├── projecten/          # Projectdatabases (MDB-bestanden)
+├── projectenlijst/     # Projectenlijst administratie
+├── magazijnlijst/      # Depot-registratie
+├── fotolijst/          # Foto-metadata database
+├── monsterdatabase/    # Monster-registratie
+├── rapporten/          # Rapportendatabases
+└── referentietabellen/ # ABR-codes en standaardtabellen
+</code></pre>
 
 <h3 id="proefdata-plaatsen">Proefdata plaatsen<a class="headerlink" href="#proefdata-plaatsen" title="Permanent link">&para;</a></h3>
 <p>Voor een eerste proef is het voldoende om een beperkte set bestanden te plaatsen:</p>
@@ -364,8 +364,8 @@ make<span class="w"> </span>app<span class="w">    </span><span class="c1"># Of:
 </div>
 <h2 id="stap-2-airflow-ui-openen">Stap 2: Airflow UI openen<a class="headerlink" href="#stap-2-airflow-ui-openen" title="Permanent link">&para;</a></h2>
 <p>Open de Airflow web-interface in je browser:</p>
-<div class="codehilite"><pre><span></span><code>http://localhost:8080
-</code></pre></div>
+<pre class="codehilite"><code>http://localhost:8080
+</code></pre>
 
 <p>Je ziet een overzicht van alle beschikbare DAGs. De belangrijkste voor het eerste inlezen:</p>
 <table>
@@ -409,14 +409,14 @@ make<span class="w"> </span>app<span class="w">    </span><span class="c1"># Of:
 <p>Je kunt de voortgang volgen in de <strong>Graph</strong>-weergave. Elke stap wordt groen bij succes, rood bij een fout.</p>
 <h3 id="optie-b-stapsgewijs-voor-debugging">Optie B: Stapsgewijs (voor debugging)<a class="headerlink" href="#optie-b-stapsgewijs-voor-debugging" title="Permanent link">&para;</a></h3>
 <p>Als je stap voor stap wilt werken, kun je de individuele DAGs in volgorde starten:</p>
-<div class="codehilite"><pre><span></span><code><span class="mf">1.</span><span class="w"> </span><span class="n">Extract_only</span><span class="w">                          </span><span class="err">→</span><span class="w"> </span><span class="n">Laadt</span><span class="w"> </span><span class="n">ruwe</span><span class="w"> </span><span class="kd">data</span><span class="w"> </span><span class="n">in</span><span class="w"> </span><span class="n">MongoDB</span>
-<span class="mf">2.</span><span class="w"> </span><span class="n">DAG_Transform1_Harmonize_Only</span><span class="w">         </span><span class="err">→</span><span class="w"> </span><span class="n">Harmoniseert</span><span class="w"> </span><span class="n">veldnamen</span>
-<span class="mf">3.</span><span class="w"> </span><span class="n">DAG_Transform2_Enhance_Attributes_Only</span><span class="w"> </span><span class="err">→</span><span class="w"> </span><span class="n">Schoont</span><span class="w"> </span><span class="n">attributen</span><span class="w"> </span><span class="n">op</span>
-<span class="mf">4.</span><span class="w"> </span><span class="n">DAG_Transform3_Keys_Only</span><span class="w">              </span><span class="err">→</span><span class="w"> </span><span class="n">Genereert</span><span class="w"> </span><span class="n">unieke</span><span class="w"> </span><span class="n">sleutels</span>
-<span class="mf">5.</span><span class="w"> </span><span class="n">DAG_Transform_Move_Only</span><span class="w">               </span><span class="err">→</span><span class="w"> </span><span class="n">Verplaatst</span><span class="w"> </span><span class="n">en</span><span class="w"> </span><span class="n">merged</span><span class="w"> </span><span class="kd">data</span>
-<span class="mf">6.</span><span class="w"> </span><span class="n">DAG_Transform4_Refs_Only</span><span class="w">              </span><span class="err">→</span><span class="w"> </span><span class="n">Zet</span><span class="w"> </span><span class="n">referenties</span><span class="w"> </span><span class="n">om</span>
-<span class="mf">7.</span><span class="w"> </span><span class="n">DAG_Load_Only</span><span class="w">                         </span><span class="err">→</span><span class="w"> </span><span class="n">Laadt</span><span class="w"> </span><span class="n">naar</span><span class="w"> </span><span class="nb">Pos</span><span class="n">tgreSQL</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">Elasticsearch</span>
-</code></pre></div>
+<pre class="codehilite"><code>1. Extract_only                          → Laadt ruwe data in MongoDB
+2. DAG_Transform1_Harmonize_Only         → Harmoniseert veldnamen
+3. DAG_Transform2_Enhance_Attributes_Only → Schoont attributen op
+4. DAG_Transform3_Keys_Only              → Genereert unieke sleutels
+5. DAG_Transform_Move_Only               → Verplaatst en merged data
+6. DAG_Transform4_Refs_Only              → Zet referenties om
+7. DAG_Load_Only                         → Laadt naar PostgreSQL + Elasticsearch
+</code></pre>
 
 <div class="admonition warning">
 <p class="admonition-title">Volgorde is belangrijk</p>
@@ -434,46 +434,46 @@ make<span class="w"> </span>app<span class="w">    </span><span class="c1"># Of:
 </ul>
 <h3 id="mongodb-controleren">MongoDB controleren<a class="headerlink" href="#mongodb-controleren" title="Permanent link">&para;</a></h3>
 <p>Je kunt de tussenresultaten direct in MongoDB bekijken:</p>
-<div class="codehilite"><pre><span></span><code><span class="c1"># Verbind met MongoDB in de container (gebruiker en wachtwoord staan in config/mongo.env)</span>
-docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>-it<span class="w"> </span>wasstraat_mongo<span class="w"> </span>mongosh<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--username<span class="w"> </span>root<span class="w"> </span>--password<span class="w"> </span>&lt;wachtwoord&gt;<span class="w"> </span>--authenticationDatabase<span class="w"> </span>admin
+<pre class="codehilite"><code class="language-bash"># Verbind met MongoDB in de container (gebruiker en wachtwoord staan in config/mongo.env)
+docker exec -it wasstraat_mongo mongosh \
+  --username root --password &lt;wachtwoord&gt; --authenticationDatabase admin
 
-<span class="c1"># Bekijk beschikbare databases</span>
-show<span class="w"> </span>dbs
+# Bekijk beschikbare databases
+show dbs
 
-<span class="c1"># Bekijk staging-collecties</span>
-use<span class="w"> </span>Arch_Staging
-show<span class="w"> </span>collections
+# Bekijk staging-collecties
+use Arch_Staging
+show collections
 
-<span class="c1"># Tel records per collectie</span>
-db.getCollectionNames<span class="o">()</span>.forEach<span class="o">(</span><span class="nv">c</span><span class="w"> </span><span class="o">=</span>&gt;<span class="w"> </span>print<span class="o">(</span>c<span class="w"> </span>+<span class="w"> </span><span class="s2">": "</span><span class="w"> </span>+<span class="w"> </span>db<span class="o">[</span>c<span class="o">]</span>.countDocuments<span class="o">()))</span>
+# Tel records per collectie
+db.getCollectionNames().forEach(c =&gt; print(c + &quot;: &quot; + db[c].countDocuments()))
 
-<span class="c1"># Bekijk een voorbeeld-record</span>
-db.Staging_Projecten_Projectenlijst.findOne<span class="o">()</span>
-</code></pre></div>
+# Bekijk een voorbeeld-record
+db.Staging_Projecten_Projectenlijst.findOne()
+</code></pre>
 
 <h3 id="postgresql-controleren">PostgreSQL controleren<a class="headerlink" href="#postgresql-controleren" title="Permanent link">&para;</a></h3>
 <p>Na de laadstap kun je de definitieve tabellen controleren:</p>
-<div class="codehilite"><pre><span></span><code><span class="c1"># Verbind met PostgreSQL in de container</span>
-docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>-it<span class="w"> </span>-u<span class="w"> </span>postgres<span class="w"> </span>wasstraat_postgres<span class="w"> </span>psql<span class="w"> </span>-d<span class="w"> </span>flask
+<pre class="codehilite"><code class="language-bash"># Verbind met PostgreSQL in de container
+docker exec -it -u postgres wasstraat_postgres psql -d flask
 
-<span class="c1"># Lijst van tabellen</span>
-<span class="se">\d</span>t<span class="w"> </span>public.<span class="s2">"Def_*"</span>
+# Lijst van tabellen
+\dt public.&quot;Def_*&quot;
 
-<span class="c1"># Tel records</span>
-SELECT<span class="w"> </span><span class="s1">'Def_Project'</span><span class="w"> </span>as<span class="w"> </span>tabel,<span class="w"> </span>count<span class="o">(</span>*<span class="o">)</span><span class="w"> </span>FROM<span class="w"> </span>public.<span class="s2">"Def_Project"</span>
-UNION<span class="w"> </span>ALL
-SELECT<span class="w"> </span><span class="s1">'Def_Put'</span>,<span class="w"> </span>count<span class="o">(</span>*<span class="o">)</span><span class="w"> </span>FROM<span class="w"> </span>public.<span class="s2">"Def_Put"</span>
-UNION<span class="w"> </span>ALL
-SELECT<span class="w"> </span><span class="s1">'Def_Spoor'</span>,<span class="w"> </span>count<span class="o">(</span>*<span class="o">)</span><span class="w"> </span>FROM<span class="w"> </span>public.<span class="s2">"Def_Spoor"</span>
-UNION<span class="w"> </span>ALL
-SELECT<span class="w"> </span><span class="s1">'Def_Vondst'</span>,<span class="w"> </span>count<span class="o">(</span>*<span class="o">)</span><span class="w"> </span>FROM<span class="w"> </span>public.<span class="s2">"Def_Vondst"</span><span class="p">;</span>
-</code></pre></div>
+# Tel records
+SELECT 'Def_Project' as tabel, count(*) FROM public.&quot;Def_Project&quot;
+UNION ALL
+SELECT 'Def_Put', count(*) FROM public.&quot;Def_Put&quot;
+UNION ALL
+SELECT 'Def_Spoor', count(*) FROM public.&quot;Def_Spoor&quot;
+UNION ALL
+SELECT 'Def_Vondst', count(*) FROM public.&quot;Def_Vondst&quot;;
+</code></pre>
 
 <h2 id="stap-5-data-bekijken-in-de-web-applicatie">Stap 5: Data bekijken in de web-applicatie<a class="headerlink" href="#stap-5-data-bekijken-in-de-web-applicatie" title="Permanent link">&para;</a></h2>
 <p>Na succesvolle verwerking is de data beschikbaar in de Flask-applicatie, via Apache:</p>
-<div class="codehilite"><pre><span></span><code>http://localhost:5052
-</code></pre></div>
+<pre class="codehilite"><code>http://localhost:5052
+</code></pre>
 
 <h3 id="wat-je-ziet">Wat je ziet<a class="headerlink" href="#wat-je-ziet" title="Permanent link">&para;</a></h3>
 <ul>
@@ -484,12 +484,12 @@ SELECT<span class="w"> </span><span class="s1">'Def_Vondst'</span>,<span class="
 </ul>
 <h3 id="elasticsearch-index-controleren">Elasticsearch-index controleren<a class="headerlink" href="#elasticsearch-index-controleren" title="Permanent link">&para;</a></h3>
 <p>De zoekfunctie werkt via Elasticsearch. Controleer of de index is opgebouwd:</p>
-<div class="codehilite"><pre><span></span><code><span class="c1"># Bekijk beschikbare indices</span>
-curl<span class="w"> </span>-s<span class="w"> </span>http://localhost:9200/_cat/indices?v
+<pre class="codehilite"><code class="language-bash"># Bekijk beschikbare indices
+curl -s http://localhost:9200/_cat/indices?v
 
-<span class="c1"># Tel documenten in de index</span>
-curl<span class="w"> </span>-s<span class="w"> </span>http://localhost:9200/_count<span class="w"> </span><span class="p">|</span><span class="w"> </span>python3<span class="w"> </span>-m<span class="w"> </span>json.tool
-</code></pre></div>
+# Tel documenten in de index
+curl -s http://localhost:9200/_count | python3 -m json.tool
+</code></pre>
 
 <h2 id="veelvoorkomende-problemen">Veelvoorkomende problemen<a class="headerlink" href="#veelvoorkomende-problemen" title="Permanent link">&para;</a></h2>
 <h3 id="extractie-mislukt">Extractie mislukt<a class="headerlink" href="#extractie-mislukt" title="Permanent link">&para;</a></h3>
@@ -510,8 +510,8 @@ curl<span class="w"> </span>-s<span class="w"> </span>http://localhost:9200/_cou
 <p><strong>Oplossing</strong>: Controleer of Elasticsearch draait (<code>curl localhost:9200</code>) en draai <code>DAG_Load_Only</code>; die laadt en indexeert opnieuw uit <code>Single_Store_Clean</code>.</p>
 <h2 id="jupyter-notebooks-voor-exploratie">Jupyter Notebooks voor Exploratie<a class="headerlink" href="#jupyter-notebooks-voor-exploratie" title="Permanent link">&para;</a></h2>
 <p>Voor diepgaande data-exploratie kun je Jupyter Lab gebruiken:</p>
-<div class="codehilite"><pre><span></span><code>http://localhost:8888
-</code></pre></div>
+<pre class="codehilite"><code>http://localhost:8888
+</code></pre>
 
 <p>De notebook-omgeving heeft toegang tot:</p>
 <ul>
@@ -552,9 +552,9 @@ curl<span class="w"> </span>-s<span class="w"> </span>http://localhost:9200/_cou
   
 </footer>
 <footer>
-    <div class="rst-footer-buttons" role="navigation" aria-label="Footernavigatie">
-        <a href="../voorbeelddata/" class="btn btn-neutral float-left" title="Voorbeelddata"><span class="icon icon-circle-arrow-left"></span> Vorige</a>
-        <a href="../../testen/" class="btn btn-neutral float-right" title="Testen">Volgende <span class="icon icon-circle-arrow-right"></span></a>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../voorbeelddata/" class="btn btn-neutral float-left" title="Voorbeelddata"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../../testen/" class="btn btn-neutral float-right" title="Testen">Next <span class="icon icon-circle-arrow-right"></span></a>
     </div>
 
   <hr/>
@@ -564,7 +564,7 @@ curl<span class="w"> </span>-s<span class="w"> </span>http://localhost:9200/_cou
       <p>© E-Space — Arjen Brienen. Uitgegeven onder de EUPL v1.2 licentie.</p>
   </div>
 
-  Gemaakt met <a href="https://www.mkdocs.org/">MkDocs</a> met behulp van een <a href="https://github.com/readthedocs/sphinx_rtd_theme">Thema</a> geleverd door <a href="https://readthedocs.org">Read the Docs</a>.
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
 </footer>
           
 
@@ -575,14 +575,14 @@ curl<span class="w"> </span>-s<span class="w"> </span>http://localhost:9200/_cou
 
   </div>
 
-  <div class="rst-versions" role="note" aria-label="Versies">
+  <div class="rst-versions" role="note" aria-label="Versions">
   <span class="rst-current-version" data-toggle="rst-current-version">
     
     
-      <span><a href="../voorbeelddata/" style="color: #fcfcfc">&laquo; Vorige</a></span>
+      <span><a href="../voorbeelddata/" style="color: #fcfcfc">&laquo; Previous</a></span>
     
     
-      <span><a href="../../testen/" style="color: #fcfcfc">Volgende &raquo;</a></span>
+      <span><a href="../../testen/" style="color: #fcfcfc">Next &raquo;</a></span>
     
   </span>
 </div>

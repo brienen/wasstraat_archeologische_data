@@ -148,12 +148,12 @@
           <a href="../.." class="icon icon-home"> Wasstraat Archeologische Data
         </a><div role="search">
   <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
-      <input type="text" name="q" placeholder="Doorzoek documentatie" aria-label="Doorzoek documentatie" title="Typ hier uw zoekterm" />
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
   </form>
 </div>
       </div>
 
-      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigatiemenu">
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <ul>
                 <li class="toctree-l1"><a class="reference internal" href="../..">Home</a>
                 </li>
@@ -258,6 +258,8 @@
     </li>
         </ul>
     </li>
+    <li class="toctree-l2"><a class="reference internal" href="#publicatie-van-de-documentatie">Publicatie van de documentatie</a>
+    </li>
     </ul>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../airflow-vs-app/">Airflow en webapplicatie</a>
@@ -284,7 +286,7 @@
     </nav>
 
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
-      <nav class="wy-nav-top" role="navigation" aria-label="Mobiel navigatiemenu">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
           <a href="../..">Wasstraat Archeologische Data</a>
         
@@ -292,7 +294,7 @@
       <div class="wy-nav-content">
         <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
   <ul class="wy-breadcrumbs">
-    <li><a href="../.." class="icon icon-home" aria-label="Documentatie"></a></li>
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
           <li class="breadcrumb-item">Deployment</li>
       <li class="breadcrumb-item active">Omgevingen en Docker Compose</li>
     <li class="wy-breadcrumbs-aside">
@@ -378,16 +380,16 @@
 <h2 id="docker-compose-bestanden">Docker Compose Bestanden<a class="headerlink" href="#docker-compose-bestanden" title="Permanent link">&para;</a></h2>
 <h3 id="docker-composeyml-basisbestand-make-app"><code>docker-compose.yml</code> — Basisbestand (<code>make app</code>)<a class="headerlink" href="#docker-composeyml-basisbestand-make-app" title="Permanent link">&para;</a></h3>
 <p>Het hoofdbestand definieert alle services en gebruikt de synthetische voorbeelddata uit <code>data/synthetic/</code>:</p>
-<div class="codehilite"><pre><span></span><code><span class="nt">services</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">postgres</span><span class="p">:</span><span class="w">      </span><span class="c1"># PostgreSQL 18 met PostGIS 3.6 (kartoza/postgis), eigen Dockerfile</span>
-<span class="w">  </span><span class="nt">airflow</span><span class="p">:</span><span class="w">       </span><span class="c1"># Apache Airflow 2.10.5 met Python 3.11, eigen Dockerfile</span>
-<span class="w">  </span><span class="nt">redis</span><span class="p">:</span><span class="w">         </span><span class="c1"># redis:7.2-alpine</span>
-<span class="w">  </span><span class="nt">flask</span><span class="p">:</span><span class="w">         </span><span class="c1"># Flask-webapplicatie op python:3.11-slim, eigen Dockerfile</span>
-<span class="w">  </span><span class="nt">mongo</span><span class="p">:</span><span class="w">         </span><span class="c1"># mongo:7.0</span>
-<span class="w">  </span><span class="nt">jupyter</span><span class="p">:</span><span class="w">       </span><span class="c1"># Jupyter Lab (jupyter/datascience-notebook, Python 3.11)</span>
-<span class="w">  </span><span class="nt">apache</span><span class="p">:</span><span class="w">        </span><span class="c1"># httpd:2.4: voordeur, reverse proxy naar Flask en bestandsserver voor /archeomedia</span>
-<span class="w">  </span><span class="nt">elasticsearch</span><span class="p">:</span><span class="w"> </span><span class="c1"># Elasticsearch 8.17.0</span>
-</code></pre></div>
+<pre class="codehilite"><code class="language-yaml">services:
+  postgres:      # PostgreSQL 18 met PostGIS 3.6 (kartoza/postgis), eigen Dockerfile
+  airflow:       # Apache Airflow 2.10.5 met Python 3.11, eigen Dockerfile
+  redis:         # redis:7.2-alpine
+  flask:         # Flask-webapplicatie op python:3.11-slim, eigen Dockerfile
+  mongo:         # mongo:7.0
+  jupyter:       # Jupyter Lab (jupyter/datascience-notebook, Python 3.11)
+  apache:        # httpd:2.4: voordeur, reverse proxy naar Flask en bestandsserver voor /archeomedia
+  elasticsearch: # Elasticsearch 8.17.0
+</code></pre>
 
 <p>Elke service leest haar configuratie uit <code>.env</code>-bestanden in de <code>config/</code> directory.</p>
 <h3 id="docker-composedelftyml-eigen-data-make-delft"><code>docker-compose.delft.yml</code> — Eigen data (<code>make delft</code>)<a class="headerlink" href="#docker-composedelftyml-eigen-data-make-delft" title="Permanent link">&para;</a></h3>
@@ -399,33 +401,33 @@
 <li><strong>Flask</strong>: Container blijft draaien via infinite loop (voor handmatig starten via IDE), broncode wordt als volume gemount, <code>FLASK_DEBUG=1</code>, en hostpoort 5051 om Flask rechtstreeks te benaderen (normaal loopt alles via Apache op 5052)</li>
 </ul>
 <h3 id="docker-composetestyml-en-docker-composedelft-testyml-testomgevingen"><code>docker-compose.test.yml</code> en <code>docker-compose.delft-test.yml</code> — Testomgevingen<a class="headerlink" href="#docker-composetestyml-en-docker-composedelft-testyml-testomgevingen" title="Permanent link">&para;</a></h3>
-<p>Zelfstandige testomgevingen voor <code>make integration</code> en <code>make integration-delft</code>, met eigen containernamen, een eigen projectnaam (<code>wasstraat-test</code>, <code>wasstraat-delft-test</code>), eigen hostpoorten (Airflow 8081 en 8082, Apache 5061 en 5062, MongoDB 27117 en 27118) en MongoDB en PostgreSQL in het geheugen. Ze kunnen naast een installatie en naast elkaar draaien; <code>tests/unit/test_testomgevingen_poorten.py</code> bewaakt dat de hostpoorten niet overlappen. Zie <a href="../../testen/">Testen</a>.</p>
+<p>Zelfstandige testomgevingen voor <code>make integration</code> en <code>make integration-delft</code>, met eigen containernamen, een eigen projectnaam (<code>wasstraat-test</code>, <code>wasstraat-delft-test</code>), eigen hostpoorten (Airflow 8081 en 8082, Apache 5061 en 5062, MongoDB 27117 en 27118) en MongoDB en PostgreSQL in het geheugen. Ze kunnen naast een installatie en naast elkaar draaien; <code>tests/unit/test_testomgevingen_poorten.py</code> bewaakt dat de hostpoorten niet overlappen. De synthetische testomgeving draait standaard met het gemeenteprofiel <code>delft</code> en met <code>GEMEENTE=&lt;profiel&gt;</code> met een ander profiel (<code>make integration GEMEENTE=voorbeeld</code>); de Delftse staat vast op <code>delft</code>. Zie <a href="../../testen/">Testen</a>.</p>
 <h2 id="starten-en-stoppen">Starten en Stoppen<a class="headerlink" href="#starten-en-stoppen" title="Permanent link">&para;</a></h2>
 <p>De <code>Makefile</code> bevat targets voor elke omgeving. Bij het starten wordt automatisch <code>init-config.sh</code> aangeroepen om eventueel ontbrekende <code>.env</code>-bestanden te genereren.</p>
-<div class="codehilite"><pre><span></span><code><span class="c1"># Alle services met synthetische voorbeelddata</span>
-make<span class="w"> </span>app
+<pre class="codehilite"><code class="language-bash"># Alle services met synthetische voorbeelddata
+make app
 
-<span class="c1"># Alle services met eigen data uit data/delft/</span>
-make<span class="w"> </span>delft
+# Alle services met eigen data uit data/delft/
+make delft
 
-<span class="c1"># Ontwikkelomgeving (met debugpy en hot-reload)</span>
-make<span class="w"> </span>dev
+# Ontwikkelomgeving (met debugpy en hot-reload)
+make dev
 
-<span class="c1"># Stoppen van alle containers</span>
-make<span class="w"> </span>stop
+# Stoppen van alle containers
+make stop
 
-<span class="c1"># Starten van gestopte containers</span>
-make<span class="w"> </span>start
+# Starten van gestopte containers
+make start
 
-<span class="c1"># Stop en verwijder alle containers (de volumes blijven bestaan)</span>
-make<span class="w"> </span>down
+# Stop en verwijder alle containers (de volumes blijven bestaan)
+make down
 
-<span class="c1"># Toon live logs</span>
-make<span class="w"> </span>logs
+# Toon live logs
+make logs
 
-<span class="c1"># Toon status van alle services</span>
-make<span class="w"> </span>ps
-</code></pre></div>
+# Toon status van alle services
+make ps
+</code></pre>
 
 <div class="admonition tip">
 <p class="admonition-title">Achterliggend commando</p>
@@ -508,29 +510,29 @@ Typ <code>make help</code> voor een overzicht van alle beschikbare commando's.</
 <h2 id="volume-mounts">Volume-Mounts<a class="headerlink" href="#volume-mounts" title="Permanent link">&para;</a></h2>
 <h3 id="data-volumes">Data-volumes<a class="headerlink" href="#data-volumes" title="Permanent link">&para;</a></h3>
 <p>De Airflow-container koppelt de invoerdata via volumes. Bij <code>make app</code> komen die uit <code>data/synthetic/data/</code>, bij <code>make delft</code> uit <code>data/delft/data/</code>:</p>
-<div class="codehilite"><pre><span></span><code><span class="nt">Airflow</span>
-<span class="o">./</span><span class="nt">data</span><span class="o">/&lt;</span><span class="nt">omgeving</span><span class="o">&gt;/</span><span class="nt">data</span><span class="o">/</span><span class="nt">projecten</span><span class="w">          </span><span class="err">→</span><span class="w"> </span><span class="o">/</span><span class="nt">input</span><span class="o">/</span><span class="nt">projecten</span>
-<span class="o">./</span><span class="nt">data</span><span class="o">/&lt;</span><span class="nt">omgeving</span><span class="o">&gt;/</span><span class="nt">data</span><span class="o">/</span><span class="nt">projecten</span><span class="w">          </span><span class="err">→</span><span class="w"> </span><span class="o">/</span><span class="nt">input</span><span class="o">/</span><span class="nt">images</span><span class="w">             </span><span class="o">(</span><span class="nt">dezelfde</span><span class="w"> </span><span class="nt">map</span><span class="o">:</span><span class="w"> </span><span class="nt">foto</span><span class="s1">'s staan in de projectmappen)</span>
-<span class="s1">./data/&lt;omgeving&gt;/data/projectenlijst     → /input/projectenlijst</span>
-<span class="s1">./data/&lt;omgeving&gt;/data/magazijnlijst      → /input/magazijnlijst</span>
-<span class="s1">./data/&lt;omgeving&gt;/data/fotolijst          → /input/fotolijst</span>
-<span class="s1">./data/&lt;omgeving&gt;/data/monsterdatabase    → /input/monsterdatabase</span>
-<span class="s1">./data/&lt;omgeving&gt;/data/rapporten          → /input/rapporten          (in de synthetische data leeg)</span>
-<span class="s1">./data/&lt;omgeving&gt;/data/referentietabellen → /input/referentietabellen</span>
-<span class="s1">./data/&lt;omgeving&gt;/output/archeomedia      → /output/archeomedia       (verwerkte media)</span>
-<span class="s1">./data/&lt;omgeving&gt;/output/rapporten        → /output/rapporten         (verwerkingsrapporten)</span>
-<span class="s1">./data/&lt;omgeving&gt;/wasstraat_config        → /opt/airflow/config       (harmonisatie-Excel, correcties.yml)</span>
+<pre class="codehilite"><code>Airflow
+./data/&lt;omgeving&gt;/data/projecten          → /input/projecten
+./data/&lt;omgeving&gt;/data/projecten          → /input/images             (dezelfde map: foto's staan in de projectmappen)
+./data/&lt;omgeving&gt;/data/projectenlijst     → /input/projectenlijst
+./data/&lt;omgeving&gt;/data/magazijnlijst      → /input/magazijnlijst
+./data/&lt;omgeving&gt;/data/fotolijst          → /input/fotolijst
+./data/&lt;omgeving&gt;/data/monsterdatabase    → /input/monsterdatabase
+./data/&lt;omgeving&gt;/data/rapporten          → /input/rapporten          (in de synthetische data leeg)
+./data/&lt;omgeving&gt;/data/referentietabellen → /input/referentietabellen
+./data/&lt;omgeving&gt;/output/archeomedia      → /output/archeomedia       (verwerkte media)
+./data/&lt;omgeving&gt;/output/rapporten        → /output/rapporten         (verwerkingsrapporten)
+./data/&lt;omgeving&gt;/wasstraat_config        → /opt/airflow/config       (harmonisatie-Excel, correcties.yml)
 
-<span class="s1">Flask</span>
-<span class="s1">./data/&lt;omgeving&gt;/output/archeomedia      → /output/archeomedia       (schrijfbaar, voor het kantelen van foto'</span><span class="nt">s</span><span class="o">)</span>
+Flask
+./data/&lt;omgeving&gt;/output/archeomedia      → /output/archeomedia       (schrijfbaar, voor het kantelen van foto's)
 
-<span class="nt">Apache</span>
-<span class="o">./</span><span class="nt">data</span><span class="o">/&lt;</span><span class="nt">omgeving</span><span class="o">&gt;/</span><span class="nt">output</span><span class="w">                  </span><span class="err">→</span><span class="w"> </span><span class="o">/</span><span class="nt">usr</span><span class="o">/</span><span class="nt">local</span><span class="o">/</span><span class="nt">apache2</span><span class="o">/</span><span class="nt">htdocs</span><span class="w"> </span><span class="o">(</span><span class="nt">alleen-lezen</span><span class="o">;</span><span class="w"> </span><span class="nt">gepubliceerd</span><span class="w"> </span><span class="nt">onder</span><span class="w"> </span><span class="o">/</span><span class="nt">archeomedia</span><span class="o">)</span>
+Apache
+./data/&lt;omgeving&gt;/output                  → /usr/local/apache2/htdocs (alleen-lezen; gepubliceerd onder /archeomedia)
 
-<span class="nt">PostgreSQL</span><span class="w"> </span><span class="nt">en</span><span class="w"> </span><span class="nt">MongoDB</span>
-<span class="o">./</span><span class="nt">data</span><span class="o">/&lt;</span><span class="nt">omgeving</span><span class="o">&gt;/</span><span class="nt">backup</span><span class="o">/</span><span class="nt">postgres</span><span class="w">         </span><span class="err">→</span><span class="w"> </span><span class="o">/</span><span class="nt">backup</span>
-<span class="o">./</span><span class="nt">data</span><span class="o">/&lt;</span><span class="nt">omgeving</span><span class="o">&gt;/</span><span class="nt">backup</span><span class="o">/</span><span class="nt">mongo</span><span class="w">            </span><span class="err">→</span><span class="w"> </span><span class="o">/</span><span class="nt">backup</span>
-</code></pre></div>
+PostgreSQL en MongoDB
+./data/&lt;omgeving&gt;/backup/postgres         → /backup
+./data/&lt;omgeving&gt;/backup/mongo            → /backup
+</code></pre>
 
 <p>De paden in de container kun je met omgevingsvariabelen wijzigen (<code>AIRFLOW_INPUT_*</code>, <code>AIRFLOW_OUTPUT_*</code>); zie <a href="../../componenten/configuratie/#27-paden-en-mounts">Configuratie: paden en mounts</a>.</p>
 <h3 id="persistente-volumes">Persistente volumes<a class="headerlink" href="#persistente-volumes" title="Permanent link">&para;</a></h3>
@@ -573,12 +575,12 @@ Typ <code>make help</code> voor een overzicht van alle beschikbare commando's.</
 </div>
 <h3 id="bestaande-installatie-postgresql-data-naar-het-volume">Bestaande installatie: PostgreSQL-data naar het volume<a class="headerlink" href="#bestaande-installatie-postgresql-data-naar-het-volume" title="Permanent link">&para;</a></h3>
 <p>Tot oktober 2026 hing het PostgreSQL-volume op <code>/var/lib/postgresql/data</code>, terwijl <code>PGDATA</code> op <code>/data/postgres</code> stond. Bij installaties uit die tijd staat de database daardoor in de container zelf, en is het volume leeg. Zodra je zo'n installatie start met de nieuwe compose-bestanden, maakt Docker Compose de PostgreSQL-container opnieuw aan en is die database weg. Migreer de data daarom eerst:</p>
-<div class="codehilite"><pre><span></span><code>make<span class="w"> </span>start<span class="w">                   </span><span class="c1"># start de bestaande containers zonder ze opnieuw aan te maken</span>
-make<span class="w"> </span>backup<span class="w">                  </span><span class="c1"># extra zekerheid: dump van PostgreSQL en MongoDB</span>
-make<span class="w"> </span>stop
-make<span class="w"> </span>migrate-postgres-data<span class="w">   </span><span class="c1"># kopieert de data uit de oude container naar het volume</span>
-make<span class="w"> </span>app<span class="w">                     </span><span class="c1"># of: make delft</span>
-</code></pre></div>
+<pre class="codehilite"><code class="language-bash">make start                   # start de bestaande containers zonder ze opnieuw aan te maken
+make backup                  # extra zekerheid: dump van PostgreSQL en MongoDB
+make stop
+make migrate-postgres-data   # kopieert de data uit de oude container naar het volume
+make app                     # of: make delft
+</code></pre>
 
 <p><code>make migrate-postgres-data</code> wijzigt de oude container niet. Het script stopt zonder iets te doen als de container nog draait, als het volume al data bevat of als de migratie al is gedaan. Na het kopiëren telt het de bestanden in bron en volume en meldt het een fout als die niet gelijk zijn. Gebruik je een andere containernaam, geef die dan mee: <code>make migrate-postgres-data PG_CONTAINER=&lt;naam&gt;</code>.</p>
 <div class="admonition danger">
@@ -591,12 +593,12 @@ make<span class="w"> </span>app<span class="w">                     </span><span
 <p>De Dockerfiles kopiëren de code in de images: de Flask-image bevat <code>app/</code> en <code>shared/</code>, de Airflow-image <code>airflow_app/dags</code>, <code>airflow_app/scripts</code> en <code>shared/</code> (als <code>/opt/airflow/dags/shared</code>). De gepubliceerde images draaien daardoor zonder volumes naar broncode. In de ontwikkelomgeving mounten <code>docker-compose.yml</code> en <code>docker-compose.delft.yml</code> de mappen <code>airflow_app/dags</code>, <code>airflow_app/scripts</code> en <code>shared/</code> over die kopieën heen, zodat wijzigingen direct zichtbaar zijn zonder opnieuw te bouwen. Jupyter is een <strong>ontwikkelvoorziening</strong>: de Jupyter-container krijgt de notebooks en de code via volumes, hoort alleen bij de ontwikkelomgeving en wordt niet gepubliceerd. <code>.dockerignore</code> houdt <code>data/</code>, <code>notebooks/</code>, <code>docs/</code> en <code>deploy/</code> buiten de buildcontext.</p>
 <h2 id="backup-en-restore">Backup en Restore<a class="headerlink" href="#backup-en-restore" title="Permanent link">&para;</a></h2>
 <p>De Makefile bevat targets voor backup en restore:</p>
-<div class="codehilite"><pre><span></span><code><span class="c1"># Backup van PostgreSQL en MongoDB (met timestamp)</span>
-make<span class="w"> </span>backup
+<pre class="codehilite"><code class="language-bash"># Backup van PostgreSQL en MongoDB (met timestamp)
+make backup
 
-<span class="c1"># Restore vanuit een eerder backup-timestamp</span>
-make<span class="w"> </span>restore<span class="w"> </span><span class="nv">TS</span><span class="o">=</span><span class="m">2024</span>-03-15_14-30-00
-</code></pre></div>
+# Restore vanuit een eerder backup-timestamp
+make restore TS=2024-03-15_14-30-00
+</code></pre>
 
 <p>Bij een backup worden de Flask- en Airflow-containers tijdelijk gestopt. De backup bevat:</p>
 <ul>
@@ -606,18 +608,18 @@ make<span class="w"> </span>restore<span class="w"> </span><span class="nv">TS</
 <p>De backups komen in <code>data/&lt;omgeving&gt;/backup/postgres/</code> en <code>data/&lt;omgeving&gt;/backup/mongo/</code>, dus in <code>data/synthetic/backup/</code> bij <code>make app</code> en in <code>data/delft/backup/</code> bij <code>make delft</code>.</p>
 <h2 id="csv-export">CSV-export<a class="headerlink" href="#csv-export" title="Permanent link">&para;</a></h2>
 <p>Alle definitieve tabellen kunnen als CSV worden geëxporteerd:</p>
-<div class="codehilite"><pre><span></span><code>make<span class="w"> </span><span class="nb">export</span>
-</code></pre></div>
+<pre class="codehilite"><code class="language-bash">make export
+</code></pre>
 
 <p>Dit exporteert alle <code>Def_*</code> tabellen (Project, Put, Spoor, Vondst, Artefact, Monster, etc.) naar CSV-bestanden in <code>data/&lt;omgeving&gt;/backup/postgres/postgres_&lt;timestamp&gt;/</code>.</p>
 <h2 id="publicatie-van-images">Publicatie van images<a class="headerlink" href="#publicatie-van-images" title="Permanent link">&para;</a></h2>
 <p>De images voor de live installatie staan op de GitHub Container Registry, onder <code>ghcr.io/brienen/wasstraat-&lt;service&gt;</code> voor de vier eigen services: <code>airflow</code>, <code>flask</code>, <code>postgres</code> en <code>apache</code>. MongoDB, Elasticsearch en Redis komen rechtstreeks van Docker Hub en Elastic. Jupyter is een ontwikkelvoorziening en wordt niet gepubliceerd. Elke image krijgt twee tags: het versienummer en <code>latest</code>.</p>
-<div class="codehilite"><pre><span></span><code>make<span class="w"> </span>publish<span class="w">                      </span><span class="c1"># alle vier images, linux/amd64 + linux/arm64, push naar ghcr.io</span>
-make<span class="w"> </span>publish<span class="w"> </span><span class="nv">SERVICE</span><span class="o">=</span>flask<span class="w">        </span><span class="c1"># één image</span>
-make<span class="w"> </span>publish<span class="w"> </span><span class="nv">PUSH</span><span class="o">=</span><span class="m">0</span><span class="w">               </span><span class="c1"># alleen lokaal bouwen voor dit platform, niet pushen</span>
-make<span class="w"> </span>publish<span class="w"> </span><span class="nv">NO_CACHE</span><span class="o">=</span><span class="m">1</span><span class="w">           </span><span class="c1"># schone build met verse basisimages</span>
-make<span class="w"> </span>publish<span class="w"> </span><span class="nv">VERSION</span><span class="o">=</span><span class="m">1</span>.2.0<span class="w">        </span><span class="c1"># andere versie dan die in config/version.env</span>
-</code></pre></div>
+<pre class="codehilite"><code class="language-bash">make publish                      # alle vier images, linux/amd64 + linux/arm64, push naar ghcr.io
+make publish SERVICE=flask        # één image
+make publish PUSH=0               # alleen lokaal bouwen voor dit platform, niet pushen
+make publish NO_CACHE=1           # schone build met verse basisimages
+make publish VERSION=1.2.0        # andere versie dan die in config/version.env
+</code></pre>
 
 <p><code>make publish</code> bouwt met <code>docker buildx</code> in één keer voor beide platformen en pusht het resultaat als multi-arch image. Daarvoor maakt het eenmalig een builder <code>wasstraat</code> aan met de <code>docker-container</code>-driver (een gewone <code>docker build</code> kan niet voor twee platformen tegelijk bouwen). Met <code>PUSH=0</code> gebruikt het de standaardbuilder, bouwt het alleen voor het eigen platform en laadt het de images in de lokale Docker (<code>--load</code>); daarmee test je <code>deploy/</code> voordat je publiceert. Elke image krijgt de OCI-labels <code>org.opencontainers.image.source</code> (de repository, waardoor GitHub het package aan de repository koppelt), <code>version</code> en <code>licenses</code>.</p>
 <table>
@@ -672,17 +674,30 @@ make<span class="w"> </span>publish<span class="w"> </span><span class="nv">VERS
 </div>
 <h3 id="inloggen-op-de-registry">Inloggen op de registry<a class="headerlink" href="#inloggen-op-de-registry" title="Permanent link">&para;</a></h3>
 <p>Inloggen gebeurt buiten <code>make publish</code> om, eenmalig per machine:</p>
-<div class="codehilite"><pre><span></span><code><span class="nb">echo</span><span class="w"> </span><span class="s2">"</span><span class="nv">$GHCR_TOKEN</span><span class="s2">"</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>docker<span class="w"> </span>login<span class="w"> </span>ghcr.io<span class="w"> </span>-u<span class="w"> </span>brienen<span class="w"> </span>--password-stdin
-</code></pre></div>
+<pre class="codehilite"><code class="language-bash">echo &quot;$GHCR_TOKEN&quot; | docker login ghcr.io -u brienen --password-stdin
+</code></pre>
 
 <p>Het token is een GitHub <em>personal access token (classic)</em> met de scope <strong><code>write:packages</code></strong> (die omvat <code>read:packages</code>); <code>delete:packages</code> is alleen nodig om oude versies te verwijderen. Fine-grained tokens werken niet voor de Container Registry. Maak het aan onder GitHub → Settings → Developer settings → Personal access tokens.</p>
 <p>Na de eerste publicatie zijn de vier packages <strong>privé</strong>. Zet ze op publiek, zodat gemeenten ze zonder inloggen kunnen ophalen: open het package op <a href="https://github.com/brienen?tab=packages">https://github.com/brienen?tab=packages</a>, kies <em>Package settings</em> en wijzig onder <em>Danger Zone</em> de zichtbaarheid naar <em>Public</em>. Controleer daar ook of het package aan de repository is gekoppeld (dat gebeurt automatisch via het label <code>org.opencontainers.image.source</code>).</p>
 <h3 id="een-versie-uitbrengen">Een versie uitbrengen<a class="headerlink" href="#een-versie-uitbrengen" title="Permanent link">&para;</a></h3>
-<div class="codehilite"><pre><span></span><code>make<span class="w"> </span>release<span class="w"> </span><span class="nv">VERSION</span><span class="o">=</span><span class="m">1</span>.1.0<span class="w"> </span><span class="nv">MSG</span><span class="o">=</span><span class="s2">"Incrementeel laden en installatie met images"</span>
-</code></pre></div>
+<pre class="codehilite"><code class="language-bash">make release VERSION=1.1.0 MSG=&quot;Incrementeel laden en installatie met images&quot;
+</code></pre>
 
-<p>Dit schrijft het versienummer naar <code>config/version.env.example</code> (in de repository), <code>config/version.env</code> (lokaal, genegeerd door git) en <code>deploy/.env.example</code> (de standaardversie voor nieuwe installaties), staget alleen <code>config/version.env.example</code> en <code>deploy/.env.example</code>, commit die met het bericht uit <code>MSG</code>, maakt de geannoteerde git-tag <code>1.1.0</code> op die commit, pusht alleen de huidige branch (<code>git push origin HEAD</code>) en de nieuwe tag, en roept <code>make publish</code> aan. Andere wijzigingen in de werkmap gaan dus niet mee in de releasecommit; commit die vooraf. De map <code>deploy/</code> van de tag is daarmee precies wat gebruikers ophalen; <code>tests/unit/test_deploy.py</code> bewaakt dat <code>deploy/.env.example</code> en <code>config/version.env.example</code> dezelfde versie noemen.</p>
+<p>Dit doet achter elkaar:</p>
+<ol>
+<li>Het versienummer schrijven naar <code>config/version.env.example</code> (in de repository), <code>config/version.env</code> (lokaal, genegeerd door git), <code>deploy/.env.example</code> (de standaardversie voor nieuwe installaties), de versiebadge in <code>README.md</code> en <code>CITATION.cff</code> (<code>version</code> en <code>date-released</code>, met de datum van vandaag).</li>
+<li>Alleen die vier bestanden in de repository stagen en committen met het bericht uit <code>MSG</code>. Andere wijzigingen in de werkmap gaan dus niet mee in de releasecommit; commit die vooraf.</li>
+<li>De geannoteerde git-tag <code>1.1.0</code> op die commit zetten en alleen de huidige branch (<code>git push origin HEAD</code>) en de nieuwe tag pushen.</li>
+<li><code>make publish</code> aanroepen.</li>
+<li>Een GitHub-release bij de tag aanmaken met <code>gh release create</code>, met <code>MSG</code> als toelichting. Pas een gepubliceerde release laat Zenodo de versie archiveren (metadata uit <code>.zenodo.json</code> en <code>CITATION.cff</code>). Zonder de GitHub CLI (<code>gh</code>) meldt het doel waar je de release met de hand aanmaakt. Faalt <code>make publish</code>, dan stopt het doel vóór de release: publiceer de images opnieuw en maak de release daarna met <code>gh release create &lt;versie&gt; --verify-tag --title &lt;versie&gt; --notes "..."</code>.</li>
+</ol>
+<p>De map <code>deploy/</code> van de tag is daarmee precies wat gebruikers ophalen. <code>tests/unit/test_deploy.py</code> bewaakt dat <code>deploy/.env.example</code>, <code>config/version.env.example</code> en <code>CITATION.cff</code> dezelfde versie noemen.</p>
 <p>Controleer vóór een release dat <code>make test-all</code> slaagt en test de images met <code>make publish PUSH=0</code> in een installatie uit <code>deploy/</code>. Een <code>latest</code>-tag wijst altijd naar de laatst gepubliceerde versie; installaties horen een versienummer te gebruiken.</p>
+<h2 id="publicatie-van-de-documentatie">Publicatie van de documentatie<a class="headerlink" href="#publicatie-van-de-documentatie" title="Permanent link">&para;</a></h2>
+<p>De documentatie staat openbaar op <a href="https://brienen.github.io/wasstraat_archeologische_data/">https://brienen.github.io/wasstraat_archeologische_data/</a>. GitHub Pages serveert daar de branch <code>gh-pages</code>, die de workflow <code>.github/workflows/docs.yml</code> vult: bij elke push naar <code>main</code> die <code>docs/</code>, <code>mkdocs.yml</code> of <code>overrides/</code> raakt, bouwt die de site met <code>mkdocs gh-deploy --strict</code> en zet hem als nieuwe commit op <code>gh-pages</code>. Een waarschuwing in de build laat de workflow falen en de site blijft dan zoals hij was. Handmatig starten kan in GitHub onder <em>Actions</em> → <em>Documentatie publiceren</em> → <em>Run workflow</em>.</p>
+<p>De workflow gebruikt dezelfde MkDocs-versie als <code>make docs</code> en <code>make docs-build</code> (<code>MKDOCS_VERSIE</code> in het <code>Makefile</code>); <code>tests/unit/test_deploy.py</code> bewaakt dat. Wijzigingen in een andere branch komen pas online na de merge naar <code>main</code>. Wil je toch met de hand publiceren, gebruik dan dezelfde versie:</p>
+<pre class="codehilite"><code class="language-bash">.venv/bin/pip install &quot;mkdocs==1.6.1&quot; &amp;&amp; .venv/bin/mkdocs gh-deploy --strict
+</code></pre>
               
             </div>
           </div>
@@ -714,9 +729,9 @@ make<span class="w"> </span>publish<span class="w"> </span><span class="nv">VERS
   
 </footer>
 <footer>
-    <div class="rst-footer-buttons" role="navigation" aria-label="Footernavigatie">
-        <a href="../../componenten/zoeken/" class="btn btn-neutral float-left" title="Zoeken en indexering"><span class="icon icon-circle-arrow-left"></span> Vorige</a>
-        <a href="../airflow-vs-app/" class="btn btn-neutral float-right" title="Airflow en webapplicatie">Volgende <span class="icon icon-circle-arrow-right"></span></a>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../../componenten/zoeken/" class="btn btn-neutral float-left" title="Zoeken en indexering"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../airflow-vs-app/" class="btn btn-neutral float-right" title="Airflow en webapplicatie">Next <span class="icon icon-circle-arrow-right"></span></a>
     </div>
 
   <hr/>
@@ -726,7 +741,7 @@ make<span class="w"> </span>publish<span class="w"> </span><span class="nv">VERS
       <p>© E-Space — Arjen Brienen. Uitgegeven onder de EUPL v1.2 licentie.</p>
   </div>
 
-  Gemaakt met <a href="https://www.mkdocs.org/">MkDocs</a> met behulp van een <a href="https://github.com/readthedocs/sphinx_rtd_theme">Thema</a> geleverd door <a href="https://readthedocs.org">Read the Docs</a>.
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
 </footer>
           
 
@@ -737,14 +752,14 @@ make<span class="w"> </span>publish<span class="w"> </span><span class="nv">VERS
 
   </div>
 
-  <div class="rst-versions" role="note" aria-label="Versies">
+  <div class="rst-versions" role="note" aria-label="Versions">
   <span class="rst-current-version" data-toggle="rst-current-version">
     
     
-      <span><a href="../../componenten/zoeken/" style="color: #fcfcfc">&laquo; Vorige</a></span>
+      <span><a href="../../componenten/zoeken/" style="color: #fcfcfc">&laquo; Previous</a></span>
     
     
-      <span><a href="../airflow-vs-app/" style="color: #fcfcfc">Volgende &raquo;</a></span>
+      <span><a href="../airflow-vs-app/" style="color: #fcfcfc">Next &raquo;</a></span>
     
   </span>
 </div>

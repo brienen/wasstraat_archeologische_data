@@ -148,12 +148,12 @@
           <a href="../.." class="icon icon-home"> Wasstraat Archeologische Data
         </a><div role="search">
   <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
-      <input type="text" name="q" placeholder="Doorzoek documentatie" aria-label="Doorzoek documentatie" title="Typ hier uw zoekterm" />
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
   </form>
 </div>
       </div>
 
-      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigatiemenu">
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <ul>
                 <li class="toctree-l1"><a class="reference internal" href="../..">Home</a>
                 </li>
@@ -260,7 +260,7 @@
     </nav>
 
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
-      <nav class="wy-nav-top" role="navigation" aria-label="Mobiel navigatiemenu">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
           <a href="../..">Wasstraat Archeologische Data</a>
         
@@ -268,7 +268,7 @@
       <div class="wy-nav-content">
         <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
   <ul class="wy-breadcrumbs">
-    <li><a href="../.." class="icon icon-home" aria-label="Documentatie"></a></li>
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
           <li class="breadcrumb-item">Componenten</li>
       <li class="breadcrumb-item active">Extractie</li>
     <li class="wy-breadcrumbs-aside">
@@ -383,8 +383,8 @@
 <p>Tests: <code>tests/unit/test_csv_kolommen.py</code> (het script, de vergelijking met de vroegere <code>sed</code>-regels en <code>importMDB.sh</code> als geheel met nagebootste mdbtools en mongoimport). De synthetische data heeft een memo-veld met een regeleinde (de beschrijving van spoor 4 van SY002); de integratietests controleren in de staging dat dat veld het regeleinde bevat en dat de extra kolommen in geen enkel ander veld staan, in de Delftse test ook het aantal records met een regeleinde per tabel.</p>
 <h3 id="controle-van-de-access-databases">Controle van de Access-databases<a class="headerlink" href="#controle-van-de-access-databases" title="Permanent link">&para;</a></h3>
 <p>De taak <code>Controleer_Databases</code> draait na alle MDB-taken en <code>Extract_ExtraProjecten</code>, en vóór de transformatie. Ze leest per categorie het log van <code>importMDB.sh</code> van deze run, telt per verwerkte database de staging-documenten en schrijft het resultaat in het run-document onder <code>tellingen.extractie</code>: onleesbare databases, databases zonder records, overgeslagen tabellen (met de reden: geen kopregel, kolommen toevoegen mislukt, <code>mongoimport</code> mislukt) en overige meldingen. Dat zijn waarschuwingen in het run-document en het verwerkingsrapport. Voor onleesbare databases geldt een drempel:</p>
-<div class="codehilite"><pre><span></span><code>drempel = max(AIRFLOW_MAX_MISLUKTE_DATABASES, AIRFLOW_MAX_MISLUKTE_DATABASES_PCT % van de verwerkte databases)
-</code></pre></div>
+<pre class="codehilite"><code>drempel = max(AIRFLOW_MAX_MISLUKTE_DATABASES, AIRFLOW_MAX_MISLUKTE_DATABASES_PCT % van de verwerkte databases)
+</code></pre>
 
 <p>met als standaard 2 databases en 5 procent. Daarboven faalt de taak en zet <code>Markeer_Run_Mislukt</code> de run op <code>mislukt</code>. De velden van <code>tellingen.extractie</code> staan in <a href="../verwerkingsrapport/#controle-van-de-access-databases-controleer_databases">Foutbeleid en verwerkingsrapport</a>.</p>
 <h2 id="excel-bestanden">Excel-bestanden<a class="headerlink" href="#excel-bestanden" title="Permanent link">&para;</a></h2>
@@ -488,8 +488,8 @@
 <p>Een mislukt bestand blijft op <code>processed: false</code> staan en wordt daarom opnieuw geprobeerd door een herhaling van de taak, door de DAG <code>Redo_Images</code> en door elke volgende incrementele run; lukt het dan wel, dan verdwijnen <code>fout</code> en <code>fout_op</code>. Tot oktober 2026 bleven mislukte én overgeslagen tif- en pdf-bestanden zonder onderscheid op <code>processed: false</code> staan en meldde niets dat er bestanden ontbraken.</p>
 <p><strong>Harde fouten.</strong> Een fout bij één bestand (onleesbaar of beschadigd bestand, geen projectcode in de naam) stopt de taak niet. Een fout waarbij elk volgend bestand ook zou mislukken wel: een vol volume (<code>ENOSPC</code>, <code>No space left on device</code>), een bereikt schijfquotum (<code>EDQUOT</code>), een alleen-lezen volume (<code>EROFS</code>) of geen schrijfrechten op de uitvoermap (een <code>PermissionError</code> op een pad onder <code>AIRFLOW_OUTPUT_MEDIA</code>; geen leesrechten op een bronbestand blijft een fout van dat ene bestand). Het bestand krijgt dan de status mislukt en de taak faalt direct, zonder herhalingen (<code>AirflowFailException</code>), met een melding die de uitvoermap noemt. De herkenning (<code>vindOnherstelbareOorzaak</code>) doorzoekt de hele keten van oorzaken, omdat <code>image_util</code> de oorspronkelijke fout in een nieuwe exception verpakt.</p>
 <p><strong>Controle na de import.</strong> De taak <code>Controleer_Afbeeldingen</code> draait na alle import-taken en vóór het einde van <code>Extract_Group</code>, dus vóór de transformatie. Ze telt de bestanden per status, logt het resultaat met de eerste tien foutmeldingen, en laat de DAG falen als het aantal mislukte plus onverwerkte bestanden groter is dan de drempel:</p>
-<div class="codehilite"><pre><span></span><code>drempel = max(AIRFLOW_MAX_MISLUKTE_AFBEELDINGEN, AIRFLOW_MAX_MISLUKTE_AFBEELDINGEN_PCT % van het aantal bestanden)
-</code></pre></div>
+<pre class="codehilite"><code>drempel = max(AIRFLOW_MAX_MISLUKTE_AFBEELDINGEN, AIRFLOW_MAX_MISLUKTE_AFBEELDINGEN_PCT % van het aantal bestanden)
+</code></pre>
 
 <p>Onder de drempel volgt een waarschuwing (<code>WARNING</code>) met de lijst. De taak zit in alle DAG's die afbeeldingen importeren: <code>Extract_Transform_Load_Full_Cycle</code>, <code>Extract_only</code> en <code>Extract_Transform_Load_Incremental</code> (via <code>Extract_Group.Controleer_Afbeeldingen</code>) en <code>Redo_Images</code> (<code>Controleer_Afbeeldingen</code>). In de volledige cyclus telt de controle alle bestanden in <code>Filenames</code>, in de incrementele cyclus alleen de bestanden die in deze run verwerkt of overgeslagen zijn plus de bestanden die nog openstaan. In beide cycli komen de tellingen in het run-document (<code>tellingen.afbeeldingen</code>, zie <a href="../incrementeel-laden/#run-document">Incrementeel laden</a>) en worden mislukte of onverwerkte bestanden een melding: een waarschuwing onder de drempel, een fout erboven. Een mislukte controle zet de run via <code>Markeer_Run_Mislukt</code> op <code>mislukt</code>. <code>Extract_only</code> en <code>Redo_Images</code> hebben geen run-document; daar staat het resultaat alleen in het log.</p>
 <table>
@@ -518,11 +518,11 @@
 <h2 id="paden-overslaan">Paden overslaan<a class="headerlink" href="#paden-overslaan" title="Permanent link">&para;</a></h2>
 <p>In de brondata staan soms kopieën van databases en afbeeldingen die niet als aparte bron mogen tellen. De extractie leest elke Access-database onder een invoermap in (<code>importMDB.sh</code>: <code>**/*.mdb</code> en <code>**/*.accdb</code>), dus zonder filter geeft zo'n kopie dubbele artefacten, sporen en vondsten. Het bekendste geval is de werkmap van Joris in DC024 (<code>DC024_Stadskantoor/K Overig/werkmap joris</code>): vijf Access-databases (<code>opgravingDC24.mdb</code>, <code>opgravingDC241.mdb</code>, <code>raapimport.accdb</code>, <code>test.mdb</code> en <code>C Database/DC24_STADSKANTOOR.mdb</code>), kopieën en tussenversies van de opgravingsdatabase in <code>C Database</code>. Op de productie-installatie leverden ze op 22 oktober 2026 17.128 rijen in de staging, 7.404 documenten in <code>Single_Store</code> en 6.663 artefacten die alleen uit deze kopieën kwamen (een vijfde van alle Delftse artefacten).</p>
 <p>De sectie <code>paden_overslaan</code> in <code>correcties.yml</code> (zie <a href="../configuratie/#35-paden_overslaan">Configuratie: paden_overslaan</a>) is een lijst met patronen van bestanden en mappen die de extractie overslaat:</p>
-<div class="codehilite"><pre><span></span><code><span class="nt">paden_overslaan</span><span class="p">:</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"DC024_Stadskantoor/K</span><span class="nv"> </span><span class="s">Overig/werkmap</span><span class="nv"> </span><span class="s">joris"</span><span class="w">   </span><span class="c1"># één map, met alles daaronder</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"**/werkmap*"</span><span class="w">                                 </span><span class="c1"># elke map die met werkmap begint, op elk niveau</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"DC097_Ipse/C</span><span class="nv"> </span><span class="s">Database/HHD2.mdb"</span><span class="w">              </span><span class="c1"># één bestand</span>
-</code></pre></div>
+<pre class="codehilite"><code class="language-yaml">paden_overslaan:
+  - &quot;DC024_Stadskantoor/K Overig/werkmap joris&quot;   # één map, met alles daaronder
+  - &quot;**/werkmap*&quot;                                 # elke map die met werkmap begint, op elk niveau
+  - &quot;DC097_Ipse/C Database/HHD2.mdb&quot;              # één bestand
+</code></pre>
 
 <table>
 <thead>
@@ -638,9 +638,9 @@
   
 </footer>
 <footer>
-    <div class="rst-footer-buttons" role="navigation" aria-label="Footernavigatie">
-        <a href="../../architectuur/stack/" class="btn btn-neutral float-left" title="Technische stack"><span class="icon icon-circle-arrow-left"></span> Vorige</a>
-        <a href="../singlestore/" class="btn btn-neutral float-right" title="MongoDB en Single_Store">Volgende <span class="icon icon-circle-arrow-right"></span></a>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../../architectuur/stack/" class="btn btn-neutral float-left" title="Technische stack"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../singlestore/" class="btn btn-neutral float-right" title="MongoDB en Single_Store">Next <span class="icon icon-circle-arrow-right"></span></a>
     </div>
 
   <hr/>
@@ -650,7 +650,7 @@
       <p>© E-Space — Arjen Brienen. Uitgegeven onder de EUPL v1.2 licentie.</p>
   </div>
 
-  Gemaakt met <a href="https://www.mkdocs.org/">MkDocs</a> met behulp van een <a href="https://github.com/readthedocs/sphinx_rtd_theme">Thema</a> geleverd door <a href="https://readthedocs.org">Read the Docs</a>.
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
 </footer>
           
 
@@ -661,14 +661,14 @@
 
   </div>
 
-  <div class="rst-versions" role="note" aria-label="Versies">
+  <div class="rst-versions" role="note" aria-label="Versions">
   <span class="rst-current-version" data-toggle="rst-current-version">
     
     
-      <span><a href="../../architectuur/stack/" style="color: #fcfcfc">&laquo; Vorige</a></span>
+      <span><a href="../../architectuur/stack/" style="color: #fcfcfc">&laquo; Previous</a></span>
     
     
-      <span><a href="../singlestore/" style="color: #fcfcfc">Volgende &raquo;</a></span>
+      <span><a href="../singlestore/" style="color: #fcfcfc">Next &raquo;</a></span>
     
   </span>
 </div>

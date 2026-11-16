@@ -148,12 +148,12 @@
           <a href=".." class="icon icon-home"> Wasstraat Archeologische Data
         </a><div role="search">
   <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
-      <input type="text" name="q" placeholder="Doorzoek documentatie" aria-label="Doorzoek documentatie" title="Typ hier uw zoekterm" />
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
   </form>
 </div>
       </div>
 
-      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigatiemenu">
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <ul>
                 <li class="toctree-l1"><a class="reference internal" href="..">Home</a>
                 </li>
@@ -252,7 +252,7 @@
     </nav>
 
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
-      <nav class="wy-nav-top" role="navigation" aria-label="Mobiel navigatiemenu">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
           <a href="..">Wasstraat Archeologische Data</a>
         
@@ -260,7 +260,7 @@
       <div class="wy-nav-content">
         <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
   <ul class="wy-breadcrumbs">
-    <li><a href=".." class="icon icon-home" aria-label="Documentatie"></a></li>
+    <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
           <li class="breadcrumb-item">Aan de slag</li>
       <li class="breadcrumb-item active">Handleiding (ontwikkelomgeving)</li>
     <li class="wy-breadcrumbs-aside">
@@ -297,9 +297,9 @@
 <p>Je hebt deze resources overigens maar heel tijdelijk nodig: denk aan een run om alle data te "wassen" van 20 min tot uiterlijk 24 uur.  </p>
 </div>
 <h3 id="repository-clonen">Repository clonen<a class="headerlink" href="#repository-clonen" title="Permanent link">&para;</a></h3>
-<div class="codehilite"><pre><span></span><code>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/brienen/wasstraat_archeologische_data.git
-<span class="nb">cd</span><span class="w"> </span>wasstraat_archeologische_data
-</code></pre></div>
+<pre class="codehilite"><code class="language-bash">git clone https://github.com/brienen/wasstraat_archeologische_data.git
+cd wasstraat_archeologische_data
+</code></pre>
 
 <h3 id="configuratie">Configuratie<a class="headerlink" href="#configuratie" title="Permanent link">&para;</a></h3>
 <p>Bij de eerste start genereert het systeem automatisch alle configuratiebestanden met unieke wachtwoorden. Je hoeft zelf niets in te stellen — het werkt direct out-of-the-box.</p>
@@ -313,8 +313,8 @@ Pas vervolgens de wachtwoorden in <code>config/*.env</code> aan naar wens, vóó
 </div>
 <h2 id="2-wasstraat-starten">2. Wasstraat starten<a class="headerlink" href="#2-wasstraat-starten" title="Permanent link">&para;</a></h2>
 <p>Start de wasstraat:</p>
-<div class="codehilite"><pre><span></span><code>make<span class="w"> </span>app
-</code></pre></div>
+<pre class="codehilite"><code class="language-bash">make app
+</code></pre>
 
 <p><code>make app</code> start alle services met de synthetische voorbeelddata uit <code>data/synthetic/</code>. Voor eigen data gebruik je <code>make delft</code> (zie stap 4).</p>
 <p>Bij de allereerste start duurt het enkele minuten omdat Docker alle images moet downloaden en bouwen. Je ziet de voortgang in de terminal. De Python-pakketten van de Airflow-, Flask- en Jupyter-image liggen vast in <code>services/*/constraints.txt</code>, zodat elke build dezelfde, geteste versies krijgt; zie <a href="../testen/#pakketversies-bijwerken">Pakketversies bijwerken</a>.</p>
@@ -331,8 +331,8 @@ Doe hetzelfde voor <code>data/delft/</code> als je met eigen data werkt. Op macO
 <p>Installaties van vóór oktober 2026 hebben hun PostgreSQL-data in de container staan in plaats van in het Docker-volume. Start zo'n installatie niet opnieuw met <code>make app</code> voordat je de data hebt gemigreerd, anders raak je de database kwijt. Volg de stappen in <a href="../deployment/omgevingen/#bestaande-installatie-postgresql-data-naar-het-volume">Omgevingen</a>.</p>
 </div>
 <p>Controleer of alle containers draaien:</p>
-<div class="codehilite"><pre><span></span><code>make<span class="w"> </span>ps
-</code></pre></div>
+<pre class="codehilite"><code class="language-bash">make ps
+</code></pre>
 
 <p>Je zou deze 8 containers moeten zien:</p>
 <table>
@@ -399,13 +399,13 @@ De meest voorkomende oorzaak is onvoldoende geheugen in Docker Desktop.</p>
 <h2 id="3-webpaginas-bekijken">3. Webpagina's bekijken<a class="headerlink" href="#3-webpaginas-bekijken" title="Permanent link">&para;</a></h2>
 <p>Na het starten zijn er drie webapplicaties beschikbaar:</p>
 <h3 id="airflow-data-verwerken-etl">Airflow — Data verwerken (ETL)<a class="headerlink" href="#airflow-data-verwerken-etl" title="Permanent link">&para;</a></h3>
-<div class="codehilite"><pre><span></span><code>http://localhost:8080
-</code></pre></div>
+<pre class="codehilite"><code>http://localhost:8080
+</code></pre>
 
 <p>Hier beheer je de dataverwerkingspipeline. Je ziet een overzicht van alle beschikbare DAGs (Directed Acyclic Graphs — de verwerkingsprocessen). Inloggen doe je met de standaard Airflow-credentials die bij de installatie zijn gegenereerd (standaard: <code>admin</code> / het gegenereerde wachtwoord, te vinden in <code>config/airflow.env</code> onder <code>SECURITY__ADMIN_PASSWORD</code>).</p>
 <h3 id="flask-app-data-inzien">Flask App — Data inzien<a class="headerlink" href="#flask-app-data-inzien" title="Permanent link">&para;</a></h3>
-<div class="codehilite"><pre><span></span><code>http://localhost:5052
-</code></pre></div>
+<pre class="codehilite"><code>http://localhost:5052
+</code></pre>
 
 <p>De webapplicatie voor het bekijken van de verwerkte data. Je bereikt haar via Apache, de voordeur op poort 5052: Apache serveert de verwerkte foto's en documenten onder <code>/archeomedia</code> rechtstreeks uit de uitvoermap en stuurt alle overige verzoeken door naar Flask. Flask zelf heeft geen hostpoort (alleen <code>make dev</code> opent poort 5051 om Flask rechtstreeks te debuggen; foto's blijven dan leeg). Na een succesvolle verwerking zie je hier een interactieve kaart met alle opgravingslocaties, en kun je doorklikken naar projecten, vondsten, artefacten, foto's en meer.</p>
 <p>Bij de eerste start maakt de Flask App een beheerder aan met gebruikersnaam <code>admin</code>. Het wachtwoord is bij de installatie gegenereerd en staat in <code>config/flask.env</code> onder <code>FLASK_ADMIN_PASSWORD</code>. Dit wachtwoord geldt alleen bij het aanmaken van de beheerder: wijzig je het later via het gebruikersmenu, dan blijft het nieuwe wachtwoord staan, ook na een herstart.</p>
@@ -424,8 +424,8 @@ De meest voorkomende oorzaak is onvoldoende geheugen in Docker Desktop.</p>
 <p>Een project kun je ook zonder locatie aanmaken of bewerken: laat Latitude en Longitude leeg. Het project staat dan niet op de kaart van de homepage.</p>
 <p><strong>Foto's kantelen.</strong> Staat een foto, tekening of pdf verkeerd om, gebruik dan <strong>Kantelen Linksom</strong> of <strong>Kantelen Rechtsom</strong>: als knop op de detailpagina van het bestand, of in de lijst via <strong>Actions</strong> voor alle aangevinkte bestanden. De webapplicatie draait het grote formaat in de uitvoermap (<code>data/&lt;omgeving&gt;/output/archeomedia</code>) en maakt het middelste formaat en de thumbnail opnieuw; van een pdf draaien alle pagina's. Een melding bovenaan de pagina zegt hoeveel bestanden gekanteld zijn en welke niet (een Word-document of een bestand dat in de uitvoermap ontbreekt). Flask heeft daarvoor schrijfrechten op de uitvoermap nodig; alle compose-bestanden koppelen die map schrijfbaar in de Flask-container. Het kantelen geldt alleen voor de verwerkte bestanden, niet voor de bronbestanden: een volledige cyclus maakt alle formaten opnieuw uit de bron en draait het kantelen dus terug, de incrementele cyclus alleen voor bronbestanden die gewijzigd zijn.</p>
 <h3 id="jupyter-lab-data-analyseren">Jupyter Lab — Data analyseren<a class="headerlink" href="#jupyter-lab-data-analyseren" title="Permanent link">&para;</a></h3>
-<div class="codehilite"><pre><span></span><code>http://localhost:8888
-</code></pre></div>
+<pre class="codehilite"><code>http://localhost:8888
+</code></pre>
 
 <p>Jupyter Lab voor eigen data-analyse. Er zijn ruim 20 notebooks beschikbaar met voorbeelden van data-exploratie en transformatie-validatie. Log in met het token uit <code>config/jupyter.env</code> (variabele <code>JUPYTER_PASSWORD</code>).</p>
 <h2 id="4-bestanden-klaarzetten">4. Bestanden klaarzetten<a class="headerlink" href="#4-bestanden-klaarzetten" title="Permanent link">&para;</a></h2>
@@ -438,15 +438,15 @@ De meest voorkomende oorzaak is onvoldoende geheugen in Docker Desktop.</p>
 <h3 id="eigen-data-klaarzetten">Eigen data klaarzetten<a class="headerlink" href="#eigen-data-klaarzetten" title="Permanent link">&para;</a></h3>
 <p>Gemeenten kunnen hun eigen opgravingsdata klaarzetten conform dezelfde directorystructuur als de Delftse pijplijn. De echte Delftse data is niet opgenomen in de repository, maar de synthetische voorbeelddata in <code>data/synthetic/data/</code> toont exact welke bestanden en structuren het platform verwacht.</p>
 <p>Eigen data verwerk je met <code>make delft</code> in plaats van <code>make app</code>. Dat gebruikt <code>docker-compose.delft.yml</code>, dat de brondata leest uit <code>data/delft/data/</code> en de configuratie uit <code>data/delft/wasstraat_config/</code>. De naam <code>delft</code> is historisch. Wil je een eigen omgevingsnaam, kopieer dan <code>docker-compose.delft.yml</code> en pas de paden aan. De lege mappen staan al in de repository. Elke subdirectory heeft een specifiek doel:</p>
-<div class="codehilite"><pre><span></span><code><span class="n">data</span><span class="o">/</span><span class="n">delft</span><span class="o">/</span><span class="n">data</span><span class="o">/</span>
-<span class="err">├──</span><span class="w"> </span><span class="n">projecten</span><span class="o">/</span><span class="w">           </span><span class="err">←</span><span class="w"> </span><span class="n">Projectdatabases</span><span class="w"> </span><span class="p">(.</span><span class="n">mdb</span><span class="o">/</span><span class="p">.</span><span class="n">accdb</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">foto</span><span class="p">'</span><span class="n">s</span>
-<span class="err">├──</span><span class="w"> </span><span class="n">projectenlijst</span><span class="o">/</span><span class="w">      </span><span class="err">←</span><span class="w"> </span><span class="n">Projectenlijst</span><span class="w"> </span><span class="n">administratie</span><span class="w"> </span><span class="p">(.</span><span class="n">mdb</span><span class="p">)</span>
-<span class="err">├──</span><span class="w"> </span><span class="n">magazijnlijst</span><span class="o">/</span><span class="w">       </span><span class="err">←</span><span class="w"> </span><span class="n">Depotregistratie</span><span class="w"> </span><span class="p">(.</span><span class="n">mdb</span><span class="p">)</span>
-<span class="err">├──</span><span class="w"> </span><span class="n">fotolijst</span><span class="o">/</span><span class="w">           </span><span class="err">←</span><span class="w"> </span><span class="n">Foto</span><span class="o">-</span><span class="n">metadata</span><span class="w"> </span><span class="p">(.</span><span class="n">mdb</span><span class="p">)</span>
-<span class="err">├──</span><span class="w"> </span><span class="n">monsterdatabase</span><span class="o">/</span><span class="w">     </span><span class="err">←</span><span class="w"> </span><span class="n">Monsterregistratie</span><span class="w"> </span><span class="p">(.</span><span class="n">mdb</span><span class="o">/</span><span class="p">.</span><span class="n">accdb</span><span class="p">)</span>
-<span class="err">├──</span><span class="w"> </span><span class="n">rapporten</span><span class="o">/</span><span class="w">           </span><span class="err">←</span><span class="w"> </span><span class="n">Rapportbestanden</span><span class="w"> </span><span class="p">(.</span><span class="n">mdb</span><span class="p">,</span><span class="w"> </span><span class="p">.</span><span class="n">pdf</span><span class="p">)</span>
-<span class="err">└──</span><span class="w"> </span><span class="n">referentietabellen</span><span class="o">/</span><span class="w">  </span><span class="err">←</span><span class="w"> </span><span class="n">ABR</span><span class="o">-</span><span class="n">codes</span><span class="w"> </span><span class="n">en</span><span class="w"> </span><span class="n">standaardtabellen</span><span class="w"> </span><span class="p">(.</span><span class="n">xlsx</span><span class="o">/</span><span class="p">.</span><span class="n">mdb</span><span class="p">)</span>
-</code></pre></div>
+<pre class="codehilite"><code>data/delft/data/
+├── projecten/           ← Projectdatabases (.mdb/.accdb) + foto's
+├── projectenlijst/      ← Projectenlijst administratie (.mdb)
+├── magazijnlijst/       ← Depotregistratie (.mdb)
+├── fotolijst/           ← Foto-metadata (.mdb)
+├── monsterdatabase/     ← Monsterregistratie (.mdb/.accdb)
+├── rapporten/           ← Rapportbestanden (.mdb, .pdf)
+└── referentietabellen/  ← ABR-codes en standaardtabellen (.xlsx/.mdb)
+</code></pre>
 
 <h3 id="wat-moet-waar">Wat moet waar?<a class="headerlink" href="#wat-moet-waar" title="Permanent link">&para;</a></h3>
 <table>
@@ -506,7 +506,7 @@ De meest voorkomende oorzaak is onvoldoende geheugen in Docker Desktop.</p>
 <h3 id="structuur-per-directory">Structuur per directory<a class="headerlink" href="#structuur-per-directory" title="Permanent link">&para;</a></h3>
 <h4 id="projecten-opgravingsdatabases">projecten/ — Opgravingsdatabases<a class="headerlink" href="#projecten-opgravingsdatabases" title="Permanent link">&para;</a></h4>
 <p>Per opgraving een subdirectory. De directorynaam bepaalt de projectcode (het eerste alfanumerieke deel). De Wasstraat doorzoekt recursief op <code>.mdb</code> en <code>.accdb</code> bestanden.</p>
-<div class="codehilite"><pre><span></span><code>projecten/
+<pre class="codehilite"><code>projecten/
 ├── DB008_Leeuwenstein/
 │   ├── C Database/
 │   │   └── DB008.mdb              ← Projectdatabase
@@ -519,7 +519,7 @@ De meest voorkomende oorzaak is onvoldoende geheugen in Docker Desktop.</p>
 └── DC001_Oude_Delft_96/
     └── C Database/
         └── DC001.mdb
-</code></pre></div>
+</code></pre>
 
 <p>Elke projectdatabase bevat tabellen zoals <code>VONDSTENLIJST</code>, <code>SPOREN</code>, <code>VULLINGEN</code>, <code>AARDEWERK 1</code>, <code>GLAS</code>, <code>METAAL</code>, <code>BEEN</code>, <code>TEKENINGEN</code>, <code>DIAOPGRAVING</code> etc. De exacte tabellen en kolomnamen worden geconfigureerd via <code>Wasstraat_Config_HarmonizeV3.xlsx</code>.</p>
 <h4 id="projectenlijst-projectoverzicht">projectenlijst/ — Projectoverzicht<a class="headerlink" href="#projectenlijst-projectoverzicht" title="Permanent link">&para;</a></h4>
@@ -658,9 +658,9 @@ De meest voorkomende oorzaak is onvoldoende geheugen in Docker Desktop.</p>
 <h2 id="5-wasstraat_config_harmonizev3-configureren">5. Wasstraat_Config_HarmonizeV3 configureren<a class="headerlink" href="#5-wasstraat_config_harmonizev3-configureren" title="Permanent link">&para;</a></h2>
 <p>Het bestand <code>Wasstraat_Config_HarmonizeV3.xlsx</code> is het hart van de dataverwerkingsconfiguratie. Het vertelt de Wasstraat hoe brondata uit diverse Access-databases moet worden omgezet naar een geüniformeerd datamodel.</p>
 <p>Het bestand bevindt zich in:</p>
-<div class="codehilite"><pre><span></span><code>data/delft/wasstraat_config/Wasstraat_Config_HarmonizeV3.xlsx      # voor make delft
+<pre class="codehilite"><code>data/delft/wasstraat_config/Wasstraat_Config_HarmonizeV3.xlsx      # voor make delft
 data/synthetic/wasstraat_config/Wasstraat_Config_HarmonizeV3.xlsx  # voor make app
-</code></pre></div>
+</code></pre>
 
 <p>De locatie wordt geconfigureerd via de omgevingsvariabele <code>AIRFLOW_WASSTRAAT_CONFIG</code> in <code>config/airflow.env</code>. De volledige beschrijving, ook van wat de Excel níet regelt, staat in <a href="../componenten/configuratie/#4-harmonisatie-excel">Configuratie: harmonisatie-Excel</a>.</p>
 <h3 id="structuur-van-het-configuratiebestand">Structuur van het configuratiebestand<a class="headerlink" href="#structuur-van-het-configuratiebestand" title="Permanent link">&para;</a></h3>
@@ -796,54 +796,54 @@ docker exec wasstraat_airflow mdb-export -H /input/projecten/&lt;bestand&gt;.mdb
 <p><strong>Speciaal</strong>: Monster_Botanie, Monster_Schelp, Fotobeschrijving, Fotokoppel</p>
 <h2 id="5b-correcties-configureren-optioneel">5b. Correcties configureren (optioneel)<a class="headerlink" href="#5b-correcties-configureren-optioneel" title="Permanent link">&para;</a></h2>
 <p>Naast de harmonisatie-Excel kan je een <code>correcties.yml</code> aanmaken in dezelfde <code>wasstraat_config/</code>-directory. Dit bestand bevat gemeente-specifieke datacorrecties en uitzonderingen die de pipeline automatisch toepast. Hieronder de secties in het kort; de volledige beschrijving met alle regels en het foutgedrag staat in <a href="../componenten/configuratie/#3-correctiesyml">Configuratie: correcties.yml</a>.</p>
-<div class="codehilite"><pre><span></span><code>data/&lt;omgeving&gt;/wasstraat_config/correcties.yml
-</code></pre></div>
+<pre class="codehilite"><code>data/&lt;omgeving&gt;/wasstraat_config/correcties.yml
+</code></pre>
 
 <h3 id="projectcode-correcties">Projectcode-correcties<a class="headerlink" href="#projectcode-correcties" title="Permanent link">&para;</a></h3>
 <p>Als na verwerking bepaalde projectcodes fout zijn (bijv. afkortingen of oude codes), kun je ze automatisch laten corrigeren:</p>
-<div class="codehilite"><pre><span></span><code><span class="nt">projectcode_correcties</span><span class="p">:</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">patroon</span><span class="p">:</span><span class="w"> </span><span class="s">"SCHE"</span>
-<span class="w">    </span><span class="nt">projectcode</span><span class="p">:</span><span class="w"> </span><span class="s">"DC039"</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">patroon</span><span class="p">:</span><span class="w"> </span><span class="s">"PPG"</span>
-<span class="w">    </span><span class="nt">projectcode</span><span class="p">:</span><span class="w"> </span><span class="s">"DC067"</span>
-</code></pre></div>
+<pre class="codehilite"><code class="language-yaml">projectcode_correcties:
+  - patroon: &quot;SCHE&quot;
+    projectcode: &quot;DC039&quot;
+  - patroon: &quot;PPG&quot;
+    projectcode: &quot;DC067&quot;
+</code></pre>
 
 <p>Elke regel matcht het regex-patroon op het <code>projectcd</code>-veld in alle verwerkte documenten en vervangt het door de opgegeven projectcode. Dit gebeurt na harmonisatie (Transform2).</p>
 <h3 id="brondata-correcties">Brondata-correcties<a class="headerlink" href="#brondata-correcties" title="Permanent link">&para;</a></h3>
 <p>Als bronbestanden afwijkende waarden bevatten die niet matchen met de projectenlijst, kun je die vóór harmonisatie laten corrigeren:</p>
-<div class="codehilite"><pre><span></span><code><span class="nt">brondata_correcties</span><span class="p">:</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">collectie</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">COLL_STAGING_MONSTER</span>
-<span class="w">    </span><span class="nt">zoek_veld</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">PROJECT</span>
-<span class="w">    </span><span class="nt">patroon</span><span class="p">:</span><span class="w"> </span><span class="s">"SCHE"</span>
-<span class="w">    </span><span class="nt">waarde</span><span class="p">:</span><span class="w"> </span><span class="s">"DC039"</span>
-</code></pre></div>
+<pre class="codehilite"><code class="language-yaml">brondata_correcties:
+  - collectie: COLL_STAGING_MONSTER
+    zoek_veld: PROJECT
+    patroon: &quot;SCHE&quot;
+    waarde: &quot;DC039&quot;
+</code></pre>
 
 <p><code>collectie</code> is de naam van een collectieconstante uit <code>shared/config.py</code> (zoals <code>COLL_STAGING_OUD</code> voor de opgravingsdatabases of <code>COLL_STAGING_MONSTER</code> voor de monsterdatabase), <code>zoek_veld</code> een kolomnaam uit de Access-tabel. Met <code>doel_veld</code> zet je de waarde in een ander veld dan waarop je zoekt.</p>
 <h3 id="paden-overslaan">Paden overslaan<a class="headerlink" href="#paden-overslaan" title="Permanent link">&para;</a></h3>
 <p>Staan er in de brondata kopieën van databases of foto's, bijvoorbeeld in een werkmap, dan leest de extractie die als aparte bron in en ontstaan dubbele vondsten en artefacten. Sla ze over met glob-patronen, relatief aan de invoermap (de projectmap):</p>
-<div class="codehilite"><pre><span></span><code><span class="nt">paden_overslaan</span><span class="p">:</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"DC024_Stadskantoor/K</span><span class="nv"> </span><span class="s">Overig/werkmap</span><span class="nv"> </span><span class="s">joris"</span><span class="w">   </span><span class="c1"># een map, met alles daaronder</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"**/oude</span><span class="nv"> </span><span class="s">kopie*"</span><span class="w">                              </span><span class="c1"># elke map die zo begint, op elk niveau</span>
-</code></pre></div>
+<pre class="codehilite"><code class="language-yaml">paden_overslaan:
+  - &quot;DC024_Stadskantoor/K Overig/werkmap joris&quot;   # een map, met alles daaronder
+  - &quot;**/oude kopie*&quot;                              # elke map die zo begint, op elk niveau
+</code></pre>
 
 <p>Elk overgeslagen bestand staat in het log van de taak en in het verwerkingsrapport.</p>
 <h3 id="overige-opties">Overige opties<a class="headerlink" href="#overige-opties" title="Permanent link">&para;</a></h3>
-<div class="codehilite"><pre><span></span><code><span class="c1"># Projecten waarvan artefacten niet worden samengevoegd</span>
-<span class="nt">artefact_niet_mergen</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">projectcodes</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">"DC112"</span><span class="p p-Indicator">]</span>
+<pre class="codehilite"><code class="language-yaml"># Projecten waarvan artefacten niet worden samengevoegd
+artefact_niet_mergen:
+  projectcodes: [&quot;DC112&quot;]
 
-<span class="c1"># Rapportcodes: rapporten herkennen aan het begin van de bestandsnaam</span>
-<span class="nt">rapportcode_prefixen</span><span class="p">:</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">prefix</span><span class="p">:</span><span class="w"> </span><span class="s">"DAR"</span>
-<span class="w">    </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="s">"archeologische_rapportage"</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">prefix</span><span class="p">:</span><span class="w"> </span><span class="s">"DAN"</span>
-<span class="w">    </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="s">"archeologische_notitie"</span>
+# Rapportcodes: rapporten herkennen aan het begin van de bestandsnaam
+rapportcode_prefixen:
+  - prefix: &quot;DAR&quot;
+    type: &quot;archeologische_rapportage&quot;
+  - prefix: &quot;DAN&quot;
+    type: &quot;archeologische_notitie&quot;
 
-<span class="c1"># Welke soort een tabel harmoniseert die de patronen van meer soorten in de Excel selecteren</span>
-<span class="c1"># (de run waarschuwt met tabel_dubbel_geselecteerd); leeg: door geen enkele soort</span>
-<span class="nt">harmonisatie_voorrang</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">AW1DeterminatiesJohan</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Aardewerk</span>
-</code></pre></div>
+# Welke soort een tabel harmoniseert die de patronen van meer soorten in de Excel selecteren
+# (de run waarschuwt met tabel_dubbel_geselecteerd); leeg: door geen enkele soort
+harmonisatie_voorrang:
+  AW1DeterminatiesJohan: Aardewerk
+</code></pre>
 
 <div class="admonition tip">
 <p class="admonition-title">Leeg bestand is prima</p>
@@ -947,14 +947,14 @@ docker exec wasstraat_airflow mdb-export -H /input/projecten/&lt;bestand&gt;.mdb
 <p>Draai toch de volledige cyclus als je de harmonisatie-Excel, <code>correcties.yml</code> of de code van de pipeline hebt aangepast. Ook de volledige cyclus houdt de bestaande sleutels en laat bruiklenen, partijen en conserveringsgegevens staan (zie <a href="../componenten/incrementeel-laden/#volledige-cyclus-gebruikersdata-en-stabiele-sleutels-issue-71">Volledige cyclus</a>). Zie <a href="../componenten/incrementeel-laden/#gebruik">Incrementeel laden</a> voor de details.</p>
 <h3 id="stapsgewijs-draaien-optioneel">Stapsgewijs draaien (optioneel)<a class="headerlink" href="#stapsgewijs-draaien-optioneel" title="Permanent link">&para;</a></h3>
 <p>Als je stap voor stap wilt werken, draai de individuele DAGs in deze volgorde:</p>
-<div class="codehilite"><pre><span></span><code><span class="mf">1.</span><span class="w"> </span><span class="n">Extract_only</span>
-<span class="mf">2.</span><span class="w"> </span><span class="n">DAG_Transform1_Harmonize_Only</span>
-<span class="mf">3.</span><span class="w"> </span><span class="n">DAG_Transform2_Enhance_Attributes_Only</span>
-<span class="mf">4.</span><span class="w"> </span><span class="n">DAG_Transform3_Keys_Only</span>
-<span class="mf">5.</span><span class="w"> </span><span class="n">DAG_Transform_Move_Only</span>
-<span class="mf">6.</span><span class="w"> </span><span class="n">DAG_Transform4_Refs_Only</span>
-<span class="mf">7.</span><span class="w"> </span><span class="n">DAG_Load_Only</span>
-</code></pre></div>
+<pre class="codehilite"><code>1. Extract_only
+2. DAG_Transform1_Harmonize_Only
+3. DAG_Transform2_Enhance_Attributes_Only
+4. DAG_Transform3_Keys_Only
+5. DAG_Transform_Move_Only
+6. DAG_Transform4_Refs_Only
+7. DAG_Load_Only
+</code></pre>
 
 <p>Dit is handig voor het debuggen van je configuratie: na stap 2 (Harmonize) kun je in MongoDB controleren of de veldnamen correct zijn geharmoniseerd. Deze losse DAG's hebben geen run-document en geen verwerkingsrapport en registreren de bronbestanden niet; draai daarna weer de volledige cyclus voordat je de incrementele cyclus gebruikt.</p>
 <h2 id="7-resultaten-bekijken">7. Resultaten bekijken<a class="headerlink" href="#7-resultaten-bekijken" title="Permanent link">&para;</a></h2>
@@ -971,39 +971,39 @@ docker exec wasstraat_airflow mdb-export -H /input/projecten/&lt;bestand&gt;.mdb
 </ul>
 <h3 id="tussenresultaten-in-mongodb">Tussenresultaten in MongoDB<a class="headerlink" href="#tussenresultaten-in-mongodb" title="Permanent link">&para;</a></h3>
 <p>Je kunt de ruwe en getransformeerde data direct in MongoDB bekijken:</p>
-<div class="codehilite"><pre><span></span><code><span class="c1"># Verbind met MongoDB</span>
-docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>-it<span class="w"> </span>wasstraat_mongo<span class="w"> </span>mongosh<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--username<span class="w"> </span>root<span class="w"> </span>--password<span class="w"> </span>&lt;wachtwoord&gt;<span class="w"> </span>--authenticationDatabase<span class="w"> </span>admin
+<pre class="codehilite"><code class="language-bash"># Verbind met MongoDB
+docker exec -it wasstraat_mongo mongosh \
+  --username root --password &lt;wachtwoord&gt; --authenticationDatabase admin
 
-<span class="c1"># Bekijk staging-data</span>
-use<span class="w"> </span>Arch_Staging
-db.getCollectionNames<span class="o">()</span>.forEach<span class="o">(</span><span class="nv">c</span><span class="w"> </span><span class="o">=</span>&gt;<span class="w"> </span>print<span class="o">(</span>c<span class="w"> </span>+<span class="w"> </span><span class="s2">": "</span><span class="w"> </span>+<span class="w"> </span>db<span class="o">[</span>c<span class="o">]</span>.countDocuments<span class="o">()))</span>
+# Bekijk staging-data
+use Arch_Staging
+db.getCollectionNames().forEach(c =&gt; print(c + &quot;: &quot; + db[c].countDocuments()))
 
-<span class="c1"># Bekijk getransformeerde data</span>
-use<span class="w"> </span>Arch_Analyse
-db.getCollectionNames<span class="o">()</span>.forEach<span class="o">(</span><span class="nv">c</span><span class="w"> </span><span class="o">=</span>&gt;<span class="w"> </span>print<span class="o">(</span>c<span class="w"> </span>+<span class="w"> </span><span class="s2">": "</span><span class="w"> </span>+<span class="w"> </span>db<span class="o">[</span>c<span class="o">]</span>.countDocuments<span class="o">()))</span>
-</code></pre></div>
+# Bekijk getransformeerde data
+use Arch_Analyse
+db.getCollectionNames().forEach(c =&gt; print(c + &quot;: &quot; + db[c].countDocuments()))
+</code></pre>
 
 <p>Het MongoDB-wachtwoord vind je in <code>config/mongo.env</code> (variabele <code>MONGO_INITDB_ROOT_PASSWORD</code>).</p>
 <h3 id="definitieve-data-in-postgresql">Definitieve data in PostgreSQL<a class="headerlink" href="#definitieve-data-in-postgresql" title="Permanent link">&para;</a></h3>
 <p>De uiteindelijke, gestructureerde data staat in PostgreSQL:</p>
-<div class="codehilite"><pre><span></span><code>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>-it<span class="w"> </span>-u<span class="w"> </span>postgres<span class="w"> </span>wasstraat_postgres<span class="w"> </span>psql<span class="w"> </span>-d<span class="w"> </span>flask
+<pre class="codehilite"><code class="language-bash">docker exec -it -u postgres wasstraat_postgres psql -d flask
 
---<span class="w"> </span>Overzicht<span class="w"> </span>van<span class="w"> </span>alle<span class="w"> </span>tabellen<span class="w"> </span>met<span class="w"> </span>aantallen
-SELECT<span class="w"> </span>schemaname,<span class="w"> </span>tablename<span class="w"> </span>FROM<span class="w"> </span>pg_tables<span class="w"> </span>WHERE<span class="w"> </span><span class="nv">schemaname</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">'public'</span><span class="w"> </span>ORDER<span class="w"> </span>BY<span class="w"> </span>tablename<span class="p">;</span>
+-- Overzicht van alle tabellen met aantallen
+SELECT schemaname, tablename FROM pg_tables WHERE schemaname = 'public' ORDER BY tablename;
 
---<span class="w"> </span>Aantal<span class="w"> </span>records<span class="w"> </span>per<span class="w"> </span>hoofdtabel
-SELECT<span class="w"> </span><span class="s1">'Def_Project'</span><span class="w"> </span>as<span class="w"> </span>tabel,<span class="w"> </span>count<span class="o">(</span>*<span class="o">)</span><span class="w"> </span>FROM<span class="w"> </span>public.<span class="s2">"Def_Project"</span>
-UNION<span class="w"> </span>ALL<span class="w"> </span>SELECT<span class="w"> </span><span class="s1">'Def_Vondst'</span>,<span class="w"> </span>count<span class="o">(</span>*<span class="o">)</span><span class="w"> </span>FROM<span class="w"> </span>public.<span class="s2">"Def_Vondst"</span>
-UNION<span class="w"> </span>ALL<span class="w"> </span>SELECT<span class="w"> </span><span class="s1">'Def_Artefact'</span>,<span class="w"> </span>count<span class="o">(</span>*<span class="o">)</span><span class="w"> </span>FROM<span class="w"> </span>public.<span class="s2">"Def_Artefact"</span>
-UNION<span class="w"> </span>ALL<span class="w"> </span>SELECT<span class="w"> </span><span class="s1">'Def_Spoor'</span>,<span class="w"> </span>count<span class="o">(</span>*<span class="o">)</span><span class="w"> </span>FROM<span class="w"> </span>public.<span class="s2">"Def_Spoor"</span><span class="p">;</span>
-</code></pre></div>
+-- Aantal records per hoofdtabel
+SELECT 'Def_Project' as tabel, count(*) FROM public.&quot;Def_Project&quot;
+UNION ALL SELECT 'Def_Vondst', count(*) FROM public.&quot;Def_Vondst&quot;
+UNION ALL SELECT 'Def_Artefact', count(*) FROM public.&quot;Def_Artefact&quot;
+UNION ALL SELECT 'Def_Spoor', count(*) FROM public.&quot;Def_Spoor&quot;;
+</code></pre>
 
 <h3 id="elasticsearch-zoekindex">Elasticsearch zoekindex<a class="headerlink" href="#elasticsearch-zoekindex" title="Permanent link">&para;</a></h3>
 <p>Controleer of de zoekindex is opgebouwd:</p>
-<div class="codehilite"><pre><span></span><code>curl<span class="w"> </span>-s<span class="w"> </span>http://localhost:9200/_cat/indices?v
-curl<span class="w"> </span>-s<span class="w"> </span>http://localhost:9200/_count<span class="w"> </span><span class="p">|</span><span class="w"> </span>python3<span class="w"> </span>-m<span class="w"> </span>json.tool
-</code></pre></div>
+<pre class="codehilite"><code class="language-bash">curl -s http://localhost:9200/_cat/indices?v
+curl -s http://localhost:9200/_count | python3 -m json.tool
+</code></pre>
 
 <h2 id="veelvoorkomende-problemen">Veelvoorkomende problemen<a class="headerlink" href="#veelvoorkomende-problemen" title="Permanent link">&para;</a></h2>
 <h3 id="containers-starten-niet-op">Containers starten niet op<a class="headerlink" href="#containers-starten-niet-op" title="Permanent link">&para;</a></h3>
@@ -1058,9 +1058,9 @@ curl<span class="w"> </span>-s<span class="w"> </span>http://localhost:9200/_cou
   
 </footer>
 <footer>
-    <div class="rst-footer-buttons" role="navigation" aria-label="Footernavigatie">
-        <a href=".." class="btn btn-neutral float-left" title="Home"><span class="icon icon-circle-arrow-left"></span> Vorige</a>
-        <a href="../deployment/installatie-met-images/" class="btn btn-neutral float-right" title="Installatie met images">Volgende <span class="icon icon-circle-arrow-right"></span></a>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href=".." class="btn btn-neutral float-left" title="Home"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../deployment/installatie-met-images/" class="btn btn-neutral float-right" title="Installatie met images">Next <span class="icon icon-circle-arrow-right"></span></a>
     </div>
 
   <hr/>
@@ -1070,7 +1070,7 @@ curl<span class="w"> </span>-s<span class="w"> </span>http://localhost:9200/_cou
       <p>© E-Space — Arjen Brienen. Uitgegeven onder de EUPL v1.2 licentie.</p>
   </div>
 
-  Gemaakt met <a href="https://www.mkdocs.org/">MkDocs</a> met behulp van een <a href="https://github.com/readthedocs/sphinx_rtd_theme">Thema</a> geleverd door <a href="https://readthedocs.org">Read the Docs</a>.
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
 </footer>
           
 
@@ -1081,14 +1081,14 @@ curl<span class="w"> </span>-s<span class="w"> </span>http://localhost:9200/_cou
 
   </div>
 
-  <div class="rst-versions" role="note" aria-label="Versies">
+  <div class="rst-versions" role="note" aria-label="Versions">
   <span class="rst-current-version" data-toggle="rst-current-version">
     
     
-      <span><a href=".." style="color: #fcfcfc">&laquo; Vorige</a></span>
+      <span><a href=".." style="color: #fcfcfc">&laquo; Previous</a></span>
     
     
-      <span><a href="../deployment/installatie-met-images/" style="color: #fcfcfc">Volgende &raquo;</a></span>
+      <span><a href="../deployment/installatie-met-images/" style="color: #fcfcfc">Next &raquo;</a></span>
     
   </span>
 </div>

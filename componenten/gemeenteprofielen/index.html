@@ -148,12 +148,12 @@
           <a href="../.." class="icon icon-home"> Wasstraat Archeologische Data
         </a><div role="search">
   <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
-      <input type="text" name="q" placeholder="Doorzoek documentatie" aria-label="Doorzoek documentatie" title="Typ hier uw zoekterm" />
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
   </form>
 </div>
       </div>
 
-      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigatiemenu">
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <ul>
                 <li class="toctree-l1"><a class="reference internal" href="../..">Home</a>
                 </li>
@@ -290,7 +290,7 @@
     </nav>
 
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
-      <nav class="wy-nav-top" role="navigation" aria-label="Mobiel navigatiemenu">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
           <a href="../..">Wasstraat Archeologische Data</a>
         
@@ -298,7 +298,7 @@
       <div class="wy-nav-content">
         <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
   <ul class="wy-breadcrumbs">
-    <li><a href="../.." class="icon icon-home" aria-label="Documentatie"></a></li>
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
           <li class="breadcrumb-item">Componenten</li>
       <li class="breadcrumb-item active">Gemeenteprofielen</li>
     <li class="wy-breadcrumbs-aside">
@@ -318,24 +318,24 @@
 <li><strong>Database-entiteiten</strong> (Project, Put, Vlak, Spoor, Vondst, Artefact, Monster, Doos, …) — normalisatie en identificatie van velden die uit de harmonisatie komen</li>
 </ul>
 <h2 id="structuur">Structuur<a class="headerlink" href="#structuur" title="Permanent link">&para;</a></h2>
-<div class="codehilite"><pre><span></span><code>airflow_app/dags/wasstraat/profielen/
+<pre class="codehilite"><code>airflow_app/dags/wasstraat/profielen/
 ├── __init__.py        # get_profiel() + reset_profiel()
 ├── conventie.py       # Basisprofiel: directe velden, geen transformatie
 ├── delft.py           # Delft-specifiek profiel
 └── voorbeeld.py       # PoC profiel: erft ConventieProfiel ongewijzigd
-</code></pre></div>
+</code></pre>
 
 <h2 id="profielselectie">Profielselectie<a class="headerlink" href="#profielselectie" title="Permanent link">&para;</a></h2>
 <p>Het actieve profiel wordt bepaald door de omgevingsvariabele <code>WASSTRAAT_GEMEENTE</code>:</p>
-<div class="codehilite"><pre><span></span><code><span class="nv">WASSTRAAT_GEMEENTE</span><span class="o">=</span>delft<span class="w">    </span><span class="c1"># standaard als niet ingesteld</span>
-<span class="nv">WASSTRAAT_GEMEENTE</span><span class="o">=</span>voorbeeld
-</code></pre></div>
+<pre class="codehilite"><code class="language-bash">WASSTRAAT_GEMEENTE=delft    # standaard als niet ingesteld
+WASSTRAAT_GEMEENTE=voorbeeld
+</code></pre>
 
 <p>De <code>get_profiel()</code> functie laadt het profiel éénmalig en cachet het resultaat:</p>
-<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">wasstraat.profielen</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_profiel</span>
+<pre class="codehilite"><code class="language-python">from wasstraat.profielen import get_profiel
 
-<span class="n">profiel</span> <span class="o">=</span> <span class="n">get_profiel</span><span class="p">()</span>   <span class="c1"># geeft altijd hetzelfde object terug</span>
-</code></pre></div>
+profiel = get_profiel()   # geeft altijd hetzelfde object terug
+</code></pre>
 
 <p>Als <code>WASSTRAAT_GEMEENTE</code> niet is ingesteld of leeg is, wordt <code>delft</code> gebruikt. Hoofdletters en spaties maken niet uit. Een andere waarde dan <code>delft</code> of <code>voorbeeld</code> (de sleutels van <code>PROFIELEN</code> in <code>profielen/__init__.py</code>) geeft de fout <code>Onbekend gemeenteprofiel: '&lt;waarde&gt;' (WASSTRAAT_GEMEENTE). Bekende profielen: delft, voorbeeld.</code> (<code>ConventieProfiel</code> is de basisklasse en niet zelf te kiezen; <code>voorbeeld</code> gedraagt zich precies zo).</p>
 <p><strong>Controle bij de start van een run.</strong> De taak <code>Start_Run</code> van de volledige cyclus, de incrementele cyclus en <code>DAG_Load_Only</code> laadt het profiel direct na het aanmaken van het run-document (<code>verwerkingsrun.startRunEnLaadProfiel</code>). Is het profiel onbekend, dan stopt de run daar als cruciale fout: een melding <code>profiel_onbekend</code> (niveau fout) in het run-document, status <code>mislukt</code>, en het <a href="../verwerkingsrapport/">verwerkingsrapport</a> noemt <code>Start_Run</code> als de taak die de run stopte. Er is dan nog niets ingelezen of gewijzigd; stel <code>WASSTRAAT_GEMEENTE</code> goed in en start opnieuw. Tot issue 87 merkte pas Transform 1 (<code>ParseFotobestanden</code>) of Transform 2 de fout op, na de extractie, en telde Transform 2 elk document als verwerkingsfout. In de losse DAG's zonder <code>Start_Run</code> laden <code>ParseFotobestanden</code> en <code>Enhance_All_Attributes</code> het profiel nu één keer vóór de documenten, zodat ook die taken direct falen.</p>
@@ -360,6 +360,14 @@
 <td>Live installatie</td>
 <td><code>WASSTRAAT_GEMEENTE</code> in <code>deploy/.env</code></td>
 </tr>
+<tr>
+<td>Synthetische testomgeving (<code>make integration</code>)</td>
+<td><code>GEMEENTE=&lt;profiel&gt;</code> bij het make-doel, bijvoorbeeld <code>make integration GEMEENTE=voorbeeld</code>; standaard <code>delft</code> (zie <a href="../../testen/#een-ander-gemeenteprofiel">Testen</a>)</td>
+</tr>
+<tr>
+<td>Delftse testomgeving (<code>make integration-delft</code>)</td>
+<td>Vast op <code>delft</code> in <code>docker-compose.delft-test.yml</code></td>
+</tr>
 </tbody>
 </table>
 <p>Een <code>environment:</code>-regel in het compose-bestand gaat vóór dezelfde variabele in <code>config/airflow.env</code>. Het profiel wordt alleen door Airflow gebruikt (Transform 1 en 2, en de controle in <code>Start_Run</code>). Maak na een wijziging de Airflow-container opnieuw aan en draai de volledige cyclus. Zie ook <a href="../configuratie/#5-gemeenteprofiel">Configuratie</a>.</p>
@@ -367,31 +375,31 @@
 <p><code>ConventieProfiel</code> is de basisklasse waarvan alle profielen erven. Het implementeert een standaard-aanpak: velden uit de brondata worden direct overgenomen zonder transformatie.</p>
 <h3 id="identificerende_velden">IDENTIFICERENDE_VELDEN<a class="headerlink" href="#identificerende_velden" title="Permanent link">&para;</a></h3>
 <p>De klasse documenteert expliciet welke velden elke entiteit identificeren:</p>
-<div class="codehilite"><pre><span></span><code><span class="n">IDENTIFICERENDE_VELDEN</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s1">'Project'</span><span class="p">:</span>     <span class="p">{</span><span class="s1">'verplicht'</span><span class="p">:</span> <span class="p">[</span><span class="s1">'projectcd'</span><span class="p">],</span>                                         <span class="s1">'integer'</span><span class="p">:</span> <span class="p">[]},</span>
-    <span class="s1">'Put'</span><span class="p">:</span>         <span class="p">{</span><span class="s1">'verplicht'</span><span class="p">:</span> <span class="p">[</span><span class="s1">'projectcd'</span><span class="p">,</span> <span class="s1">'putnr'</span><span class="p">],</span>                                <span class="s1">'integer'</span><span class="p">:</span> <span class="p">[</span><span class="s1">'putnr'</span><span class="p">]},</span>
-    <span class="s1">'Vlak'</span><span class="p">:</span>        <span class="p">{</span><span class="s1">'verplicht'</span><span class="p">:</span> <span class="p">[</span><span class="s1">'projectcd'</span><span class="p">,</span> <span class="s1">'vlaknr'</span><span class="p">],</span>       <span class="s1">'optioneel'</span><span class="p">:</span> <span class="p">[</span><span class="s1">'putnr'</span><span class="p">],</span> <span class="s1">'integer'</span><span class="p">:</span> <span class="p">[</span><span class="s1">'putnr'</span><span class="p">,</span> <span class="s1">'vlaknr'</span><span class="p">]},</span>
-    <span class="s1">'Spoor'</span><span class="p">:</span>       <span class="p">{</span><span class="s1">'verplicht'</span><span class="p">:</span> <span class="p">[</span><span class="s1">'projectcd'</span><span class="p">,</span> <span class="s1">'spoornr'</span><span class="p">],</span>      <span class="s1">'optioneel'</span><span class="p">:</span> <span class="p">[</span><span class="s1">'putnr'</span><span class="p">,</span> <span class="s1">'vlaknr'</span><span class="p">],</span> <span class="s1">'integer'</span><span class="p">:</span> <span class="p">[</span><span class="s1">'putnr'</span><span class="p">,</span> <span class="s1">'vlaknr'</span><span class="p">,</span> <span class="s1">'spoornr'</span><span class="p">]},</span>
-    <span class="s1">'Vondst'</span><span class="p">:</span>      <span class="p">{</span><span class="s1">'verplicht'</span><span class="p">:</span> <span class="p">[</span><span class="s1">'projectcd'</span><span class="p">,</span> <span class="s1">'vondstnr'</span><span class="p">],</span>     <span class="s1">'optioneel'</span><span class="p">:</span> <span class="p">[</span><span class="s1">'putnr'</span><span class="p">],</span> <span class="s1">'integer'</span><span class="p">:</span> <span class="p">[</span><span class="s1">'putnr'</span><span class="p">,</span> <span class="s1">'vondstnr'</span><span class="p">]},</span>
-    <span class="s1">'Artefact'</span><span class="p">:</span>    <span class="p">{</span><span class="s1">'verplicht'</span><span class="p">:</span> <span class="p">[</span><span class="s1">'projectcd'</span><span class="p">,</span> <span class="s1">'artefactnr'</span><span class="p">],</span>   <span class="s1">'optioneel'</span><span class="p">:</span> <span class="p">[</span><span class="s1">'putnr'</span><span class="p">,</span> <span class="s1">'vondstnr'</span><span class="p">,</span> <span class="s1">'splitid'</span><span class="p">],</span> <span class="s1">'integer'</span><span class="p">:</span> <span class="p">[</span><span class="s1">'putnr'</span><span class="p">,</span> <span class="s1">'vondstnr'</span><span class="p">,</span> <span class="s1">'artefactnr'</span><span class="p">,</span> <span class="s1">'subnr'</span><span class="p">]},</span>
-    <span class="s1">'Monster'</span><span class="p">:</span>     <span class="p">{</span><span class="s1">'verplicht'</span><span class="p">:</span> <span class="p">[</span><span class="s1">'projectcd'</span><span class="p">,</span> <span class="s1">'monstercd'</span><span class="p">],</span>                            <span class="s1">'integer'</span><span class="p">:</span> <span class="p">[]},</span>
-    <span class="s1">'Doos'</span><span class="p">:</span>        <span class="p">{</span><span class="s1">'verplicht'</span><span class="p">:</span> <span class="p">[</span><span class="s1">'doosnr'</span><span class="p">],</span>                    <span class="s1">'optioneel'</span><span class="p">:</span> <span class="p">[</span><span class="s1">'projectcd'</span><span class="p">],</span>           <span class="s1">'integer'</span><span class="p">:</span> <span class="p">[</span><span class="s1">'doosnr'</span><span class="p">]},</span>
-    <span class="s1">'Foto'</span><span class="p">:</span>        <span class="p">{</span><span class="s1">'verplicht'</span><span class="p">:</span> <span class="p">[</span><span class="s1">'projectcd'</span><span class="p">],</span>                 <span class="s1">'optioneel'</span><span class="p">:</span> <span class="p">[</span><span class="s1">'putnr'</span><span class="p">,</span> <span class="s1">'vondstnr'</span><span class="p">,</span> <span class="s1">'subnr'</span><span class="p">,</span> <span class="s1">'fotonr'</span><span class="p">],</span> <span class="s1">'integer'</span><span class="p">:</span> <span class="p">[</span><span class="s1">'putnr'</span><span class="p">,</span> <span class="s1">'vondstnr'</span><span class="p">,</span> <span class="s1">'subnr'</span><span class="p">,</span> <span class="s1">'fotonr'</span><span class="p">]},</span>
-    <span class="s1">'Tekening'</span><span class="p">:</span>    <span class="p">{</span><span class="s1">'verplicht'</span><span class="p">:</span> <span class="p">[</span><span class="s1">'projectcd'</span><span class="p">,</span> <span class="s1">'tekeningcd'</span><span class="p">],</span>                           <span class="s1">'integer'</span><span class="p">:</span> <span class="p">[]},</span>
-    <span class="s1">'Rapport'</span><span class="p">:</span>     <span class="p">{</span><span class="s1">'verplicht'</span><span class="p">:</span> <span class="p">[</span><span class="s1">'rapportnr'</span><span class="p">],</span>                 <span class="s1">'optioneel'</span><span class="p">:</span> <span class="p">[</span><span class="s1">'projectcd'</span><span class="p">],</span>           <span class="s1">'integer'</span><span class="p">:</span> <span class="p">[]},</span>
-    <span class="s1">'Standplaats'</span><span class="p">:</span> <span class="p">{</span><span class="s1">'verplicht'</span><span class="p">:</span> <span class="p">[</span><span class="s1">'stelling'</span><span class="p">],</span>                  <span class="s1">'optioneel'</span><span class="p">:</span> <span class="p">[</span><span class="s1">'vaknr'</span><span class="p">,</span> <span class="s1">'volgletter'</span><span class="p">],</span> <span class="s1">'integer'</span><span class="p">:</span> <span class="p">[]},</span>
-<span class="p">}</span>
-</code></pre></div>
+<pre class="codehilite"><code class="language-python">IDENTIFICERENDE_VELDEN = {
+    'Project':     {'verplicht': ['projectcd'],                                         'integer': []},
+    'Put':         {'verplicht': ['projectcd', 'putnr'],                                'integer': ['putnr']},
+    'Vlak':        {'verplicht': ['projectcd', 'vlaknr'],       'optioneel': ['putnr'], 'integer': ['putnr', 'vlaknr']},
+    'Spoor':       {'verplicht': ['projectcd', 'spoornr'],      'optioneel': ['putnr', 'vlaknr'], 'integer': ['putnr', 'vlaknr', 'spoornr']},
+    'Vondst':      {'verplicht': ['projectcd', 'vondstnr'],     'optioneel': ['putnr'], 'integer': ['putnr', 'vondstnr']},
+    'Artefact':    {'verplicht': ['projectcd', 'artefactnr'],   'optioneel': ['putnr', 'vondstnr', 'splitid'], 'integer': ['putnr', 'vondstnr', 'artefactnr', 'subnr']},
+    'Monster':     {'verplicht': ['projectcd', 'monstercd'],                            'integer': []},
+    'Doos':        {'verplicht': ['doosnr'],                    'optioneel': ['projectcd'],           'integer': ['doosnr']},
+    'Foto':        {'verplicht': ['projectcd'],                 'optioneel': ['putnr', 'vondstnr', 'subnr', 'fotonr'], 'integer': ['putnr', 'vondstnr', 'subnr', 'fotonr']},
+    'Tekening':    {'verplicht': ['projectcd', 'tekeningcd'],                           'integer': []},
+    'Rapport':     {'verplicht': ['rapportnr'],                 'optioneel': ['projectcd'],           'integer': []},
+    'Standplaats': {'verplicht': ['stelling'],                  'optioneel': ['vaknr', 'volgletter'], 'integer': []},
+}
+</code></pre>
 
 <h3 id="dispatcher-identificeer">Dispatcher: identificeer()<a class="headerlink" href="#dispatcher-identificeer" title="Permanent link">&para;</a></h3>
 <p>De centrale methode <code>identificeer(soort, doc)</code> delegeert naar de juiste per-entiteit methode:</p>
-<div class="codehilite"><pre><span></span><code><span class="n">profiel</span><span class="o">.</span><span class="n">identificeer</span><span class="p">(</span><span class="s1">'Put'</span><span class="p">,</span> <span class="n">doc</span><span class="p">)</span>       <span class="c1"># → identificeer_put(doc)</span>
-<span class="n">profiel</span><span class="o">.</span><span class="n">identificeer</span><span class="p">(</span><span class="s1">'Artefact'</span><span class="p">,</span> <span class="n">doc</span><span class="p">)</span>  <span class="c1"># → identificeer_artefact(doc)</span>
-<span class="n">profiel</span><span class="o">.</span><span class="n">identificeer</span><span class="p">(</span><span class="s1">'Vondst'</span><span class="p">,</span> <span class="n">doc</span><span class="p">)</span>    <span class="c1"># → identificeer_vondst(doc)</span>
-<span class="n">profiel</span><span class="o">.</span><span class="n">identificeer</span><span class="p">(</span><span class="s1">'Foto'</span><span class="p">,</span> <span class="n">doc</span><span class="p">)</span>      <span class="c1"># → identificeer_foto_db(doc)</span>
-<span class="n">profiel</span><span class="o">.</span><span class="n">identificeer</span><span class="p">(</span><span class="s1">'Tekening'</span><span class="p">,</span> <span class="n">doc</span><span class="p">)</span>  <span class="c1"># → identificeer_tekening_db(doc)</span>
-<span class="n">profiel</span><span class="o">.</span><span class="n">identificeer</span><span class="p">(</span><span class="s1">'Rapport'</span><span class="p">,</span> <span class="n">doc</span><span class="p">)</span>   <span class="c1"># → identificeer_rapport_db(doc)</span>
-</code></pre></div>
+<pre class="codehilite"><code class="language-python">profiel.identificeer('Put', doc)       # → identificeer_put(doc)
+profiel.identificeer('Artefact', doc)  # → identificeer_artefact(doc)
+profiel.identificeer('Vondst', doc)    # → identificeer_vondst(doc)
+profiel.identificeer('Foto', doc)      # → identificeer_foto_db(doc)
+profiel.identificeer('Tekening', doc)  # → identificeer_tekening_db(doc)
+profiel.identificeer('Rapport', doc)   # → identificeer_rapport_db(doc)
+</code></pre>
 
 <p>Bij een onbekend soort wordt de standaard-methode gebruikt: normaliseer <code>projectcd</code> + converteer integer-velden.</p>
 <p>Voor de bestands-entiteiten (<code>const.BESTANDSOORTEN</code>: Foto, Tekening, Rapport) kiest de dispatcher de <code>_db</code>-variant. De methode zonder <code>_db</code> is voor die soorten de bestandsnaam-parser met twee argumenten (<code>identificeer_foto(doc, projectcd)</code>), die alleen <code>parseFotobestanden()</code> aanroept. Tot oktober 2026 koos de dispatcher voor <code>Foto</code> die parser; elke foto gaf dan een <code>TypeError</code> in Transform 2, hield zijn ongenormaliseerde projectcode (<code>DB34</code> in plaats van <code>DB034</code>) en tekstnummers, en werd in Transform 4 nooit aan een artefact gekoppeld.</p>
@@ -460,54 +468,54 @@
 </tbody>
 </table>
 <h3 id="normalisatie-helpers">Normalisatie-helpers<a class="headerlink" href="#normalisatie-helpers" title="Permanent link">&para;</a></h3>
-<div class="codehilite"><pre><span></span><code><span class="n">profiel</span><span class="o">.</span><span class="n">normaliseer_projectcode</span><span class="p">(</span><span class="s2">"dc016"</span><span class="p">)</span>    <span class="c1"># standaard: passthrough → "dc016"</span>
-<span class="n">profiel</span><span class="o">.</span><span class="n">normaliseer_tekeningcode</span><span class="p">(</span><span class="s2">"B2"</span><span class="p">)</span>      <span class="c1"># standaard: passthrough → "B2"</span>
-<span class="n">profiel</span><span class="o">.</span><span class="n">normaliseer_rapportnr</span><span class="p">(</span><span class="s2">"DAR123"</span><span class="p">,</span> <span class="p">{})</span> <span class="c1"># standaard: passthrough → "DAR123"</span>
-<span class="n">profiel</span><span class="o">.</span><span class="n">detecteer_artefactsoort</span><span class="p">(</span><span class="s2">"/fotos/aardewerk/test.jpg"</span><span class="p">)</span>  <span class="c1"># → const.ARTF_AARDEWERK</span>
-</code></pre></div>
+<pre class="codehilite"><code class="language-python">profiel.normaliseer_projectcode(&quot;dc016&quot;)    # standaard: passthrough → &quot;dc016&quot;
+profiel.normaliseer_tekeningcode(&quot;B2&quot;)      # standaard: passthrough → &quot;B2&quot;
+profiel.normaliseer_rapportnr(&quot;DAR123&quot;, {}) # standaard: passthrough → &quot;DAR123&quot;
+profiel.detecteer_artefactsoort(&quot;/fotos/aardewerk/test.jpg&quot;)  # → const.ARTF_AARDEWERK
+</code></pre>
 
 <p><code>detecteer_artefactsoort()</code> is gemeenteonafhankelijk en matcht op keywords in het bestandspad (<code>aardewerk</code>, <code>glas</code>, <code>metaal</code>, <code>bot</code>, etc.).</p>
 <h2 id="delftprofiel">DelftProfiel<a class="headerlink" href="#delftprofiel" title="Permanent link">&para;</a></h2>
 <p><code>DelftProfiel</code> erft van <code>ConventieProfiel</code> en overschrijft de Delft-specifieke methoden.</p>
 <h3 id="projectcode-normalisatie">Projectcode-normalisatie<a class="headerlink" href="#projectcode-normalisatie" title="Permanent link">&para;</a></h3>
 <p>Delftse projectcodes volgen het patroon <code>[2 letters][3 cijfers]</code>, bijv. <code>DC016</code>, <code>DB034</code>:</p>
-<div class="codehilite"><pre><span></span><code><span class="n">profiel</span><span class="o">.</span><span class="n">normaliseer_projectcode</span><span class="p">(</span><span class="s2">"dc-16"</span><span class="p">)</span>  <span class="c1"># → "DC016"</span>
-<span class="n">profiel</span><span class="o">.</span><span class="n">normaliseer_projectcode</span><span class="p">(</span><span class="s2">"DC016"</span><span class="p">)</span>  <span class="c1"># → "DC016"</span>
-<span class="n">profiel</span><span class="o">.</span><span class="n">normaliseer_projectcode</span><span class="p">(</span><span class="s2">"dc16"</span><span class="p">)</span>   <span class="c1"># → "DC016"</span>
-<span class="n">profiel</span><span class="o">.</span><span class="n">normaliseer_projectcode</span><span class="p">(</span><span class="s2">"DB"</span><span class="p">)</span>     <span class="c1"># → "DB"  (geen cijfers → geen padding)</span>
-</code></pre></div>
+<pre class="codehilite"><code class="language-python">profiel.normaliseer_projectcode(&quot;dc-16&quot;)  # → &quot;DC016&quot;
+profiel.normaliseer_projectcode(&quot;DC016&quot;)  # → &quot;DC016&quot;
+profiel.normaliseer_projectcode(&quot;dc16&quot;)   # → &quot;DC016&quot;
+profiel.normaliseer_projectcode(&quot;DB&quot;)     # → &quot;DB&quot;  (geen cijfers → geen padding)
+</code></pre>
 
 <h3 id="tekeningcode-normalisatie">Tekeningcode-normalisatie<a class="headerlink" href="#tekeningcode-normalisatie" title="Permanent link">&para;</a></h3>
 <p>Tekeningcodes volgen het patroon <code>[letter][3 cijfers]</code>:</p>
-<div class="codehilite"><pre><span></span><code><span class="n">profiel</span><span class="o">.</span><span class="n">normaliseer_tekeningcode</span><span class="p">(</span><span class="s2">"B2"</span><span class="p">)</span>    <span class="c1"># → "B002"</span>
-<span class="n">profiel</span><span class="o">.</span><span class="n">normaliseer_tekeningcode</span><span class="p">(</span><span class="s2">"A15"</span><span class="p">)</span>   <span class="c1"># → "A015"</span>
-<span class="n">profiel</span><span class="o">.</span><span class="n">normaliseer_tekeningcode</span><span class="p">(</span><span class="s2">"B002"</span><span class="p">)</span>  <span class="c1"># → "B002"</span>
-<span class="n">profiel</span><span class="o">.</span><span class="n">normaliseer_tekeningcode</span><span class="p">(</span><span class="s2">"tekst"</span><span class="p">)</span> <span class="c1"># → "tekst"  (geen match → passthrough)</span>
-</code></pre></div>
+<pre class="codehilite"><code class="language-python">profiel.normaliseer_tekeningcode(&quot;B2&quot;)    # → &quot;B002&quot;
+profiel.normaliseer_tekeningcode(&quot;A15&quot;)   # → &quot;A015&quot;
+profiel.normaliseer_tekeningcode(&quot;B002&quot;)  # → &quot;B002&quot;
+profiel.normaliseer_tekeningcode(&quot;tekst&quot;) # → &quot;tekst&quot;  (geen match → passthrough)
+</code></pre>
 
 <h3 id="rapportnummer-normalisatie">Rapportnummer-normalisatie<a class="headerlink" href="#rapportnummer-normalisatie" title="Permanent link">&para;</a></h3>
 <p>Delftse rapportnummers gebruiken de prefixen <code>DAR</code> (Delft Archeologisch Rapport) of <code>DAN</code> (Delft Archeologische Notitie):</p>
-<div class="codehilite"><pre><span></span><code><span class="n">profiel</span><span class="o">.</span><span class="n">normaliseer_rapportnr</span><span class="p">(</span><span class="s2">"DAR 123"</span><span class="p">,</span> <span class="p">{})</span>           <span class="c1"># → "DAR123"</span>
-<span class="n">profiel</span><span class="o">.</span><span class="n">normaliseer_rapportnr</span><span class="p">(</span><span class="s2">"45"</span><span class="p">,</span> <span class="p">{</span><span class="s2">"DARnr"</span><span class="p">:</span> <span class="mi">45</span><span class="p">})</span>     <span class="c1"># → "DAR045"</span>
-<span class="n">profiel</span><span class="o">.</span><span class="n">normaliseer_rapportnr</span><span class="p">(</span><span class="s2">"7"</span><span class="p">,</span> <span class="p">{</span><span class="s2">"DANnr"</span><span class="p">:</span> <span class="mi">7</span><span class="p">})</span>       <span class="c1"># → "DAN007"</span>
-<span class="n">profiel</span><span class="o">.</span><span class="n">normaliseer_rapportnr</span><span class="p">(</span><span class="s2">"123"</span><span class="p">,</span> <span class="p">{})</span>               <span class="c1"># → ""  (prefix onbekend)</span>
-</code></pre></div>
+<pre class="codehilite"><code class="language-python">profiel.normaliseer_rapportnr(&quot;DAR 123&quot;, {})           # → &quot;DAR123&quot;
+profiel.normaliseer_rapportnr(&quot;45&quot;, {&quot;DARnr&quot;: 45})     # → &quot;DAR045&quot;
+profiel.normaliseer_rapportnr(&quot;7&quot;, {&quot;DANnr&quot;: 7})       # → &quot;DAN007&quot;
+profiel.normaliseer_rapportnr(&quot;123&quot;, {})               # → &quot;&quot;  (prefix onbekend)
+</code></pre>
 
 <h3 id="bestandsnaam-parsing-fotos">Bestandsnaam-parsing: foto's<a class="headerlink" href="#bestandsnaam-parsing-fotos" title="Permanent link">&para;</a></h3>
 <p>Het DelftProfiel herkent twee patronen:</p>
 <p><strong>Objectfoto's</strong> (<code>_H</code> patroon):</p>
-<div class="codehilite"><pre><span></span><code>DC001_P3_H456_789_002.jpg
+<pre class="codehilite"><code>DC001_P3_H456_789_002.jpg
   │    │   │   │   └── fotonr: 2
   │    │   │   └────── subnr: 789
   │    │   └────────── vondstnr: 456
   │    └────────────── putnr: 3
   └─────────────────── projectcd: DC001
-</code></pre></div>
+</code></pre>
 
 <p><strong>Projectfoto's</strong> (<code>F</code>/<code>G</code> patroon):</p>
-<div class="codehilite"><pre><span></span><code>DC001_F001.jpg   → bestandsoort: FOTO_SFEERFOTO
+<pre class="codehilite"><code>DC001_F001.jpg   → bestandsoort: FOTO_SFEERFOTO
 DC001_G002.jpg   → bestandsoort: FOTO_OPGRAVINGSFOTO
-</code></pre></div>
+</code></pre>
 
 <h3 id="bestandsnaam-parsing-tekeningen">Bestandsnaam-parsing: tekeningen<a class="headerlink" href="#bestandsnaam-parsing-tekeningen" title="Permanent link">&para;</a></h3>
 <p>Tekeningtypes worden bepaald door de letter in de bestandsnaam:</p>
@@ -559,84 +567,90 @@ DC001_G002.jpg   → bestandsoort: FOTO_OPGRAVINGSFOTO
 </ul>
 <h3 id="bestands-entiteiten-vanuit-de-database">Bestands-entiteiten vanuit de database<a class="headerlink" href="#bestands-entiteiten-vanuit-de-database" title="Permanent link">&para;</a></h3>
 <p>Voor Foto-, Tekening- en Rapport-records in Transform 2 (uit de harmonisatie én uit <code>parseFotobestanden()</code>) kiest de dispatcher de <code>_db</code>-varianten. Het DelftProfiel overschrijft er twee:</p>
-<div class="codehilite"><pre><span></span><code><span class="n">doc</span> <span class="o">=</span> <span class="n">profiel</span><span class="o">.</span><span class="n">identificeer</span><span class="p">(</span><span class="s1">'Foto'</span><span class="p">,</span> <span class="n">doc</span><span class="p">)</span>      <span class="c1"># identificeer_foto_db: geërfd, DB34 → DB034 en nummers → int</span>
-<span class="n">doc</span> <span class="o">=</span> <span class="n">profiel</span><span class="o">.</span><span class="n">identificeer</span><span class="p">(</span><span class="s1">'Tekening'</span><span class="p">,</span> <span class="n">doc</span><span class="p">)</span>  <span class="c1"># identificeer_tekening_db: tekeningcd normaliseren</span>
-<span class="n">doc</span> <span class="o">=</span> <span class="n">profiel</span><span class="o">.</span><span class="n">identificeer</span><span class="p">(</span><span class="s1">'Rapport'</span><span class="p">,</span> <span class="n">doc</span><span class="p">)</span>   <span class="c1"># identificeer_rapport_db: rapportnr normaliseren</span>
-</code></pre></div>
+<pre class="codehilite"><code class="language-python">doc = profiel.identificeer('Foto', doc)      # identificeer_foto_db: geërfd, DB34 → DB034 en nummers → int
+doc = profiel.identificeer('Tekening', doc)  # identificeer_tekening_db: tekeningcd normaliseren
+doc = profiel.identificeer('Rapport', doc)   # identificeer_rapport_db: rapportnr normaliseren
+</code></pre>
 
 <h3 id="projectcode-uit-bestandsnaam">Projectcode uit bestandsnaam<a class="headerlink" href="#projectcode-uit-bestandsnaam" title="Permanent link">&para;</a></h3>
-<div class="codehilite"><pre><span></span><code><span class="n">profiel</span><span class="o">.</span><span class="n">extract_projectcode_uit_bestandsnaam</span><span class="p">(</span><span class="s2">"DC001_F001.jpg"</span><span class="p">,</span> <span class="s2">"/map"</span><span class="p">)</span>     <span class="c1"># → "DC001"</span>
-<span class="n">profiel</span><span class="o">.</span><span class="n">extract_projectcode_uit_bestandsnaam</span><span class="p">(</span><span class="s2">"test.jpg"</span><span class="p">,</span> <span class="s2">"/DC045/fotos"</span><span class="p">)</span>  <span class="c1"># → "DC045"  (via directory)</span>
-</code></pre></div>
+<pre class="codehilite"><code class="language-python">profiel.extract_projectcode_uit_bestandsnaam(&quot;DC001_F001.jpg&quot;, &quot;/map&quot;)     # → &quot;DC001&quot;
+profiel.extract_projectcode_uit_bestandsnaam(&quot;test.jpg&quot;, &quot;/DC045/fotos&quot;)  # → &quot;DC045&quot;  (via directory)
+</code></pre>
 
 <p>Als noch de bestandsnaam noch de directory een <code>DB</code>/<code>DC</code>-prefix bevat, wordt de eerste alfanumerieke reeks uit de bestandsnaam teruggegeven.</p>
 <h2 id="voorbeeldprofiel">VoorbeeldProfiel<a class="headerlink" href="#voorbeeldprofiel" title="Permanent link">&para;</a></h2>
 <p><code>VoorbeeldProfiel</code> is een minimaal PoC-profiel dat volledig erft van <code>ConventieProfiel</code> zonder aanpassingen. Het dient als startpunt voor een nieuwe gemeente die de standaardconventie wil volgen:</p>
-<div class="codehilite"><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">VoorbeeldProfiel</span><span class="p">(</span><span class="n">ConventieProfiel</span><span class="p">):</span>
-    <span class="n">naam</span> <span class="o">=</span> <span class="s2">"voorbeeld"</span>
-</code></pre></div>
+<pre class="codehilite"><code class="language-python">class VoorbeeldProfiel(ConventieProfiel):
+    naam = &quot;voorbeeld&quot;
+</code></pre>
 
+<p>Met dit profiel doorloopt de synthetische data de hele keten (<code>make integration GEMEENTE=voorbeeld</code>): alle gegevens uit de databases komen er hetzelfde uit als met het Delftse profiel, met dezelfde aantallen en sleutels. Het verschil zit in de bestanden. Het basisprofiel ontleedt geen bestandsnamen (<code>identificeer_foto</code> en <code>identificeer_tekening</code> geven <code>None</code>): een foto of tekening wordt verwerkt en aan het project van zijn map gekoppeld, maar krijgt de bestandsoort <code>Bestand_Overige</code> en geen put, vondst of artefact. Wie foto's naar soort wil indelen of aan vondsten en artefacten wil koppelen, heeft een profiel nodig dat de eigen naamconventie ontleedt, zoals <code>DelftProfiel</code>.</p>
 <h2 id="nieuw-profiel-toevoegen">Nieuw profiel toevoegen<a class="headerlink" href="#nieuw-profiel-toevoegen" title="Permanent link">&para;</a></h2>
 <p>Om een profiel voor een nieuwe gemeente toe te voegen:</p>
 <ol>
 <li><strong>Maak een nieuw bestand</strong> <code>airflow_app/dags/wasstraat/profielen/[gemeente].py</code>:</li>
 </ol>
-<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">wasstraat.profielen.conventie</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConventieProfiel</span>
+<pre class="codehilite"><code class="language-python">from wasstraat.profielen.conventie import ConventieProfiel
 
-<span class="k">class</span><span class="w"> </span><span class="nc">MijnGemeenteProfiel</span><span class="p">(</span><span class="n">ConventieProfiel</span><span class="p">):</span>
-    <span class="n">naam</span> <span class="o">=</span> <span class="s2">"mijn_gemeente"</span>
+class MijnGemeenteProfiel(ConventieProfiel):
+    naam = &quot;mijn_gemeente&quot;
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">normaliseer_projectcode</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">projectcd</span><span class="p">):</span>
-        <span class="c1"># Gemeente-specifieke normalisatie</span>
-        <span class="k">return</span> <span class="n">projectcd</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
-</code></pre></div>
+    def normaliseer_projectcode(self, projectcd):
+        # Gemeente-specifieke normalisatie
+        return projectcd.upper()
+</code></pre>
 
 <ol>
 <li><strong>Registreer het profiel</strong> in <code>PROFIELEN</code> in <code>airflow_app/dags/wasstraat/profielen/__init__.py</code> (waarde van <code>WASSTRAAT_GEMEENTE</code> → module en klasse; de sleutel is in kleine letters):</li>
 </ol>
-<div class="codehilite"><pre><span></span><code><span class="n">PROFIELEN</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s1">'delft'</span><span class="p">:</span> <span class="p">(</span><span class="s1">'wasstraat.profielen.delft'</span><span class="p">,</span> <span class="s1">'DelftProfiel'</span><span class="p">),</span>
-    <span class="s1">'voorbeeld'</span><span class="p">:</span> <span class="p">(</span><span class="s1">'wasstraat.profielen.voorbeeld'</span><span class="p">,</span> <span class="s1">'VoorbeeldProfiel'</span><span class="p">),</span>
-    <span class="s1">'mijn_gemeente'</span><span class="p">:</span> <span class="p">(</span><span class="s1">'wasstraat.profielen.mijn_gemeente'</span><span class="p">,</span> <span class="s1">'MijnGemeenteProfiel'</span><span class="p">),</span>
-<span class="p">}</span>
-</code></pre></div>
+<pre class="codehilite"><code class="language-python">PROFIELEN = {
+    'delft': ('wasstraat.profielen.delft', 'DelftProfiel'),
+    'voorbeeld': ('wasstraat.profielen.voorbeeld', 'VoorbeeldProfiel'),
+    'mijn_gemeente': ('wasstraat.profielen.mijn_gemeente', 'MijnGemeenteProfiel'),
+}
+</code></pre>
 
 <p>De foutmelding bij een onbekende waarde noemt de nieuwe sleutel dan vanzelf.</p>
 <ol>
 <li><strong>Stel de omgevingsvariabele in</strong> (zie <a href="#profielselectie">Profielselectie</a> voor de plek per omgeving):</li>
 </ol>
-<div class="codehilite"><pre><span></span><code><span class="nv">WASSTRAAT_GEMEENTE</span><span class="o">=</span>mijn_gemeente
-</code></pre></div>
+<pre class="codehilite"><code class="language-bash">WASSTRAAT_GEMEENTE=mijn_gemeente
+</code></pre>
 
 <p>Een nieuw profiel bestaat alleen in de code; voor de live installatie is het dus pas bruikbaar in een nieuwe versie van de images.</p>
 <ol>
-<li><strong>Schrijf unit tests</strong> in <code>tests/unit/test_profielen.py</code> voor de nieuwe klasse.</li>
+<li>
+<p><strong>Schrijf unit tests</strong> in <code>tests/unit/test_profielen.py</code> voor de nieuwe klasse.</p>
+</li>
+<li>
+<p><strong>Draai de synthetische testsuite met het profiel</strong>: <code>make integration GEMEENTE=mijn_gemeente</code>. Ontleedt het profiel de Delftse bestandsnamen van de synthetische data, neem het dan op in <code>PROFIELEN_MET_DELFTSE_BESTANDSNAMEN</code> in <code>tests/integration/testomgeving.py</code>; <code>tests/unit/test_testomgeving_profiel.py</code> faalt zolang die indeling niet klopt.</p>
+</li>
 </ol>
 <h2 id="gebruik-in-de-pipeline">Gebruik in de pipeline<a class="headerlink" href="#gebruik-in-de-pipeline" title="Permanent link">&para;</a></h2>
 <p>Het profiel wordt op twee plaatsen aangeroepen (en in <code>Start_Run</code> alleen geladen, als controle). Beide taken laden het één keer, vóór de documenten:</p>
 <h3 id="parsefotobestanden-bestandsnaam-parsing">parseFotobestanden() — bestandsnaam-parsing<a class="headerlink" href="#parsefotobestanden-bestandsnaam-parsing" title="Permanent link">&para;</a></h3>
-<div class="codehilite"><pre><span></span><code><span class="n">profiel</span> <span class="o">=</span> <span class="n">get_profiel</span><span class="p">()</span>   <span class="c1"># één keer, vóór de lus over de bestanden</span>
-<span class="n">projectcd</span> <span class="o">=</span> <span class="n">profiel</span><span class="o">.</span><span class="n">extract_projectcode_uit_bestandsnaam</span><span class="p">(</span><span class="n">doc</span><span class="p">[</span><span class="s1">'fileName'</span><span class="p">],</span> <span class="n">doc</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'directory'</span><span class="p">,</span> <span class="s1">''</span><span class="p">))</span>
+<pre class="codehilite"><code class="language-python">profiel = get_profiel()   # één keer, vóór de lus over de bestanden
+projectcd = profiel.extract_projectcode_uit_bestandsnaam(doc['fileName'], doc.get('directory', ''))
 
-<span class="n">parsed</span> <span class="o">=</span> <span class="n">profiel</span><span class="o">.</span><span class="n">identificeer_foto</span><span class="p">(</span><span class="n">doc</span><span class="p">,</span> <span class="n">projectcd</span><span class="p">)</span>
-<span class="k">if</span> <span class="n">parsed</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-    <span class="c1"># Foto-record opslaan</span>
-    <span class="k">continue</span>
+parsed = profiel.identificeer_foto(doc, projectcd)
+if parsed is not None:
+    # Foto-record opslaan
+    continue
 
-<span class="n">parsed</span> <span class="o">=</span> <span class="n">profiel</span><span class="o">.</span><span class="n">identificeer_tekening</span><span class="p">(</span><span class="n">doc</span><span class="p">,</span> <span class="n">projectcd</span><span class="p">)</span>
-<span class="k">if</span> <span class="n">parsed</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-    <span class="c1"># Tekening-record opslaan</span>
-    <span class="k">continue</span>
-</code></pre></div>
+parsed = profiel.identificeer_tekening(doc, projectcd)
+if parsed is not None:
+    # Tekening-record opslaan
+    continue
+</code></pre>
 
 <h3 id="enhanceallattributes-entiteit-identificatie">enhanceAllAttributes() — entiteit-identificatie<a class="headerlink" href="#enhanceallattributes-entiteit-identificatie" title="Permanent link">&para;</a></h3>
-<div class="codehilite"><pre><span></span><code><span class="n">profiel</span> <span class="o">=</span> <span class="n">get_profiel</span><span class="p">()</span>   <span class="c1"># één keer, vóór de lus over de documenten</span>
-<span class="n">soort</span> <span class="o">=</span> <span class="n">doc</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'soort'</span><span class="p">,</span> <span class="s1">''</span><span class="p">)</span>
+<pre class="codehilite"><code class="language-python">profiel = get_profiel()   # één keer, vóór de lus over de documenten
+soort = doc.get('soort', '')
 
-<span class="c1"># De dispatcher kiest per soort de methode; voor Foto, Tekening en Rapport</span>
-<span class="c1"># de _db-variant en niet de bestandsnaam-parser.</span>
-<span class="n">doc</span> <span class="o">=</span> <span class="n">profiel</span><span class="o">.</span><span class="n">identificeer</span><span class="p">(</span><span class="n">soort</span><span class="p">,</span> <span class="n">doc</span><span class="p">)</span>
-</code></pre></div>
+# De dispatcher kiest per soort de methode; voor Foto, Tekening en Rapport
+# de _db-variant en niet de bestandsnaam-parser.
+doc = profiel.identificeer(soort, doc)
+</code></pre>
               
             </div>
           </div>
@@ -668,9 +682,9 @@ DC001_G002.jpg   → bestandsoort: FOTO_OPGRAVINGSFOTO
   
 </footer>
 <footer>
-    <div class="rst-footer-buttons" role="navigation" aria-label="Footernavigatie">
-        <a href="../validatie/" class="btn btn-neutral float-left" title="Validatie en kwaliteitscontroles"><span class="icon icon-circle-arrow-left"></span> Vorige</a>
-        <a href="../zoeken/" class="btn btn-neutral float-right" title="Zoeken en indexering">Volgende <span class="icon icon-circle-arrow-right"></span></a>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../validatie/" class="btn btn-neutral float-left" title="Validatie en kwaliteitscontroles"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../zoeken/" class="btn btn-neutral float-right" title="Zoeken en indexering">Next <span class="icon icon-circle-arrow-right"></span></a>
     </div>
 
   <hr/>
@@ -680,7 +694,7 @@ DC001_G002.jpg   → bestandsoort: FOTO_OPGRAVINGSFOTO
       <p>© E-Space — Arjen Brienen. Uitgegeven onder de EUPL v1.2 licentie.</p>
   </div>
 
-  Gemaakt met <a href="https://www.mkdocs.org/">MkDocs</a> met behulp van een <a href="https://github.com/readthedocs/sphinx_rtd_theme">Thema</a> geleverd door <a href="https://readthedocs.org">Read the Docs</a>.
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
 </footer>
           
 
@@ -691,14 +705,14 @@ DC001_G002.jpg   → bestandsoort: FOTO_OPGRAVINGSFOTO
 
   </div>
 
-  <div class="rst-versions" role="note" aria-label="Versies">
+  <div class="rst-versions" role="note" aria-label="Versions">
   <span class="rst-current-version" data-toggle="rst-current-version">
     
     
-      <span><a href="../validatie/" style="color: #fcfcfc">&laquo; Vorige</a></span>
+      <span><a href="../validatie/" style="color: #fcfcfc">&laquo; Previous</a></span>
     
     
-      <span><a href="../zoeken/" style="color: #fcfcfc">Volgende &raquo;</a></span>
+      <span><a href="../zoeken/" style="color: #fcfcfc">Next &raquo;</a></span>
     
   </span>
 </div>

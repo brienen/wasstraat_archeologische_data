@@ -148,12 +148,12 @@
           <a href="../.." class="icon icon-home"> Wasstraat Archeologische Data
         </a><div role="search">
   <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
-      <input type="text" name="q" placeholder="Doorzoek documentatie" aria-label="Doorzoek documentatie" title="Typ hier uw zoekterm" />
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
   </form>
 </div>
       </div>
 
-      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigatiemenu">
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <ul>
                 <li class="toctree-l1"><a class="reference internal" href="../..">Home</a>
                 </li>
@@ -254,7 +254,7 @@
     </nav>
 
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
-      <nav class="wy-nav-top" role="navigation" aria-label="Mobiel navigatiemenu">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
           <a href="../..">Wasstraat Archeologische Data</a>
         
@@ -262,7 +262,7 @@
       <div class="wy-nav-content">
         <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
   <ul class="wy-breadcrumbs">
-    <li><a href="../.." class="icon icon-home" aria-label="Documentatie"></a></li>
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
           <li class="breadcrumb-item">Componenten</li>
       <li class="breadcrumb-item active">Zoeken en indexering</li>
     <li class="wy-breadcrumbs-aside">
@@ -379,14 +379,14 @@
 <p>Zie <a href="../configuratie/">Configuratie</a>.</p>
 <h2 id="controleren">Controleren<a class="headerlink" href="#controleren" title="Permanent link">&para;</a></h2>
 <p>In de ontwikkelomgeving heeft Elasticsearch hostpoort 9200:</p>
-<div class="codehilite"><pre><span></span><code>curl<span class="w"> </span>-s<span class="w"> </span><span class="s2">"http://localhost:9200/_cat/aliases?v"</span><span class="w">            </span><span class="c1"># alias per tabel</span>
-curl<span class="w"> </span>-s<span class="w"> </span><span class="s2">"http://localhost:9200/_cat/indices?v"</span><span class="w">            </span><span class="c1"># indexen en aantallen</span>
-curl<span class="w"> </span>-s<span class="w"> </span><span class="s2">"http://localhost:9200/def_artefact/_count"</span><span class="w">       </span><span class="c1"># aantal artefacten in de index</span>
-</code></pre></div>
+<pre class="codehilite"><code class="language-bash">curl -s &quot;http://localhost:9200/_cat/aliases?v&quot;            # alias per tabel
+curl -s &quot;http://localhost:9200/_cat/indices?v&quot;            # indexen en aantallen
+curl -s &quot;http://localhost:9200/def_artefact/_count&quot;       # aantal artefacten in de index
+</code></pre>
 
 <p>In de live installatie en de testomgevingen heeft Elasticsearch geen hostpoort; gebruik daar <code>docker exec</code>:</p>
-<div class="codehilite"><pre><span></span><code>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>wasstraat_elasticsearch<span class="w"> </span>curl<span class="w"> </span>-s<span class="w"> </span><span class="s2">"http://localhost:9200/_cat/indices?v"</span>
-</code></pre></div>
+<pre class="codehilite"><code class="language-bash">docker exec wasstraat_elasticsearch curl -s &quot;http://localhost:9200/_cat/indices?v&quot;
+</code></pre>
 
 <p>Het aantal documenten per index hoort gelijk te zijn aan het aantal rijen in de tabel; de integratietests controleren dat na elke run.</p>
 <h2 id="testen">Testen<a class="headerlink" href="#testen" title="Permanent link">&para;</a></h2>
@@ -428,9 +428,9 @@ curl<span class="w"> </span>-s<span class="w"> </span><span class="s2">"http://l
   
 </footer>
 <footer>
-    <div class="rst-footer-buttons" role="navigation" aria-label="Footernavigatie">
-        <a href="../gemeenteprofielen/" class="btn btn-neutral float-left" title="Gemeenteprofielen"><span class="icon icon-circle-arrow-left"></span> Vorige</a>
-        <a href="../../deployment/omgevingen/" class="btn btn-neutral float-right" title="Omgevingen en Docker Compose">Volgende <span class="icon icon-circle-arrow-right"></span></a>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../gemeenteprofielen/" class="btn btn-neutral float-left" title="Gemeenteprofielen"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../../deployment/omgevingen/" class="btn btn-neutral float-right" title="Omgevingen en Docker Compose">Next <span class="icon icon-circle-arrow-right"></span></a>
     </div>
 
   <hr/>
@@ -440,7 +440,7 @@ curl<span class="w"> </span>-s<span class="w"> </span><span class="s2">"http://l
       <p>© E-Space — Arjen Brienen. Uitgegeven onder de EUPL v1.2 licentie.</p>
   </div>
 
-  Gemaakt met <a href="https://www.mkdocs.org/">MkDocs</a> met behulp van een <a href="https://github.com/readthedocs/sphinx_rtd_theme">Thema</a> geleverd door <a href="https://readthedocs.org">Read the Docs</a>.
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
 </footer>
           
 
@@ -451,14 +451,14 @@ curl<span class="w"> </span>-s<span class="w"> </span><span class="s2">"http://l
 
   </div>
 
-  <div class="rst-versions" role="note" aria-label="Versies">
+  <div class="rst-versions" role="note" aria-label="Versions">
   <span class="rst-current-version" data-toggle="rst-current-version">
     
     
-      <span><a href="../gemeenteprofielen/" style="color: #fcfcfc">&laquo; Vorige</a></span>
+      <span><a href="../gemeenteprofielen/" style="color: #fcfcfc">&laquo; Previous</a></span>
     
     
-      <span><a href="../../deployment/omgevingen/" style="color: #fcfcfc">Volgende &raquo;</a></span>
+      <span><a href="../../deployment/omgevingen/" style="color: #fcfcfc">Next &raquo;</a></span>
     
   </span>
 </div>

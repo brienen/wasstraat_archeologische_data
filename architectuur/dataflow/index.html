@@ -148,12 +148,12 @@
           <a href="../.." class="icon icon-home"> Wasstraat Archeologische Data
         </a><div role="search">
   <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
-      <input type="text" name="q" placeholder="Doorzoek documentatie" aria-label="Doorzoek documentatie" title="Typ hier uw zoekterm" />
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
   </form>
 </div>
       </div>
 
-      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigatiemenu">
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <ul>
                 <li class="toctree-l1"><a class="reference internal" href="../..">Home</a>
                 </li>
@@ -262,7 +262,7 @@
     </nav>
 
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
-      <nav class="wy-nav-top" role="navigation" aria-label="Mobiel navigatiemenu">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
           <a href="../..">Wasstraat Archeologische Data</a>
         
@@ -270,7 +270,7 @@
       <div class="wy-nav-content">
         <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
   <ul class="wy-breadcrumbs">
-    <li><a href="../.." class="icon icon-home" aria-label="Documentatie"></a></li>
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
           <li class="breadcrumb-item">Architectuur</li>
       <li class="breadcrumb-item active">Verwerkingspipeline</li>
     <li class="wy-breadcrumbs-aside">
@@ -483,11 +483,11 @@
 </table>
 <p>De volledige tabel per stap staat in <a href="../../componenten/verwerkingsrapport/#beleid-per-stap">Foutbeleid en verwerkingsrapport</a>.</p>
 <h2 id="stappen-van-de-incrementele-cyclus">Stappen van de incrementele cyclus<a class="headerlink" href="#stappen-van-de-incrementele-cyclus" title="Permanent link">&para;</a></h2>
-<div class="codehilite"><pre><span></span><code>Start_Run → Bepaal_Delta → Opruimen_Oude_Records → Extract_Group (delta)
+<pre class="codehilite"><code>Start_Run → Bepaal_Delta → Opruimen_Oude_Records → Extract_Group (delta)
   → Transform 1 → 2 → 3 → 5 → 4 (delta, stabiele sleutels)
   → Load_Upsert → Index_&lt;tabel&gt; (parallel) → Index_Klaar → Registreer_Run
   → Verwerkingsrapport → End_ETL_incremental
-</code></pre></div>
+</code></pre>
 
 <p><code>Bepaal_Delta</code> vergelijkt de bestanden in de invoermappen met <code>Def_Bronbestand</code> en bepaalt per bestand of het nieuw, gewijzigd, ongewijzigd of verwijderd is. <code>Opruimen_Oude_Records</code> haalt de records van gewijzigde en verwijderde bestanden weg uit de staging en <code>Single_Store</code>. De extractie en de transformaties werken daarna alleen op de delta, met een extra taak <code>Werk_Geraakte_Projecten_Bij</code> in Transform 1 en 2. <code>Load_Upsert</code> werkt de tabellen in PostgreSQL bij met <code>INSERT ... ON CONFLICT</code> en verwijdert verdwenen rijen; de Index-taken werken alleen de tabellen uit <code>LOAD_TABELLEN</code> bij. Zie <a href="../../componenten/incrementeel-laden/">Incrementeel laden</a>.</p>
 <h2 id="overige-dags">Overige DAG's<a class="headerlink" href="#overige-dags" title="Permanent link">&para;</a></h2>
@@ -600,9 +600,9 @@
   
 </footer>
 <footer>
-    <div class="rst-footer-buttons" role="navigation" aria-label="Footernavigatie">
-        <a href="../systeem/" class="btn btn-neutral float-left" title="Systeemarchitectuur"><span class="icon icon-circle-arrow-left"></span> Vorige</a>
-        <a href="../componenten/" class="btn btn-neutral float-right" title="Componentenmodel">Volgende <span class="icon icon-circle-arrow-right"></span></a>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../systeem/" class="btn btn-neutral float-left" title="Systeemarchitectuur"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../componenten/" class="btn btn-neutral float-right" title="Componentenmodel">Next <span class="icon icon-circle-arrow-right"></span></a>
     </div>
 
   <hr/>
@@ -612,7 +612,7 @@
       <p>© E-Space — Arjen Brienen. Uitgegeven onder de EUPL v1.2 licentie.</p>
   </div>
 
-  Gemaakt met <a href="https://www.mkdocs.org/">MkDocs</a> met behulp van een <a href="https://github.com/readthedocs/sphinx_rtd_theme">Thema</a> geleverd door <a href="https://readthedocs.org">Read the Docs</a>.
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
 </footer>
           
 
@@ -623,14 +623,14 @@
 
   </div>
 
-  <div class="rst-versions" role="note" aria-label="Versies">
+  <div class="rst-versions" role="note" aria-label="Versions">
   <span class="rst-current-version" data-toggle="rst-current-version">
     
     
-      <span><a href="../systeem/" style="color: #fcfcfc">&laquo; Vorige</a></span>
+      <span><a href="../systeem/" style="color: #fcfcfc">&laquo; Previous</a></span>
     
     
-      <span><a href="../componenten/" style="color: #fcfcfc">Volgende &raquo;</a></span>
+      <span><a href="../componenten/" style="color: #fcfcfc">Next &raquo;</a></span>
     
   </span>
 </div>

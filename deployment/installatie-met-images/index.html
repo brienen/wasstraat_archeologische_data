@@ -148,12 +148,12 @@
           <a href="../.." class="icon icon-home"> Wasstraat Archeologische Data
         </a><div role="search">
   <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
-      <input type="text" name="q" placeholder="Doorzoek documentatie" aria-label="Doorzoek documentatie" title="Typ hier uw zoekterm" />
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
   </form>
 </div>
       </div>
 
-      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigatiemenu">
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <ul>
                 <li class="toctree-l1"><a class="reference internal" href="../..">Home</a>
                 </li>
@@ -266,7 +266,7 @@
     </nav>
 
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
-      <nav class="wy-nav-top" role="navigation" aria-label="Mobiel navigatiemenu">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
           <a href="../..">Wasstraat Archeologische Data</a>
         
@@ -274,7 +274,7 @@
       <div class="wy-nav-content">
         <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
   <ul class="wy-breadcrumbs">
-    <li><a href="../.." class="icon icon-home" aria-label="Documentatie"></a></li>
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
           <li class="breadcrumb-item">Aan de slag</li>
       <li class="breadcrumb-item active">Installatie met images</li>
     <li class="wy-breadcrumbs-aside">
@@ -390,30 +390,30 @@
 </div>
 <h2 id="2-de-map-deploy-ophalen">2. De map deploy ophalen<a class="headerlink" href="#2-de-map-deploy-ophalen" title="Permanent link">&para;</a></h2>
 <p>Haal de map <code>deploy/</code> van de gewenste versie op. Zonder Git, met één opdracht:</p>
-<div class="codehilite"><pre><span></span><code><span class="nv">VERSIE</span><span class="o">=</span><span class="m">1</span>.1.0
-curl<span class="w"> </span>-L<span class="w"> </span><span class="s2">"https://github.com/brienen/wasstraat_archeologische_data/archive/refs/tags/</span><span class="nv">$VERSIE</span><span class="s2">.tar.gz"</span><span class="w"> </span><span class="se">\</span>
-<span class="w">  </span><span class="p">|</span><span class="w"> </span>tar<span class="w"> </span>xz<span class="w"> </span>--strip-components<span class="o">=</span><span class="m">1</span><span class="w"> </span><span class="s2">"wasstraat_archeologische_data-</span><span class="nv">$VERSIE</span><span class="s2">/deploy"</span>
-<span class="nb">cd</span><span class="w"> </span>deploy
-</code></pre></div>
+<pre class="codehilite"><code class="language-bash">VERSIE=1.1.0
+curl -L &quot;https://github.com/brienen/wasstraat_archeologische_data/archive/refs/tags/$VERSIE.tar.gz&quot; \
+  | tar xz --strip-components=1 &quot;wasstraat_archeologische_data-$VERSIE/deploy&quot;
+cd deploy
+</code></pre>
 
 <p>Je kunt ook het zip-bestand van de release downloaden op <a href="https://github.com/brienen/wasstraat_archeologische_data/releases">https://github.com/brienen/wasstraat_archeologische_data/releases</a> en alleen de map <code>deploy/</code> bewaren. Hernoem de map gerust, bijvoorbeeld naar <code>wasstraat/</code>.</p>
 <p>De map bevat:</p>
-<div class="codehilite"><pre><span></span><code><span class="s s-Atom">deploy</span><span class="o">/</span>
-<span class="s s-Atom">├──</span> <span class="s s-Atom">docker</span><span class="o">-</span><span class="s s-Atom">compose</span><span class="p">.</span><span class="s s-Atom">yml</span>    <span class="s s-Atom">#</span> <span class="nv">De</span> <span class="s s-Atom">services</span><span class="p">,</span> <span class="s s-Atom">alleen</span> <span class="s s-Atom">image</span><span class="p">:</span><span class="o">-</span><span class="s s-Atom">regels</span> <span class="s s-Atom">naar</span> <span class="s s-Atom">ghcr</span><span class="p">.</span><span class="s s-Atom">io</span><span class="o">/</span><span class="s s-Atom">brienen</span>
-<span class="s s-Atom">├──</span> <span class="p">.</span><span class="s s-Atom">env</span><span class="p">.</span><span class="s s-Atom">example</span>          <span class="s s-Atom">#</span> <span class="nv">Versie</span><span class="p">,</span> <span class="s s-Atom">mappen</span> <span class="s s-Atom">en</span> <span class="s s-Atom">poorten</span> <span class="s s-Atom">→</span> <span class="s s-Atom">kopiëren</span> <span class="s s-Atom">naar</span> <span class="p">.</span><span class="s s-Atom">env</span>
-<span class="s s-Atom">├──</span> <span class="nv">Makefile</span>              <span class="s s-Atom">#</span> <span class="s s-Atom">make</span> <span class="s s-Atom">help</span> <span class="s s-Atom">toont</span> <span class="s s-Atom">alle</span> <span class="s s-Atom">commando</span><span class="err">'</span><span class="s s-Atom">s</span>
-<span class="s s-Atom">├──</span> <span class="s s-Atom">init</span><span class="o">-</span><span class="s s-Atom">config</span><span class="p">.</span><span class="s s-Atom">sh</span>        <span class="s s-Atom">#</span> <span class="nv">Maakt</span> <span class="s s-Atom">config</span><span class="cm">/*.env aan met unieke wachtwoorden</span>
-<span class="cm">├── config/               # Sjablonen (*.env.example) voor de configuratie van de services</span>
-<span class="cm">├── wasstraat_config/     # Harmonisatie-Excel en correcties.yml voor de pipeline</span>
-<span class="cm">└── data/</span>
-<span class="cm">    ├── input/            # Brondata (zeven mappen, zie stap 4)</span>
-<span class="cm">    ├── output/           # Verwerkte media (archeomedia/) en verwerkingsrapporten (rapporten/)</span>
-<span class="cm">    └── backup/           # Backups</span>
-</code></pre></div>
+<pre class="codehilite"><code>deploy/
+├── docker-compose.yml    # De services, alleen image:-regels naar ghcr.io/brienen
+├── .env.example          # Versie, mappen en poorten → kopiëren naar .env
+├── Makefile              # make help toont alle commando's
+├── init-config.sh        # Maakt config/*.env aan met unieke wachtwoorden
+├── config/               # Sjablonen (*.env.example) voor de configuratie van de services
+├── wasstraat_config/     # Harmonisatie-Excel en correcties.yml voor de pipeline
+└── data/
+    ├── input/            # Brondata (zeven mappen, zie stap 4)
+    ├── output/           # Verwerkte media (archeomedia/) en verwerkingsrapporten (rapporten/)
+    └── backup/           # Backups
+</code></pre>
 
 <h2 id="3-configureren">3. Configureren<a class="headerlink" href="#3-configureren" title="Permanent link">&para;</a></h2>
-<div class="codehilite"><pre><span></span><code>make<span class="w"> </span>init
-</code></pre></div>
+<pre class="codehilite"><code class="language-bash">make init
+</code></pre>
 
 <p>Dit maakt drie dingen aan:</p>
 <ol>
@@ -469,15 +469,15 @@ curl<span class="w"> </span>-L<span class="w"> </span><span class="s2">"https://
 </div>
 <h2 id="4-eigen-data-klaarzetten">4. Eigen data klaarzetten<a class="headerlink" href="#4-eigen-data-klaarzetten" title="Permanent link">&para;</a></h2>
 <p>Zet je brondata in <code>data/input/</code> (of in de map uit <code>WASSTRAAT_INPUT</code>). De structuur is dezelfde als in de ontwikkelomgeving; <a href="../../aan-de-slag/#4-bestanden-klaarzetten">Aan de slag, stap 4</a> beschrijft per map welke bestanden en tabellen de pipeline verwacht.</p>
-<div class="codehilite"><pre><span></span><code><span class="n">data</span><span class="o">/</span><span class="k">input</span><span class="o">/</span>
-<span class="err">├──</span><span class="w"> </span><span class="n">projecten</span><span class="o">/</span><span class="w">           </span><span class="err">←</span><span class="w"> </span><span class="n">Per</span><span class="w"> </span><span class="n">opgraving</span><span class="w"> </span><span class="n">een</span><span class="w"> </span><span class="n">map</span><span class="w"> </span><span class="n">met</span><span class="w"> </span><span class="n">de</span><span class="w"> </span><span class="n">projectdatabase</span><span class="w"> </span><span class="p">(.</span><span class="n">mdb</span><span class="o">/</span><span class="p">.</span><span class="n">accdb</span><span class="p">)</span><span class="w"> </span><span class="n">en</span><span class="w"> </span><span class="n">foto</span><span class="p">'</span><span class="n">s</span>
-<span class="err">├──</span><span class="w"> </span><span class="n">projectenlijst</span><span class="o">/</span><span class="w">      </span><span class="err">←</span><span class="w"> </span><span class="n">Projectoverzicht</span><span class="w"> </span><span class="p">(</span><span class="n">tabel</span><span class="w"> </span><span class="n">OPGRAVINGEN</span><span class="p">)</span>
-<span class="err">├──</span><span class="w"> </span><span class="n">magazijnlijst</span><span class="o">/</span><span class="w">       </span><span class="err">←</span><span class="w"> </span><span class="n">Depotregistratie</span>
-<span class="err">├──</span><span class="w"> </span><span class="n">fotolijst</span><span class="o">/</span><span class="w">           </span><span class="err">←</span><span class="w"> </span><span class="n">Fotocatalogus</span>
-<span class="err">├──</span><span class="w"> </span><span class="n">monsterdatabase</span><span class="o">/</span><span class="w">     </span><span class="err">←</span><span class="w"> </span><span class="n">Monsters</span><span class="w"> </span><span class="n">en</span><span class="w"> </span><span class="n">determinaties</span>
-<span class="err">├──</span><span class="w"> </span><span class="n">rapporten</span><span class="o">/</span><span class="w">           </span><span class="err">←</span><span class="w"> </span><span class="n">Rapporten</span><span class="w"> </span><span class="p">(.</span><span class="n">pdf</span><span class="p">)</span><span class="w"> </span><span class="n">en</span><span class="w"> </span><span class="n">rapportendatabases</span>
-<span class="err">└──</span><span class="w"> </span><span class="n">referentietabellen</span><span class="o">/</span><span class="w">  </span><span class="err">←</span><span class="w"> </span><span class="n">ABR</span><span class="o">-</span><span class="n">thesaurus</span><span class="w"> </span><span class="p">(</span><span class="n">abr_versie_</span><span class="o">*</span><span class="p">.</span><span class="n">xlsx</span><span class="p">)</span><span class="w"> </span><span class="n">en</span><span class="w"> </span><span class="n">bestandslijsten</span>
-</code></pre></div>
+<pre class="codehilite"><code>data/input/
+├── projecten/           ← Per opgraving een map met de projectdatabase (.mdb/.accdb) en foto's
+├── projectenlijst/      ← Projectoverzicht (tabel OPGRAVINGEN)
+├── magazijnlijst/       ← Depotregistratie
+├── fotolijst/           ← Fotocatalogus
+├── monsterdatabase/     ← Monsters en determinaties
+├── rapporten/           ← Rapporten (.pdf) en rapportendatabases
+└── referentietabellen/  ← ABR-thesaurus (abr_versie_*.xlsx) en bestandslijsten
+</code></pre>
 
 <p>De containers lezen deze mappen alleen; de pipeline wijzigt je bronbestanden nooit. Je kunt ze dus ook rechtstreeks vanaf een netwerkschijf koppelen door <code>WASSTRAAT_INPUT</code> daarnaar te laten wijzen.</p>
 <p>De pipelineconfiguratie staat in <code>wasstraat_config/</code>:</p>
@@ -490,13 +490,13 @@ curl<span class="w"> </span>-L<span class="w"> </span><span class="s2">"https://
 <p>Wil je de installatie eerst zien werken? Download uit de repository de map <code>data/synthetic/data/</code> (twee fictieve opgravingen) en zet de inhoud in <code>data/input/</code>. De meegeleverde harmonisatie-Excel is daar al op afgestemd.</p>
 </div>
 <h2 id="5-starten">5. Starten<a class="headerlink" href="#5-starten" title="Permanent link">&para;</a></h2>
-<div class="codehilite"><pre><span></span><code>make<span class="w"> </span>up
-</code></pre></div>
+<pre class="codehilite"><code class="language-bash">make up
+</code></pre>
 
 <p>De eerste keer haalt Docker ongeveer 15 GB aan images op; dat duurt enkele minuten tot een half uur. Daarna starten de containers. Controleer de status:</p>
-<div class="codehilite"><pre><span></span><code>make<span class="w"> </span>ps
-make<span class="w"> </span>logs<span class="w"> </span><span class="nv">S</span><span class="o">=</span>airflow<span class="w">     </span><span class="c1"># logs van één service; zonder S= van alle services</span>
-</code></pre></div>
+<pre class="codehilite"><code class="language-bash">make ps
+make logs S=airflow     # logs van één service; zonder S= van alle services
+</code></pre>
 
 <p>Alle zeven services moeten <code>Up</code> zijn (Elasticsearch <code>healthy</code>). Airflow en Flask wachten bij het starten zelf tot PostgreSQL klaar is; Flask maakt bij de eerste start de tabellen in PostgreSQL aan en de beheerder van de webapplicatie.</p>
 <div class="admonition warning">
@@ -504,8 +504,8 @@ make<span class="w"> </span>logs<span class="w"> </span><span class="nv">S</span
 <p>De containers draaien als verschillende gebruikers (Airflow bijvoorbeeld als uid 50000). <code>make init</code> maakt de uitvoer- en backupmappen daarom schrijfbaar voor iedereen. Gebruik je eigen mappen via <code>.env</code>, geef die dan dezelfde rechten: <code>chmod -R a+rwX &lt;map&gt;</code>. Op macOS en Windows regelt Docker Desktop dit zelf.</p>
 </div>
 <h2 id="6-inloggen">6. Inloggen<a class="headerlink" href="#6-inloggen" title="Permanent link">&para;</a></h2>
-<div class="codehilite"><pre><span></span><code>make<span class="w"> </span>inloggegevens
-</code></pre></div>
+<pre class="codehilite"><code class="language-bash">make inloggegevens
+</code></pre>
 
 <table>
 <thead>
@@ -540,21 +540,21 @@ make<span class="w"> </span>logs<span class="w"> </span><span class="nv">S</span
 </div>
 <h2 id="7-de-eerste-volledige-verwerking">7. De eerste volledige verwerking<a class="headerlink" href="#7-de-eerste-volledige-verwerking" title="Permanent link">&para;</a></h2>
 <p>De eerste keer verwerk je alle brondata met de DAG <code>Extract_Transform_Load_Full_Cycle</code>. Dat kan via de Airflow-webinterface (DAG aanzetten en op de play-knop klikken, zie <a href="../../aan-de-slag/#6-voor-de-eerste-keer-draaien">Aan de slag, stap 6</a>) of vanaf de commandoregel:</p>
-<div class="codehilite"><pre><span></span><code>make<span class="w"> </span>volledige-cyclus
-</code></pre></div>
+<pre class="codehilite"><code class="language-bash">make volledige-cyclus
+</code></pre>
 
 <p>Volg de voortgang in Airflow onder <strong>Graph</strong>. Voor een paar projecten duurt de verwerking enkele minuten, voor een volledige gemeentelijke collectie uren. Aan het eind staat een verwerkingsrapport in <code>data/output/rapporten/</code> (Markdown en JSON): de uitkomst, de bestanden die niet of maar deels verwerkt zijn met de reden, de aantallen per tabel en de doorlooptijd per stap (zie <a href="../../componenten/verwerkingsrapport/">Foutbeleid en verwerkingsrapport</a>). Daarna zie je de projecten op de kaart in de Flask App (de startpagina wordt vijf minuten gecachet, dus eventueel even wachten) en zijn de foto's verwerkt in <code>data/output/archeomedia/</code>.</p>
 <p>Komen er later opgravingen bij, of vervang of verwijder je bestanden, draai dan de incrementele cyclus. Die verwerkt alleen de wijzigingen en laat de rest van de database staan:</p>
-<div class="codehilite"><pre><span></span><code>make<span class="w"> </span>incrementeel
-</code></pre></div>
+<pre class="codehilite"><code class="language-bash">make incrementeel
+</code></pre>
 
 <p>Draai de volledige cyclus opnieuw na wijzigingen in de harmonisatie-Excel, in <code>correcties.yml</code> of na het bijwerken naar een versie met een gewijzigde pipeline (zie het volgende hoofdstuk). De volledige cyclus leegt de tussenopslag en bouwt de definitieve tabellen opnieuw op, met dezelfde sleutels (<code>primary_key</code>) als ervoor; bruiklenen, partijen en conserveringsgegevens die in de webapplicatie zijn ingevoerd blijven staan en blijven gekoppeld. Verdwijnt een artefact of project uit de brondata, dan blijft de bruikleen bestaan met een markering. Zie <a href="../../componenten/incrementeel-laden/">Incrementeel laden</a> voor de details.</p>
 <h2 id="8-bijwerken-naar-een-nieuwe-versie">8. Bijwerken naar een nieuwe versie<a class="headerlink" href="#8-bijwerken-naar-een-nieuwe-versie" title="Permanent link">&para;</a></h2>
 <p>Nieuwe versies verschijnen op <a href="https://github.com/brienen/wasstraat_archeologische_data/releases">https://github.com/brienen/wasstraat_archeologische_data/releases</a>. Bijwerken gaat in drie stappen:</p>
-<div class="codehilite"><pre><span></span><code>make<span class="w"> </span>backup<span class="w">                                </span><span class="c1"># 1. backup van PostgreSQL en MongoDB</span>
-sed<span class="w"> </span>-i<span class="w"> </span><span class="s1">'s/^WASSTRAAT_VERSION=.*/WASSTRAAT_VERSION=1.1.0/'</span><span class="w"> </span>.env<span class="w">   </span><span class="c1"># 2. nieuwe versie in .env (of met een editor)</span>
-make<span class="w"> </span>update<span class="w">                                </span><span class="c1"># 3. images ophalen en containers vervangen</span>
-</code></pre></div>
+<pre class="codehilite"><code class="language-bash">make backup                                # 1. backup van PostgreSQL en MongoDB
+sed -i 's/^WASSTRAAT_VERSION=.*/WASSTRAAT_VERSION=1.1.0/' .env   # 2. nieuwe versie in .env (of met een editor)
+make update                                # 3. images ophalen en containers vervangen
+</code></pre>
 
 <p>Wat er gebeurt bij <code>make update</code>:</p>
 <ul>
@@ -573,9 +573,9 @@ make<span class="w"> </span>update<span class="w">                              
 <p>Draaide je de Wasstraat al vanuit een clone van de repository (<code>make app</code> of <code>make delft</code>)? Maak daar een backup (<code>make backup</code>), kopieer de bestanden uit <code>data/&lt;omgeving&gt;/backup/postgres/</code> en <code>.../mongo/</code> naar <code>data/backup/postgres/</code> en <code>data/backup/mongo/</code> van de nieuwe installatie, start die (<code>make up</code>) en zet de backup terug met <code>make restore TS=&lt;tijdstempel&gt;</code>. Kopieer ook <code>data/&lt;omgeving&gt;/output/archeomedia/</code> naar <code>data/output/archeomedia/</code>, en neem de wachtwoorden over uit de oude <code>config/*.env</code> als je dezelfde inloggegevens wilt houden. Een migratie van het oude PostgreSQL-volume (<code>make migrate-postgres-data</code>) is hier niet nodig.</p>
 </div>
 <h2 id="9-backup-en-restore">9. Backup en restore<a class="headerlink" href="#9-backup-en-restore" title="Permanent link">&para;</a></h2>
-<div class="codehilite"><pre><span></span><code>make<span class="w"> </span>backup<span class="w">                              </span><span class="c1"># dump van PostgreSQL en MongoDB</span>
-make<span class="w"> </span>restore<span class="w"> </span><span class="nv">TS</span><span class="o">=</span><span class="m">2026</span>-01-15_10-30-00<span class="w">      </span><span class="c1"># terugzetten van één tijdstempel</span>
-</code></pre></div>
+<pre class="codehilite"><code class="language-bash">make backup                              # dump van PostgreSQL en MongoDB
+make restore TS=2026-01-15_10-30-00      # terugzetten van één tijdstempel
+</code></pre>
 
 <p><code>make backup</code> stopt Flask en Airflow kort, schrijft <code>data/backup/postgres/postgres_&lt;tijdstempel&gt;.tar</code> (<code>pg_dump</code>) en <code>data/backup/mongo/mongo_&lt;tijdstempel&gt;/</code> (<code>mongodump</code> van de drie databases van de pipeline) en start de containers weer. Plan dit bijvoorbeeld 's nachts in met <code>cron</code>, en kopieer de backupmap naar een andere locatie.</p>
 <p>Niet in de backup zitten:</p>
@@ -635,9 +635,9 @@ make<span class="w"> </span>restore<span class="w"> </span><span class="nv">TS</
   
 </footer>
 <footer>
-    <div class="rst-footer-buttons" role="navigation" aria-label="Footernavigatie">
-        <a href="../../aan-de-slag/" class="btn btn-neutral float-left" title="Handleiding (ontwikkelomgeving)"><span class="icon icon-circle-arrow-left"></span> Vorige</a>
-        <a href="../../componenten/configuratie/" class="btn btn-neutral float-right" title="Configuratie">Volgende <span class="icon icon-circle-arrow-right"></span></a>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../../aan-de-slag/" class="btn btn-neutral float-left" title="Handleiding (ontwikkelomgeving)"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../../componenten/configuratie/" class="btn btn-neutral float-right" title="Configuratie">Next <span class="icon icon-circle-arrow-right"></span></a>
     </div>
 
   <hr/>
@@ -647,7 +647,7 @@ make<span class="w"> </span>restore<span class="w"> </span><span class="nv">TS</
       <p>© E-Space — Arjen Brienen. Uitgegeven onder de EUPL v1.2 licentie.</p>
   </div>
 
-  Gemaakt met <a href="https://www.mkdocs.org/">MkDocs</a> met behulp van een <a href="https://github.com/readthedocs/sphinx_rtd_theme">Thema</a> geleverd door <a href="https://readthedocs.org">Read the Docs</a>.
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
 </footer>
           
 
@@ -658,14 +658,14 @@ make<span class="w"> </span>restore<span class="w"> </span><span class="nv">TS</
 
   </div>
 
-  <div class="rst-versions" role="note" aria-label="Versies">
+  <div class="rst-versions" role="note" aria-label="Versions">
   <span class="rst-current-version" data-toggle="rst-current-version">
     
     
-      <span><a href="../../aan-de-slag/" style="color: #fcfcfc">&laquo; Vorige</a></span>
+      <span><a href="../../aan-de-slag/" style="color: #fcfcfc">&laquo; Previous</a></span>
     
     
-      <span><a href="../../componenten/configuratie/" style="color: #fcfcfc">Volgende &raquo;</a></span>
+      <span><a href="../../componenten/configuratie/" style="color: #fcfcfc">Next &raquo;</a></span>
     
   </span>
 </div>

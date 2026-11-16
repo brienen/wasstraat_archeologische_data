@@ -148,12 +148,12 @@
           <a href="../.." class="icon icon-home"> Wasstraat Archeologische Data
         </a><div role="search">
   <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
-      <input type="text" name="q" placeholder="Doorzoek documentatie" aria-label="Doorzoek documentatie" title="Typ hier uw zoekterm" />
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
   </form>
 </div>
       </div>
 
-      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigatiemenu">
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <ul>
                 <li class="toctree-l1"><a class="reference internal" href="../..">Home</a>
                 </li>
@@ -306,7 +306,7 @@
     </nav>
 
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
-      <nav class="wy-nav-top" role="navigation" aria-label="Mobiel navigatiemenu">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
           <a href="../..">Wasstraat Archeologische Data</a>
         
@@ -314,7 +314,7 @@
       <div class="wy-nav-content">
         <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
   <ul class="wy-breadcrumbs">
-    <li><a href="../.." class="icon icon-home" aria-label="Documentatie"></a></li>
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
       <li class="breadcrumb-item active">Configuratie</li>
     <li class="wy-breadcrumbs-aside">
     </li>
@@ -1128,8 +1128,8 @@
 <tbody>
 <tr>
 <td><code>WASSTRAAT_GEMEENTE</code></td>
-<td><code>docker-compose.delft.yml</code> (Airflow); <code>deploy/docker-compose.yml</code> via <code>deploy/.env</code></td>
-<td><code>delft</code>; in <code>docker-compose.yml</code> niet gezet, dus de standaard <code>delft</code></td>
+<td><code>docker-compose.delft.yml</code> (Airflow); <code>deploy/docker-compose.yml</code> via <code>deploy/.env</code>; <code>docker-compose.test.yml</code> via <code>GEMEENTE</code> van het Makefile; <code>docker-compose.delft-test.yml</code></td>
+<td><code>delft</code>; in <code>docker-compose.yml</code> niet gezet, dus de standaard <code>delft</code>; in de synthetische testomgeving instelbaar (<code>make integration GEMEENTE=voorbeeld</code>), in de Delftse vast op <code>delft</code></td>
 </tr>
 <tr>
 <td><code>WASSTRAAT_VERSION</code></td>
@@ -1519,19 +1519,19 @@
 </table>
 <h3 id="31-brondata_correcties">3.1 brondata_correcties<a class="headerlink" href="#31-brondata_correcties" title="Permanent link">&para;</a></h3>
 <p>Corrigeert ruwe velden in de staging, vóór de harmonisatie. Nodig als een bron een afwijkende waarde heeft die later niet meer goed te koppelen is, zoals een projectcode die niet in de projectenlijst staat, of een database die in de verkeerde projectmap staat.</p>
-<div class="codehilite"><pre><span></span><code><span class="nt">brondata_correcties</span><span class="p">:</span>
-<span class="w">  </span><span class="c1"># De monsterdatabase gebruikt een oude code voor DC039</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">collectie</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">COLL_STAGING_MONSTER</span>
-<span class="w">    </span><span class="nt">zoek_veld</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">PROJECT</span>
-<span class="w">    </span><span class="nt">patroon</span><span class="p">:</span><span class="w"> </span><span class="s">"SCHE"</span>
-<span class="w">    </span><span class="nt">waarde</span><span class="p">:</span><span class="w"> </span><span class="s">"DC039"</span>
-<span class="w">  </span><span class="c1"># Alle rijen uit de databases in deze map horen bij DC027</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">collectie</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">COLL_STAGING_OUD</span>
-<span class="w">    </span><span class="nt">zoek_veld</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">mdbfile</span>
-<span class="w">    </span><span class="nt">doel_veld</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">project</span>
-<span class="w">    </span><span class="nt">patroon</span><span class="p">:</span><span class="w"> </span><span class="s">"DC027_Voorstraat"</span>
-<span class="w">    </span><span class="nt">waarde</span><span class="p">:</span><span class="w"> </span><span class="s">"DC027"</span>
-</code></pre></div>
+<pre class="codehilite"><code class="language-yaml">brondata_correcties:
+  # De monsterdatabase gebruikt een oude code voor DC039
+  - collectie: COLL_STAGING_MONSTER
+    zoek_veld: PROJECT
+    patroon: &quot;SCHE&quot;
+    waarde: &quot;DC039&quot;
+  # Alle rijen uit de databases in deze map horen bij DC027
+  - collectie: COLL_STAGING_OUD
+    zoek_veld: mdbfile
+    doel_veld: project
+    patroon: &quot;DC027_Voorstraat&quot;
+    waarde: &quot;DC027&quot;
+</code></pre>
 
 <table>
 <thead>
@@ -1572,12 +1572,12 @@
 <p>Elke regel wordt uitgevoerd als <code>update_many</code> op de hele collectie; het log van <code>FixProjectNames</code> noemt per regel het aantal gewijzigde documenten (<code>Brondata fix: ...</code>). Een regel zonder <code>collectie</code>, <code>patroon</code> of <code>waarde</code> geeft een foutmelding en wordt overgeslagen. Daarna zet de taak altijd numerieke projectcodes in <code>Staging_Projecten_Oud</code> en <code>Plaatjes</code> om naar tekst; dat hoort niet bij <code>correcties.yml</code>.</p>
 <h3 id="32-projectcode_correcties">3.2 projectcode_correcties<a class="headerlink" href="#32-projectcode_correcties" title="Permanent link">&para;</a></h3>
 <p>Corrigeert het veld <code>projectcd</code> van alle geharmoniseerde documenten in <code>Single_Store</code>, na de harmonisatie en vóór de identificatie door het gemeenteprofiel. Gebruik dit voor afkortingen en oude codes die in meer bronnen voorkomen.</p>
-<div class="codehilite"><pre><span></span><code><span class="nt">projectcode_correcties</span><span class="p">:</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">patroon</span><span class="p">:</span><span class="w"> </span><span class="s">"DC</span><span class="nv"> </span><span class="s">16"</span><span class="w">       </span><span class="c1"># reguliere expressie op projectcd</span>
-<span class="w">    </span><span class="nt">projectcode</span><span class="p">:</span><span class="w"> </span><span class="s">"DC016"</span><span class="w">   </span><span class="c1"># nieuwe waarde</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">patroon</span><span class="p">:</span><span class="w"> </span><span class="s">"^MONSTERS$"</span>
-<span class="w">    </span><span class="nt">projectcode</span><span class="p">:</span><span class="w"> </span><span class="s">"Onbekend"</span>
-</code></pre></div>
+<pre class="codehilite"><code class="language-yaml">projectcode_correcties:
+  - patroon: &quot;DC 16&quot;       # reguliere expressie op projectcd
+    projectcode: &quot;DC016&quot;   # nieuwe waarde
+  - patroon: &quot;^MONSTERS$&quot;
+    projectcode: &quot;Onbekend&quot;
+</code></pre>
 
 <table>
 <thead>
@@ -1603,19 +1603,19 @@
 <p>De regels worden in volgorde uitgevoerd, in beide cycli op de hele collectie. Het log van <code>Enhance_All_Attributes</code> noemt per regel het aantal gewijzigde documenten (<code>Projectcode fix: ...</code>); een onvolledige regel geeft een foutmelding en wordt overgeslagen. Het gemeenteprofiel normaliseert de code daarna nog (in Delft <code>dc16</code> → <code>DC016</code>, zie <a href="../gemeenteprofielen/#projectcode-normalisatie">Gemeenteprofielen</a>); een correctie is dus alleen nodig voor codes die het profiel niet kan herleiden.</p>
 <h3 id="33-artefact_niet_mergen">3.3 artefact_niet_mergen<a class="headerlink" href="#33-artefact_niet_mergen" title="Permanent link">&para;</a></h3>
 <p>Transform 5 voegt artefacten met dezelfde <code>key_subnr</code> (project, put, vondst en subnummer) en artefactsoort samen tot één artefact; de andere artefacten worden één op één verplaatst. Voor projecten in <code>artefact_niet_mergen</code> gebeurt dat samenvoegen niet: elke bronrij wordt een eigen artefact. Gebruik dit voor projecten waarin hetzelfde subnummer voor verschillende voorwerpen is gebruikt.</p>
-<div class="codehilite"><pre><span></span><code><span class="nt">artefact_niet_mergen</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">projectcodes</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">"DC112"</span><span class="p p-Indicator">]</span>
-</code></pre></div>
+<pre class="codehilite"><code class="language-yaml">artefact_niet_mergen:
+  projectcodes: [&quot;DC112&quot;]
+</code></pre>
 
 <p>De projectcodes worden vergeleken met <code>projectcd</code> na Transform 2, dus in de genormaliseerde vorm (<code>DC112</code>, niet <code>dc112</code>). Is <code>artefact_niet_mergen</code> geen dictionary of <code>projectcodes</code> geen lijst, dan volgt een waarschuwing en geldt de sectie als leeg. De werking en de vaste uitzonderingen (de tabellen <code>ROMEINS AARDEWERK</code> en <code>ARTEFACT</code>) staan in <a href="../transformatie/#verplaatsen-en-samenvoegen-van-artefacten">Transformatie: verplaatsen en samenvoegen van artefacten</a>.</p>
 <h3 id="34-rapportcode_prefixen">3.4 rapportcode_prefixen<a class="headerlink" href="#34-rapportcode_prefixen" title="Permanent link">&para;</a></h3>
 <p>Rapportnummers zoals <code>DAR045</code> (Delftse Archeologische Rapporten) en <code>DAN007</code> (Delftse Archeologische Notities) beginnen met een vaste letterreeks. Deze sectie legt die reeksen vast:</p>
-<div class="codehilite"><pre><span></span><code><span class="nt">rapportcode_prefixen</span><span class="p">:</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">prefix</span><span class="p">:</span><span class="w"> </span><span class="s">"DAR"</span>
-<span class="w">    </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="s">"archeologische_rapportage"</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">prefix</span><span class="p">:</span><span class="w"> </span><span class="s">"DAN"</span>
-<span class="w">    </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="s">"archeologische_notitie"</span>
-</code></pre></div>
+<pre class="codehilite"><code class="language-yaml">rapportcode_prefixen:
+  - prefix: &quot;DAR&quot;
+    type: &quot;archeologische_rapportage&quot;
+  - prefix: &quot;DAN&quot;
+    type: &quot;archeologische_notitie&quot;
+</code></pre>
 
 <table>
 <thead>
@@ -1644,11 +1644,11 @@
 <p>De herkenning controleert de sectie aan het begin van <code>ParseFotobestanden</code> (<code>harmonize_functions.leesRapportcodePrefixen</code>, toegestane waarden in <code>RAPPORT_TYPES</code>). Een regel met een onbekend <code>type</code>, zonder <code>type</code> of zonder <code>prefix</code> geeft een foutmelding in het log en een waarschuwing <code>configuratie_ongeldig</code> in het <a href="../verwerkingsrapport/">verwerkingsrapport</a>, en wordt overgeslagen: bestanden met dat prefix worden geen rapport (maar bijvoorbeeld een <code>Bestand</code>). De run gaat door. Tot issue 87 werd elk ander type stil een notitie. Bij de selectie telt alleen <code>prefix</code>; zo'n bestand wordt dus wel ingelezen.</p>
 <h3 id="35-paden_overslaan">3.5 paden_overslaan<a class="headerlink" href="#35-paden_overslaan" title="Permanent link">&para;</a></h3>
 <p>Een lijst met bestanden en mappen die de extractie overslaat, zoals kopieën van databases en afbeeldingen in een werkmap. Zonder deze sectie leest de extractie elke Access-database onder een invoermap in, en geeft zo'n kopie dubbele artefacten, sporen en vondsten.</p>
-<div class="codehilite"><pre><span></span><code><span class="nt">paden_overslaan</span><span class="p">:</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"DC024_Stadskantoor/K</span><span class="nv"> </span><span class="s">Overig/werkmap</span><span class="nv"> </span><span class="s">joris"</span><span class="w">   </span><span class="c1"># één map, met alles daaronder</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"**/werkmap*"</span><span class="w">                                 </span><span class="c1"># elke map die met werkmap begint, op elk niveau</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"DC097_Ipse/C</span><span class="nv"> </span><span class="s">Database/HHD2.mdb"</span><span class="w">              </span><span class="c1"># één bestand</span>
-</code></pre></div>
+<pre class="codehilite"><code class="language-yaml">paden_overslaan:
+  - &quot;DC024_Stadskantoor/K Overig/werkmap joris&quot;   # één map, met alles daaronder
+  - &quot;**/werkmap*&quot;                                 # elke map die met werkmap begint, op elk niveau
+  - &quot;DC097_Ipse/C Database/HHD2.mdb&quot;              # één bestand
+</code></pre>
 
 <table>
 <thead>
@@ -1697,19 +1697,19 @@
 <p><strong>Zichtbaarheid.</strong> Elk overgeslagen bestand krijgt een regel in het log van de taak (<code>Overgeslagen volgens paden_overslaan (patroon '...'): &lt;pad&gt;</code>), gevolgd door een telling per invoermap. Het run-document krijgt <code>paden_overgeslagen</code> (per categorie de paden, hoogstens 1.000) en <code>tellingen.paden_overgeslagen</code>; het <a href="../verwerkingsrapport/">verwerkingsrapport</a> noemt ze als bestanden met status <code>overgeslagen</code> en reden <code>paden_overslaan (correcties.yml)</code>.</p>
 <p><strong>Wijzigen.</strong> Een nieuw patroon werkt ook in de incrementele cyclus: een al geregistreerd bestand dat erbuiten valt, geldt daar als verwijderd en zijn rijen worden opgeruimd; haal je een patroon weg, dan gelden de bestanden als nieuw. Na een grotere wijziging is de volledige cyclus de veilige weg. Meer achtergrond en de Delftse aantallen staan in <a href="../extractie/#paden-overslaan">Extractie: paden overslaan</a>.</p>
 <p><strong>Delft: tussenversies van een database (issue 86).</strong> Naast de werkmap van Joris slaat de Delftse configuratie twee losse bestanden over, tussenversies van <code>opgravingDC97.mdb</code> in DC097:</p>
-<div class="codehilite"><pre><span></span><code><span class="nt">paden_overslaan</span><span class="p">:</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"DC024_Stadskantoor/K</span><span class="nv"> </span><span class="s">Overig/werkmap</span><span class="nv"> </span><span class="s">joris"</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"DC097_Ipse/C</span><span class="nv"> </span><span class="s">Database/HHD2.mdb"</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"DC097_Ipse/C</span><span class="nv"> </span><span class="s">Database/dc79a1.mdb"</span>
-</code></pre></div>
+<pre class="codehilite"><code class="language-yaml">paden_overslaan:
+  - &quot;DC024_Stadskantoor/K Overig/werkmap joris&quot;
+  - &quot;DC097_Ipse/C Database/HHD2.mdb&quot;
+  - &quot;DC097_Ipse/C Database/dc79a1.mdb&quot;
+</code></pre>
 
 <p>Het pad begint bij de projectmap (niet bij <code>projecten/</code>). Samengevoegde artefacten en vondsten van DC097 verliezen zo twee van hun drie bronrijen; ze houden hun nummer via hun key, die niet verandert. Rijen die alleen in de tussenversies stonden (115 artefacten, 182 sporen, 196 vullingen) vervallen bij de eerstvolgende volledige cyclus.</p>
 <h3 id="36-harmonisatie_voorrang">3.6 harmonisatie_voorrang<a class="headerlink" href="#36-harmonisatie_voorrang" title="Permanent link">&para;</a></h3>
 <p>Bepaalt welke soort een Access-tabel harmoniseert als de patronen van meer dan één soort in de <a href="#4-harmonisatie-excel">harmonisatie-Excel</a> hem selecteren, en welke tabellen door geen enkele soort worden geharmoniseerd. Zonder deze keuze schreven de parallelle taken <code>Harmonize_&lt;soort&gt;</code> hetzelfde document om beurten weg en won de taak die het laatst klaar was, per run anders (issue 89: <code>AW1DeterminatiesJohan</code> werd de ene keer aardewerk met baksel, decoratie en ABR-materiaal, de andere keer een kaal artefact).</p>
-<div class="codehilite"><pre><span></span><code><span class="nt">harmonisatie_voorrang</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">AW1DeterminatiesJohan</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Aardewerk</span><span class="w">   </span><span class="c1"># door Aardewerk ("AW1.*"), niet door Artefact ("Determinaties")</span>
-<span class="w">  </span><span class="s">"CODES</span><span class="nv"> </span><span class="s">BAKSEL"</span><span class="p p-Indicator">:</span><span class="w">                    </span><span class="c1"># codetabel: door geen enkele soort</span>
-</code></pre></div>
+<pre class="codehilite"><code class="language-yaml">harmonisatie_voorrang:
+  AW1DeterminatiesJohan: Aardewerk   # door Aardewerk (&quot;AW1.*&quot;), niet door Artefact (&quot;Determinaties&quot;)
+  &quot;CODES BAKSEL&quot;:                    # codetabel: door geen enkele soort
+</code></pre>
 
 <table>
 <thead>
@@ -1745,42 +1745,42 @@
 <p><strong>Zichtbaarheid.</strong> Een tabel die meer soorten selecteren zonder instelling geeft een waarschuwing <code>tabel_dubbel_geselecteerd</code> in het run-document, met de tabel, de collectie, de kandidaten en de gekozen soort; de run gaat door. Alle besluiten, ook die uit deze sectie, staan in het <a href="../verwerkingsrapport/">verwerkingsrapport</a> onder Kwaliteitsmeldingen ("Harmonisatie: tabellen bij meer dan één soort") en in het log van de taak van de gekozen soort (bij geen enkele soort: van de eerste kandidaat). Een instelling voor een tabel die geen enkele pipeline selecteert heeft geen effect en wordt niet gemeld.</p>
 <p><strong>Delft.</strong> In de Delftse staging selecteren twee pipelines dezelfde tabel bij alleen <code>AW1DeterminatiesJohan</code> (802 rijen uit <code>opgravingDB34.mdb</code>): <code>Aardewerk</code> via <code>AW1.*</code> en <code>Artefact</code> via <code>Determinaties</code>; <code>data/delft/wasstraat_config/correcties.yml</code> kiest <code>Aardewerk</code>. De codetabel <code>METAAL OPPERVLAK</code> staat in de projectenlijst, waar alleen de vaste pipelines van projecten (<code>OPGRAVINGEN</code>) en vindplaatsen (<code>VINDPLAATSEN</code>) draaien; geen enkele soort selecteert hem. De synthetische data en de Delftse testdata hebben geen dubbel geselecteerde tabellen.</p>
 <p><strong>Delft: codetabellen (issue 75).</strong> De tabellen <code>AARDEWERK 1&amp;2 VOORWERP</code> (kolommen <code>CODE</code> en <code>VOORWERP</code>, 96 rijen) en <code>AARDEWERK 1 BAKSEL</code> (<code>CODE</code> en <code>BAKSEL</code>, 46 rijen) uit <code>opgravingDB34.mdb</code> zijn lijsten met codes, geen artefacten. Alleen <code>Aardewerk</code> selecteert ze (via <code>.*AARDEWERK.*</code>); een lege waarde sluit ze toch uit. Ze blijven als referentiedata in de staging:</p>
-<div class="codehilite"><pre><span></span><code><span class="nt">harmonisatie_voorrang</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">AW1DeterminatiesJohan</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Aardewerk</span>
-<span class="w">  </span><span class="s">"AARDEWERK</span><span class="nv"> </span><span class="s">1&amp;2</span><span class="nv"> </span><span class="s">VOORWERP"</span><span class="p p-Indicator">:</span>
-<span class="w">  </span><span class="s">"AARDEWERK</span><span class="nv"> </span><span class="s">1</span><span class="nv"> </span><span class="s">BAKSEL"</span><span class="p p-Indicator">:</span>
-</code></pre></div>
+<pre class="codehilite"><code class="language-yaml">harmonisatie_voorrang:
+  AW1DeterminatiesJohan: Aardewerk
+  &quot;AARDEWERK 1&amp;2 VOORWERP&quot;:
+  &quot;AARDEWERK 1 BAKSEL&quot;:
+</code></pre>
 
 <p>De Delftse testdata (<code>data/test/wasstraat_config/correcties.yml</code>) sluit dezelfde twee tabellen uit. Andere tabellen die een artefactsoort selecteert en die alleen codes of omschrijvingen bevatten (in Delft <code>GLAS FUNCTIE</code>, <code>GLAS GLASSOORT</code> en <code>GLAS VOORWERP</code> uit <code>DC024_Stadskantoor/B Arcview/opgravingDC24.mdb</code>), worden nog als artefact geharmoniseerd.</p>
 <p><strong>Wijzigen.</strong> Een andere keuze verandert de soort (en bij artefacten de artefactsoort en de velden) van de documenten uit die tabel: draai daarna de volledige cyclus. Rijen die zo een andere artefactsoort krijgen, houden hun nummer in PostgreSQL (zie <a href="../incrementeel-laden/#andere-artefactsoort-door-de-harmonisatie-issue-89">Incrementeel laden</a>).</p>
 <h3 id="37-volledig-voorbeeld">3.7 Volledig voorbeeld<a class="headerlink" href="#37-volledig-voorbeeld" title="Permanent link">&para;</a></h3>
-<div class="codehilite"><pre><span></span><code><span class="c1"># correcties.yml van een gemeente; alle secties zijn optioneel</span>
+<pre class="codehilite"><code class="language-yaml"># correcties.yml van een gemeente; alle secties zijn optioneel
 
-<span class="nt">brondata_correcties</span><span class="p">:</span><span class="w">            </span><span class="c1"># Transform 1, op de ruwe staging</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">collectie</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">COLL_STAGING_MONSTER</span>
-<span class="w">    </span><span class="nt">zoek_veld</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">PROJECT</span>
-<span class="w">    </span><span class="nt">patroon</span><span class="p">:</span><span class="w"> </span><span class="s">"^OUDECODE$"</span>
-<span class="w">    </span><span class="nt">waarde</span><span class="p">:</span><span class="w"> </span><span class="s">"AB001"</span>
+brondata_correcties:            # Transform 1, op de ruwe staging
+  - collectie: COLL_STAGING_MONSTER
+    zoek_veld: PROJECT
+    patroon: &quot;^OUDECODE$&quot;
+    waarde: &quot;AB001&quot;
 
-<span class="nt">projectcode_correcties</span><span class="p">:</span><span class="w">         </span><span class="c1"># Transform 2, op projectcd in Single_Store</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">patroon</span><span class="p">:</span><span class="w"> </span><span class="s">"^AB</span><span class="nv"> </span><span class="s">1$"</span>
-<span class="w">    </span><span class="nt">projectcode</span><span class="p">:</span><span class="w"> </span><span class="s">"AB001"</span>
+projectcode_correcties:         # Transform 2, op projectcd in Single_Store
+  - patroon: &quot;^AB 1$&quot;
+    projectcode: &quot;AB001&quot;
 
-<span class="nt">artefact_niet_mergen</span><span class="p">:</span><span class="w">           </span><span class="c1"># Transform 5: elke bronrij een eigen artefact</span>
-<span class="w">  </span><span class="nt">projectcodes</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">"AB012"</span><span class="p p-Indicator">]</span>
+artefact_niet_mergen:           # Transform 5: elke bronrij een eigen artefact
+  projectcodes: [&quot;AB012&quot;]
 
-<span class="nt">rapportcode_prefixen</span><span class="p">:</span><span class="w">           </span><span class="c1"># extractie en ParseFotobestanden</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">prefix</span><span class="p">:</span><span class="w"> </span><span class="s">"ABR"</span>
-<span class="w">    </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="s">"archeologische_rapportage"</span>
+rapportcode_prefixen:           # extractie en ParseFotobestanden
+  - prefix: &quot;ABR&quot;
+    type: &quot;archeologische_rapportage&quot;
 
-<span class="nt">paden_overslaan</span><span class="p">:</span><span class="w">                </span><span class="c1"># extractie en registratie</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"AB001_Voorbeeldproject/K</span><span class="nv"> </span><span class="s">Overig/werkmap"</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"**/oude</span><span class="nv"> </span><span class="s">kopie*"</span>
+paden_overslaan:                # extractie en registratie
+  - &quot;AB001_Voorbeeldproject/K Overig/werkmap&quot;
+  - &quot;**/oude kopie*&quot;
 
-<span class="nt">harmonisatie_voorrang</span><span class="p">:</span><span class="w">          </span><span class="c1"># Transform 1: welke soort een dubbel geselecteerde tabel harmoniseert</span>
-<span class="w">  </span><span class="nt">ABDeterminaties</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Aardewerk</span>
-<span class="w">  </span><span class="s">"AARDEWERK</span><span class="nv"> </span><span class="s">BAKSEL"</span><span class="p p-Indicator">:</span><span class="w">           </span><span class="c1"># codetabel: door geen enkele soort</span>
-</code></pre></div>
+harmonisatie_voorrang:          # Transform 1: welke soort een dubbel geselecteerde tabel harmoniseert
+  ABDeterminaties: Aardewerk
+  &quot;AARDEWERK BAKSEL&quot;:           # codetabel: door geen enkele soort
+</code></pre>
 
 <p>Controleer na een run of de correcties werkten: de logs van <code>FixProjectNames</code> en <code>Enhance_All_Attributes</code> noemen per regel het aantal gewijzigde documenten, en het verwerkingsrapport noemt de overgeslagen paden en de voorrang bij de harmonisatie. <code>tests/unit/test_correcties_yml.py</code>, <code>tests/unit/test_paden_overslaan.py</code> en <code>tests/unit/test_harmonisatie_voorrang.py</code> toetsen het inlezen, de werking en de foutgevallen.</p>
 <h2 id="4-harmonisatie-excel">4. Harmonisatie-Excel<a class="headerlink" href="#4-harmonisatie-excel" title="Permanent link">&para;</a></h2>
@@ -1954,11 +1954,11 @@
 </tbody>
 </table>
 <p>De build stopt als de geïnstalleerde versies afwijken van <code>constraints.txt</code>. De Airflow-build houdt bovendien alle pakketten van de basisimage <code>apache/airflow:2.10.5-python3.11</code> op hun versie; pip mag alleen toevoegen. Bijwerken:</p>
-<div class="codehilite"><pre><span></span><code>make<span class="w"> </span>constraints<span class="w">                       </span><span class="c1"># alle drie; of: bash scripts/leg_pakketversies_vast.sh flask</span>
-git<span class="w"> </span>diff<span class="w"> </span>services/*/constraints.txt
-docker<span class="w"> </span>compose<span class="w"> </span>-p<span class="w"> </span>wasstraat-test<span class="w"> </span>-f<span class="w"> </span>docker-compose.test.yml<span class="w"> </span>build<span class="w"> </span>--no-cache<span class="w"> </span>--pull
-make<span class="w"> </span>test-all
-</code></pre></div>
+<pre class="codehilite"><code class="language-bash">make constraints                       # alle drie; of: bash scripts/leg_pakketversies_vast.sh flask
+git diff services/*/constraints.txt
+docker compose -p wasstraat-test -f docker-compose.test.yml build --no-cache --pull
+make test-all
+</code></pre>
 
 <p>Zie <a href="../../testen/#pakketversies-bijwerken">Testen: pakketversies bijwerken</a> voor de achtergrond.</p>
 <h2 id="8-versienummer-en-releases">8. Versienummer en releases<a class="headerlink" href="#8-versienummer-en-releases" title="Permanent link">&para;</a></h2>
@@ -1986,9 +1986,19 @@ make<span class="w"> </span>test-all
 <td><code>WASSTRAAT_VERSION=&lt;versie&gt;</code>, de standaard voor nieuwe installaties</td>
 <td>ja</td>
 </tr>
+<tr>
+<td><code>CITATION.cff</code></td>
+<td><code>version</code> en <code>date-released</code>, voor de citatie op GitHub en de metadata van Zenodo</td>
+<td>ja</td>
+</tr>
+<tr>
+<td><code>README.md</code></td>
+<td>Versiebadge</td>
+<td>ja</td>
+</tr>
 </tbody>
 </table>
-<p><code>make publish</code> gebruikt de versie uit <code>config/version.env</code> (anders uit het sjabloon) als tag van de images; <code>VERSION=x.y.z</code> op de commandoregel gaat voor. <code>make release VERSION=1.2.3 MSG="..."</code> schrijft de versie in de drie bestanden, staget alleen <code>config/version.env.example</code> en <code>deploy/.env.example</code>, commit, maakt een geannoteerde tag, pusht de huidige branch en de tag, en publiceert de images. <code>tests/unit/test_deploy.py</code> eist dat <code>deploy/.env.example</code> en <code>config/version.env.example</code> dezelfde versie noemen.</p>
+<p><code>make publish</code> gebruikt de versie uit <code>config/version.env</code> (anders uit het sjabloon) als tag van de images; <code>VERSION=x.y.z</code> op de commandoregel gaat voor. <code>make release VERSION=1.2.3 MSG="..."</code> schrijft de versie in de vijf bestanden, staget alleen de vier die in de repository staan, commit, maakt een geannoteerde tag, pusht de huidige branch en de tag, publiceert de images en maakt een GitHub-release bij de tag (waarna Zenodo de versie archiveert). <code>tests/unit/test_deploy.py</code> eist dat <code>deploy/.env.example</code>, <code>CITATION.cff</code> en <code>config/version.env.example</code> dezelfde versie noemen.</p>
 <p>Het verwerkingsrapport vermeldt de versie als die in de Airflow-container bekend is: eerst <code>WASSTRAAT_VERSION</code>, anders de regel <code>VERSION=</code> uit <code>WASSTRAAT_VERSIEBESTAND</code> (standaard <code>/opt/airflow/version.env</code>). In de live installatie zet <code>deploy/docker-compose.yml</code> <code>WASSTRAAT_VERSION</code> uit <code>deploy/.env</code>. In de ontwikkelomgeving geven <code>make app</code>, <code>make delft</code> en <code>make dev</code> de versie uit <code>config/version.env</code> (anders <code>config/version.env.example</code>, dezelfde regel als <code>make publish</code>) als <code>WASSTRAAT_VERSION</code> mee; <code>docker-compose.yml</code> en <code>docker-compose.delft.yml</code> zetten die in de Airflow-container. Start je de ontwikkelomgeving met <code>docker compose up</code> zonder de Makefile, dan is <code>WASSTRAAT_VERSION</code> leeg en ontbreekt de versie in het rapport (tenzij je hem zelf meegeeft: <code>WASSTRAAT_VERSION=1.2.1 docker compose up -d</code>). De testomgevingen zetten geen versie. Publiceren en releases staan in <a href="../../deployment/omgevingen/#publicatie-van-images">Omgevingen: publicatie van images</a>.</p>
 <h2 id="9-veelvoorkomende-configuratietaken">9. Veelvoorkomende configuratietaken<a class="headerlink" href="#9-veelvoorkomende-configuratietaken" title="Permanent link">&para;</a></h2>
 <table>
@@ -2092,9 +2102,9 @@ make<span class="w"> </span>test-all
   
 </footer>
 <footer>
-    <div class="rst-footer-buttons" role="navigation" aria-label="Footernavigatie">
-        <a href="../../deployment/installatie-met-images/" class="btn btn-neutral float-left" title="Installatie met images"><span class="icon icon-circle-arrow-left"></span> Vorige</a>
-        <a href="../../overzicht/inleiding/" class="btn btn-neutral float-right" title="Inleiding">Volgende <span class="icon icon-circle-arrow-right"></span></a>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../../deployment/installatie-met-images/" class="btn btn-neutral float-left" title="Installatie met images"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../../overzicht/inleiding/" class="btn btn-neutral float-right" title="Inleiding">Next <span class="icon icon-circle-arrow-right"></span></a>
     </div>
 
   <hr/>
@@ -2104,7 +2114,7 @@ make<span class="w"> </span>test-all
       <p>© E-Space — Arjen Brienen. Uitgegeven onder de EUPL v1.2 licentie.</p>
   </div>
 
-  Gemaakt met <a href="https://www.mkdocs.org/">MkDocs</a> met behulp van een <a href="https://github.com/readthedocs/sphinx_rtd_theme">Thema</a> geleverd door <a href="https://readthedocs.org">Read the Docs</a>.
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
 </footer>
           
 
@@ -2115,14 +2125,14 @@ make<span class="w"> </span>test-all
 
   </div>
 
-  <div class="rst-versions" role="note" aria-label="Versies">
+  <div class="rst-versions" role="note" aria-label="Versions">
   <span class="rst-current-version" data-toggle="rst-current-version">
     
     
-      <span><a href="../../deployment/installatie-met-images/" style="color: #fcfcfc">&laquo; Vorige</a></span>
+      <span><a href="../../deployment/installatie-met-images/" style="color: #fcfcfc">&laquo; Previous</a></span>
     
     
-      <span><a href="../../overzicht/inleiding/" style="color: #fcfcfc">Volgende &raquo;</a></span>
+      <span><a href="../../overzicht/inleiding/" style="color: #fcfcfc">Next &raquo;</a></span>
     
   </span>
 </div>

@@ -148,12 +148,12 @@
           <a href="../.." class="icon icon-home"> Wasstraat Archeologische Data
         </a><div role="search">
   <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
-      <input type="text" name="q" placeholder="Doorzoek documentatie" aria-label="Doorzoek documentatie" title="Typ hier uw zoekterm" />
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
   </form>
 </div>
       </div>
 
-      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigatiemenu">
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <ul>
                 <li class="toctree-l1"><a class="reference internal" href="../..">Home</a>
                 </li>
@@ -274,7 +274,7 @@
     </nav>
 
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
-      <nav class="wy-nav-top" role="navigation" aria-label="Mobiel navigatiemenu">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
           <a href="../..">Wasstraat Archeologische Data</a>
         
@@ -282,7 +282,7 @@
       <div class="wy-nav-content">
         <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
   <ul class="wy-breadcrumbs">
-    <li><a href="../.." class="icon icon-home" aria-label="Documentatie"></a></li>
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
           <li class="breadcrumb-item">Componenten</li>
       <li class="breadcrumb-item active">Foutbeleid en verwerkingsrapport</li>
     <li class="wy-breadcrumbs-aside">
@@ -567,10 +567,10 @@
 <p>Herstel na een cruciale fout: zie de melding in het rapport en het log van de taak. Een mislukte incrementele run kan na herstel van de oorzaak gewoon opnieuw starten (de registratie is niet bijgewerkt); na een mislukte volledige cyclus de volledige cyclus opnieuw draaien. Een mislukte Elasticsearch-index herstel je met <code>DAG_Load_Only</code> of de volgende incrementele run.</p>
 <h3 id="opbouw-van-de-dags">Opbouw van de DAG's<a class="headerlink" href="#opbouw-van-de-dags" title="Permanent link">&para;</a></h3>
 <p>De volledige cyclus, de incrementele cyclus en <code>DAG_Load_Only</code> hebben dezelfde opbouw (<code>airflow_app/dags/tasks_verwerkingsrun.py</code>):</p>
-<div class="codehilite"><pre><span></span><code><span class="n">Start_Run</span><span class="w"> </span><span class="err">→</span><span class="w"> </span><span class="err">…</span><span class="w"> </span><span class="n">verwerking</span><span class="w"> </span><span class="err">…</span><span class="w"> </span><span class="err">→</span><span class="w"> </span><span class="n">registratie</span><span class="w"> </span><span class="p">(</span><span class="n">Registreer_Bronbestanden</span><span class="p">,</span><span class="w"> </span><span class="n">Registreer_Run</span><span class="w"> </span><span class="n">of</span><span class="w"> </span><span class="n">Rond_Run_Af</span><span class="p">)</span>
-<span class="n">bewaakte</span><span class="w"> </span><span class="n">taken</span><span class="w"> </span><span class="err">→</span><span class="w"> </span><span class="n">Markeer_Run_Mislukt</span><span class="w"> </span><span class="p">(</span><span class="n">one_failed</span><span class="p">)</span>
-<span class="n">alle</span><span class="w"> </span><span class="n">andere</span><span class="w"> </span><span class="n">taken</span><span class="w"> </span><span class="err">→</span><span class="w"> </span><span class="n">Verwerkingsrapport</span><span class="w"> </span><span class="p">(</span><span class="n">all_done</span><span class="p">)</span><span class="w"> </span><span class="err">→</span><span class="w"> </span><span class="n">eindtaak</span><span class="w"> </span><span class="p">(</span><span class="n">all_success</span><span class="p">)</span>
-</code></pre></div>
+<pre class="codehilite"><code>Start_Run → … verwerking … → registratie (Registreer_Bronbestanden, Registreer_Run of Rond_Run_Af)
+bewaakte taken → Markeer_Run_Mislukt (one_failed)
+alle andere taken → Verwerkingsrapport (all_done) → eindtaak (all_success)
+</code></pre>
 
 <ul>
 <li><strong>Bewaking.</strong> De cruciale taken (en taakgroepen) hangen aan <code>Markeer_Run_Mislukt</code> (<code>trigger_rule=one_failed</code>), de Index-taken niet. De melding van de run noemt de mislukte taken, bijvoorbeeld <code>Mislukte taak in Airflow-run manual__…: Extract_Group.Controleer_Afbeeldingen.</code></li>
@@ -695,9 +695,9 @@
 <h2 id="verwerkingsrapport">Verwerkingsrapport<a class="headerlink" href="#verwerkingsrapport" title="Permanent link">&para;</a></h2>
 <h3 id="wanneer-en-waar">Wanneer en waar<a class="headerlink" href="#wanneer-en-waar" title="Permanent link">&para;</a></h3>
 <p>De taak <code>Verwerkingsrapport</code> draait aan het eind van elke run van <code>Extract_Transform_Load_Full_Cycle</code>, <code>Extract_Transform_Load_Incremental</code> en <code>DAG_Load_Only</code>, ook na een fout. Hij schrijft twee bestanden naar <code>AIRFLOW_OUTPUT_RAPPORTEN</code> (standaard <code>/output/rapporten</code>):</p>
-<div class="codehilite"><pre><span></span><code>verwerkingsrapport_&lt;run_id&gt;_&lt;soort&gt;_&lt;tijdstip&gt;.json
+<pre class="codehilite"><code>verwerkingsrapport_&lt;run_id&gt;_&lt;soort&gt;_&lt;tijdstip&gt;.json
 verwerkingsrapport_&lt;run_id&gt;_&lt;soort&gt;_&lt;tijdstip&gt;.md
-</code></pre></div>
+</code></pre>
 
 <p>bijvoorbeeld <code>verwerkingsrapport_20261029T101500_volledig_20261029T102312.json</code> (run-id = start van de run, tijdstip = moment van het rapport, beide UTC). Mislukte <code>Start_Run</code> (er was al een run actief): <code>verwerkingsrapport_zonder-run_&lt;dag_id&gt;_&lt;tijdstip&gt;</code>. Het opnieuw draaien van de taak maakt een nieuw bestand; er wordt niets overschreven of opgeruimd.</p>
 <table>
@@ -788,9 +788,9 @@ verwerkingsrapport_&lt;run_id&gt;_&lt;soort&gt;_&lt;tijdstip&gt;.md
 </ul>
 <h3 id="voorbeeld-markdown">Voorbeeld (Markdown)<a class="headerlink" href="#voorbeeld-markdown" title="Permanent link">&para;</a></h3>
 <p>Ingekort (lege secties en rijen weggelaten), uit de synthetische testomgeving: de incrementele run met een onleesbare database (stap h2 van de integratietest):</p>
-<div class="codehilite"><pre><span></span><code><span class="gh"># Verwerkingsrapport 20261029T134248</span>
+<pre class="codehilite"><code class="language-markdown"># Verwerkingsrapport 20261029T134248
 
-Uitkomst: <span class="gs">**geslaagd met waarschuwingen**</span> (0 fout(en), 1 waarschuwing(en)).
+Uitkomst: **geslaagd met waarschuwingen** (0 fout(en), 1 waarschuwing(en)).
 
 | Gegeven | Waarde |
 |---|---|
@@ -802,23 +802,23 @@ Uitkomst: <span class="gs">**geslaagd met waarschuwingen**</span> (0 fout(en), 1
 | Doorlooptijd | 16,8 s |
 | Profiel | delft |
 
-<span class="gu">## Foutbeleid</span>
+## Foutbeleid
 
 Geen fout heeft de run gestopt.
 
-<span class="gu">### Fouten</span>
+### Fouten
 
 Geen.
 
-<span class="gu">### Waarschuwingen</span>
+### Waarschuwingen
 
 | Stap | Taak | Soort | Aantal | Melding |
 |---|---|---|---|---|
 | extractie | Extract_Group.Controleer_Databases | database_onleesbaar | 1 | Onleesbare Access-databases (mogelijk corrupt; zie het log van de extractie): 1 van 1, binnen de drempel van 2. |
 
-<span class="gu">## Bronbestanden</span>
+## Bronbestanden
 
-<span class="gu">### Totalen per categorie</span>
+### Totalen per categorie
 
 | Categorie | overgeslagen | mislukt | ongewijzigd |
 |---|---|---|---|
@@ -826,25 +826,25 @@ Geen.
 | projecten | 1 | 1 | 2 |
 | … | | | |
 
-<span class="gu">### Bestanden</span>
+### Bestanden
 
 | Bestand | Categorie | Grootte | Status | Records | Reden |
 |---|---|---|---|---|---|
 | /input/projecten/SY003/C Database/kapot.mdb | projecten | 10600 | mislukt | 0 | onleesbaar (mdb-tables kan het bestand niet lezen; mogelijk corrupt) |
 | /input/projecten/SY001/K Overig/werkmap/opgravingSY001.mdb | projecten | – | overgeslagen | – | paden_overslaan (correcties.yml) |
 
-<span class="gu">## Objecttotalen</span>
+## Objecttotalen
 
 | Tabel | Totaal | Aangemaakt | Bijgewerkt | Samengevoegd | Verwijderd |
 |---|---|---|---|---|---|
 | Def_Project | 2 | 0 | 0 | 0 | 0 |
 | Def_Artefact | 27 | 0 | 0 | 0 | 0 |
 | … | | | | | |
-| <span class="gs">**Totaal**</span> | 4989 | 0 | 0 | 0 | 0 |
+| **Totaal** | 4989 | 0 | 0 | 0 | 0 |
 
-<span class="gu">## Kwaliteitsmeldingen</span>
+## Kwaliteitsmeldingen
 
-<span class="gu">### Access-databases</span>
+### Access-databases
 
 1 databases verwerkt: 1 onleesbaar, 0 zonder records, 0 tabel(len) overgeslagen (drempel onleesbaar 2).
 
@@ -852,9 +852,9 @@ Geen.
 |---|---|
 | /input/projecten/SY003/C Database/kapot.mdb | onleesbaar |
 
-<span class="gu">## Pipeline</span>
+## Pipeline
 
-<span class="gu">### Doorlooptijd per stap</span>
+### Doorlooptijd per stap
 
 | Stap | Start | Eind | Duur | Taken | Mislukt | Niet uitgevoerd |
 |---|---|---|---|---|---|---|
@@ -862,7 +862,7 @@ Geen.
 | transform4 | 2026-10-29 13:42:56 UTC | 2026-10-29 13:43:01 UTC | 5,2 s | 59 | 0 | 0 |
 | load | 2026-10-29 13:43:01 UTC | 2026-10-29 13:43:03 UTC | 1,4 s | 1 | 0 | 0 |
 | index | 2026-10-29 13:43:03 UTC | 2026-10-29 13:43:04 UTC | 1,5 s | 22 | 0 | 0 |
-</code></pre></div>
+</code></pre>
 
 <h2 id="configuratie">Configuratie<a class="headerlink" href="#configuratie" title="Permanent link">&para;</a></h2>
 <table>
@@ -921,10 +921,10 @@ Geen.
 </table>
 <p>De drempels worden in <code>shared/config.py</code> gelezen (aantallen met <code>int()</code>, percentages met <code>float()</code>); een lege, ongeldige of negatieve waarde levert de standaard op. Met <code>0</code> en <code>0</code> is elke fout cruciaal. Ze staan, met <code>AIRFLOW_OUTPUT_RAPPORTEN</code>, in <code>config/airflow.env.example</code> en <code>deploy/config/airflow.env.example</code>. De drempels voor afbeeldingen (<code>AIRFLOW_MAX_MISLUKTE_AFBEELDINGEN</code> / <code>_PCT</code>) staan bij de <a href="../extractie/#afbeeldingen-en-rapporten">extractie</a>; alle instellingen van Airflow staan in <a href="../configuratie/#23-airflow-airflowenv-airflow_dbenv">Configuratie</a>.</p>
 <p>Voorbeeld (alleen afwijkingen van de standaard zijn nodig):</p>
-<div class="codehilite"><pre><span></span><code>AIRFLOW_MAX_MISLUKTE_DATABASES=5
+<pre class="codehilite"><code>AIRFLOW_MAX_MISLUKTE_DATABASES=5
 AIRFLOW_MAX_MISLUKTE_DATABASES_PCT=2.5
 AIRFLOW_OUTPUT_RAPPORTEN=/output/rapporten
-</code></pre></div>
+</code></pre>
 
 <h2 id="modules-en-taken">Modules en taken<a class="headerlink" href="#modules-en-taken" title="Permanent link">&para;</a></h2>
 <table>
@@ -1003,9 +1003,9 @@ AIRFLOW_OUTPUT_RAPPORTEN=/output/rapporten
   
 </footer>
 <footer>
-    <div class="rst-footer-buttons" role="navigation" aria-label="Footernavigatie">
-        <a href="../incrementeel-laden/" class="btn btn-neutral float-left" title="Incrementeel laden"><span class="icon icon-circle-arrow-left"></span> Vorige</a>
-        <a href="../validatie/" class="btn btn-neutral float-right" title="Validatie en kwaliteitscontroles">Volgende <span class="icon icon-circle-arrow-right"></span></a>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../incrementeel-laden/" class="btn btn-neutral float-left" title="Incrementeel laden"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../validatie/" class="btn btn-neutral float-right" title="Validatie en kwaliteitscontroles">Next <span class="icon icon-circle-arrow-right"></span></a>
     </div>
 
   <hr/>
@@ -1015,7 +1015,7 @@ AIRFLOW_OUTPUT_RAPPORTEN=/output/rapporten
       <p>© E-Space — Arjen Brienen. Uitgegeven onder de EUPL v1.2 licentie.</p>
   </div>
 
-  Gemaakt met <a href="https://www.mkdocs.org/">MkDocs</a> met behulp van een <a href="https://github.com/readthedocs/sphinx_rtd_theme">Thema</a> geleverd door <a href="https://readthedocs.org">Read the Docs</a>.
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
 </footer>
           
 
@@ -1026,14 +1026,14 @@ AIRFLOW_OUTPUT_RAPPORTEN=/output/rapporten
 
   </div>
 
-  <div class="rst-versions" role="note" aria-label="Versies">
+  <div class="rst-versions" role="note" aria-label="Versions">
   <span class="rst-current-version" data-toggle="rst-current-version">
     
     
-      <span><a href="../incrementeel-laden/" style="color: #fcfcfc">&laquo; Vorige</a></span>
+      <span><a href="../incrementeel-laden/" style="color: #fcfcfc">&laquo; Previous</a></span>
     
     
-      <span><a href="../validatie/" style="color: #fcfcfc">Volgende &raquo;</a></span>
+      <span><a href="../validatie/" style="color: #fcfcfc">Next &raquo;</a></span>
     
   </span>
 </div>
