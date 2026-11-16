@@ -69,6 +69,8 @@ pymongo = pytest.importorskip("pymongo")
 import wasstraat.delta_transform as delta_transform
 from wasstraat.loadToDatabase_functions import GEBRUIKERS_TABELLEN, LOAD_TABELLEN
 
+from tests.integration import testomgeving
+
 
 # ============================================================
 # Configuratie
@@ -168,7 +170,7 @@ def pgRijen(sql):
     resultaat = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
     if resultaat.returncode != 0:
         raise RuntimeError(f"psql fout: {resultaat.stderr.strip()}")
-    return [regel.split("\t") for regel in resultaat.stdout.strip().split("\n") if regel.strip()]
+    return testomgeving.splitsPsqlUitvoer(resultaat.stdout)
 
 
 def pgWaarde(sql):
@@ -225,13 +227,22 @@ def vergelijkRijIdentiteiten(verwacht):
     assert not fouten, f"Rijen met een andere primary_key, key of bronsleutel: {fouten}"
 
 
-def filterProject(projectcd):
-    """SQL-voorwaarde voor de rijen van een project (op de key)."""
+def filterProject(projectcd, tabel=None):
+    """SQL-voorwaarde voor de rijen van een project: op de key, voor Def_Bestand op de kolom projectcd.
+
+    Een bestand heeft niet altijd een key: een profiel dat geen bestandsnamen ontleedt geeft een
+    afbeelding geen key (zie tests/integration/testomgeving.py), en de key van een rapport begint
+    met een R. De projectcode van een bestand staat bij elk profiel in de kolom projectcd.
+    """
+    if tabel == "Def_Bestand":
+        return f"projectcd = '{projectcd}'"
     return f"key LIKE 'P{projectcd}%'"
 
 
-def filterNietProject(projectcd):
-    """SQL-voorwaarde voor alle rijen die niet bij een project horen (ook rijen zonder key)."""
+def filterNietProject(projectcd, tabel=None):
+    """SQL-voorwaarde voor alle rijen die niet bij een project horen (ook rijen zonder key of projectcode)."""
+    if tabel == "Def_Bestand":
+        return f"COALESCE(projectcd, '') <> '{projectcd}'"
     return f"COALESCE(key, '') NOT LIKE 'P{projectcd}%'"
 
 
@@ -271,7 +282,7 @@ def bronbestandStatussen(filter_sql="TRUE"):
 
 
 def telProject(tabel, projectcd):
-    return pgWaarde(f'SELECT COUNT(*) FROM "{tabel}" WHERE {filterProject(projectcd)}')
+    return pgWaarde(f'SELECT COUNT(*) FROM "{tabel}" WHERE {filterProject(projectcd, tabel)}')
 
 
 def esJson(pad):
@@ -444,7 +455,7 @@ def controleerFkGeldig(run):
 def controleerSY001SY002Ongewijzigd():
     """Sleutels en primary_keys van alle rijen die niet bij SY003 horen zijn gelijk aan stap a."""
     for tabel in SLEUTEL_TABELLEN:
-        assert sleutels(tabel, filterNietProject("SY003")) == TOESTAND["sleutels"][tabel], (
+        assert sleutels(tabel, filterNietProject("SY003", tabel)) == TOESTAND["sleutels"][tabel], (
             f"{tabel}: sleutels of primary_keys van SY001/SY002 gewijzigd")
 
 
@@ -472,8 +483,8 @@ def maakSY003AlsKopieVanSY002():
 
 
 def tekst(kolom):
-    """SQL-expressie die een kolom als tekst geeft, met 'NULL' voor een lege waarde (psql -A laat lege velden
-    aan het eind van de uitvoer anders wegvallen)."""
+    """SQL-expressie die een kolom als tekst geeft, met 'NULL' voor een ontbrekende waarde, zodat die in de
+    uitvoer van psql te onderscheiden is van een lege tekst."""
     return f"COALESCE({kolom}::text, 'NULL')"
 
 
@@ -741,7 +752,13 @@ class TestIncrementeelSynthetic:
         """Issue 72: de volledige cyclus vult de afgeleide velden zelf, zonder Flask te herstarten,
         met dezelfde uitkomst als init.init() van de webapplicatie."""
         dekking = controleerAfgeleideVelden()
-        assert dekking["met_fotos"] > 0, "Geen artefact met objectfoto's: de test dekt aantal_fotos niet"
+        if testomgeving.herkentBestandsnamen():
+            assert dekking["met_fotos"] > 0, "Geen artefact met objectfoto's: de test dekt aantal_fotos niet"
+        else:
+            # Zonder herkenning van bestandsnamen is geen foto een objectfoto van een artefact
+            assert dekking["met_fotos"] == 0, (
+                f"{dekking['met_fotos']} artefacten met objectfoto's, terwijl het profiel "
+                f"{testomgeving.actiefProfiel()} geen bestandsnamen ontleedt")
         assert dekking["met_datering"] > 0, "Geen artefact met een datering: de test dekt de dateringen niet"
         assert pgWaarde('SELECT COUNT(*) FROM "Def_Project" WHERE aantal_artefacten > 0') == 2
         vergelijkMetFlaskInit()
@@ -850,7 +867,7 @@ class TestIncrementeelSynthetic:
                 nieuw = telProject(tabel, "SY003")
                 assert nieuw == telProject(tabel, "SY002"), f"{tabel}: SY003 is geen kopie van SY002"
                 assert aantallen[tabel] == TOESTAND["aantallen"][tabel] + nieuw
-                ids = primaryKeys(tabel, filterProject("SY003"))
+                ids = primaryKeys(tabel, filterProject("SY003", tabel))
                 assert min(ids) > TOESTAND["max_pk"][tabel], f"{tabel}: nieuwe primary_keys niet boven het oude maximum"
                 TOESTAND["sy003_ids"][tabel] = ids
             else:
@@ -929,8 +946,10 @@ class TestIncrementeelSynthetic:
         # SY003_P4_H11_1_1.jpg verwijst naar put 4 en vondst 11, die SY001 niet heeft: Transform 5
         # (Generate_Missing) maakt die put en vondst aan, zoals bij elke foto zonder bijbehorend record.
         # De andere objectfoto (put 2, vondst 4) past bij een bestaande vondst van SY001.
-        gegenereerd_uit_foto = {"Def_Put": 1, "Def_Vondst": 1}
-        assert telProject("Def_Vondst", "SY003") == 4 + gegenereerd_uit_foto["Def_Vondst"]
+        # Een profiel dat geen bestandsnamen ontleedt leest put en vondst niet uit de naam van de foto;
+        # dan komt er niets bij en volgt SY003 precies SY001.
+        gegenereerd_uit_foto = {"Def_Put": 1, "Def_Vondst": 1} if testomgeving.herkentBestandsnamen() else {}
+        assert telProject("Def_Vondst", "SY003") == 4 + gegenereerd_uit_foto.get("Def_Vondst", 0)
         for tabel in PROJECT_TABELLEN:
             if tabel == "Def_Bestand":
                 continue

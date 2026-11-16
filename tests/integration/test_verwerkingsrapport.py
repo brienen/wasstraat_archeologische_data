@@ -37,6 +37,8 @@ pymongo = pytest.importorskip("pymongo")
 
 from wasstraat.loadToDatabase_functions import LOAD_TABELLEN
 
+from tests.integration import testomgeving
+
 
 # MongoDB van de synthetische testomgeving (hostpoort 27117) en van de Delftse (27118, zie
 # docker-compose.delft-test.yml); make integration-delft zet MONGO_TEST_URI op de Delftse
@@ -98,7 +100,7 @@ def pgRijen(omgeving, sql):
     resultaat = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
     if resultaat.returncode != 0:
         raise RuntimeError(f"psql fout: {resultaat.stderr.strip()}")
-    return [regel.split("\t") for regel in resultaat.stdout.strip().split("\n") if regel.strip()]
+    return testomgeving.splitsPsqlUitvoer(resultaat.stdout)
 
 
 def telTabellen(omgeving):

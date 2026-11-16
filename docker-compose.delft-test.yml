@@ -152,6 +152,8 @@ services:
       # Verwerkingsrapporten (issue 62): in de container; de tests lezen ze met docker exec
       AIRFLOW_OUTPUT_RAPPORTEN: /tmp/rapporten_test
       ES_HOST: "http://elasticsearch:9200"
+      # Delftse data hoort bij het Delftse gemeenteprofiel; hier niet instelbaar
+      WASSTRAAT_GEMEENTE: delft
     volumes:
       - ./airflow_app/dags:/opt/airflow/dags
       - ./airflow_app/scripts:/opt/airflow/scripts

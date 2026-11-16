@@ -128,6 +128,7 @@ make delft            # Start alle services met eigen data uit data/delft/
 # Testen
 make test             # Unit tests (tests/unit/)
 make integration      # Volledige suite: Extract → Transform → Load → Flask smoke tests
+make integration GEMEENTE=voorbeeld # Dezelfde suite met een ander gemeenteprofiel (standaard delft)
 make integration-pipeline # Alleen Extract + Transform (zonder Load en Flask)
 make integration-load # Extract + Transform + Load (zonder Flask)
 make integration-delft # Integratietests met Delftse data (indien aanwezig)
@@ -165,6 +166,7 @@ make clean            # Verwijder .venv en caches
 - **Fixtures:** `conftest.py` mockt externe dependencies (MongoDB URI, config, etc.)
 - **Draai altijd `make test-all` na wijzigingen** om regressies te vangen
 - **Testomgevingen naast elkaar:** de synthetische testomgeving gebruikt MongoDB-hostpoort 27117, Airflow 8081 en Apache 5061, de Delftse 27118, 8082 en 5062 (bewaakt door `tests/unit/test_testomgevingen_poorten.py`); `make integration-delft` zet `MONGO_TEST_URI` op 27118
+- **Gemeenteprofiel van de testomgeving:** de synthetische testomgeving draait standaard met het profiel `delft` (de synthetische bestandsnamen volgen de Delftse conventie); `GEMEENTE=<profiel>` bij de make-doelen geeft `WASSTRAAT_GEMEENTE` door aan `airflow-test`, de Delftse testomgeving staat vast op `delft`. De pipelinetests lezen het actieve profiel uit de container (`tests/integration/testomgeving.py`: `actiefProfiel`, `herkentBestandsnamen`) en kiezen daarmee alleen hun verwachtingen voor bestanden: zonder herkenning van bestandsnamen is elk bestand aan zijn project gekoppeld, elke afbeelding `Bestand_Overige`, geen foto aan een artefact gekoppeld en maakt een objectfoto geen put of vondst aan. Rijen van `Def_Bestand` per project selecteren de tests op de kolom `projectcd`, omdat een afbeelding dan geen `key` heeft. `pgRijen` gebruikt `testomgeving.splitsPsqlUitvoer` (geen `strip()` op de hele uitvoer: een lege eerste waarde moet blijven staan). Bewaakt door `tests/unit/test_testomgeving_profiel.py`, dat ook eist dat `PROFIELEN_MET_DELFTSE_BESTANDSNAMEN` klopt met elk profiel uit `PROFIELEN`
 - **Delftse referentie-uitkomst:** `make integration-delft` eindigt met `tests/integration/test_delft_referentie.py`, dat de aantallen per soort, de artefactsoorten en de voorbeeldsleutels vergelijkt met `tests/integration/fixtures/delft_golden_snapshot.json`; verandert de Delftse uitkomst bewust, leg de referentie dan opnieuw vast met `tests/integration/snapshot_mongodb.py referentie <fixture> "<verklaring>"` zolang de testomgeving draait (de make-targets ruimen hem aan het eind op)
 
 ## Datamodel (kernentiteiten)

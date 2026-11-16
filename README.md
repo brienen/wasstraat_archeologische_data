@@ -165,6 +165,7 @@ make export                              # Exporteer alle tabellen als CSV
 make install          # Eenmalig: maakt .venv aan met test-dependencies
 make test             # Draai unit tests
 make integration      # Integratietests met synthetische data
+make integration GEMEENTE=voorbeeld  # Dezelfde tests met een ander gemeenteprofiel
 make integration-delft # Integratietests met Delftse data (indien aanwezig)
 make test-all         # Unit + integratietests
 ```

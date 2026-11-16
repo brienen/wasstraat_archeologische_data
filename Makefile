@@ -41,7 +41,10 @@ MKDOCS_VERSIE := 1.6.1
 
 # --- Docker Compose ---
 DC := docker compose 
-COMPOSE_TEST := $(DC) -p wasstraat-test -f docker-compose.test.yml
+# Gemeenteprofiel van de synthetische testomgeving (make integration GEMEENTE=voorbeeld); de tests
+# lezen het actieve profiel uit de Airflow-container en passen hun verwachtingen voor bestanden aan
+GEMEENTE ?= delft
+COMPOSE_TEST := WASSTRAAT_GEMEENTE=$(GEMEENTE) $(DC) -p wasstraat-test -f docker-compose.test.yml
 COMPOSE_DELFT := $(DC) -f docker-compose.delft.yml
 COMPOSE_DELFT_TEST := $(DC) -p wasstraat-delft-test -f docker-compose.delft-test.yml
 # MongoDB van de Delftse testomgeving (hostpoort 27118; de synthetische gebruikt 27117), zodat
@@ -128,7 +131,7 @@ test-quick: install ## Draai unit tests (korte output)
 	$(PYTEST) tests/unit/ -q
 
 .PHONY: integration
-integration: install ## Draai volledige integratietests: Extract + Transform + Load + Flask
+integration: install ## Draai volledige integratietests: Extract + Transform + Load + Flask (GEMEENTE=voorbeeld: ander gemeenteprofiel)
 	@echo "➜ Test-omgeving starten (synthetische data)..."
 	$(COMPOSE_TEST) up -d mongo-test postgres-test redis-test elasticsearch-test airflow-test flask-test apache-test
 	@echo "➜ Stap 1: Extract + Transform + Load pipeline..."

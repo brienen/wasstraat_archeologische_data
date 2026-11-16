@@ -216,7 +216,7 @@ Sommige instellingen staan niet in `config/`, maar direct in een compose-bestand
 
 | Instelling | Waar | Waarde |
 |------------|------|--------|
-| `WASSTRAAT_GEMEENTE` | `docker-compose.delft.yml` (Airflow); `deploy/docker-compose.yml` via `deploy/.env` | `delft`; in `docker-compose.yml` niet gezet, dus de standaard `delft` |
+| `WASSTRAAT_GEMEENTE` | `docker-compose.delft.yml` (Airflow); `deploy/docker-compose.yml` via `deploy/.env`; `docker-compose.test.yml` via `GEMEENTE` van het Makefile; `docker-compose.delft-test.yml` | `delft`; in `docker-compose.yml` niet gezet, dus de standaard `delft`; in de synthetische testomgeving instelbaar (`make integration GEMEENTE=voorbeeld`), in de Delftse vast op `delft` |
 | `WASSTRAAT_VERSION` | `deploy/docker-compose.yml` via `deploy/.env`; `docker-compose.yml` en `docker-compose.delft.yml` (Airflow) via de Makefile | de versie van de images; in de ontwikkelomgeving de versie uit `config/version.env` (anders `config/version.env.example`), meegegeven door `make app`, `make delft` en `make dev` |
 | `PGDATA` | alle compose-bestanden (PostgreSQL) | `/data/postgres` |
 | Elasticsearch | alle compose-bestanden | `discovery.type=single-node`, `xpack.security.enabled=false`, heap 512 MB (live installatie: `WASSTRAAT_ES_GEHEUGEN`) |

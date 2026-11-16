@@ -7,7 +7,8 @@
 # Elasticsearch draait zonder hostpoort (9200 is op de host in gebruik door de echte
 # installatie); tests benaderen het via 'docker exec wasstraat_elasticsearch_test curl ...'.
 #
-# Standaard: synthetische data (SY001 + SY002).
+# Standaard: synthetische data (SY001 + SY002) met het gemeenteprofiel delft;
+# een ander profiel met GEMEENTE=<profiel> (bijvoorbeeld make integration GEMEENTE=voorbeeld).
 # Voor Delftse data: make integration-delft (gebruikt het aparte docker-compose.delft-test.yml)
 #
 # Gebruik: make integration       (Airflow pipeline tests)
@@ -153,6 +154,10 @@ services:
       # Verwerkingsrapporten (issue 62): in de container; de tests lezen ze met docker exec
       AIRFLOW_OUTPUT_RAPPORTEN: /tmp/rapporten_test
       ES_HOST: "http://elasticsearch:9200"
+      # Gemeenteprofiel: standaard delft, want de bestandsnamen van de synthetische data volgen de
+      # Delftse conventie. Een ander profiel: make integration GEMEENTE=voorbeeld. De tests lezen het
+      # actieve profiel uit deze container (tests/integration/testprofiel.py).
+      WASSTRAAT_GEMEENTE: ${WASSTRAAT_GEMEENTE:-delft}
     volumes:
       - ./airflow_app/dags:/opt/airflow/dags
       - ./airflow_app/scripts:/opt/airflow/scripts

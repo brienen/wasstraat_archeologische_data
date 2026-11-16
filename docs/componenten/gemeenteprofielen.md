@@ -47,6 +47,8 @@ Waar je de variabele zet:
 | Ontwikkelomgeving, `make delft` | `environment:` van de service `airflow` in `docker-compose.delft.yml` (staat op `delft`) |
 | Ontwikkelomgeving, `make app` | Niet gezet, dus `delft`; voeg een `environment:`-regel toe in `docker-compose.yml` om te wisselen |
 | Live installatie | `WASSTRAAT_GEMEENTE` in `deploy/.env` |
+| Synthetische testomgeving (`make integration`) | `GEMEENTE=<profiel>` bij het make-doel, bijvoorbeeld `make integration GEMEENTE=voorbeeld`; standaard `delft` (zie [Testen](../testen.md#een-ander-gemeenteprofiel)) |
+| Delftse testomgeving (`make integration-delft`) | Vast op `delft` in `docker-compose.delft-test.yml` |
 
 Een `environment:`-regel in het compose-bestand gaat vóór dezelfde variabele in `config/airflow.env`. Het profiel wordt alleen door Airflow gebruikt (Transform 1 en 2, en de controle in `Start_Run`). Maak na een wijziging de Airflow-container opnieuw aan en draai de volledige cyclus. Zie ook [Configuratie](configuratie.md#5-gemeenteprofiel).
 
@@ -234,6 +236,8 @@ class VoorbeeldProfiel(ConventieProfiel):
     naam = "voorbeeld"
 ```
 
+Met dit profiel doorloopt de synthetische data de hele keten (`make integration GEMEENTE=voorbeeld`): alle gegevens uit de databases komen er hetzelfde uit als met het Delftse profiel, met dezelfde aantallen en sleutels. Het verschil zit in de bestanden. Het basisprofiel ontleedt geen bestandsnamen (`identificeer_foto` en `identificeer_tekening` geven `None`): een foto of tekening wordt verwerkt en aan het project van zijn map gekoppeld, maar krijgt de bestandsoort `Bestand_Overige` en geen put, vondst of artefact. Wie foto's naar soort wil indelen of aan vondsten en artefacten wil koppelen, heeft een profiel nodig dat de eigen naamconventie ontleedt, zoals `DelftProfiel`.
+
 ## Nieuw profiel toevoegen
 
 Om een profiel voor een nieuwe gemeente toe te voegen:
@@ -272,6 +276,8 @@ WASSTRAAT_GEMEENTE=mijn_gemeente
    Een nieuw profiel bestaat alleen in de code; voor de live installatie is het dus pas bruikbaar in een nieuwe versie van de images.
 
 4. **Schrijf unit tests** in `tests/unit/test_profielen.py` voor de nieuwe klasse.
+
+5. **Draai de synthetische testsuite met het profiel**: `make integration GEMEENTE=mijn_gemeente`. Ontleedt het profiel de Delftse bestandsnamen van de synthetische data, neem het dan op in `PROFIELEN_MET_DELFTSE_BESTANDSNAMEN` in `tests/integration/testomgeving.py`; `tests/unit/test_testomgeving_profiel.py` faalt zolang die indeling niet klopt.
 
 ## Gebruik in de pipeline
 

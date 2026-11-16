@@ -56,7 +56,7 @@ Overschrijft instellingen voor lokale ontwikkeling:
 
 ### `docker-compose.test.yml` en `docker-compose.delft-test.yml` — Testomgevingen
 
-Zelfstandige testomgevingen voor `make integration` en `make integration-delft`, met eigen containernamen, een eigen projectnaam (`wasstraat-test`, `wasstraat-delft-test`), eigen hostpoorten (Airflow 8081 en 8082, Apache 5061 en 5062, MongoDB 27117 en 27118) en MongoDB en PostgreSQL in het geheugen. Ze kunnen naast een installatie en naast elkaar draaien; `tests/unit/test_testomgevingen_poorten.py` bewaakt dat de hostpoorten niet overlappen. Zie [Testen](../testen.md).
+Zelfstandige testomgevingen voor `make integration` en `make integration-delft`, met eigen containernamen, een eigen projectnaam (`wasstraat-test`, `wasstraat-delft-test`), eigen hostpoorten (Airflow 8081 en 8082, Apache 5061 en 5062, MongoDB 27117 en 27118) en MongoDB en PostgreSQL in het geheugen. Ze kunnen naast een installatie en naast elkaar draaien; `tests/unit/test_testomgevingen_poorten.py` bewaakt dat de hostpoorten niet overlappen. De synthetische testomgeving draait standaard met het gemeenteprofiel `delft` en met `GEMEENTE=<profiel>` met een ander profiel (`make integration GEMEENTE=voorbeeld`); de Delftse staat vast op `delft`. Zie [Testen](../testen.md).
 
 ## Starten en Stoppen
 
