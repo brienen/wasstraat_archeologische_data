@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="nl" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="author" content="E-Space / Arjen Brienen" /><link rel="canonical" href="https://brienen.github.io/wasstraat_archeologische_data/toekomstvisie/" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>Toekomstvisie - Wasstraat Archeologische Data</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+        <link href="../assets/extra.css" rel="stylesheet" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Toekomstvisie";
+        var mkdocs_page_input_path = "toekomstvisie.md";
+        var mkdocs_page_url = "/wasstraat_archeologische_data/toekomstvisie/";
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script>
+  
+  <meta name="author" content="Arjen Brienen">
+  <meta name="publisher" content="E-Space">
+  <meta name="description" content="Technische documentatie voor de Wasstraat Archeologische Data - een open source verwerkingsplatform voor archeologische datasets">
+  <meta name="keywords" content="archeologie, wasstraat, ETL, open data, erfgoed, ABR, CIDOC CRM, Delft, Airflow, open source">
+  <meta name="generator" content="MkDocs">
+  <meta name="robots" content="index, follow">
+  <meta http-equiv="Content-Language" content="nl">
+
+  
+  <meta name="DC.title" content="Toekomstvisie">
+  <meta name="DC.creator" content="Arjen Brienen">
+  <meta name="DC.publisher" content="E-Space">
+  <meta name="DC.language" content="nl">
+  <meta name="DC.rights" content="EUPL v1.2">
+  <meta name="DC.type" content="Text">
+  <meta name="DC.format" content="text/html">
+
+  
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Wasstraat Archeologische Data">
+  <meta property="og:title" content="Toekomstvisie">
+  <meta property="og:description" content="Technische documentatie voor de Wasstraat Archeologische Data - een open source verwerkingsplatform voor archeologische datasets">
+  <meta property="og:locale" content="nl_NL">
+  <meta property="og:url" content="https://brienen.github.io/wasstraat_archeologische_data/toekomstvisie/">
+
+  
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Toekomstvisie">
+  <meta name="twitter:description" content="Technische documentatie voor de Wasstraat Archeologische Data - een open source verwerkingsplatform voor archeologische datasets">
+
+  
+  <link rel="canonical" href="https://brienen.github.io/wasstraat_archeologische_data/toekomstvisie/">
+
+  
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://brienen.github.io/wasstraat_archeologische_data/#org-espace",
+        "name": "E-Space",
+        "description": "Ontwikkelaar van de Wasstraat Archeologische Data.",
+        "inLanguage": "nl"
+      },
+      {
+        "@type": "Person",
+        "@id": "https://brienen.github.io/wasstraat_archeologische_data/#person-arjen",
+        "name": "Arjen Brienen",
+        "jobTitle": "Architect en ontwikkelaar",
+        "affiliation": { "@id": "https://brienen.github.io/wasstraat_archeologische_data/#org-espace" },
+        "sameAs": [
+          "https://www.linkedin.com/in/arjenbrienen/",
+          "https://github.com/brienen"
+        ]
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://brienen.github.io/wasstraat_archeologische_data/#website",
+        "url": "https://brienen.github.io/wasstraat_archeologische_data/",
+        "name": "Wasstraat Archeologische Data",
+        "description": "Technische documentatie voor de Wasstraat Archeologische Data - een open source verwerkingsplatform voor archeologische datasets",
+        "inLanguage": "nl",
+        "publisher": { "@id": "https://brienen.github.io/wasstraat_archeologische_data/#org-espace" },
+        "author": { "@id": "https://brienen.github.io/wasstraat_archeologische_data/#person-arjen" },
+        "creator": { "@id": "https://brienen.github.io/wasstraat_archeologische_data/#person-arjen" },
+        "copyrightHolder": { "@id": "https://brienen.github.io/wasstraat_archeologische_data/#org-espace" },
+        "license": "https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12"
+      },
+      {
+        "@type": "SoftwareSourceCode",
+        "@id": "https://brienen.github.io/wasstraat_archeologische_data/#software",
+        "name": "Wasstraat Archeologische Data",
+        "alternateName": "Wasstraat",
+        "description": "Open-source ETL-platform dat archeologische gegevens verzamelt, verwerkt en toegankelijk maakt. Ontwikkeld voor de gemeente Delft en uitgebreid tot een generiek platform voor Nederlandse gemeenten.",
+        "programmingLanguage": ["Python", "SQL", "YAML"],
+        "runtimePlatform": "Docker Compose",
+        "codeRepository": "https://github.com/brienen/wasstraat_archeologische_data",
+        "license": "https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12",
+        "author": { "@id": "https://brienen.github.io/wasstraat_archeologische_data/#person-arjen" },
+        "creator": { "@id": "https://brienen.github.io/wasstraat_archeologische_data/#person-arjen" },
+        "publisher": { "@id": "https://brienen.github.io/wasstraat_archeologische_data/#org-espace" },
+        "maintainer": { "@id": "https://brienen.github.io/wasstraat_archeologische_data/#person-arjen" },
+        "copyrightHolder": { "@id": "https://brienen.github.io/wasstraat_archeologische_data/#org-espace" },
+        "inLanguage": "nl",
+        "keywords": "archeologie, ETL, Airflow, PostgreSQL, MongoDB, Elasticsearch, ABR, CIDOC CRM, GGM, erfgoed, open data",
+        "about": [
+          { "@type": "Thing", "name": "Archeologisch Basisregister (ABR)" },
+          { "@type": "Thing", "name": "CIDOC CRM" },
+          { "@type": "Thing", "name": "Gemeentelijk Gegevensmodel (GGM)" },
+          { "@type": "Thing", "name": "DANS e-Depot" },
+          { "@type": "Thing", "name": "Archis" }
+        ]
+      }
+      
+      ,{
+        "@type": "TechArticle",
+        "@id": "https://brienen.github.io/wasstraat_archeologische_data/toekomstvisie/#article",
+        "url": "https://brienen.github.io/wasstraat_archeologische_data/toekomstvisie/",
+        "name": "Toekomstvisie",
+        "headline": "Toekomstvisie",
+        "description": "Technische documentatie voor de Wasstraat Archeologische Data - een open source verwerkingsplatform voor archeologische datasets",
+        "inLanguage": "nl",
+        "isPartOf": { "@id": "https://brienen.github.io/wasstraat_archeologische_data/#website" },
+        "author": { "@id": "https://brienen.github.io/wasstraat_archeologische_data/#person-arjen" },
+        "publisher": { "@id": "https://brienen.github.io/wasstraat_archeologische_data/#org-espace" },
+        "license": "https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12"
+      }
+      
+    ]
+  }
+  </script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href=".." class="icon icon-home"> Wasstraat Archeologische Data
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Doorzoek documentatie" aria-label="Doorzoek documentatie" title="Typ hier uw zoekterm" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigatiemenu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="..">Home</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Aan de slag</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../aan-de-slag/">Handleiding (ontwikkelomgeving)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../deployment/installatie-met-images/">Installatie met images</a>
+                  </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../componenten/configuratie/">Configuratie</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Projectoverzicht</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../overzicht/inleiding/">Inleiding</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../overzicht/probleemstelling/">Probleemstelling</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../overzicht/doelstellingen/">Doelstellingen</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Architectuur</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../architectuur/systeem/">Systeemarchitectuur</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../architectuur/dataflow/">Verwerkingspipeline</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../architectuur/componenten/">Componentenmodel</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../architectuur/gegevensmodel/">Gegevensmodel</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../architectuur/stack/">Technische stack</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Componenten</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../componenten/extractie/">Extractie</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../componenten/singlestore/">MongoDB en Single_Store</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../componenten/transformatie/">Transformatie</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../componenten/incrementeel-laden/">Incrementeel laden</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../componenten/verwerkingsrapport/">Foutbeleid en verwerkingsrapport</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../componenten/validatie/">Validatie en kwaliteitscontroles</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../componenten/gemeenteprofielen/">Gemeenteprofielen</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../componenten/zoeken/">Zoeken en indexering</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Deployment</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../deployment/omgevingen/">Omgevingen en Docker Compose</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../deployment/airflow-vs-app/">Airflow en webapplicatie</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../deployment/voorbeelddata/">Voorbeelddata</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../deployment/proefdata/">Proefdata inlezen</a>
+                  </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../testen/">Testen</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../diagrammen/">Diagrammen</a>
+                </li>
+              </ul>
+              <ul class="current">
+                <li class="toctree-l1 current"><a class="reference internal current" href="#">Toekomstvisie</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#generiek-en-configureerbaar">Generiek en configureerbaar</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#crossviews">Crossviews</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#validatie-met-regels">Validatie met regels</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#semantisch-model-en-linked-open-data">Semantisch model en Linked Open Data</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#ontsluiting-en-uitwisseling">Ontsluiting en uitwisseling</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#zoeken">Zoeken</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#beheer-van-runs">Beheer van runs</a>
+    </li>
+    </ul>
+                </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobiel navigatiemenu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="..">Wasstraat Archeologische Data</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".." class="icon icon-home" aria-label="Documentatie"></a></li>
+      <li class="breadcrumb-item active">Toekomstvisie</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="toekomstvisie">Toekomstvisie<a class="headerlink" href="#toekomstvisie" title="Permanent link">&para;</a></h1>
+<div class="admonition warning">
+<p class="admonition-title">Geen beschrijving van de huidige software</p>
+<p>Deze pagina beschrijft ideeën en ambities voor de verdere ontwikkeling van de Wasstraat. Niets op deze pagina bestaat nu in de code. Wat de Wasstraat vandaag doet, staat in <a href="../architectuur/systeem/">Architectuur</a>, de componentpagina's en <a href="../componenten/configuratie/">Configuratie</a>.</p>
+</div>
+<p>De Wasstraat is gebouwd voor de gemeente Delft en wordt via het innovatieproject van Stichting Reuvens uitgebreid tot een generiek systeem voor andere Nederlandse gemeenten. De ideeën hieronder komen uit het oorspronkelijke ontwerp en uit die uitbreiding.</p>
+<h2 id="generiek-en-configureerbaar">Generiek en configureerbaar<a class="headerlink" href="#generiek-en-configureerbaar" title="Permanent link">&para;</a></h2>
+<p><strong>Nu:</strong> tabel- en kolomnamen staan in de harmonisatie-Excel, gemeente-specifieke correcties in <code>correcties.yml</code>, en de logica die daar niet in past in een gemeenteprofiel in Python. Een nieuwe artefactsoort of een nieuw objecttype vraagt een codewijziging.</p>
+<p><strong>Ambitie:</strong></p>
+<ul>
+<li>nieuwe objecttypen en artefactsoorten volledig vanuit de configuratie, zonder wijziging van <code>meta.py</code> en <code>models.py</code>;</li>
+<li>gemeenteprofielen als configuratie in plaats van Python-klassen, voor de gangbare patronen van bestandsnamen en codes;</li>
+<li>een beheerscherm in de webapplicatie voor de configuratie, met validatie vóór een run, in plaats van het bewerken van Excel- en YAML-bestanden;</li>
+<li>bronnen in andere formaten dan Access en Excel (CSV, XML, GIS-bestanden) via dezelfde stappen.</li>
+</ul>
+<h2 id="crossviews">Crossviews<a class="headerlink" href="#crossviews" title="Permanent link">&para;</a></h2>
+<p>Een onderdeel om verbanden tussen bronnen zichtbaar te maken: overeenkomende records uit verschillende databases herkennen (dezelfde vondst in een opgravingsdatabase en een determinatiedatabase), tegenstrijdigheden tussen bronnen tonen en de beheerder laten beslissen over samenvoegen. Op termijn met lerende algoritmen die voorstellen doen op basis van eerder bevestigde koppelingen.</p>
+<p><strong>Nu:</strong> het samenvoegen gebeurt met vaste regels op sleutels (<code>key</code>, en bij artefacten <code>key_subnr</code> en artefactsoort) in Transform 5; uitzonderingen staan in <code>artefact_niet_mergen</code> en kopieën worden uitgesloten met <code>paden_overslaan</code> (zie <a href="../componenten/transformatie/#verplaatsen-en-samenvoegen-van-artefacten">Transformatie</a>).</p>
+<h2 id="validatie-met-regels">Validatie met regels<a class="headerlink" href="#validatie-met-regels" title="Permanent link">&para;</a></h2>
+<p>Een validatielaag waarin per gemeente regels voor de inhoud worden vastgelegd (een datering moet binnen een periode vallen, een diepte binnen redelijke grenzen, een code in de ABR voorkomen), met een rapport van overtredingen per run en een scherm om ze af te handelen.</p>
+<p><strong>Nu:</strong> de pipeline controleert coördinaten, telt records die niet te verwerken zijn, onleesbare databases en mislukte afbeeldingen, en legt dat vast in het verwerkingsrapport (zie <a href="../componenten/validatie/">Validatie en kwaliteitscontroles</a>).</p>
+<h2 id="semantisch-model-en-linked-open-data">Semantisch model en Linked Open Data<a class="headerlink" href="#semantisch-model-en-linked-open-data" title="Permanent link">&para;</a></h2>
+<p>Het gegevensmodel uitdrukken in de CIDOC CRM-familie (CRMarchaeo voor opgravingen en contexten, CRMsci voor analyses en dateringen) en aansluiten op het Gemeentelijk Gegevensmodel (GGM), zodat de data als Linked Open Data te publiceren is, met URI's per entiteit en verwijzingen naar externe thesauri. Het <a href="../diagrammen/#toekomstbeeld-semantisch-model">semantische model</a> schetst die inbedding.</p>
+<p><strong>Nu:</strong> het gegevensmodel is een eigen relationeel model in PostgreSQL (zie <a href="../architectuur/gegevensmodel/">Gegevensmodel</a>). Van de standaarden wordt alleen de ABR-thesaurus gebruikt: artefacten verwijzen naar ABR-materialen.</p>
+<h2 id="ontsluiting-en-uitwisseling">Ontsluiting en uitwisseling<a class="headerlink" href="#ontsluiting-en-uitwisseling" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Export naar DANS e-Depot en aansluiting op Archis.</li>
+<li>Geo-services (WMS/WFS) en GeoJSON-exports op basis van PostGIS.</li>
+<li>Rapportages en analyses buiten de webapplicatie (een datawarehouse of BI-koppeling).</li>
+<li>Een uitgebreidere publieke API dan de huidige endpoints onder <code>/api/v1/</code>.</li>
+</ul>
+<h2 id="zoeken">Zoeken<a class="headerlink" href="#zoeken" title="Permanent link">&para;</a></h2>
+<p>Zoeken dat beter omgaat met onnauwkeurige termen: synoniemen uit de ABR-thesaurus, spellingsvarianten en historische schrijfwijzen, en zoeken op periode en locatie als facetten.</p>
+<p><strong>Nu:</strong> de webapplicatie zoekt per tabel in Elasticsearch met een <code>query_string</code>-query over de tekstkolommen (zie <a href="../componenten/zoeken/">Zoeken en indexering</a>).</p>
+<h2 id="beheer-van-runs">Beheer van runs<a class="headerlink" href="#beheer-van-runs" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Het verwerkingsrapport tonen in de webapplicatie, met een overzicht van alle runs uit <code>Verwerkingsruns</code>.</li>
+<li>Een opschoonbeleid voor oude rapporten en run-documenten.</li>
+<li>Het kantelen van foto's blijvend maken, zodat een volledige cyclus het niet terugdraait.</li>
+</ul>
+<p>Openstaande punten en bekende beperkingen worden bijgehouden als issues op <a href="https://github.com/brienen/wasstraat_archeologische_data/issues">GitHub</a>.</p>
+              
+            </div>
+          </div>
+<footer role="contentinfo" class="wasstraat-footer"
+        itemscope itemtype="https://schema.org/WPFooter">
+  <hr>
+  <p class="wasstraat-credits">
+    Gebouwd door
+    <span itemprop="publisher" itemscope itemtype="https://schema.org/Organization">
+      <strong itemprop="name">E-Space</strong>
+    </span>
+    —
+    <span itemprop="author" itemscope itemtype="https://schema.org/Person">
+      <strong itemprop="name">Arjen Brienen</strong><meta itemprop="affiliation" content="E-Space">
+      <link itemprop="sameAs" href="https://www.linkedin.com/in/arjenbrienen/">
+      <link itemprop="sameAs" href="https://github.com/brienen">
+    </span>
+  </p>
+  <p class="wasstraat-license">
+    Uitgegeven onder de
+    <a href="https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12"
+       rel="license">EUPL v1.2</a>.
+    Broncode:
+    <a href="https://github.com/brienen/wasstraat_archeologische_data"
+       rel="external">github.com/brienen/wasstraat_archeologische_data</a>.
+  </p>
+  
+    <p class="wasstraat-copyright"><small>© E-Space — Arjen Brienen. Uitgegeven onder de EUPL v1.2 licentie.</small></p>
+  
+</footer>
+<footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footernavigatie">
+        <a href="../diagrammen/" class="btn btn-neutral float-left" title="Diagrammen"><span class="icon icon-circle-arrow-left"></span> Vorige</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+      <p>© E-Space — Arjen Brienen. Uitgegeven onder de EUPL v1.2 licentie.</p>
+  </div>
+
+  Gemaakt met <a href="https://www.mkdocs.org/">MkDocs</a> met behulp van een <a href="https://github.com/readthedocs/sphinx_rtd_theme">Thema</a> geleverd door <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versies">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../diagrammen/" style="color: #fcfcfc">&laquo; Vorige</a></span>
+    
+    
+  </span>
+</div>
+    <script src="../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "..";</script>
+    <script src="../js/theme_extra.js"></script>
+    <script src="../js/theme.js"></script>
+      <script src="../assets/lightbox.js"></script>
+      <script src="../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

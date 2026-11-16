@@ -3,9 +3,9 @@
 <head>
     <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="author" content="E-Space / Arjen Brienen" /><link rel="canonical" href="https://wasstraat.e-space.nl/architectuur/dataflow/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="author" content="E-Space / Arjen Brienen" /><link rel="canonical" href="https://brienen.github.io/wasstraat_archeologische_data/architectuur/dataflow/" />
       <link rel="shortcut icon" href="../../img/favicon.ico" />
-    <title>Dataflow Pipeline - Wasstraat Archeologische Data</title>
+    <title>Verwerkingspipeline - Wasstraat Archeologische Data</title>
     <link rel="stylesheet" href="../../css/theme.css" />
     <link rel="stylesheet" href="../../css/theme_extra.css" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
@@ -13,9 +13,9 @@
     
       <script>
         // Current page data
-        var mkdocs_page_name = "Dataflow Pipeline";
+        var mkdocs_page_name = "Verwerkingspipeline";
         var mkdocs_page_input_path = "architectuur/dataflow.md";
-        var mkdocs_page_url = "/architectuur/dataflow/";
+        var mkdocs_page_url = "/wasstraat_archeologische_data/architectuur/dataflow/";
       </script>
     
     <!--[if lt IE 9]>
@@ -33,7 +33,7 @@
   <meta http-equiv="Content-Language" content="nl">
 
   
-  <meta name="DC.title" content="Dataflow Pipeline">
+  <meta name="DC.title" content="Verwerkingspipeline">
   <meta name="DC.creator" content="Arjen Brienen">
   <meta name="DC.publisher" content="E-Space">
   <meta name="DC.language" content="nl">
@@ -44,18 +44,18 @@
   
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Wasstraat Archeologische Data">
-  <meta property="og:title" content="Dataflow Pipeline">
+  <meta property="og:title" content="Verwerkingspipeline">
   <meta property="og:description" content="Technische documentatie voor de Wasstraat Archeologische Data - een open source verwerkingsplatform voor archeologische datasets">
   <meta property="og:locale" content="nl_NL">
-  <meta property="og:url" content="https://wasstraat.e-space.nl/architectuur/dataflow/">
+  <meta property="og:url" content="https://brienen.github.io/wasstraat_archeologische_data/architectuur/dataflow/">
 
   
   <meta name="twitter:card" content="summary">
-  <meta name="twitter:title" content="Dataflow Pipeline">
+  <meta name="twitter:title" content="Verwerkingspipeline">
   <meta name="twitter:description" content="Technische documentatie voor de Wasstraat Archeologische Data - een open source verwerkingsplatform voor archeologische datasets">
 
   
-  <link rel="canonical" href="https://wasstraat.e-space.nl/architectuur/dataflow/">
+  <link rel="canonical" href="https://brienen.github.io/wasstraat_archeologische_data/architectuur/dataflow/">
 
   
   <script type="application/ld+json">
@@ -64,17 +64,17 @@
     "@graph": [
       {
         "@type": "Organization",
-        "@id": "https://wasstraat.e-space.nl/#org-espace",
+        "@id": "https://brienen.github.io/wasstraat_archeologische_data/#org-espace",
         "name": "E-Space",
         "description": "Ontwikkelaar van de Wasstraat Archeologische Data.",
         "inLanguage": "nl"
       },
       {
         "@type": "Person",
-        "@id": "https://wasstraat.e-space.nl/#person-arjen",
+        "@id": "https://brienen.github.io/wasstraat_archeologische_data/#person-arjen",
         "name": "Arjen Brienen",
         "jobTitle": "Architect en ontwikkelaar",
-        "affiliation": { "@id": "https://wasstraat.e-space.nl/#org-espace" },
+        "affiliation": { "@id": "https://brienen.github.io/wasstraat_archeologische_data/#org-espace" },
         "sameAs": [
           "https://www.linkedin.com/in/arjenbrienen/",
           "https://github.com/brienen"
@@ -82,20 +82,20 @@
       },
       {
         "@type": "WebSite",
-        "@id": "https://wasstraat.e-space.nl/#website",
-        "url": "https://wasstraat.e-space.nl/",
+        "@id": "https://brienen.github.io/wasstraat_archeologische_data/#website",
+        "url": "https://brienen.github.io/wasstraat_archeologische_data/",
         "name": "Wasstraat Archeologische Data",
         "description": "Technische documentatie voor de Wasstraat Archeologische Data - een open source verwerkingsplatform voor archeologische datasets",
         "inLanguage": "nl",
-        "publisher": { "@id": "https://wasstraat.e-space.nl/#org-espace" },
-        "author": { "@id": "https://wasstraat.e-space.nl/#person-arjen" },
-        "creator": { "@id": "https://wasstraat.e-space.nl/#person-arjen" },
-        "copyrightHolder": { "@id": "https://wasstraat.e-space.nl/#org-espace" },
+        "publisher": { "@id": "https://brienen.github.io/wasstraat_archeologische_data/#org-espace" },
+        "author": { "@id": "https://brienen.github.io/wasstraat_archeologische_data/#person-arjen" },
+        "creator": { "@id": "https://brienen.github.io/wasstraat_archeologische_data/#person-arjen" },
+        "copyrightHolder": { "@id": "https://brienen.github.io/wasstraat_archeologische_data/#org-espace" },
         "license": "https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12"
       },
       {
         "@type": "SoftwareSourceCode",
-        "@id": "https://wasstraat.e-space.nl/#software",
+        "@id": "https://brienen.github.io/wasstraat_archeologische_data/#software",
         "name": "Wasstraat Archeologische Data",
         "alternateName": "Wasstraat",
         "description": "Open-source ETL-platform dat archeologische gegevens verzamelt, verwerkt en toegankelijk maakt. Ontwikkeld voor de gemeente Delft en uitgebreid tot een generiek platform voor Nederlandse gemeenten.",
@@ -103,11 +103,11 @@
         "runtimePlatform": "Docker Compose",
         "codeRepository": "https://github.com/brienen/wasstraat_archeologische_data",
         "license": "https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12",
-        "author": { "@id": "https://wasstraat.e-space.nl/#person-arjen" },
-        "creator": { "@id": "https://wasstraat.e-space.nl/#person-arjen" },
-        "publisher": { "@id": "https://wasstraat.e-space.nl/#org-espace" },
-        "maintainer": { "@id": "https://wasstraat.e-space.nl/#person-arjen" },
-        "copyrightHolder": { "@id": "https://wasstraat.e-space.nl/#org-espace" },
+        "author": { "@id": "https://brienen.github.io/wasstraat_archeologische_data/#person-arjen" },
+        "creator": { "@id": "https://brienen.github.io/wasstraat_archeologische_data/#person-arjen" },
+        "publisher": { "@id": "https://brienen.github.io/wasstraat_archeologische_data/#org-espace" },
+        "maintainer": { "@id": "https://brienen.github.io/wasstraat_archeologische_data/#person-arjen" },
+        "copyrightHolder": { "@id": "https://brienen.github.io/wasstraat_archeologische_data/#org-espace" },
         "inLanguage": "nl",
         "keywords": "archeologie, ETL, Airflow, PostgreSQL, MongoDB, Elasticsearch, ABR, CIDOC CRM, GGM, erfgoed, open data",
         "about": [
@@ -121,15 +121,15 @@
       
       ,{
         "@type": "TechArticle",
-        "@id": "https://wasstraat.e-space.nl/architectuur/dataflow/#article",
-        "url": "https://wasstraat.e-space.nl/architectuur/dataflow/",
-        "name": "Dataflow Pipeline",
-        "headline": "Dataflow Pipeline",
+        "@id": "https://brienen.github.io/wasstraat_archeologische_data/architectuur/dataflow/#article",
+        "url": "https://brienen.github.io/wasstraat_archeologische_data/architectuur/dataflow/",
+        "name": "Verwerkingspipeline",
+        "headline": "Verwerkingspipeline",
         "description": "Technische documentatie voor de Wasstraat Archeologische Data - een open source verwerkingsplatform voor archeologische datasets",
         "inLanguage": "nl",
-        "isPartOf": { "@id": "https://wasstraat.e-space.nl/#website" },
-        "author": { "@id": "https://wasstraat.e-space.nl/#person-arjen" },
-        "publisher": { "@id": "https://wasstraat.e-space.nl/#org-espace" },
+        "isPartOf": { "@id": "https://brienen.github.io/wasstraat_archeologische_data/#website" },
+        "author": { "@id": "https://brienen.github.io/wasstraat_archeologische_data/#person-arjen" },
+        "publisher": { "@id": "https://brienen.github.io/wasstraat_archeologische_data/#org-espace" },
         "license": "https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12"
       }
       
@@ -158,6 +158,17 @@
                 <li class="toctree-l1"><a class="reference internal" href="../..">Home</a>
                 </li>
               </ul>
+              <p class="caption"><span class="caption-text">Aan de slag</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../aan-de-slag/">Handleiding (ontwikkelomgeving)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../deployment/installatie-met-images/">Installatie met images</a>
+                  </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../componenten/configuratie/">Configuratie</a>
+                </li>
+              </ul>
               <p class="caption"><span class="caption-text">Projectoverzicht</span></p>
               <ul>
                   <li class="toctree-l1"><a class="reference internal" href="../../overzicht/inleiding/">Inleiding</a>
@@ -167,125 +178,83 @@
                   <li class="toctree-l1"><a class="reference internal" href="../../overzicht/doelstellingen/">Doelstellingen</a>
                   </li>
               </ul>
-              <p class="caption"><span class="caption-text">Aan de slag</span></p>
-              <ul>
-                  <li class="toctree-l1"><a class="reference internal" href="../../aan-de-slag/">Handleiding</a>
-                  </li>
-              </ul>
               <p class="caption"><span class="caption-text">Architectuur</span></p>
               <ul class="current">
                   <li class="toctree-l1"><a class="reference internal" href="../systeem/">Systeemarchitectuur</a>
                   </li>
-                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Dataflow Pipeline</a>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Verwerkingspipeline</a>
     <ul class="current">
-    <li class="toctree-l2"><a class="reference internal" href="#overzicht">Overzicht</a>
+    <li class="toctree-l2"><a class="reference internal" href="#twee-cycli">Twee cycli</a>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#fase-1-bronsystemen">Fase 1: Bronsystemen</a>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#fase-2-extractie">Fase 2: Extractie</a>
+    <li class="toctree-l2"><a class="reference internal" href="#stappen-van-de-volledige-cyclus">Stappen van de volledige cyclus</a>
         <ul>
-    <li class="toctree-l3"><a class="reference internal" href="#extractielogica">Extractielogica</a>
+    <li class="toctree-l3"><a class="reference internal" href="#2-extractie">2. Extractie</a>
     </li>
-    <li class="toctree-l3"><a class="reference internal" href="#mapping-en-herkenning">Mapping en Herkenning</a>
+    <li class="toctree-l3"><a class="reference internal" href="#3-tot-en-met-7-transformatie">3 tot en met 7. Transformatie</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#8-laden-en-indexeren">8. Laden en indexeren</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#9-en-10-registratie-rapport-en-einde">9 en 10. Registratie, rapport en einde</a>
     </li>
         </ul>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#fase-3-ruwopslag">Fase 3: Ruwopslag</a>
-        <ul>
-    <li class="toctree-l3"><a class="reference internal" href="#mongodb-nosql-storage">MongoDB NoSQL Storage</a>
+    <li class="toctree-l2"><a class="reference internal" href="#foutbeleid-en-trigger-rules">Foutbeleid en trigger rules</a>
     </li>
-    <li class="toctree-l3"><a class="reference internal" href="#singlestore-kolom-opslag">SingleStore Kolom-opslag</a>
+    <li class="toctree-l2"><a class="reference internal" href="#stappen-van-de-incrementele-cyclus">Stappen van de incrementele cyclus</a>
     </li>
-        </ul>
+    <li class="toctree-l2"><a class="reference internal" href="#overige-dags">Overige DAG's</a>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#fase-4-transformatie">Fase 4: Transformatie</a>
-        <ul>
-    <li class="toctree-l3"><a class="reference internal" href="#abr-harmonisering">ABR-Harmonisering</a>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#datumafstemming">Datumafstemming</a>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#locatieharmonisering">Locatieharmonisering</a>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#spelling-en-tekst">Spelling en Tekst</a>
-    </li>
-        </ul>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#fase-5-definitieve-opslag">Fase 5: Definitieve Opslag</a>
-        <ul>
-    <li class="toctree-l3"><a class="reference internal" href="#postgresql">PostgreSQL</a>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#oracle">Oracle</a>
-    </li>
-        </ul>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#fase-6-verdere-verwerking">Fase 6: Verdere Verwerking</a>
-        <ul>
-    <li class="toctree-l3"><a class="reference internal" href="#fulltext-search">Fulltext Search</a>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#crossviews">Crossviews</a>
-    </li>
-        </ul>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#fase-7-outputs">Fase 7: Outputs</a>
-        <ul>
-    <li class="toctree-l3"><a class="reference internal" href="#website">Website</a>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#gis-integratie">GIS-Integratie</a>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#data-warehouse">Data Warehouse</a>
-    </li>
-        </ul>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#transformatiestelling">Transformatiestelling</a>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#handmatige-interventie">Handmatige Interventie</a>
+    <li class="toctree-l2"><a class="reference internal" href="#uitgangspunten">Uitgangspunten</a>
     </li>
     </ul>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../componenten/">Componentenmodel</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../gegevensmodel/">Gegevensmodel & Semantiek</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../gegevensmodel/">Gegevensmodel</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../stack/">Technische Stack</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../stack/">Technische stack</a>
                   </li>
               </ul>
               <p class="caption"><span class="caption-text">Componenten</span></p>
               <ul>
-                  <li class="toctree-l1"><a class="reference internal" href="../../componenten/extractie/">Extractielaag</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../../componenten/extractie/">Extractie</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../../componenten/singlestore/">SingleStore & Clusterlaag</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../../componenten/singlestore/">MongoDB en Single_Store</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../../componenten/transformatie/">Transformatielaag</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../../componenten/transformatie/">Transformatie</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../componenten/incrementeel-laden/">Incrementeel laden</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../componenten/verwerkingsrapport/">Foutbeleid en verwerkingsrapport</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../componenten/validatie/">Validatie en kwaliteitscontroles</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../componenten/gemeenteprofielen/">Gemeenteprofielen</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../../componenten/crossviews/">Crossviews</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../../componenten/validatie/">Validatielaag</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../../componenten/configuratie/">Configuratiemodule</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../../componenten/zoeken/">Zoek- en Indexeringslaag</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../../componenten/zoeken/">Zoeken en indexering</a>
                   </li>
               </ul>
               <p class="caption"><span class="caption-text">Deployment</span></p>
               <ul>
-                  <li class="toctree-l1"><a class="reference internal" href="../../deployment/omgevingen/">Omgevingen & Docker Compose</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../../deployment/omgevingen/">Omgevingen en Docker Compose</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../../deployment/airflow-vs-app/">Airflow Transformatie vs. Web Applicatie</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../../deployment/airflow-vs-app/">Airflow en webapplicatie</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../deployment/voorbeelddata/">Voorbeelddata</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../../deployment/proefdata/">Proefdata Inlezen</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../../deployment/proefdata/">Proefdata inlezen</a>
                   </li>
               </ul>
-              <p class="caption"><span class="caption-text">Testen</span></p>
               <ul>
-                  <li class="toctree-l1"><a class="reference internal" href="../../testen/">Unit & Integratietests</a>
-                  </li>
+                <li class="toctree-l1"><a class="reference internal" href="../../testen/">Testen</a>
+                </li>
               </ul>
               <ul>
                 <li class="toctree-l1"><a class="reference internal" href="../../diagrammen/">Diagrammen</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../toekomstvisie/">Toekomstvisie</a>
                 </li>
               </ul>
       </div>
@@ -303,7 +272,7 @@
   <ul class="wy-breadcrumbs">
     <li><a href="../.." class="icon icon-home" aria-label="Documentatie"></a></li>
           <li class="breadcrumb-item">Architectuur</li>
-      <li class="breadcrumb-item active">Dataflow Pipeline</li>
+      <li class="breadcrumb-item active">Verwerkingspipeline</li>
     <li class="wy-breadcrumbs-aside">
     </li>
   </ul>
@@ -312,157 +281,294 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
             <div class="section" itemprop="articleBody">
               
-                <h1 id="gegevensstroomverloop">Gegevensstroomverloop<a class="headerlink" href="#gegevensstroomverloop" title="Permanent link">&para;</a></h1>
-<h2 id="overzicht">Overzicht<a class="headerlink" href="#overzicht" title="Permanent link">&para;</a></h2>
-<p>Dit document beschrijft de volledige stroom van archeologische gegevens door het Wasstraat-systeem, van bron tot eindgebruiker. Elke fase voegt waarde toe door gegevens incrementeel beter toegankelijk, betrouwbaar en betekenisvol te maken.</p>
-<p><img alt="Dataflow Pipeline" src="../../assets/images/dataflow-pipeline.svg" /></p>
-<h2 id="fase-1-bronsystemen">Fase 1: Bronsystemen<a class="headerlink" href="#fase-1-bronsystemen" title="Permanent link">&para;</a></h2>
-<p>Gegevens origineren uit verschillende bronnen:</p>
+                <h1 id="verwerkingspipeline">Verwerkingspipeline<a class="headerlink" href="#verwerkingspipeline" title="Permanent link">&para;</a></h1>
+<p>Deze pagina beschrijft hoe de brondata door de Wasstraat stroomt: van de Access-databases, foto's en rapporten in de invoermappen, via MongoDB, naar PostgreSQL en Elasticsearch. De verwerking is gebouwd als DAG's in Apache Airflow; de code staat in <code>airflow_app/dags/</code>.</p>
+<p><img alt="Verwerkingspipeline" src="../../assets/images/dataflow-pipeline.svg" /></p>
+<h2 id="twee-cycli">Twee cycli<a class="headerlink" href="#twee-cycli" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
 <tr>
-<th>Brontype</th>
-<th>Beschrijving</th>
-<th>Frequentie</th>
+<th>Cyclus</th>
+<th>DAG</th>
+<th>Wat hij doet</th>
+<th>Wanneer</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Historische datasets</td>
-<td>Gedigitaliseerde collecties, archieven</td>
-<td>Eenmalig</td>
+<td><strong>Volledige cyclus</strong></td>
+<td><code>Extract_Transform_Load_Full_Cycle</code></td>
+<td>Leegt de tussenopslag in MongoDB en verwerkt alle bronbestanden opnieuw. De tabellen in PostgreSQL worden in één keer vervangen (atomic swap), met dezelfde <code>primary_key</code>s als ervoor; gebruikersdata blijft staan</td>
+<td>De eerste keer, en na een wijziging in de harmonisatie-Excel, <code>correcties.yml</code>, het gemeenteprofiel of de pipelinecode</td>
 </tr>
 <tr>
-<td>Veldwerkapplicaties</td>
-<td>Real-time veldopnamen van opgravingen</td>
-<td>Periodiek</td>
-</tr>
-<tr>
-<td>Externe bronnen</td>
-<td>Samenwerking met andere instellingen</td>
-<td>Variabel</td>
-</tr>
-<tr>
-<td>Thesauribronnen</td>
-<td>Gecontroleerde vocabulaires (ABR, etc.)</td>
-<td>Regelmatig</td>
+<td><strong>Incrementele cyclus</strong></td>
+<td><code>Extract_Transform_Load_Incremental</code></td>
+<td>Verwerkt alleen nieuwe, gewijzigde en verwijderde bronbestanden en werkt PostgreSQL en Elasticsearch bij (upsert); leegt niets</td>
+<td>Na het toevoegen, vervangen of verwijderen van bronbestanden</td>
 </tr>
 </tbody>
 </table>
-<h2 id="fase-2-extractie">Fase 2: Extractie<a class="headerlink" href="#fase-2-extractie" title="Permanent link">&para;</a></h2>
-<p><strong>Python-extractielaag</strong> leest gegevens in native formaten en converteert naar standaardformaten.</p>
-<h3 id="extractielogica">Extractielogica<a class="headerlink" href="#extractielogica" title="Permanent link">&para;</a></h3>
-<div class="codehilite"><pre><span></span><code><span class="c1"># Pseudo-code voor typische extractiestap</span>
-<span class="k">for</span> <span class="n">bronbestand</span> <span class="ow">in</span> <span class="n">bronsystemen</span><span class="p">:</span>
-    <span class="n">data</span> <span class="o">=</span> <span class="n">lees_bronformaat</span><span class="p">(</span><span class="n">bronbestand</span><span class="p">)</span>
-    <span class="n">validatie</span> <span class="o">=</span> <span class="n">basale_checks</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
-    <span class="n">standaard</span> <span class="o">=</span> <span class="n">map_naar_standaardformaat</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
-    <span class="n">log_extractie</span><span class="p">(</span><span class="n">bronbestand</span><span class="p">,</span> <span class="n">standaard</span><span class="p">,</span> <span class="n">validatie</span><span class="p">)</span>
+<p>Beide cycli, en <code>DAG_Load_Only</code>, hebben een <strong>run-document</strong> in MongoDB (collectie <code>Verwerkingsruns</code> in <code>Arch_Staging</code>), houden zich aan hetzelfde <strong>foutbeleid</strong> en schrijven aan het eind een <strong>verwerkingsrapport</strong>. Er draait steeds hoogstens één run tegelijk. Zie <a href="../../componenten/verwerkingsrapport/">Foutbeleid en verwerkingsrapport</a> en <a href="../../componenten/incrementeel-laden/">Incrementeel laden</a>.</p>
+<h2 id="stappen-van-de-volledige-cyclus">Stappen van de volledige cyclus<a class="headerlink" href="#stappen-van-de-volledige-cyclus" title="Permanent link">&para;</a></h2>
+<div class="admonition note">
+<p class="admonition-title">Nummering van de taakgroepen</p>
+<p>De taakgroepen van de transformatie zijn genummerd in de volgorde waarin ze ooit zijn gebouwd, niet in de volgorde waarin ze draaien: na Transform 3 komt eerst <code>Transform5_Move_And_Merge_Group</code> (verplaatsen en samenvoegen) en daarna <code>Transform4_Set_References_Group</code> (sleutels en verwijzingen). Deze documentatie volgt de namen in Airflow: Transform 5 is verplaatsen en samenvoegen, Transform 4 de sleutels en verwijzingen.</p>
+</div>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Stap</th>
+<th>Taken in Airflow</th>
+<th>Leest</th>
+<th>Schrijft</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0</td>
+<td>Run starten</td>
+<td><code>Start_Run</code></td>
+<td>–</td>
+<td>Run-document (soort <code>volledig</code>, status <code>actief</code>)</td>
+</tr>
+<tr>
+<td>1</td>
+<td>Databases legen</td>
+<td><code>Drop_All_Databases</code></td>
+<td>–</td>
+<td>Leegt <code>Arch_Staging</code>, <code>Arch_Files</code> en <code>Arch_Analyse</code> (behalve <code>Verwerkingsruns</code>)</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Extractie</td>
+<td><code>Extract_Group</code>: <code>Extract_Data_From_Projecten</code>, <code>_Projectenlijst</code>, <code>_Magazijnlijst</code>, <code>_Fotolijst</code>, <code>_MonsterDB</code>, <code>_RapportaneDBs</code>, <code>Extract_Referentietabellen</code>, <code>Extract_ExtraProjecten</code>, <code>Controleer_Databases</code>; parallel <code>GetAndStoreImageFilenames</code>, <code>Extract_Data_From_Fotos_0</code> t/m <code>_7</code> en <code>Controleer_Afbeeldingen</code></td>
+<td>Invoermappen</td>
+<td>Staging-collecties, <code>Filenames</code>, <code>Plaatjes</code>, de mediamap</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Transform 1: harmoniseren</td>
+<td><code>Transform1_Harmonize_Group</code>: <code>FixProjectNames</code>, <code>fixMonsterProjectcds</code>, <code>Harmonize_&lt;soort&gt;</code> (één per soort), <code>ParseFotobestanden</code></td>
+<td>Staging, harmonisatie-Excel, <code>correcties.yml</code></td>
+<td><code>Single_Store</code></td>
+</tr>
+<tr>
+<td>4</td>
+<td>Transform 2: attributen</td>
+<td><code>Transform2_Enhance_Attributes_Group</code>: <code>Enhance_All_Attributes</code>, <code>extract_Imagedata_From_FileNames</code></td>
+<td><code>Single_Store</code>, gemeenteprofiel</td>
+<td><code>Single_Store</code> (en fouten in <code>_processing_errors</code>)</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Transform 3: sleutels</td>
+<td><code>Transform3_Set_Keys_Group</code>: <code>Set_Artefactnr_Unique</code>, <code>mergeRAAPArtefacts</code>, <code>Set_ReferenceKeys_&lt;soort&gt;</code>, <code>Set_Index_SingleStore</code></td>
+<td><code>Single_Store</code></td>
+<td><code>Single_Store</code> (velden <code>key</code>, <code>key_&lt;soort&gt;</code>)</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Transform 5: verplaatsen en samenvoegen</td>
+<td><code>Transform5_Move_And_Merge_Group</code>: <code>Drop_SingleStoreClean</code>, <code>Move_&lt;soort&gt;</code>, <code>Merge_&lt;soort&gt;</code>, <code>MergeFotoinfo</code>, <code>Generate_Missing_&lt;soort&gt;</code>, <code>Set_Index_SingleStoreClean</code></td>
+<td><code>Single_Store</code>, <code>Plaatjes</code></td>
+<td><code>Single_Store_Clean</code></td>
+</tr>
+<tr>
+<td>7</td>
+<td>Transform 4: sleutels en verwijzingen</td>
+<td><code>Transform4_Set_References_Group</code>: <code>Set_PrimaryKey_&lt;soort&gt;</code>, <code>Set_Reference_&lt;soort&gt;</code>, <code>Set_Reference_ABR_Materiaal</code>, <code>Set_Reference_ABR_SubMateriaal</code>, <code>Set_Reference_Images_to_Foto1</code> en <code>_Foto3</code></td>
+<td><code>Single_Store_Clean</code>, PostgreSQL (bestaande <code>primary_key</code>s)</td>
+<td><code>Single_Store_Clean</code> (velden <code>ID</code>, <code>&lt;soort&gt;ID</code>)</td>
+</tr>
+<tr>
+<td>8</td>
+<td>Laden en indexeren</td>
+<td><code>Load_To_Database_And_Inxdex_Group</code>: <code>LoadToDatabase_postgres</code>, daarna parallel <code>Index_&lt;tabel&gt;</code>, dan <code>Index_Klaar</code></td>
+<td><code>Single_Store_Clean</code></td>
+<td>PostgreSQL (<code>Def_</code>-tabellen), Elasticsearch</td>
+</tr>
+<tr>
+<td>9</td>
+<td>Registratie</td>
+<td><code>Registreer_Bronbestanden</code></td>
+<td>Invoermappen</td>
+<td><code>Def_Bronbestand</code>, run-document (<code>afgerond</code>)</td>
+</tr>
+<tr>
+<td>10</td>
+<td>Rapport en einde</td>
+<td><code>Verwerkingsrapport</code>, <code>End_ETL_full_cycle</code>; bij een fout ook <code>Markeer_Run_Mislukt</code></td>
+<td>Run-document, Airflow, PostgreSQL</td>
+<td>Rapport in <code>AIRFLOW_OUTPUT_RAPPORTEN</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="2-extractie">2. Extractie<a class="headerlink" href="#2-extractie" title="Permanent link">&para;</a></h3>
+<p>De zes MDB-taken roepen <code>airflow_app/scripts/importMDB.sh</code> aan met een invoermap en een staging-collectie. Het script zoekt recursief naar <code>.mdb</code>- en <code>.accdb</code>-bestanden (behalve de paden uit <code>paden_overslaan</code> in <code>correcties.yml</code>), exporteert elke tabel met <code>mdb-export</code> naar CSV, zet de tekst om naar UTF-8, voegt per record de velden <code>table</code>, <code>projectcd</code>, <code>bron</code>, <code>loadtime</code> en <code>mdbfile</code> toe en laadt het resultaat met <code>mongoimport</code> in de staging-collectie. De ABR-thesaurus en de extra projecten zijn Excel-bestanden die met pandas worden ingelezen.</p>
+<p>De afbeeldingen en rapporten lopen apart: <code>GetAndStoreImageFilenames</code> zet de te verwerken bestanden in <code>Filenames</code>, acht taken maken per bestand drie formaten in de mediamap en een document in <code>Plaatjes</code>.</p>
+<p>Na de import tellen twee controletaken wat niet gelukt is: <code>Controleer_Databases</code> (onleesbare en lege databases, overgeslagen tabellen) en <code>Controleer_Afbeeldingen</code> (mislukte en onverwerkte bestanden). Onder de drempel is dat een waarschuwing, erboven stopt de run. Zie <a href="../../componenten/extractie/">Extractie</a>.</p>
+<h3 id="3-tot-en-met-7-transformatie">3 tot en met 7. Transformatie<a class="headerlink" href="#3-tot-en-met-7-transformatie" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Stap</th>
+<th>Kern</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Transform 1</td>
+<td>De <a href="../../componenten/configuratie/#4-harmonisatie-excel">harmonisatie-Excel</a> bepaalt per soort welke Access-tabellen erbij horen en welke kolommen welk veld worden. Elk document krijgt <code>soort</code> en het oorspronkelijke record in <code>brondata</code>. Vooraf past <code>FixProjectNames</code> de <code>brondata_correcties</code> uit <code>correcties.yml</code> toe; <code>ParseFotobestanden</code> leidt uit de bestandsnamen af of een bestand een foto, tekening of rapport is</td>
+</tr>
+<tr>
+<td>Transform 2</td>
+<td>Per document: de <code>projectcode_correcties</code>, de identificatie door het <a href="../../componenten/gemeenteprofielen/">gemeenteprofiel</a> (projectcode, nummers als getal), dateringen, getallen, ja/nee-velden, datums en de omrekening van Rijksdriehoek-coördinaten naar WGS84</td>
+</tr>
+<tr>
+<td>Transform 3</td>
+<td>De samengestelde sleutel <code>key</code> van elk document (zoals <code>PDB034P10V460</code> voor vondst 460 in put 10 van DB034) en de sleutels naar de entiteiten waarnaar het verwijst (<code>key_vondst</code>, <code>key_put</code>, ...)</td>
+</tr>
+<tr>
+<td>Transform 5</td>
+<td>Documenten gaan naar <code>Single_Store_Clean</code>: verplaatst (één op één) of samengevoegd (meer bronrijen met dezelfde sleutel worden één document). Ontbrekende putten, vlakken, sporen, vondsten en dozen worden aangemaakt uit de nummers in de andere documenten</td>
+</tr>
+<tr>
+<td>Transform 4</td>
+<td>Elk document krijgt een stabiele integer-sleutel (<code>ID</code>, in PostgreSQL <code>primary_key</code>): bestaande nummers worden uit PostgreSQL overgenomen, alleen nieuwe entiteiten krijgen een nieuw nummer. Daarna worden de verwijzingen (<code>projectID</code>, <code>vondstID</code>, <code>artefactID</code>, ...) gezet</td>
+</tr>
+</tbody>
+</table>
+<p>Details: <a href="../../componenten/transformatie/">Transformatie</a> en <a href="../../componenten/singlestore/">MongoDB en Single_Store</a>.</p>
+<h3 id="8-laden-en-indexeren">8. Laden en indexeren<a class="headerlink" href="#8-laden-en-indexeren" title="Permanent link">&para;</a></h3>
+<p><code>LoadToDatabase_postgres</code> (<code>loadToDatabase_functions.loadAll</code>) laadt elke tabel uit <code>LOAD_TABELLEN</code> naar een <code>_new</code>-tabel, wisselt die in één transactie om met de bestaande tabel (atomic swap, met tijdelijk verwijderde foreign keys), herstelt de foreign keys en ruimt de oude tabellen op. Daarbij blijven de gebruikerstabellen (bruiklenen, partijen, conservering, extra ABR-materialen) staan: verwijzingen naar rijen die verdwenen zijn, worden losgekoppeld met een markering. Daarna berekent de laadstap de afgeleide velden (aantal foto's per artefact, aantal artefacten per project, dateringen). Elke <code>Index_&lt;tabel&gt;</code>-taak bouwt de Elasticsearch-index van één tabel opnieuw op. Zie <a href="../../componenten/zoeken/">Zoeken en indexering</a> en <a href="../gegevensmodel/">Gegevensmodel</a>.</p>
+<p>De tabellen in PostgreSQL maakt de webapplicatie aan bij het opstarten (<code>db.create_all()</code>); de laadstap faalt als Flask niet heeft gedraaid.</p>
+<h3 id="9-en-10-registratie-rapport-en-einde">9 en 10. Registratie, rapport en einde<a class="headerlink" href="#9-en-10-registratie-rapport-en-einde" title="Permanent link">&para;</a></h3>
+<p><code>Registreer_Bronbestanden</code> legt van elk bronbestand een vingerafdruk vast in <code>Def_Bronbestand</code>, zodat een volgende incrementele run weet wat al verwerkt is, en zet het run-document op <code>afgerond</code>. <code>Verwerkingsrapport</code> schrijft het rapport van de run, ook na een fout.</p>
+<h2 id="foutbeleid-en-trigger-rules">Foutbeleid en trigger rules<a class="headerlink" href="#foutbeleid-en-trigger-rules" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Element</th>
+<th>Werking</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Cruciale taken</td>
+<td>Alle taken en taakgroepen behalve de <code>Index_&lt;tabel&gt;</code>-taken hangen aan <code>Markeer_Run_Mislukt</code> (<code>trigger_rule=one_failed</code>). Faalt er een, dan zet die taak de run op <code>mislukt</code>; de registratie wordt niet bijgewerkt, zodat een volgende run dezelfde bestanden opnieuw oppakt</td>
+</tr>
+<tr>
+<td>Index-taken</td>
+<td>Een mislukte <code>Index_&lt;tabel&gt;</code> is een waarschuwing. <code>Index_Klaar</code> (<code>trigger_rule=all_done</code>) wacht op alle Index-taken, ongeacht de uitkomst; de registratie gaat door en de DAG slaagt</td>
+</tr>
+<tr>
+<td>Drempels</td>
+<td>Onleesbare databases, mislukte afbeeldingen en records die Transform 2 niet kon verwerken zijn waarschuwingen tot een drempel (<code>AIRFLOW_MAX_*</code>, zie <a href="../../componenten/configuratie/#23-airflow-airflowenv-airflow_dbenv">Configuratie</a>) en cruciaal daarboven</td>
+</tr>
+<tr>
+<td>Meldingen</td>
+<td>Elke taak heeft een <code>on_failure_callback</code> die de foutmelding in de lijst <code>meldingen</code> van het run-document zet</td>
+</tr>
+<tr>
+<td>Rapport</td>
+<td><code>Verwerkingsrapport</code> hangt aan alle andere taken met <code>trigger_rule=all_done</code>; de eindtaak hangt aan de registratie en het rapport en bepaalt de status van de DAG</td>
+</tr>
+<tr>
+<td>Eén run tegelijk</td>
+<td><code>max_active_runs=1</code> en <code>Start_Run</code> faalt als er al een run actief is</td>
+</tr>
+</tbody>
+</table>
+<p>De volledige tabel per stap staat in <a href="../../componenten/verwerkingsrapport/#beleid-per-stap">Foutbeleid en verwerkingsrapport</a>.</p>
+<h2 id="stappen-van-de-incrementele-cyclus">Stappen van de incrementele cyclus<a class="headerlink" href="#stappen-van-de-incrementele-cyclus" title="Permanent link">&para;</a></h2>
+<div class="codehilite"><pre><span></span><code>Start_Run → Bepaal_Delta → Opruimen_Oude_Records → Extract_Group (delta)
+  → Transform 1 → 2 → 3 → 5 → 4 (delta, stabiele sleutels)
+  → Load_Upsert → Index_&lt;tabel&gt; (parallel) → Index_Klaar → Registreer_Run
+  → Verwerkingsrapport → End_ETL_incremental
 </code></pre></div>
 
-<h3 id="mapping-en-herkenning">Mapping en Herkenning<a class="headerlink" href="#mapping-en-herkenning" title="Permanent link">&para;</a></h3>
-<p>De <strong>mappinglaag</strong> herkent:
-- <strong>Termdefinities</strong>: Mapping van bron-termen naar gestandaardiseerde vocabulaires
-- <strong>Veldherkenning</strong>: Automatische detectie van semantisch equivalente velden
-- <strong>Domeinafleiding</strong>: Bepaling van gegevensdomeinen op basis van inhoud</p>
-<h2 id="fase-3-ruwopslag">Fase 3: Ruwopslag<a class="headerlink" href="#fase-3-ruwopslag" title="Permanent link">&para;</a></h2>
-<p>Opgeslagen gegevens in niet-genormaliseerde vorm:</p>
-<h3 id="mongodb-nosql-storage">MongoDB NoSQL Storage<a class="headerlink" href="#mongodb-nosql-storage" title="Permanent link">&para;</a></h3>
-<p>Flexibele schema voor heterogene bronnen:
-- Behoud van originele structuur
-- Semi-gestructureerde gegevens
-- Schaalbare horizontale distributie</p>
-<h3 id="singlestore-kolom-opslag">SingleStore Kolom-opslag<a class="headerlink" href="#singlestore-kolom-opslag" title="Permanent link">&para;</a></h3>
-<p>Geoptimaliseerd voor analytische queries:
-- Efficiënte compressie
-- Snelle aggregaties
-- Ondersteuning voor crossviews</p>
-<h2 id="fase-4-transformatie">Fase 4: Transformatie<a class="headerlink" href="#fase-4-transformatie" title="Permanent link">&para;</a></h2>
-<p>De <strong>Python-transformatielaag</strong> en <strong>SQLAlchemy ORM</strong> normaliseren en harmoniseren gegevens:</p>
-<h3 id="abr-harmonisering">ABR-Harmonisering<a class="headerlink" href="#abr-harmonisering" title="Permanent link">&para;</a></h3>
-<p>Mapping van lokale termen naar ABR-thesaurusconcepten:</p>
-<div class="codehilite"><pre><span></span><code>Lokale term: &quot;middeleeuwse aardewerkscherf&quot;
-    ↓ [ABR-mapping]
-ABR-concept: &quot;keramiek&quot; (urn:nbn:nl:ui:nbn-id-123456)
-</code></pre></div>
-
-<h3 id="datumafstemming">Datumafstemming<a class="headerlink" href="#datumafstemming" title="Permanent link">&para;</a></h3>
-<p>Conversie naar ISO 8601-standaard:</p>
-<div class="codehilite"><pre><span></span><code><span class="n">Verschillende</span><span class="w"> </span><span class="nl">invoeren</span><span class="p">:</span><span class="w"> </span><span class="ss">&quot;13de eeuw&quot;</span><span class="p">,</span><span class="w"> </span><span class="ss">&quot;1200-1300&quot;</span><span class="p">,</span><span class="w"> </span><span class="ss">&quot;AD 1250&quot;</span>
-<span class="w">    </span><span class="err">↓</span><span class="w"> </span><span class="o">[</span><span class="n">Normalisering</span><span class="o">]</span>
-<span class="nl">Standaard</span><span class="p">:</span><span class="w"> </span><span class="err">{</span><span class="ss">&quot;begin&quot;</span><span class="err">:</span><span class="w"> </span><span class="mi">1200</span><span class="p">,</span><span class="w"> </span><span class="ss">&quot;einde&quot;</span><span class="err">:</span><span class="w"> </span><span class="mi">1300</span><span class="err">}</span>
-</code></pre></div>
-
-<h3 id="locatieharmonisering">Locatieharmonisering<a class="headerlink" href="#locatieharmonisering" title="Permanent link">&para;</a></h3>
-<p>Consolidatie van locatieaanduidingen:</p>
-<div class="codehilite"><pre><span></span><code>Duplicate locaties → Deduplicatie → Canonische locatie-ID
-RDx,y koordinaten → Conversie naar WGS84
-</code></pre></div>
-
-<h3 id="spelling-en-tekst">Spelling en Tekst<a class="headerlink" href="#spelling-en-tekst" title="Permanent link">&para;</a></h3>
+<p><code>Bepaal_Delta</code> vergelijkt de bestanden in de invoermappen met <code>Def_Bronbestand</code> en bepaalt per bestand of het nieuw, gewijzigd, ongewijzigd of verwijderd is. <code>Opruimen_Oude_Records</code> haalt de records van gewijzigde en verwijderde bestanden weg uit de staging en <code>Single_Store</code>. De extractie en de transformaties werken daarna alleen op de delta, met een extra taak <code>Werk_Geraakte_Projecten_Bij</code> in Transform 1 en 2. <code>Load_Upsert</code> werkt de tabellen in PostgreSQL bij met <code>INSERT ... ON CONFLICT</code> en verwijdert verdwenen rijen; de Index-taken werken alleen de tabellen uit <code>LOAD_TABELLEN</code> bij. Zie <a href="../../componenten/incrementeel-laden/">Incrementeel laden</a>.</p>
+<h2 id="overige-dags">Overige DAG's<a class="headerlink" href="#overige-dags" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>DAG</th>
+<th>Taken</th>
+<th>Gebruik</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>DAG_Load_Only</code></td>
+<td><code>Start_Run</code> → laden en indexeren → <code>Rond_Run_Af</code>, met run-document (soort <code>laden</code>) en rapport</td>
+<td>Opnieuw laden of indexeren uit <code>Single_Store_Clean</code>, bijvoorbeeld na een mislukte Index-taak</td>
+</tr>
+<tr>
+<td><code>Extract_only</code></td>
+<td><code>Drop_Staging_Database</code>, <code>Drop_Files_Database</code>, <code>Extract_Group</code></td>
+<td>Alleen inlezen</td>
+</tr>
+<tr>
+<td><code>Extract_Projects_only</code></td>
+<td><code>Drop_Project_Collection</code>, <code>Extract_Data_From_Projecten</code></td>
+<td>Alleen de opgravingsdatabases opnieuw inlezen</td>
+</tr>
+<tr>
+<td><code>Redo_Images</code></td>
+<td><code>Extract_Data_From_Fotos_0</code> t/m <code>_7</code>, <code>Controleer_Afbeeldingen</code></td>
+<td>Bestanden die in <code>Filenames</code> nog open staan (mislukt of onverwerkt) opnieuw proberen</td>
+</tr>
+<tr>
+<td><code>DAG_Transform_Only</code></td>
+<td><code>Drop_Analyse_Database</code>, Transform 1, 2, 3, 5 en 4</td>
+<td>Alleen transformeren, zonder laden</td>
+</tr>
+<tr>
+<td><code>DAG_Transform_Load_Only</code></td>
+<td>Idem, plus laden en indexeren</td>
+<td>Transformeren en laden zonder nieuwe extractie</td>
+</tr>
+<tr>
+<td><code>DAG_Transform1_Harmonize_Only</code></td>
+<td><code>Drop_SingleStore</code>, Transform 1</td>
+<td>Stap voor stap debuggen</td>
+</tr>
+<tr>
+<td><code>DAG_Transform2_Enhance_Attributes_Only</code></td>
+<td>Transform 2 op de bestaande <code>Single_Store</code> (raakt <code>Single_Store_Clean</code> niet, zie <a href="../../componenten/transformatie/#losse-dags-per-stap">Transformatie</a>)</td>
+<td>idem</td>
+</tr>
+<tr>
+<td><code>DAG_Transform3_Keys_Only</code></td>
+<td>Transform 3</td>
+<td>idem</td>
+</tr>
+<tr>
+<td><code>DAG_Transform_Move_Only</code></td>
+<td>Transform 5</td>
+<td>idem</td>
+</tr>
+<tr>
+<td><code>DAG_Transform4_Refs_Only</code></td>
+<td>Transform 4</td>
+<td>idem</td>
+</tr>
+<tr>
+<td><code>DAG_Transform_Move_And_References_Only</code></td>
+<td>Transform 5 en 4</td>
+<td>idem</td>
+</tr>
+</tbody>
+</table>
+<p>Alleen de twee cycli en <code>DAG_Load_Only</code> hebben een run-document en een verwerkingsrapport. De andere DAG's registreren geen bronbestanden; draai na stapsgewijs werken weer de volledige cyclus voordat je de incrementele gebruikt.</p>
+<h2 id="uitgangspunten">Uitgangspunten<a class="headerlink" href="#uitgangspunten" title="Permanent link">&para;</a></h2>
 <ul>
-<li>Unicode-normalisatie</li>
-<li>Diacrietenafhandeling</li>
-<li>Diakritiek-neutrale zoekindex</li>
+<li><strong>De bron blijft onaangeroerd.</strong> De invoermappen worden alleen gelezen; in de live installatie zijn ze alleen-lezen gekoppeld. Elk document in MongoDB en elke rij in PostgreSQL bewaart zijn oorspronkelijke record in <code>brondata</code>, met het pad van het bronbestand.</li>
+<li><strong>Herhaalbaar.</strong> De volledige cyclus bouwt alles opnieuw op uit de bron en levert, bij dezelfde bron en configuratie, dezelfde rijen met dezelfde sleutels op.</li>
+<li><strong>Configuratie in plaats van code.</strong> Tabel- en kolomnamen staan in de harmonisatie-Excel, gemeente-specifieke correcties in <code>correcties.yml</code>; alleen wat daar niet in te vangen is, zit in het gemeenteprofiel. Zie <a href="../../componenten/configuratie/">Configuratie</a>.</li>
 </ul>
-<h2 id="fase-5-definitieve-opslag">Fase 5: Definitieve Opslag<a class="headerlink" href="#fase-5-definitieve-opslag" title="Permanent link">&para;</a></h2>
-<p>Genormaliseerde, canonieke opslag in relationele databases:</p>
-<h3 id="postgresql">PostgreSQL<a class="headerlink" href="#postgresql" title="Permanent link">&para;</a></h3>
-<p>Voorkeur voor nieuwe implementaties:
-- Open-source, goed gedocumenteerd
-- Sterke JSON/jsonb-ondersteuning
-- PostGIS extensie voor geografische data
-- Excellent voor FAIR data-workflows</p>
-<h3 id="oracle">Oracle<a class="headerlink" href="#oracle" title="Permanent link">&para;</a></h3>
-<p>Voor legacy-integratie en enterprise-omgevingen:
-- Reeds aanwezig in sommige organisaties
-- Sterke integratie met BI-tools</p>
-<h2 id="fase-6-verdere-verwerking">Fase 6: Verdere Verwerking<a class="headerlink" href="#fase-6-verdere-verwerking" title="Permanent link">&para;</a></h2>
-<h3 id="fulltext-search">Fulltext Search<a class="headerlink" href="#fulltext-search" title="Permanent link">&para;</a></h3>
-<p>Polymorfe zoekindexering met:
-- Vakgericht-bewuste tokening
-- Multi-language stemming
-- Relevantie-ranking op basis van gegevensveld</p>
-<h3 id="crossviews">Crossviews<a class="headerlink" href="#crossviews" title="Permanent link">&para;</a></h3>
-<p>Query-lagen die data uit meerdere bronnen combineren zonder duplicatie</p>
-<h2 id="fase-7-outputs">Fase 7: Outputs<a class="headerlink" href="#fase-7-outputs" title="Permanent link">&para;</a></h2>
-<h3 id="website">Website<a class="headerlink" href="#website" title="Permanent link">&para;</a></h3>
-<ul>
-<li>REST API's</li>
-<li>Web UI voor zoeken en browse</li>
-<li>Linked Open Data exports</li>
-</ul>
-<h3 id="gis-integratie">GIS-Integratie<a class="headerlink" href="#gis-integratie" title="Permanent link">&para;</a></h3>
-<ul>
-<li>WMS/WFS services</li>
-<li>GeoJSON exports</li>
-<li>Kaartgebaseerde interfaces</li>
-</ul>
-<h3 id="data-warehouse">Data Warehouse<a class="headerlink" href="#data-warehouse" title="Permanent link">&para;</a></h3>
-<ul>
-<li>OLAP-cubes</li>
-<li>Reporting dashboards</li>
-<li>Exports voor verdere analyse</li>
-</ul>
-<h2 id="transformatiestelling">Transformatiestelling<a class="headerlink" href="#transformatiestelling" title="Permanent link">&para;</a></h2>
-<p>Een kritiek ontwerp-principe:</p>
-<blockquote>
-<p><strong>Originele data wordt altijd behouden. Transformaties kunnen opnieuw worden uitgevoerd.</strong></p>
-</blockquote>
-<p>Dit betekent:
-- Alle transformatielogica is versioneerd
-- Transformatieresultaten kunnen worden geverifieerd
-- Fouten kunnen worden geïsoleerd en gecorrigeerd
-- Volledig audittrail is beschikbaar</p>
-<h2 id="handmatige-interventie">Handmatige Interventie<a class="headerlink" href="#handmatige-interventie" title="Permanent link">&para;</a></h2>
-<p>De <strong>handmatige schoonmaakinterface</strong> biedt menselijke mogelijkheden:
-- Controle van onzekere transformaties
-- Correctie van foutieve mappings
-- Disambiguering van anomalieën</p>
-<p>Dit is vooral belangrijk voor:
-- Waardeconflicten tussen bronnen
-- Verouderde of onvolledig bron-thesaurus
-- Contextgebonden interpretaties</p>
               
             </div>
           </div>

@@ -1,0 +1,1053 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="nl" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="author" content="E-Space / Arjen Brienen" /><link rel="canonical" href="https://brienen.github.io/wasstraat_archeologische_data/componenten/verwerkingsrapport/" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>Foutbeleid en verwerkingsrapport - Wasstraat Archeologische Data</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+        <link href="../../assets/extra.css" rel="stylesheet" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Foutbeleid en verwerkingsrapport";
+        var mkdocs_page_input_path = "componenten/verwerkingsrapport.md";
+        var mkdocs_page_url = "/wasstraat_archeologische_data/componenten/verwerkingsrapport/";
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script>
+  
+  <meta name="author" content="Arjen Brienen">
+  <meta name="publisher" content="E-Space">
+  <meta name="description" content="Technische documentatie voor de Wasstraat Archeologische Data - een open source verwerkingsplatform voor archeologische datasets">
+  <meta name="keywords" content="archeologie, wasstraat, ETL, open data, erfgoed, ABR, CIDOC CRM, Delft, Airflow, open source">
+  <meta name="generator" content="MkDocs">
+  <meta name="robots" content="index, follow">
+  <meta http-equiv="Content-Language" content="nl">
+
+  
+  <meta name="DC.title" content="Foutbeleid en verwerkingsrapport">
+  <meta name="DC.creator" content="Arjen Brienen">
+  <meta name="DC.publisher" content="E-Space">
+  <meta name="DC.language" content="nl">
+  <meta name="DC.rights" content="EUPL v1.2">
+  <meta name="DC.type" content="Text">
+  <meta name="DC.format" content="text/html">
+
+  
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Wasstraat Archeologische Data">
+  <meta property="og:title" content="Foutbeleid en verwerkingsrapport">
+  <meta property="og:description" content="Technische documentatie voor de Wasstraat Archeologische Data - een open source verwerkingsplatform voor archeologische datasets">
+  <meta property="og:locale" content="nl_NL">
+  <meta property="og:url" content="https://brienen.github.io/wasstraat_archeologische_data/componenten/verwerkingsrapport/">
+
+  
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Foutbeleid en verwerkingsrapport">
+  <meta name="twitter:description" content="Technische documentatie voor de Wasstraat Archeologische Data - een open source verwerkingsplatform voor archeologische datasets">
+
+  
+  <link rel="canonical" href="https://brienen.github.io/wasstraat_archeologische_data/componenten/verwerkingsrapport/">
+
+  
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://brienen.github.io/wasstraat_archeologische_data/#org-espace",
+        "name": "E-Space",
+        "description": "Ontwikkelaar van de Wasstraat Archeologische Data.",
+        "inLanguage": "nl"
+      },
+      {
+        "@type": "Person",
+        "@id": "https://brienen.github.io/wasstraat_archeologische_data/#person-arjen",
+        "name": "Arjen Brienen",
+        "jobTitle": "Architect en ontwikkelaar",
+        "affiliation": { "@id": "https://brienen.github.io/wasstraat_archeologische_data/#org-espace" },
+        "sameAs": [
+          "https://www.linkedin.com/in/arjenbrienen/",
+          "https://github.com/brienen"
+        ]
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://brienen.github.io/wasstraat_archeologische_data/#website",
+        "url": "https://brienen.github.io/wasstraat_archeologische_data/",
+        "name": "Wasstraat Archeologische Data",
+        "description": "Technische documentatie voor de Wasstraat Archeologische Data - een open source verwerkingsplatform voor archeologische datasets",
+        "inLanguage": "nl",
+        "publisher": { "@id": "https://brienen.github.io/wasstraat_archeologische_data/#org-espace" },
+        "author": { "@id": "https://brienen.github.io/wasstraat_archeologische_data/#person-arjen" },
+        "creator": { "@id": "https://brienen.github.io/wasstraat_archeologische_data/#person-arjen" },
+        "copyrightHolder": { "@id": "https://brienen.github.io/wasstraat_archeologische_data/#org-espace" },
+        "license": "https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12"
+      },
+      {
+        "@type": "SoftwareSourceCode",
+        "@id": "https://brienen.github.io/wasstraat_archeologische_data/#software",
+        "name": "Wasstraat Archeologische Data",
+        "alternateName": "Wasstraat",
+        "description": "Open-source ETL-platform dat archeologische gegevens verzamelt, verwerkt en toegankelijk maakt. Ontwikkeld voor de gemeente Delft en uitgebreid tot een generiek platform voor Nederlandse gemeenten.",
+        "programmingLanguage": ["Python", "SQL", "YAML"],
+        "runtimePlatform": "Docker Compose",
+        "codeRepository": "https://github.com/brienen/wasstraat_archeologische_data",
+        "license": "https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12",
+        "author": { "@id": "https://brienen.github.io/wasstraat_archeologische_data/#person-arjen" },
+        "creator": { "@id": "https://brienen.github.io/wasstraat_archeologische_data/#person-arjen" },
+        "publisher": { "@id": "https://brienen.github.io/wasstraat_archeologische_data/#org-espace" },
+        "maintainer": { "@id": "https://brienen.github.io/wasstraat_archeologische_data/#person-arjen" },
+        "copyrightHolder": { "@id": "https://brienen.github.io/wasstraat_archeologische_data/#org-espace" },
+        "inLanguage": "nl",
+        "keywords": "archeologie, ETL, Airflow, PostgreSQL, MongoDB, Elasticsearch, ABR, CIDOC CRM, GGM, erfgoed, open data",
+        "about": [
+          { "@type": "Thing", "name": "Archeologisch Basisregister (ABR)" },
+          { "@type": "Thing", "name": "CIDOC CRM" },
+          { "@type": "Thing", "name": "Gemeentelijk Gegevensmodel (GGM)" },
+          { "@type": "Thing", "name": "DANS e-Depot" },
+          { "@type": "Thing", "name": "Archis" }
+        ]
+      }
+      
+      ,{
+        "@type": "TechArticle",
+        "@id": "https://brienen.github.io/wasstraat_archeologische_data/componenten/verwerkingsrapport/#article",
+        "url": "https://brienen.github.io/wasstraat_archeologische_data/componenten/verwerkingsrapport/",
+        "name": "Foutbeleid en verwerkingsrapport",
+        "headline": "Foutbeleid en verwerkingsrapport",
+        "description": "Technische documentatie voor de Wasstraat Archeologische Data - een open source verwerkingsplatform voor archeologische datasets",
+        "inLanguage": "nl",
+        "isPartOf": { "@id": "https://brienen.github.io/wasstraat_archeologische_data/#website" },
+        "author": { "@id": "https://brienen.github.io/wasstraat_archeologische_data/#person-arjen" },
+        "publisher": { "@id": "https://brienen.github.io/wasstraat_archeologische_data/#org-espace" },
+        "license": "https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12"
+      }
+      
+    ]
+  }
+  </script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> Wasstraat Archeologische Data
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Doorzoek documentatie" aria-label="Doorzoek documentatie" title="Typ hier uw zoekterm" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigatiemenu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Home</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Aan de slag</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../aan-de-slag/">Handleiding (ontwikkelomgeving)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../deployment/installatie-met-images/">Installatie met images</a>
+                  </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../configuratie/">Configuratie</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Projectoverzicht</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../overzicht/inleiding/">Inleiding</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../overzicht/probleemstelling/">Probleemstelling</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../overzicht/doelstellingen/">Doelstellingen</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Architectuur</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../architectuur/systeem/">Systeemarchitectuur</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../architectuur/dataflow/">Verwerkingspipeline</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../architectuur/componenten/">Componentenmodel</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../architectuur/gegevensmodel/">Gegevensmodel</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../architectuur/stack/">Technische stack</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Componenten</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../extractie/">Extractie</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../singlestore/">MongoDB en Single_Store</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../transformatie/">Transformatie</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../incrementeel-laden/">Incrementeel laden</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Foutbeleid en verwerkingsrapport</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#doel">Doel</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#foutbeleid">Foutbeleid</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#uitgangspunt">Uitgangspunt</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#beleid-per-stap">Beleid per stap</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#opbouw-van-de-dags">Opbouw van de DAG's</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#controle-van-de-access-databases-controleer_databases">Controle van de Access-databases (Controleer_Databases)</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#meldingen-in-het-run-document">Meldingen in het run-document</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#verwerkingsrapport">Verwerkingsrapport</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#wanneer-en-waar">Wanneer en waar</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inhoud-json">Inhoud (JSON)</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#voorbeeld-markdown">Voorbeeld (Markdown)</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#configuratie">Configuratie</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#modules-en-taken">Modules en taken</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#testen">Testen</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#vervolg">Vervolg</a>
+    </li>
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../validatie/">Validatie en kwaliteitscontroles</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../gemeenteprofielen/">Gemeenteprofielen</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../zoeken/">Zoeken en indexering</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Deployment</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../deployment/omgevingen/">Omgevingen en Docker Compose</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../deployment/airflow-vs-app/">Airflow en webapplicatie</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../deployment/voorbeelddata/">Voorbeelddata</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../deployment/proefdata/">Proefdata inlezen</a>
+                  </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../testen/">Testen</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../diagrammen/">Diagrammen</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../toekomstvisie/">Toekomstvisie</a>
+                </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobiel navigatiemenu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">Wasstraat Archeologische Data</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" aria-label="Documentatie"></a></li>
+          <li class="breadcrumb-item">Componenten</li>
+      <li class="breadcrumb-item active">Foutbeleid en verwerkingsrapport</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="foutbeleid-en-verwerkingsrapport">Foutbeleid en verwerkingsrapport<a class="headerlink" href="#foutbeleid-en-verwerkingsrapport" title="Permanent link">&para;</a></h1>
+<div class="admonition note">
+<p class="admonition-title">Status</p>
+<p>Gebouwd voor <a href="https://github.com/brienen/wasstraat_archeologische_data/issues/54">issue 54</a> (fouten bij inlezen leiden niet altijd tot het afbreken van de hele run) en <a href="https://github.com/brienen/wasstraat_archeologische_data/issues/62">issue 62</a> (verwerkingsrapport per run). Het run-document waarop beide steunen staat in <a href="../incrementeel-laden/#run-document">Incrementeel laden</a>.</p>
+</div>
+<h2 id="doel">Doel<a class="headerlink" href="#doel" title="Permanent link">&para;</a></h2>
+<p>Tot issue 54 stopte een fout in een taak de hele DAG, terwijl een deel van de fouten (één onleesbare database, één beschadigde foto, een haperende Elasticsearch) de rest van de verwerking niet raakt. Andere fouten werden juist stil genegeerd: een mislukte <code>Drop_All_Databases</code> werd alleen gelogd, een onleesbare Access-database alleen in het log van <code>importMDB.sh</code> genoemd. En na een run was nergens in één overzicht te zien wat er verwerkt was, wat niet, en waarom.</p>
+<p>Daarom:</p>
+<ul>
+<li><strong>Foutbeleid (issue 54):</strong> per taak is vastgelegd of een fout <em>cruciaal</em> is (de run stopt) of een <em>waarschuwing</em> (de run gaat door, de fout wordt geteld en gemeld), met waar nodig een drempel. Alle waarschuwingen en fouten komen op één plek: de meldingen in het run-document. Ook de volledige cyclus en <code>DAG_Load_Only</code> hebben nu een run-document.</li>
+<li><strong>Verwerkingsrapport (issue 62):</strong> aan het eind van elke run, ook na een fout, schrijft de taak <code>Verwerkingsrapport</code> een rapport als JSON (machineleesbaar) en Markdown (leesbaar), met een samenvatting in het Airflow-log en in het run-document.</li>
+</ul>
+<h2 id="foutbeleid">Foutbeleid<a class="headerlink" href="#foutbeleid" title="Permanent link">&para;</a></h2>
+<h3 id="uitgangspunt">Uitgangspunt<a class="headerlink" href="#uitgangspunt" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Soort fout</th>
+<th>Gedrag</th>
+<th>Voorbeelden</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Cruciaal</strong></td>
+<td>De taak faalt, <code>Markeer_Run_Mislukt</code> zet de run op <code>mislukt</code>, de DAG faalt. De registratie van bronbestanden wordt niet bijgewerkt, zodat een volgende run dezelfde bestanden opnieuw oppakt.</td>
+<td>De data in PostgreSQL zou onvolledig of onjuist worden: een harmonisatie, transformatie of load die faalt, een vol mediavolume, een drempel die wordt overschreden, MongoDB of PostgreSQL onbereikbaar</td>
+</tr>
+<tr>
+<td><strong>Waarschuwing</strong></td>
+<td>De run gaat door. De fout komt als melding met niveau <code>waarschuwing</code> in het run-document en in het rapport.</td>
+<td>Eén onleesbare database, tabel, afbeelding of record; een mislukte Elasticsearch-index; afgeleide velden die niet herberekend konden worden; een FK die niet gevalideerd kon worden</td>
+</tr>
+<tr>
+<td><strong>Waarschuwing met drempel</strong></td>
+<td>Onder de drempel een waarschuwing, erboven cruciaal: een reeks losse fouten wijst op een structureel probleem (mdbtools kapot, een fout in het gemeenteprofiel, een ontbrekende map).</td>
+<td>Onleesbare Access-databases, mislukte afbeeldingen, records die Transform 2 niet kon verwerken</td>
+</tr>
+</tbody>
+</table>
+<p>De drempel is steeds het grootste van een vast aantal en een percentage van het totaal (<code>foutbeleid.bepaalDrempel</code>, dezelfde regel als bij de afbeeldingen): bij een kleine verzameling telt het vaste aantal, bij een grote het percentage.</p>
+<h3 id="beleid-per-stap">Beleid per stap<a class="headerlink" href="#beleid-per-stap" title="Permanent link">&para;</a></h3>
+<p>Legenda gedrag tot issue 54: <strong>F</strong> = taak faalt en DAG faalt; <strong>S</strong> = overgeslagen met alleen een regel in het log (taak slaagt); <strong>T</strong> = geteld en gerapporteerd.</p>
+<table>
+<thead>
+<tr>
+<th>Stap / taak</th>
+<th>Fout</th>
+<th>Tot issue 54</th>
+<th>Nu</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Volledige cyclus en <code>DAG_Load_Only</code></td>
+<td>geen run-document tijdens de run (de volledige cyclus maakte er pas bij de registratie een aan)</td>
+<td>—</td>
+<td><code>Start_Run</code> aan het begin (soort <code>volledig</code> of <code>laden</code>), <code>Markeer_Run_Mislukt</code>, meldingen, rapport</td>
+</tr>
+<tr>
+<td><code>Start_Run</code></td>
+<td>er loopt al een run</td>
+<td>F (alleen incrementeel)</td>
+<td>F in alle drie de DAG's: twee runs tegelijk beschadigen elkaars staging en registratie</td>
+</tr>
+<tr>
+<td>idem</td>
+<td>onbekend gemeenteprofiel (<code>WASSTRAAT_GEMEENTE</code>)</td>
+<td>F, maar laat: pas <code>ParseFotobestanden</code> faalde, na de extractie; Transform 2 telde elk document als verwerkingsfout</td>
+<td>F in <code>Start_Run</code> (issue 87): melding <code>profiel_onbekend</code>, run <code>mislukt</code> voordat er iets verwerkt is (zie <a href="../gemeenteprofielen/#profielselectie">Gemeenteprofielen</a>)</td>
+</tr>
+<tr>
+<td><code>Drop_All_Databases</code></td>
+<td>MongoDB-fout</td>
+<td><strong>S</strong>: de extractie las daarna bovenop de oude data in</td>
+<td>F. De collectie <code>Verwerkingsruns</code> blijft staan (geschiedenis van runs en rapporten)</td>
+</tr>
+<tr>
+<td><code>Bepaal_Delta</code>, <code>Opruimen_Oude_Records</code></td>
+<td>elke fout</td>
+<td>F</td>
+<td>F</td>
+</tr>
+<tr>
+<td><code>Extract_Data_From_&lt;map&gt;</code> (<code>importMDB.sh</code>)</td>
+<td>onleesbare Access-database</td>
+<td>S (ERROR in het log, exit 0)</td>
+<td>T met drempel: nieuwe taak <code>Controleer_Databases</code>, waarschuwing; boven <code>AIRFLOW_MAX_MISLUKTE_DATABASES</code> / <code>_PCT</code> cruciaal</td>
+</tr>
+<tr>
+<td>idem</td>
+<td>tabel die de export niet aankan (kopregel, kolommen, mongoimport)</td>
+<td>S</td>
+<td>T: waarschuwing, per tabel in het rapport</td>
+</tr>
+<tr>
+<td>idem</td>
+<td>database zonder één record</td>
+<td>S (registratie met 0 records en een WARNING)</td>
+<td>T: waarschuwing</td>
+</tr>
+<tr>
+<td>idem</td>
+<td>lijstbestand ontbreekt (incrementeel)</td>
+<td>F</td>
+<td>F</td>
+</tr>
+<tr>
+<td><code>Extract_Data_From_Fotos_*</code></td>
+<td>één bestand onleesbaar of beschadigd</td>
+<td>T (status <code>mislukt</code> in <code>Filenames</code>)</td>
+<td>T, ongewijzigd</td>
+</tr>
+<tr>
+<td>idem</td>
+<td>vol of alleen-lezen volume, geen schrijfrechten</td>
+<td>F direct, zonder herhaling</td>
+<td>F, ongewijzigd</td>
+</tr>
+<tr>
+<td><code>Controleer_Afbeeldingen</code></td>
+<td>mislukte afbeeldingen</td>
+<td>T met drempel; tellingen alleen in het run-document van de incrementele cyclus</td>
+<td>T met drempel; tellingen en melding nu ook in de volledige cyclus</td>
+</tr>
+<tr>
+<td><code>Extract_Referentietabellen</code>, <code>Extract_ExtraProjecten</code></td>
+<td>bestand onleesbaar</td>
+<td>F</td>
+<td>F: zonder ABR of projecten is de rest onbruikbaar</td>
+</tr>
+<tr>
+<td>Transform 1 (harmonisatie)</td>
+<td>aggregatie faalt</td>
+<td>F</td>
+<td>F</td>
+</tr>
+<tr>
+<td><code>Controleer_Harmonisatie_Excel</code></td>
+<td>rij in het blad <code>Objecten</code> met een object dat geen soort is</td>
+<td>S (rij stil ongebruikt)</td>
+<td>T: waarschuwing <code>configuratie_ongeldig</code> per object (issue 87)</td>
+</tr>
+<tr>
+<td><code>ParseFotobestanden</code></td>
+<td>één bestand niet te parsen</td>
+<td>S</td>
+<td>ongewijzigd; het rapport telt de onherkende bestandsnamen (soort <code>Bestand</code>)</td>
+</tr>
+<tr>
+<td>idem</td>
+<td>regel in <code>rapportcode_prefixen</code> met een onbekend of ontbrekend <code>type</code> of zonder <code>prefix</code></td>
+<td>S: een onbekend type werd stil een notitie</td>
+<td>T: foutmelding in het log, waarschuwing <code>configuratie_ongeldig</code>, regel overgeslagen (issue 87)</td>
+</tr>
+<tr>
+<td><code>Enhance_All_Attributes</code> (Transform 2)</td>
+<td>één record faalt</td>
+<td>T (<code>_processing_errors</code>), geen drempel</td>
+<td>T met drempel (<code>AIRFLOW_MAX_VERWERKINGSFOUTEN</code> / <code>_PCT</code>), melding</td>
+</tr>
+<tr>
+<td>idem</td>
+<td>locatie buiten Nederland of onleesbare coördinaat</td>
+<td>S (veld <code>error</code> in het document)</td>
+<td>T: locatiefouten per soort in het rapport</td>
+</tr>
+<tr>
+<td>idem</td>
+<td>artefact zonder artefactsoort met een materiaalcode waaruit geen artefactsoort volgt</td>
+<td>– (de RAAP-tabel <code>ARTEFACT</code> werd niet geladen)</td>
+<td>T: waarschuwing <code>artefactsoort_niet_afgeleid</code> per run, met de codes; het artefact wordt <code>Onbekend</code> (issue 86)</td>
+</tr>
+<tr>
+<td><code>extract_Imagedata_From_FileNames</code></td>
+<td>één foto faalt</td>
+<td>S</td>
+<td>T (<code>_processing_errors</code>, fase <code>imagedata</code>) met drempel</td>
+</tr>
+<tr>
+<td><code>Set_Artefactnr_Unique</code> (Transform 3)</td>
+<td>fout bij één project</td>
+<td>S</td>
+<td>T: waarschuwing</td>
+</tr>
+<tr>
+<td>idem</td>
+<td>fout buiten de projecten</td>
+<td><strong>S</strong>: de sleutels werden zonder de vlag <code>vondstkey_met_putnr</code> berekend</td>
+<td>F</td>
+</tr>
+<tr>
+<td>Overige taken van Transform 3, 4 en 5</td>
+<td>aggregatie- of PostgreSQL-fout</td>
+<td>F</td>
+<td>F</td>
+</tr>
+<tr>
+<td><code>LoadToDatabase_postgres</code> (<code>loadAll</code>)</td>
+<td>laden of swap faalt</td>
+<td>F</td>
+<td>F</td>
+</tr>
+<tr>
+<td>idem</td>
+<td>FK niet hersteld (na de commit van de swap)</td>
+<td>S (WARNING)</td>
+<td>T: waarschuwing met de namen</td>
+</tr>
+<tr>
+<td>idem</td>
+<td>FK niet gevalideerd</td>
+<td>S (WARNING)</td>
+<td>T: waarschuwing</td>
+</tr>
+<tr>
+<td>idem</td>
+<td>sleutels niet stabiel (hernummerd)</td>
+<td>S (WARNING)</td>
+<td>T: waarschuwing</td>
+</tr>
+<tr>
+<td>idem</td>
+<td>afgeleide velden (FASE 4)</td>
+<td>F, terwijl de swap al gecommit was</td>
+<td>T: waarschuwing; de volgende load herstelt ze, <code>init.init()</code> van Flask blijft vangnet</td>
+</tr>
+<tr>
+<td><code>Load_Upsert</code> (<code>loadIncrementeel</code>)</td>
+<td>upsert, verwijderen of FK-herstel faalt</td>
+<td>F (rollback)</td>
+<td>F (rollback)</td>
+</tr>
+<tr>
+<td>idem</td>
+<td>FK niet gevalideerd</td>
+<td>T (<code>fk_niet_gevalideerd</code>)</td>
+<td>T + melding</td>
+</tr>
+<tr>
+<td>idem</td>
+<td>afgeleide velden</td>
+<td>F: de hele upsert werd teruggedraaid</td>
+<td>T: waarschuwing; alleen de herberekening wordt teruggedraaid (<code>SAVEPOINT</code>)</td>
+</tr>
+<tr>
+<td><code>Index_&lt;tabel&gt;</code> (volledige cyclus, <code>DAG_Load_Only</code>)</td>
+<td>Elasticsearch-fout</td>
+<td>F: de hele DAG faalde, terwijl de load al goed was</td>
+<td>waarschuwing: <code>Index_Klaar</code> (<code>all_done</code>), de registratie gaat door en de DAG slaagt</td>
+</tr>
+<tr>
+<td><code>Index_&lt;tabel&gt;</code> (incrementeel)</td>
+<td>Elasticsearch-fout</td>
+<td>run <code>afgerond</code>, DAG rood</td>
+<td>waarschuwing, DAG slaagt</td>
+</tr>
+<tr>
+<td><code>Registreer_Bronbestanden</code>, <code>Registreer_Run</code>, <code>Rond_Run_Af</code></td>
+<td>PostgreSQL- of MongoDB-fout</td>
+<td>F</td>
+<td>F</td>
+</tr>
+<tr>
+<td><code>Verwerkingsrapport</code></td>
+<td>rapportmap niet schrijfbaar</td>
+<td>—</td>
+<td>terugval naar <code>AIRFLOW_LOGDIR/rapporten</code> met een waarschuwing; een sectie die niet op te bouwen is, staat als niet beschikbaar in het rapport; alleen een onverwachte fout laat de taak (en de DAG) falen, de status van de run blijft</td>
+</tr>
+</tbody>
+</table>
+<p>Herstel na een cruciale fout: zie de melding in het rapport en het log van de taak. Een mislukte incrementele run kan na herstel van de oorzaak gewoon opnieuw starten (de registratie is niet bijgewerkt); na een mislukte volledige cyclus de volledige cyclus opnieuw draaien. Een mislukte Elasticsearch-index herstel je met <code>DAG_Load_Only</code> of de volgende incrementele run.</p>
+<h3 id="opbouw-van-de-dags">Opbouw van de DAG's<a class="headerlink" href="#opbouw-van-de-dags" title="Permanent link">&para;</a></h3>
+<p>De volledige cyclus, de incrementele cyclus en <code>DAG_Load_Only</code> hebben dezelfde opbouw (<code>airflow_app/dags/tasks_verwerkingsrun.py</code>):</p>
+<div class="codehilite"><pre><span></span><code><span class="n">Start_Run</span><span class="w"> </span><span class="err">→</span><span class="w"> </span><span class="err">…</span><span class="w"> </span><span class="n">verwerking</span><span class="w"> </span><span class="err">…</span><span class="w"> </span><span class="err">→</span><span class="w"> </span><span class="n">registratie</span><span class="w"> </span><span class="p">(</span><span class="n">Registreer_Bronbestanden</span><span class="p">,</span><span class="w"> </span><span class="n">Registreer_Run</span><span class="w"> </span><span class="n">of</span><span class="w"> </span><span class="n">Rond_Run_Af</span><span class="p">)</span>
+<span class="n">bewaakte</span><span class="w"> </span><span class="n">taken</span><span class="w"> </span><span class="err">→</span><span class="w"> </span><span class="n">Markeer_Run_Mislukt</span><span class="w"> </span><span class="p">(</span><span class="n">one_failed</span><span class="p">)</span>
+<span class="n">alle</span><span class="w"> </span><span class="n">andere</span><span class="w"> </span><span class="n">taken</span><span class="w"> </span><span class="err">→</span><span class="w"> </span><span class="n">Verwerkingsrapport</span><span class="w"> </span><span class="p">(</span><span class="n">all_done</span><span class="p">)</span><span class="w"> </span><span class="err">→</span><span class="w"> </span><span class="n">eindtaak</span><span class="w"> </span><span class="p">(</span><span class="n">all_success</span><span class="p">)</span>
+</code></pre></div>
+
+<ul>
+<li><strong>Bewaking.</strong> De cruciale taken (en taakgroepen) hangen aan <code>Markeer_Run_Mislukt</code> (<code>trigger_rule=one_failed</code>), de Index-taken niet. De melding van de run noemt de mislukte taken, bijvoorbeeld <code>Mislukte taak in Airflow-run manual__…: Extract_Group.Controleer_Afbeeldingen.</code></li>
+<li><strong>Foutmelding per taak.</strong> Elke taak heeft <code>foutbeleid.registreerTaakfout</code> als <code>on_failure_callback</code> (via <code>default_args</code>): de foutmelding van een mislukte taak komt in de meldingen van het run-document, met niveau <code>fout</code> bij een cruciale taak en <code>waarschuwing</code> bij een Index-taak. Heeft de taak zelf al een fout gemeld (zoals een overschreden drempel), dan volgt geen tweede melding.</li>
+<li><strong>Eindstatus.</strong> De eindtaak (<code>End_ETL_full_cycle</code>, <code>End_ETL_incremental</code>, <code>End_cycle</code>) is de enige taak zonder stroomafwaartse taken en bepaalt de status van de DAG. Hij hangt via <code>all_success</code> aan de registratie en aan het rapport: hij faalt (upstream_failed) als een cruciale taak faalde of het rapport niet gemaakt kon worden, en slaagt als alleen een Index-taak faalde.</li>
+<li><strong>Rapport na alles.</strong> <code>Verwerkingsrapport</code> hangt aan álle andere taken met <code>trigger_rule=all_done</code>, zodat het ook na een fout pas draait als de rest klaar is (ook bij <code>airflow dags test</code>, dat de taken na elkaar uitvoert).</li>
+<li><strong>Index-taken.</strong> In de taakgroep <code>Load_To_Database_And_Inxdex_Group</code> wacht <code>Index_Klaar</code> (<code>all_done</code>) op alle Index-taken; <code>End_cycle</code> hangt aan <code>LoadToDatabase_postgres</code> en <code>Index_Klaar</code>. In de volledige cyclus hangt <code>Registreer_Bronbestanden</code> aan de groep en dus ook aan <code>Index_Klaar</code>: de registratie wacht tot de indexering klaar is, ongeacht de uitkomst (zoals <code>Registreer_Run</code> in de incrementele cyclus), zodat geen nieuwe run kan starten terwijl de indexering nog loopt.</li>
+<li><strong>Eén run tegelijk.</strong> De drie DAG's hebben <code>max_active_runs=1</code> en <code>Start_Run</code> faalt als er al een run actief is.</li>
+<li><strong>Volgorde ongewijzigd.</strong> Er zijn alleen taken bijgekomen (<code>Start_Run</code>, <code>Controleer_Databases</code>, <code>Index_Klaar</code>, <code>Rond_Run_Af</code>, <code>Markeer_Run_Mislukt</code>, <code>Verwerkingsrapport</code>); de verwerkingsvolgorde van de stappen is niet veranderd.</li>
+</ul>
+<p><code>foutbeleid.controleerBewaking(dag)</code> controleert deze regels voor een DAG; de integratietest <code>test_verwerkingsrapport.py</code> past hem toe op de DagBag.</p>
+<h3 id="controle-van-de-access-databases-controleer_databases">Controle van de Access-databases (<code>Controleer_Databases</code>)<a class="headerlink" href="#controle-van-de-access-databases-controleer_databases" title="Permanent link">&para;</a></h3>
+<p><code>importMDB.sh</code> slaat een onleesbare database of een tabel die de export niet aankan over met een regel <code>ERROR</code>/<code>WARNING</code> in zijn log en eindigt met exit 0. De taak <code>Controleer_Databases</code> (in <code>Extract_Group</code>, na <code>Extract_ExtraProjecten</code>, vóór de transformatie) leest per MDB-categorie het log van deze run (<code>AIRFLOW_LOGDIR/&lt;collectie&gt;.log</code>, door <code>importMDB.sh</code> per run overschreven; een log van vóór de start van de run telt niet), telt per verwerkte database de staging-documenten en schrijft het resultaat in het run-document onder <code>tellingen.extractie</code>:</p>
+<table>
+<thead>
+<tr>
+<th>Veld</th>
+<th>Inhoud</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>databases</code>, <code>onleesbaar</code>, <code>leeg</code>, <code>tabellen_overgeslagen</code></td>
+<td>Aantallen over alle categorieën</td>
+</tr>
+<tr>
+<td><code>per_categorie</code></td>
+<td>Per categorie <code>log_gelezen</code>, <code>verwerkt</code>, <code>onleesbaar</code>, <code>tabellen_overgeslagen</code>, <code>leeg</code></td>
+</tr>
+<tr>
+<td><code>onleesbare_databases</code>, <code>lege_databases</code>, <code>overgeslagen_tabellen</code></td>
+<td>Lijsten (hoogstens 200) met <code>bestand</code>, <code>categorie</code> en bij tabellen <code>tabel</code> en <code>reden</code> (<code>geen kopregel gelezen</code>, <code>kolommen toevoegen mislukt</code>, <code>mongoimport mislukt (exit n)</code>)</td>
+</tr>
+<tr>
+<td><code>niet_gevonden</code>, <code>overige_meldingen</code></td>
+<td>Paden uit het lijstbestand die niet bestaan en overige <code>ERROR</code>/<code>WARNING</code>-regels</td>
+</tr>
+<tr>
+<td><code>records</code></td>
+<td>Per verwerkte database het aantal staging-documenten</td>
+</tr>
+<tr>
+<td><code>drempel</code>, <code>max_aantal</code>, <code>max_pct</code>, <code>boven_drempel</code></td>
+<td>De drempel voor onleesbare databases</td>
+</tr>
+</tbody>
+</table>
+<p>Lege databases, overgeslagen tabellen en overige meldingen zijn waarschuwingen; onleesbare databases ook, tot de drempel. Meldingen van <code>mdb-prop</code> (alleen metainformatie) tellen niet.</p>
+<h3 id="meldingen-in-het-run-document">Meldingen in het run-document<a class="headerlink" href="#meldingen-in-het-run-document" title="Permanent link">&para;</a></h3>
+<p><code>foutbeleid.meld(niveau, soort, melding, aantal, details)</code> schrijft een melding in de lijst <code>meldingen</code> van het run-document van de lopende run (begrensd op 500 meldingen van hoogstens 2.000 tekens). Een taak uit een DAG zonder eigen run (bijvoorbeeld <code>DAG_Transform_Only</code>) schrijft niets, ook niet in een run van een andere DAG die toevallig actief is (<code>verwerkingsrun.runVanTaak</code>). Soorten:</p>
+<table>
+<thead>
+<tr>
+<th>Soort</th>
+<th>Niveau</th>
+<th>Bron</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>taak_mislukt</code></td>
+<td>fout of waarschuwing (Index)</td>
+<td><code>registreerTaakfout</code> (on_failure_callback)</td>
+</tr>
+<tr>
+<td><code>profiel_onbekend</code></td>
+<td>fout</td>
+<td><code>Start_Run</code>: het gemeenteprofiel van <code>WASSTRAAT_GEMEENTE</code> is niet te laden; de run stopt (issue 87)</td>
+</tr>
+<tr>
+<td><code>database_onleesbaar</code></td>
+<td>waarschuwing, boven de drempel fout</td>
+<td><code>Controleer_Databases</code></td>
+</tr>
+<tr>
+<td><code>database_leeg</code>, <code>tabel_overgeslagen</code>, <code>import_melding</code></td>
+<td>waarschuwing</td>
+<td><code>Controleer_Databases</code></td>
+</tr>
+<tr>
+<td><code>tabel_dubbel_geselecteerd</code></td>
+<td>waarschuwing</td>
+<td><code>Harmonize_&lt;soort&gt;</code> (de taak van de gekozen soort): een tabel die meer harmonisatie-pipelines selecteren, zonder keuze in <code>harmonisatie_voorrang</code>, of met een instelling die genegeerd is (issue 89, zie <a href="../configuratie/#36-harmonisatie_voorrang">Configuratie</a>)</td>
+</tr>
+<tr>
+<td><code>configuratie_ongeldig</code></td>
+<td>waarschuwing</td>
+<td><code>Controleer_Harmonisatie_Excel</code> (object in het blad <code>Objecten</code> dat geen soort is) en <code>ParseFotobestanden</code> (ongeldige regel in <a href="../configuratie/#34-rapportcode_prefixen"><code>rapportcode_prefixen</code></a>): de regel wordt niet gebruikt (issue 87)</td>
+</tr>
+<tr>
+<td><code>afbeeldingen_mislukt</code></td>
+<td>waarschuwing, boven de drempel fout</td>
+<td><code>Controleer_Afbeeldingen</code></td>
+</tr>
+<tr>
+<td><code>verwerkingsfouten</code></td>
+<td>waarschuwing, boven de drempel fout</td>
+<td><code>Enhance_All_Attributes</code>, <code>extract_Imagedata_From_FileNames</code></td>
+</tr>
+<tr>
+<td><code>artefactsoort_niet_afgeleid</code></td>
+<td>waarschuwing</td>
+<td><code>Enhance_All_Attributes</code>: artefacten zonder artefactsoort met een materiaalcode waaruit geen artefactsoort volgt (geen ABR-materiaalcode, of niet eenduidig); per code het aantal en de reden; tellingen in <code>tellingen.transform.artefactsoort_uit_materiaalcode</code> (issue 86, zie <a href="../transformatie/#transform-2-attributen">Transformatie</a>)</td>
+</tr>
+<tr>
+<td><code>uniciteit_niet_bepaald</code></td>
+<td>waarschuwing</td>
+<td><code>Set_Artefactnr_Unique</code></td>
+</tr>
+<tr>
+<td><code>sleutels_niet_stabiel</code>, <code>fk_niet_hersteld</code>, <code>fk_niet_gevalideerd</code>, <code>afgeleide_velden_mislukt</code></td>
+<td>waarschuwing</td>
+<td><code>LoadToDatabase_postgres</code>, <code>Load_Upsert</code></td>
+</tr>
+<tr>
+<td><code>rapport</code></td>
+<td>waarschuwing</td>
+<td><code>Verwerkingsrapport</code> (terugval van de rapportmap)</td>
+</tr>
+</tbody>
+</table>
+<h2 id="verwerkingsrapport">Verwerkingsrapport<a class="headerlink" href="#verwerkingsrapport" title="Permanent link">&para;</a></h2>
+<h3 id="wanneer-en-waar">Wanneer en waar<a class="headerlink" href="#wanneer-en-waar" title="Permanent link">&para;</a></h3>
+<p>De taak <code>Verwerkingsrapport</code> draait aan het eind van elke run van <code>Extract_Transform_Load_Full_Cycle</code>, <code>Extract_Transform_Load_Incremental</code> en <code>DAG_Load_Only</code>, ook na een fout. Hij schrijft twee bestanden naar <code>AIRFLOW_OUTPUT_RAPPORTEN</code> (standaard <code>/output/rapporten</code>):</p>
+<div class="codehilite"><pre><span></span><code>verwerkingsrapport_&lt;run_id&gt;_&lt;soort&gt;_&lt;tijdstip&gt;.json
+verwerkingsrapport_&lt;run_id&gt;_&lt;soort&gt;_&lt;tijdstip&gt;.md
+</code></pre></div>
+
+<p>bijvoorbeeld <code>verwerkingsrapport_20261029T101500_volledig_20261029T102312.json</code> (run-id = start van de run, tijdstip = moment van het rapport, beide UTC). Mislukte <code>Start_Run</code> (er was al een run actief): <code>verwerkingsrapport_zonder-run_&lt;dag_id&gt;_&lt;tijdstip&gt;</code>. Het opnieuw draaien van de taak maakt een nieuw bestand; er wordt niets overschreven of opgeruimd.</p>
+<table>
+<thead>
+<tr>
+<th>Omgeving</th>
+<th>Map op de host</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Ontwikkelomgeving (<code>docker-compose.yml</code>)</td>
+<td><code>data/synthetic/output/rapporten</code></td>
+</tr>
+<tr>
+<td>Delftse omgeving (<code>docker-compose.delft.yml</code>)</td>
+<td><code>data/delft/output/rapporten</code></td>
+</tr>
+<tr>
+<td>Live installatie (<code>deploy/</code>)</td>
+<td><code>${WASSTRAAT_OUTPUT:-./data/output}/rapporten</code> (aangemaakt door <code>make init</code>)</td>
+</tr>
+<tr>
+<td>Testomgevingen</td>
+<td><code>/tmp/rapporten_test</code> in de Airflow-container (gelezen met <code>docker exec</code>)</td>
+</tr>
+</tbody>
+</table>
+<p>De Airflow-image maakt <code>/output/rapporten</code> aan met de airflow-gebruiker als eigenaar. Is de map niet schrijfbaar (bijvoorbeeld een bind mount die Docker op Linux als root heeft aangemaakt, of een installatie zonder de nieuwe mount), dan schrijft de taak in <code>AIRFLOW_LOGDIR/rapporten</code> en komt er een waarschuwing in het run-document. De mappen <code>data/*/output/</code> staan in <code>.gitignore</code>.</p>
+<p>Daarnaast:</p>
+<ul>
+<li><strong>Airflow-log:</strong> een samenvatting (uitkomst, fouten, waarschuwingen, bronbestanden, objecten) met de eerste fouten en waarschuwingen en de paden van het rapport.</li>
+<li><strong>Run-document:</strong> het veld <code>rapport</code> met <code>json</code>, <code>markdown</code>, <code>map_terugval</code>, <code>gemaakt_op</code> en <code>samenvatting</code> (zie hieronder), zodat de webapplicatie het rapport later kan tonen.</li>
+</ul>
+<h3 id="inhoud-json">Inhoud (JSON)<a class="headerlink" href="#inhoud-json" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Sectie</th>
+<th>Inhoud</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>rapport_versie</code>, <code>gemaakt_op</code></td>
+<td>Versie van de opbouw (1) en tijdstip (UTC)</td>
+</tr>
+<tr>
+<td><code>run</code></td>
+<td><code>run_id</code>, <code>soort</code>, <code>status</code>, <code>melding</code>, <code>dag_id</code>, <code>airflow_run_id</code>, <code>gestart_op</code>, <code>beeindigd_op</code>, <code>duur_seconden</code>, <code>profiel</code> (<code>WASSTRAAT_GEMEENTE</code>) en <code>versie</code> (alleen als bekend, zie <a href="#configuratie">Configuratie</a>)</td>
+</tr>
+<tr>
+<td><code>samenvatting</code></td>
+<td><code>uitkomst</code>, <code>status</code>, <code>duur_seconden</code>, <code>fouten</code>, <code>waarschuwingen</code>, <code>gestopt_door</code>, bronbestanden per status, objecttotalen, <code>verwerkingsfouten</code>, <code>afbeeldingen_mislukt</code>, <code>databases_onleesbaar</code>, <code>secties_niet_beschikbaar</code></td>
+</tr>
+<tr>
+<td><code>foutbeleid</code></td>
+<td><code>uitkomst</code> (<code>geslaagd</code>, <code>geslaagd met waarschuwingen</code> of <code>mislukt</code>), <code>gestopt_door</code> (<code>taak</code>, <code>stap</code>, <code>melding</code> van de eerste mislukte cruciale taak), <code>fouten</code> en <code>waarschuwingen</code> (de meldingen, aangevuld met mislukte taken zonder melding), <code>mislukte_taken</code>, <code>niet_uitgevoerd</code> (taken die door een fout niet aan de beurt kwamen) en de <code>drempels</code> die golden</td>
+</tr>
+<tr>
+<td><code>bronbestanden</code></td>
+<td><code>totalen</code> per categorie en status (<code>verwerkt</code>, <code>overgeslagen</code>, <code>mislukt</code>, <code>onverwerkt</code>, <code>verwijderd</code>, <code>ongewijzigd</code>), <code>bestanden</code> (per bestand <code>bestand</code>, <code>categorie</code>, <code>grootte</code>, <code>status</code>, <code>wijziging</code> (de delta: <code>nieuw</code>, <code>gewijzigd</code>, …), <code>records</code>, <code>reden</code> en eventueel <code>tabellen_overgeslagen</code>), <code>weggelaten</code>, <code>delta</code>, <code>paden_overgeslagen</code>, <code>registratie_uitgevoerd</code> en <code>van_toepassing</code> (niet bij <code>DAG_Load_Only</code>)</td>
+</tr>
+<tr>
+<td><code>objecttotalen</code></td>
+<td>Per tabel uit <code>LOAD_TABELLEN</code>: <code>totaal</code> (rijen in PostgreSQL na de run), <code>aangemaakt</code>, <code>bijgewerkt</code>, <code>samengevoegd</code>, <code>verwijderd</code> en <code>nieuwe_sleutels</code>; plus <code>totaal</code>, <code>artefactsoorten</code> en <code>load_uitgevoerd</code></td>
+</tr>
+<tr>
+<td><code>kwaliteitsmeldingen</code></td>
+<td><code>verwerkingsfouten</code> (per fase, soort en fouttype met voorbeelden), <code>afbeeldingen</code> (<code>tellingen.afbeeldingen</code>), <code>databases</code> (<code>tellingen.extractie</code>), <code>paden_overgeslagen</code>, <code>harmonisatie_voorrang</code> (per tabel die meer harmonisatie-pipelines selecteren: <code>tabel</code>, <code>collectie</code>, <code>kandidaten</code>, <code>gekozen</code>, <code>bron</code> (<code>correcties.yml</code> of <code>voorrangsregel</code>) en eventueel <code>ongeldige_instelling</code>, uit <code>tellingen.transform.harmonisatie_voorrang</code>), <code>locatiefouten</code>, <code>onherkende_bestandsnamen</code>, <code>rijen_zonder_key</code>, <code>fk</code>, <code>gebruikersdata</code>, <code>sleutels</code> (hernummerd, nieuwe en verdwenen primary_keys per soort) en <code>afgeleide_velden</code></td>
+</tr>
+<tr>
+<td><code>pipeline</code></td>
+<td><code>start</code>, <code>eind</code>, <code>duur_seconden</code> van de Airflow-run, <code>stappen</code> (per stap <code>start</code>, <code>eind</code>, <code>duur_seconden</code>, <code>som_taakduur_seconden</code>, <code>taken</code>, <code>geslaagd</code>, <code>mislukt</code>, <code>niet_uitgevoerd</code>, <code>overgeslagen</code>) en <code>taken</code> (per taak <code>status</code>, <code>start</code>, <code>eind</code>, <code>duur_seconden</code>, <code>start_geschat</code>, <code>pogingen</code>, <code>stap</code>, <code>cruciaal</code>)</td>
+</tr>
+<tr>
+<td><code>fouten_in_rapport</code></td>
+<td>Secties die niet (volledig) opgebouwd konden worden, met de fout</td>
+</tr>
+</tbody>
+</table>
+<p>Herkomst van de gegevens:</p>
+<ul>
+<li><strong>Bronbestanden.</strong> De registratie van deze run in <code>Def_Bronbestand</code> (<code>run_id</code>), bij een incrementele run aangevuld met de delta uit <code>Verwerkingsrun_Bestanden</code>; de onleesbare en lege databases en overgeslagen tabellen uit <code>tellingen.extractie</code>; mislukte, onverwerkte en overgeslagen afbeeldingen uit <code>Filenames</code> (bij een incrementele run alleen die van deze run en de openstaande); de paden die <code>paden_overslaan</code> in <code>correcties.yml</code> overslaat (<code>paden_overgeslagen</code> in het run-document). Stopte de run vóór de registratie, dan krijgen nieuwe en gewijzigde bestanden zonder andere status <code>onverwerkt</code>. De lijst noemt alle bestanden behalve ongewijzigde en verwerkte afbeeldingen zonder bijzonderheden (bij een incrementele run wel de nieuwe en gewijzigde), hoogstens 2.000 in de JSON en 200 in de Markdown; de totalen tellen alles.</li>
+<li><strong>Objecttotalen.</strong> <code>aangemaakt</code>, <code>bijgewerkt</code> en <code>verwijderd</code> komen uit <code>tellingen.load</code>: bij de incrementele cyclus uit de upsert (<code>ingevoegd</code>, <code>bijgewerkt</code>, <code>verwijderd</code>), bij de volledige cyclus en <code>DAG_Load_Only</code> uit de vergelijking van de oude en de nieuwe tabel in <code>loadAll</code> (<code>telLaadRijen</code>: rijen met een nieuwe of verdwenen <code>primary_key</code>; <code>bijgewerkt</code> is daar niet bekend, want elke rij wordt opnieuw geschreven). <code>samengevoegd</code> is het aantal documenten in <code>Single_Store_Clean</code> dat uit meer dan één bronrecord is samengevoegd (<code>brondata_count &gt; 1</code>; incrementeel alleen die van deze run). <code>nieuwe_sleutels</code> komt uit Transform 4 (<code>tellingen.transform.primary_keys</code>).</li>
+<li><strong>Kwaliteitsmeldingen.</strong> <code>_processing_errors</code> met een tijdstempel na de start van de run; locatiefouten (veld <code>error</code>, gezet door <code>archutils.logError</code>) en onherkende bestandsnamen (soort <code>Bestand</code>, <code>fototype</code> N) in <code>Single_Store_Clean</code>; rijen zonder key in PostgreSQL (alleen na een load); de rest uit de tellingen van het run-document.</li>
+<li><strong>Pipeline.</strong> De taakinstanties van de lopende DagRun (<code>dag_run.get_task_instances()</code>), zonder het rapport zelf en de eindtaak. De scheduler legt per taak start en einde vast; <code>airflow dags test</code> (de integratietests) legt alleen het einde vast. Daar lopen de taken na elkaar, dus wordt de start dan geschat als het einde van de taak die daarvóór eindigde (<code>start_geschat</code>). Om dezelfde reden bepaalt <code>verwerkingsrun.startVanAirflowRun</code> de start van een Airflow-run uit het vroegste tijdstip van zijn taken: <code>airflow dags test</code> geeft de DagRun de logische datum als start en bij elke aanroep dezelfde run_id.</li>
+</ul>
+<h3 id="voorbeeld-markdown">Voorbeeld (Markdown)<a class="headerlink" href="#voorbeeld-markdown" title="Permanent link">&para;</a></h3>
+<p>Ingekort (lege secties en rijen weggelaten), uit de synthetische testomgeving: de incrementele run met een onleesbare database (stap h2 van de integratietest):</p>
+<div class="codehilite"><pre><span></span><code><span class="gh"># Verwerkingsrapport 20261029T134248</span>
+
+Uitkomst: <span class="gs">**geslaagd met waarschuwingen**</span> (0 fout(en), 1 waarschuwing(en)).
+
+| Gegeven | Waarde |
+|---|---|
+| Soort run | incrementeel |
+| Status | afgerond |
+| DAG | Extract_Transform_Load_Incremental |
+| Gestart | 2026-10-29 13:42:48 UTC |
+| Beëindigd | 2026-10-29 13:43:04 UTC |
+| Doorlooptijd | 16,8 s |
+| Profiel | delft |
+
+<span class="gu">## Foutbeleid</span>
+
+Geen fout heeft de run gestopt.
+
+<span class="gu">### Fouten</span>
+
+Geen.
+
+<span class="gu">### Waarschuwingen</span>
+
+| Stap | Taak | Soort | Aantal | Melding |
+|---|---|---|---|---|
+| extractie | Extract_Group.Controleer_Databases | database_onleesbaar | 1 | Onleesbare Access-databases (mogelijk corrupt; zie het log van de extractie): 1 van 1, binnen de drempel van 2. |
+
+<span class="gu">## Bronbestanden</span>
+
+<span class="gu">### Totalen per categorie</span>
+
+| Categorie | overgeslagen | mislukt | ongewijzigd |
+|---|---|---|---|
+| afbeeldingen | 1 | 0 | 15 |
+| projecten | 1 | 1 | 2 |
+| … | | | |
+
+<span class="gu">### Bestanden</span>
+
+| Bestand | Categorie | Grootte | Status | Records | Reden |
+|---|---|---|---|---|---|
+| /input/projecten/SY003/C Database/kapot.mdb | projecten | 10600 | mislukt | 0 | onleesbaar (mdb-tables kan het bestand niet lezen; mogelijk corrupt) |
+| /input/projecten/SY001/K Overig/werkmap/opgravingSY001.mdb | projecten | – | overgeslagen | – | paden_overslaan (correcties.yml) |
+
+<span class="gu">## Objecttotalen</span>
+
+| Tabel | Totaal | Aangemaakt | Bijgewerkt | Samengevoegd | Verwijderd |
+|---|---|---|---|---|---|
+| Def_Project | 2 | 0 | 0 | 0 | 0 |
+| Def_Artefact | 27 | 0 | 0 | 0 | 0 |
+| … | | | | | |
+| <span class="gs">**Totaal**</span> | 4989 | 0 | 0 | 0 | 0 |
+
+<span class="gu">## Kwaliteitsmeldingen</span>
+
+<span class="gu">### Access-databases</span>
+
+1 databases verwerkt: 1 onleesbaar, 0 zonder records, 0 tabel(len) overgeslagen (drempel onleesbaar 2).
+
+| Bestand | Probleem |
+|---|---|
+| /input/projecten/SY003/C Database/kapot.mdb | onleesbaar |
+
+<span class="gu">## Pipeline</span>
+
+<span class="gu">### Doorlooptijd per stap</span>
+
+| Stap | Start | Eind | Duur | Taken | Mislukt | Niet uitgevoerd |
+|---|---|---|---|---|---|---|
+| extractie | 2026-10-29 13:42:48 UTC | 2026-10-29 13:42:49 UTC | 1,2 s | 21 | 0 | 0 |
+| transform4 | 2026-10-29 13:42:56 UTC | 2026-10-29 13:43:01 UTC | 5,2 s | 59 | 0 | 0 |
+| load | 2026-10-29 13:43:01 UTC | 2026-10-29 13:43:03 UTC | 1,4 s | 1 | 0 | 0 |
+| index | 2026-10-29 13:43:03 UTC | 2026-10-29 13:43:04 UTC | 1,5 s | 22 | 0 | 0 |
+</code></pre></div>
+
+<h2 id="configuratie">Configuratie<a class="headerlink" href="#configuratie" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Omgevingsvariabele (Airflow)</th>
+<th>Vorm</th>
+<th>Standaard</th>
+<th>Betekenis</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>AIRFLOW_OUTPUT_RAPPORTEN</code></td>
+<td>pad</td>
+<td><code>/output/rapporten</code></td>
+<td>Map voor de verwerkingsrapporten (terugval: <code>AIRFLOW_LOGDIR/rapporten</code>)</td>
+</tr>
+<tr>
+<td><code>AIRFLOW_MAX_MISLUKTE_DATABASES</code></td>
+<td>geheel getal ≥ 0</td>
+<td><code>2</code></td>
+<td>Vast aantal onleesbare Access-databases dat nog acceptabel is</td>
+</tr>
+<tr>
+<td><code>AIRFLOW_MAX_MISLUKTE_DATABASES_PCT</code></td>
+<td>getal ≥ 0 (decimaal mag)</td>
+<td><code>5</code></td>
+<td>Percentage van de verwerkte databases dat nog acceptabel is</td>
+</tr>
+<tr>
+<td><code>AIRFLOW_MAX_VERWERKINGSFOUTEN</code></td>
+<td>geheel getal ≥ 0</td>
+<td><code>100</code></td>
+<td>Vast aantal records per taak van Transform 2 dat niet verwerkt hoeft te kunnen worden</td>
+</tr>
+<tr>
+<td><code>AIRFLOW_MAX_VERWERKINGSFOUTEN_PCT</code></td>
+<td>getal ≥ 0 (decimaal mag)</td>
+<td><code>1</code></td>
+<td>Percentage van de bekeken records dat nog acceptabel is</td>
+</tr>
+<tr>
+<td><code>WASSTRAAT_VERSION</code></td>
+<td>tekst</td>
+<td>—</td>
+<td>Versie in het rapport; <code>deploy/docker-compose.yml</code> geeft de versie uit <code>.env</code> mee, in de ontwikkelomgeving <code>make app</code>, <code>make delft</code> en <code>make dev</code> die uit <code>config/version.env</code></td>
+</tr>
+<tr>
+<td><code>WASSTRAAT_VERSIEBESTAND</code></td>
+<td>pad</td>
+<td><code>/opt/airflow/version.env</code></td>
+<td>Bestand met een regel <code>VERSION=</code> (bijvoorbeeld een gemounte <code>config/version.env</code>); alleen gelezen zonder <code>WASSTRAAT_VERSION</code>. Ontbreken beide, dan staat er geen versie in het rapport</td>
+</tr>
+</tbody>
+</table>
+<p>De drempels worden in <code>shared/config.py</code> gelezen (aantallen met <code>int()</code>, percentages met <code>float()</code>); een lege, ongeldige of negatieve waarde levert de standaard op. Met <code>0</code> en <code>0</code> is elke fout cruciaal. Ze staan, met <code>AIRFLOW_OUTPUT_RAPPORTEN</code>, in <code>config/airflow.env.example</code> en <code>deploy/config/airflow.env.example</code>. De drempels voor afbeeldingen (<code>AIRFLOW_MAX_MISLUKTE_AFBEELDINGEN</code> / <code>_PCT</code>) staan bij de <a href="../extractie/#afbeeldingen-en-rapporten">extractie</a>; alle instellingen van Airflow staan in <a href="../configuratie/#23-airflow-airflowenv-airflow_dbenv">Configuratie</a>.</p>
+<p>Voorbeeld (alleen afwijkingen van de standaard zijn nodig):</p>
+<div class="codehilite"><pre><span></span><code>AIRFLOW_MAX_MISLUKTE_DATABASES=5
+AIRFLOW_MAX_MISLUKTE_DATABASES_PCT=2.5
+AIRFLOW_OUTPUT_RAPPORTEN=/output/rapporten
+</code></pre></div>
+
+<h2 id="modules-en-taken">Modules en taken<a class="headerlink" href="#modules-en-taken" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Onderdeel</th>
+<th>Inhoud</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>airflow_app/dags/wasstraat/foutbeleid.py</code></td>
+<td>Beleid per taak (<code>isCrucialeTaak</code>, <code>isWaarschuwingstaak</code>, <code>bepaalStap</code>), <code>bepaalDrempel</code>, <code>toetsDrempel</code>, <code>meld</code>, <code>schrijfTelling</code>, <code>registreerTaakfout</code> (on_failure_callback), <code>controleerBewaking</code>, <code>CrucialeFout</code></td>
+</tr>
+<tr>
+<td><code>airflow_app/dags/wasstraat/controle_extractie.py</code></td>
+<td><code>controleerDatabases</code> (taak <code>Controleer_Databases</code>), <code>leesImportLog</code>, <code>controleerAfbeeldingen</code> (taak <code>Controleer_Afbeeldingen</code>, om <code>image_import.controleerAfbeeldingen</code> heen)</td>
+</tr>
+<tr>
+<td><code>airflow_app/dags/wasstraat/verwerkingsrapport.py</code></td>
+<td><code>maakVerwerkingsrapport</code> (taak <code>Verwerkingsrapport</code>), de lezers per bron, de opbouw per sectie (<code>bouwBronbestanden</code>, <code>bouwObjecttotalen</code>, <code>bouwKwaliteit</code>, <code>bepaalFoutbeleid</code>, <code>bouwPipeline</code>), <code>maakMarkdown</code>, <code>schrijfRapport</code>, <code>bepaalRapportmap</code>, <code>leesVersie</code></td>
+</tr>
+<tr>
+<td><code>airflow_app/dags/tasks_verwerkingsrun.py</code></td>
+<td><code>maakStartRun</code>, <code>maakMarkeerRunMislukt</code>, <code>maakRondRunAf</code>, <code>voegVerwerkingsrapportToe</code>, <code>getDefaultArgs</code></td>
+</tr>
+<tr>
+<td><code>airflow_app/dags/wasstraat/verwerkingsrun.py</code></td>
+<td>Soort <code>laden</code>, aansluiten bij de lopende volledige cyclus (<code>startRun('volledig')</code> zonder Airflow-run), <code>zoekRunVanAirflowRun</code>, <code>runVanTaak</code>, <code>voegMeldingToe</code>, <code>rondRunAf</code>, <code>getMislukteTaken</code></td>
+</tr>
+<tr>
+<td>Overige wijzigingen</td>
+<td><code>mongoUtils.dropAll</code> (laat <code>Verwerkingsruns</code> staan, faalt bij een fout); <code>setAttributes_functions.toetsVerwerkingsfouten</code>; <code>references_functions.setAndVondstUniqueInProject</code>; in <code>loadToDatabase_functions</code>: <code>telLaadRijen</code>, <code>schrijfLoadTellingen</code>, <code>herberekenAfgeleideVeldenInSavepoint</code> en de meldingen; <code>tasks_extract</code> (<code>Controleer_Databases</code>); <code>tasks_load_to_database_and_index</code> (<code>Index_Klaar</code>)</td>
+</tr>
+</tbody>
+</table>
+<h2 id="testen">Testen<a class="headerlink" href="#testen" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Unit tests: <code>tests/unit/test_foutbeleid.py</code> (beleid per taak, drempels en meldingen, de callback, <code>controleerBewaking</code> op nagebootste DAG's, het run-document van alle cycli, <code>dropAll</code>, Transform 2 en 3, de meldingen en tellingen van de laadstap), <code>tests/unit/test_controle_extractie.py</code> (het log van <code>importMDB.sh</code>, <code>Controleer_Databases</code> onder en boven de drempel, <code>Controleer_Afbeeldingen</code> in beide cycli) en <code>tests/unit/test_verwerkingsrapport.py</code> (opbouw per sectie, JSON-structuur, Markdown-koppen ook bij lege secties en zonder run-document, een sectie die faalt, schrijven met terugval, het veld <code>rapport</code> in het run-document, de lezers met nagebootste MongoDB en PostgreSQL). De gewijzigde verwachtingen van de afgeleide velden staan in <code>test_loadToDatabase.py</code> en <code>test_load_incrementeel.py</code>.</li>
+<li>Integratietests: <code>tests/integration/test_incremental_synthetic_data.py</code> controleert na elke run het rapport (secties, koppen, totalen per tabel gelijk aan PostgreSQL, aangemaakte rijen van SY003), het run-document van de volledige cyclus, het rapport van de bewust mislukte run (stap g: de stoppende taak en de onleesbare foto) en een onleesbare database als waarschuwing (stap h2, ook in de volledige cyclus daarna). <code>tests/integration/test_verwerkingsrapport.py</code> bevat de DagBag-test op trigger rules en bewaking, controleert dat elke beëindigde run een rapport heeft, <code>DAG_Load_Only</code> (totalen gelijk aan PostgreSQL, niets nieuw of verwijderd) en een bewust mislukte <code>Start_Run</code> (rapport zonder run-document, de andere run ongemoeid); in de Delftse suite het rapport na <code>DAG_Load_Only</code>.</li>
+</ul>
+<h2 id="vervolg">Vervolg<a class="headerlink" href="#vervolg" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Weergave in de webapplicatie</strong> (optie B uit issue 62): een pagina die de runs uit <code>Verwerkingsruns</code> toont met het veld <code>rapport</code> (samenvatting, link naar het Markdown-rapport). Het run-document bevat daarvoor al de paden en de samenvatting; de bestanden staan in de uitvoermap, die Flask nu niet mount.</li>
+<li><strong>Opschoonbeleid.</strong> Rapporten en run-documenten blijven onbeperkt staan (per run enkele tientallen kB tot enkele MB bij grote volledige cycli).</li>
+<li><strong>Parsefouten van bestandsnamen.</strong> <code>ParseFotobestanden</code> logt een fout per bestand nog alleen; het rapport telt wel de onherkende bestandsnamen.</li>
+</ul>
+              
+            </div>
+          </div>
+<footer role="contentinfo" class="wasstraat-footer"
+        itemscope itemtype="https://schema.org/WPFooter">
+  <hr>
+  <p class="wasstraat-credits">
+    Gebouwd door
+    <span itemprop="publisher" itemscope itemtype="https://schema.org/Organization">
+      <strong itemprop="name">E-Space</strong>
+    </span>
+    —
+    <span itemprop="author" itemscope itemtype="https://schema.org/Person">
+      <strong itemprop="name">Arjen Brienen</strong><meta itemprop="affiliation" content="E-Space">
+      <link itemprop="sameAs" href="https://www.linkedin.com/in/arjenbrienen/">
+      <link itemprop="sameAs" href="https://github.com/brienen">
+    </span>
+  </p>
+  <p class="wasstraat-license">
+    Uitgegeven onder de
+    <a href="https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12"
+       rel="license">EUPL v1.2</a>.
+    Broncode:
+    <a href="https://github.com/brienen/wasstraat_archeologische_data"
+       rel="external">github.com/brienen/wasstraat_archeologische_data</a>.
+  </p>
+  
+    <p class="wasstraat-copyright"><small>© E-Space — Arjen Brienen. Uitgegeven onder de EUPL v1.2 licentie.</small></p>
+  
+</footer>
+<footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footernavigatie">
+        <a href="../incrementeel-laden/" class="btn btn-neutral float-left" title="Incrementeel laden"><span class="icon icon-circle-arrow-left"></span> Vorige</a>
+        <a href="../validatie/" class="btn btn-neutral float-right" title="Validatie en kwaliteitscontroles">Volgende <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+      <p>© E-Space — Arjen Brienen. Uitgegeven onder de EUPL v1.2 licentie.</p>
+  </div>
+
+  Gemaakt met <a href="https://www.mkdocs.org/">MkDocs</a> met behulp van een <a href="https://github.com/readthedocs/sphinx_rtd_theme">Thema</a> geleverd door <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versies">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../incrementeel-laden/" style="color: #fcfcfc">&laquo; Vorige</a></span>
+    
+    
+      <span><a href="../validatie/" style="color: #fcfcfc">Volgende &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../..";</script>
+    <script src="../../js/theme_extra.js"></script>
+    <script src="../../js/theme.js"></script>
+      <script src="../../assets/lightbox.js"></script>
+      <script src="../../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

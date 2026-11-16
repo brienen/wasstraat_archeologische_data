@@ -1,0 +1,1410 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="nl" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="author" content="E-Space / Arjen Brienen" /><link rel="canonical" href="https://brienen.github.io/wasstraat_archeologische_data/componenten/incrementeel-laden/" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>Incrementeel laden - Wasstraat Archeologische Data</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+        <link href="../../assets/extra.css" rel="stylesheet" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Incrementeel laden";
+        var mkdocs_page_input_path = "componenten/incrementeel-laden.md";
+        var mkdocs_page_url = "/wasstraat_archeologische_data/componenten/incrementeel-laden/";
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script>
+  
+  <meta name="author" content="Arjen Brienen">
+  <meta name="publisher" content="E-Space">
+  <meta name="description" content="Technische documentatie voor de Wasstraat Archeologische Data - een open source verwerkingsplatform voor archeologische datasets">
+  <meta name="keywords" content="archeologie, wasstraat, ETL, open data, erfgoed, ABR, CIDOC CRM, Delft, Airflow, open source">
+  <meta name="generator" content="MkDocs">
+  <meta name="robots" content="index, follow">
+  <meta http-equiv="Content-Language" content="nl">
+
+  
+  <meta name="DC.title" content="Incrementeel laden">
+  <meta name="DC.creator" content="Arjen Brienen">
+  <meta name="DC.publisher" content="E-Space">
+  <meta name="DC.language" content="nl">
+  <meta name="DC.rights" content="EUPL v1.2">
+  <meta name="DC.type" content="Text">
+  <meta name="DC.format" content="text/html">
+
+  
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Wasstraat Archeologische Data">
+  <meta property="og:title" content="Incrementeel laden">
+  <meta property="og:description" content="Technische documentatie voor de Wasstraat Archeologische Data - een open source verwerkingsplatform voor archeologische datasets">
+  <meta property="og:locale" content="nl_NL">
+  <meta property="og:url" content="https://brienen.github.io/wasstraat_archeologische_data/componenten/incrementeel-laden/">
+
+  
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Incrementeel laden">
+  <meta name="twitter:description" content="Technische documentatie voor de Wasstraat Archeologische Data - een open source verwerkingsplatform voor archeologische datasets">
+
+  
+  <link rel="canonical" href="https://brienen.github.io/wasstraat_archeologische_data/componenten/incrementeel-laden/">
+
+  
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://brienen.github.io/wasstraat_archeologische_data/#org-espace",
+        "name": "E-Space",
+        "description": "Ontwikkelaar van de Wasstraat Archeologische Data.",
+        "inLanguage": "nl"
+      },
+      {
+        "@type": "Person",
+        "@id": "https://brienen.github.io/wasstraat_archeologische_data/#person-arjen",
+        "name": "Arjen Brienen",
+        "jobTitle": "Architect en ontwikkelaar",
+        "affiliation": { "@id": "https://brienen.github.io/wasstraat_archeologische_data/#org-espace" },
+        "sameAs": [
+          "https://www.linkedin.com/in/arjenbrienen/",
+          "https://github.com/brienen"
+        ]
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://brienen.github.io/wasstraat_archeologische_data/#website",
+        "url": "https://brienen.github.io/wasstraat_archeologische_data/",
+        "name": "Wasstraat Archeologische Data",
+        "description": "Technische documentatie voor de Wasstraat Archeologische Data - een open source verwerkingsplatform voor archeologische datasets",
+        "inLanguage": "nl",
+        "publisher": { "@id": "https://brienen.github.io/wasstraat_archeologische_data/#org-espace" },
+        "author": { "@id": "https://brienen.github.io/wasstraat_archeologische_data/#person-arjen" },
+        "creator": { "@id": "https://brienen.github.io/wasstraat_archeologische_data/#person-arjen" },
+        "copyrightHolder": { "@id": "https://brienen.github.io/wasstraat_archeologische_data/#org-espace" },
+        "license": "https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12"
+      },
+      {
+        "@type": "SoftwareSourceCode",
+        "@id": "https://brienen.github.io/wasstraat_archeologische_data/#software",
+        "name": "Wasstraat Archeologische Data",
+        "alternateName": "Wasstraat",
+        "description": "Open-source ETL-platform dat archeologische gegevens verzamelt, verwerkt en toegankelijk maakt. Ontwikkeld voor de gemeente Delft en uitgebreid tot een generiek platform voor Nederlandse gemeenten.",
+        "programmingLanguage": ["Python", "SQL", "YAML"],
+        "runtimePlatform": "Docker Compose",
+        "codeRepository": "https://github.com/brienen/wasstraat_archeologische_data",
+        "license": "https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12",
+        "author": { "@id": "https://brienen.github.io/wasstraat_archeologische_data/#person-arjen" },
+        "creator": { "@id": "https://brienen.github.io/wasstraat_archeologische_data/#person-arjen" },
+        "publisher": { "@id": "https://brienen.github.io/wasstraat_archeologische_data/#org-espace" },
+        "maintainer": { "@id": "https://brienen.github.io/wasstraat_archeologische_data/#person-arjen" },
+        "copyrightHolder": { "@id": "https://brienen.github.io/wasstraat_archeologische_data/#org-espace" },
+        "inLanguage": "nl",
+        "keywords": "archeologie, ETL, Airflow, PostgreSQL, MongoDB, Elasticsearch, ABR, CIDOC CRM, GGM, erfgoed, open data",
+        "about": [
+          { "@type": "Thing", "name": "Archeologisch Basisregister (ABR)" },
+          { "@type": "Thing", "name": "CIDOC CRM" },
+          { "@type": "Thing", "name": "Gemeentelijk Gegevensmodel (GGM)" },
+          { "@type": "Thing", "name": "DANS e-Depot" },
+          { "@type": "Thing", "name": "Archis" }
+        ]
+      }
+      
+      ,{
+        "@type": "TechArticle",
+        "@id": "https://brienen.github.io/wasstraat_archeologische_data/componenten/incrementeel-laden/#article",
+        "url": "https://brienen.github.io/wasstraat_archeologische_data/componenten/incrementeel-laden/",
+        "name": "Incrementeel laden",
+        "headline": "Incrementeel laden",
+        "description": "Technische documentatie voor de Wasstraat Archeologische Data - een open source verwerkingsplatform voor archeologische datasets",
+        "inLanguage": "nl",
+        "isPartOf": { "@id": "https://brienen.github.io/wasstraat_archeologische_data/#website" },
+        "author": { "@id": "https://brienen.github.io/wasstraat_archeologische_data/#person-arjen" },
+        "publisher": { "@id": "https://brienen.github.io/wasstraat_archeologische_data/#org-espace" },
+        "license": "https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12"
+      }
+      
+    ]
+  }
+  </script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> Wasstraat Archeologische Data
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Doorzoek documentatie" aria-label="Doorzoek documentatie" title="Typ hier uw zoekterm" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigatiemenu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Home</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Aan de slag</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../aan-de-slag/">Handleiding (ontwikkelomgeving)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../deployment/installatie-met-images/">Installatie met images</a>
+                  </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../configuratie/">Configuratie</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Projectoverzicht</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../overzicht/inleiding/">Inleiding</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../overzicht/probleemstelling/">Probleemstelling</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../overzicht/doelstellingen/">Doelstellingen</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Architectuur</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../architectuur/systeem/">Systeemarchitectuur</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../architectuur/dataflow/">Verwerkingspipeline</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../architectuur/componenten/">Componentenmodel</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../architectuur/gegevensmodel/">Gegevensmodel</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../architectuur/stack/">Technische stack</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Componenten</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../extractie/">Extractie</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../singlestore/">MongoDB en Single_Store</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../transformatie/">Transformatie</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Incrementeel laden</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#doel">Doel</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#uitgangspunten">Uitgangspunten</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#herleidbaarheid-door-de-pipeline">Herleidbaarheid door de pipeline</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#registratie-van-bronbestanden">Registratie van bronbestanden</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#verloop-van-een-incrementele-run">Verloop van een incrementele run</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#uitwerking-in-fase-2">Uitwerking in fase 2</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#de-vlag-vondstkey_met_putnr">De vlag vondstkey_met_putnr</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#voor-fase-3-upsert-load">Voor fase 3 (upsert-load)</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#uitwerking-in-fase-3">Uitwerking in fase 3</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#load_upsert-loadtodatabase_functionsloadincrementeel">Load_Upsert (loadToDatabase_functions.loadIncrementeel)</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#gebruikersdata-bij-verdwenen-rijen-issue-73">Gebruikersdata bij verdwenen rijen (issue 73)</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#volledige-cyclus-gebruikersdata-en-stabiele-sleutels-issue-71">Volledige cyclus: gebruikersdata en stabiele sleutels (issue 71)</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#afgeleide-velden-issue-72">Afgeleide velden (issue 72)</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#stabiele-sleutels-voor-artefacten">Stabiele sleutels voor artefacten</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#hulpsleutel-uit-de-bronrij-issue-81">Hulpsleutel uit de bronrij (issue 81)</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#verloren-keys-in-transform-3-issue-88">Verloren keys in Transform 3 (issue 88)</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#andere-artefactsoort-door-de-harmonisatie-issue-89">Andere artefactsoort door de harmonisatie (issue 89)</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#codetabellen-spijkers-raap-koppen-en-tussenversies-issues-75-85-en-86">Codetabellen, spijkers, RAAP-koppen en tussenversies (issues 75, 85 en 86)</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#elasticsearch-delta-fulltextindextableincrementeel">Elasticsearch-delta (fulltext.indexTableIncrementeel)</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#testomgeving">Testomgeving</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#run-document">Run-document</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#modules-en-taken">Modules en taken</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#gebruik">Gebruik</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#wat-de-incrementele-cyclus-niet-doet">Wat de incrementele cyclus niet doet</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#testen">Testen</a>
+    </li>
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../verwerkingsrapport/">Foutbeleid en verwerkingsrapport</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../validatie/">Validatie en kwaliteitscontroles</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../gemeenteprofielen/">Gemeenteprofielen</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../zoeken/">Zoeken en indexering</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Deployment</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../deployment/omgevingen/">Omgevingen en Docker Compose</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../deployment/airflow-vs-app/">Airflow en webapplicatie</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../deployment/voorbeelddata/">Voorbeelddata</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../deployment/proefdata/">Proefdata inlezen</a>
+                  </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../testen/">Testen</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../diagrammen/">Diagrammen</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../toekomstvisie/">Toekomstvisie</a>
+                </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobiel navigatiemenu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">Wasstraat Archeologische Data</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" aria-label="Documentatie"></a></li>
+          <li class="breadcrumb-item">Componenten</li>
+      <li class="breadcrumb-item active">Incrementeel laden</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="incrementeel-laden">Incrementeel laden<a class="headerlink" href="#incrementeel-laden" title="Permanent link">&para;</a></h1>
+<div class="admonition note">
+<p class="admonition-title">Status</p>
+<p>Gebouwd voor <a href="https://github.com/brienen/wasstraat_archeologische_data/issues/61">issue 61</a>, in drie fasen. Deze pagina is het ontwerp, bijgewerkt met de keuzes per fase.</p>
+<p><strong>Fase 1:</strong> registratie van bronbestanden (<code>Def_Bronbestand</code>), het run-document, de bepaling van de delta, het opruimen van oude records, de extractie van alleen de delta en de registratie aan het eind van de incrementele én de volledige cyclus.</p>
+<p><strong>Fase 2:</strong> de transformaties van alleen de delta (stap 4 t/m 7: Transform 1, 2, 3, 5 en 4 met stabiele sleutels).</p>
+<p><strong>Fase 3:</strong> de load als upsert naar PostgreSQL (stap 8, <code>Load_Upsert</code>), de Elasticsearch-delta (stap 9, <code>Index_&lt;tabel&gt;</code>), stabiele sleutels voor artefacten (<code>key_subnr|artefactsoort</code>), Elasticsearch in de testomgeving en de integratietest. De DAG <code>Extract_Transform_Load_Incremental</code> is daarmee compleet: zie <a href="#gebruik">Gebruik</a>.</p>
+<p><strong>Issue 81:</strong> een hulpsleutel uit de bronrij voor rijen zonder (unieke) natuurlijke key, zodat ook artefacten zonder subnr, monsters, plaatsingen, vindplaatsen en rijen met een dubbele key hun <code>primary_key</code> houden: zie <a href="#hulpsleutel-uit-de-bronrij-issue-81">Hulpsleutel uit de bronrij</a>.</p>
+<p><strong>Issue 88:</strong> in Transform 3 overschreven de parallelle sleuteltaken elkaars keys; hersteld, en rijen die met een vervangende key zijn geladen worden teruggevonden: zie <a href="#verloren-keys-in-transform-3-issue-88">Verloren keys in Transform 3</a>.</p>
+</div>
+<h2 id="doel">Doel<a class="headerlink" href="#doel" title="Permanent link">&para;</a></h2>
+<p>De volledige cyclus (<code>Extract_Transform_Load_Full_Cycle</code>) begint met het legen van alle databases en verwerkt daarna alle bronbestanden opnieuw. Voor het toevoegen of corrigeren van een handvol opgravingen is dat bij ~1 TB brondata onwerkbaar. De incrementele cyclus (<code>Extract_Transform_Load_Incremental</code>) verwerkt alleen bronbestanden die nieuw, gewijzigd of verwijderd zijn, en voegt het resultaat samen met de bestaande data. De volledige cyclus blijft bestaan; sinds issue 71 houdt ook hij de sleutels stabiel en laat hij de gebruikerstabellen staan (zie <a href="#volledige-cyclus-gebruikersdata-en-stabiele-sleutels-issue-71">Volledige cyclus: gebruikersdata en stabiele sleutels</a>).</p>
+<h2 id="uitgangspunten">Uitgangspunten<a class="headerlink" href="#uitgangspunten" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>Het bronbestand is de eenheid van verandering.</strong> Elke Access-database, spreadsheet, foto en elk rapport wordt geregistreerd met een vingerafdruk. Een run vergelijkt de bestanden op schijf met de registratie en bepaalt per bestand de status: <code>nieuw</code>, <code>gewijzigd</code>, <code>ongewijzigd</code> of <code>verwijderd</code>.</li>
+<li><strong>PostgreSQL is de bron van waarheid</strong> voor de registratie van bronbestanden (tabel <code>Def_Bronbestand</code>) en voor de integer-sleutels (<code>primary_key</code>) van alle entiteiten. Daar draait de webapplicatie op, en daar staan de gegevens die gebruikers zelf invoeren (bruiklenen, conservering).</li>
+<li><strong>MongoDB is werkgeheugen dat blijft staan.</strong> De staging-collecties, <code>Single_Store</code> en <code>Single_Store_Clean</code> worden bij een incrementele run niet geleegd. Daardoor kan elke entiteit die door een wijziging wordt geraakt opnieuw worden samengesteld uit <code>Single_Store</code>, dat altijd volledig is. Een pre-fetch van bestaande records uit <code>Single_Store_Clean</code> is daardoor niet nodig: de merge per sleutel is deterministisch en wordt voor de geraakte sleutels gewoon opnieuw uitgevoerd.</li>
+<li><strong>Sleutels zijn stabiel.</strong> De samengestelde sleutel (<code>key</code>) is al deterministisch. De integer-sleutel (<code>primary_key</code>) wordt bij een incrementele run (en sinds issue 71 ook bij de volledige cyclus) opgezocht in PostgreSQL op basis van (soort, key), en sinds issue 81 voor rijen zonder unieke key op de hulpsleutel uit hun bronrij; alleen nieuwe entiteiten krijgen een nieuw nummer boven het bestaande maximum. Verwijzingen vanuit de webapplicatie en van buitenaf blijven daardoor geldig.</li>
+<li><strong>Laden is een upsert, geen vervanging.</strong> De <code>Def_</code>-tabellen worden bijgewerkt met <code>INSERT ... ON CONFLICT (primary_key) DO UPDATE</code>; rijen waarvan de entiteit verdwenen is worden verwijderd. Tabellen met gebruikersdata (<code>Def_Bruikleen</code>, <code>Def_Partij</code>, <code>Def_Conserveringsproject</code>, <code>Def_artefact_conservering</code>, <code>Def_artefact_abr</code>) worden niet geleegd; verwijst gebruikersdata naar een verdwenen rij, dan wordt die verwijzing losgekoppeld met een markering of de koppelrij verwijderd (issue 73, zie <a href="#gebruikersdata-bij-verdwenen-rijen-issue-73">Gebruikersdata bij verdwenen rijen</a>).</li>
+</ol>
+<h2 id="herleidbaarheid-door-de-pipeline">Herleidbaarheid door de pipeline<a class="headerlink" href="#herleidbaarheid-door-de-pipeline" title="Permanent link">&para;</a></h2>
+<p>De pipeline bewaart al genoeg sporen om een bronbestand door alle stappen te volgen:</p>
+<table>
+<thead>
+<tr>
+<th>Laag</th>
+<th>Collectie</th>
+<th>Spoor naar het bronbestand</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Staging</td>
+<td><code>Staging_Projecten_*</code></td>
+<td>veld <code>mdbfile</code> (pad in de container), gezet door <code>importMDB.sh</code></td>
+</tr>
+<tr>
+<td>Staging</td>
+<td><code>Staging_Projecten_Projectenlijst</code> (extra projecten)</td>
+<td>veld <code>mdbfile</code> met het pad van <code>FILE_EXTRA_PROJECTS</code>, gezet door <code>extractExtraProjects</code> (nieuw in fase 1)</td>
+</tr>
+<tr>
+<td>Staging</td>
+<td><code>Staging_Referentietabellen</code></td>
+<td>geen veld nodig: de hele collectie komt uit <code>FILE_ABREXCEL</code></td>
+</tr>
+<tr>
+<td>Staging</td>
+<td><code>Plaatjes</code></td>
+<td>veld <code>fullFileName</code>; de afbeeldingen zelf staan als kopieën in <code>AIRFLOW_OUTPUT_MEDIA</code> (paden in <code>imageID</code>, <code>imageMiddleID</code>, <code>imageThumbID</code>); een oudere versie van <code>image_util</code> gebruikte GridFS (<code>imageUUID</code> e.d.)</td>
+</tr>
+<tr>
+<td>Staging</td>
+<td><code>Filenames</code> (in <code>Arch_Files</code>)</td>
+<td>veld <code>filename</code></td>
+</tr>
+<tr>
+<td>Analyse</td>
+<td><code>Single_Store</code></td>
+<td>zelfde <code>_id</code> als het staging-document (<code>$replaceRoot</code> in de harmonisatie behoudt <code>_id</code>), en altijd <code>brondata.mdbfile</code> (afbeeldingen: <code>fullFileName</code>). Let op: de harmonisatie van <code>Standplaats</code>, <code>Plaatsing</code> en <code>Doos</code> maakt wél een nieuw <code>_id</code>; die documenten zijn alleen via <code>brondata.mdbfile</code> te vinden</td>
+</tr>
+<tr>
+<td>Analyse</td>
+<td><code>Single_Store_Clean</code></td>
+<td>Move-soorten: zelfde <code>_id</code> als in <code>Single_Store</code>. Merge-soorten (Vondst, Artefact, Monster, Tekening, Rapport): de merge groepeert op de sleutel (<code>key</code>, Artefact: <code>key_subnr</code> + <code>artefactsoort</code>), maar het document neemt via <code>$mergeObjects</code> op <code>$$ROOT</code> het <code>_id</code> over van het <strong>laatste brondocument in de groep</strong>; samengevoegde documenten zijn herkenbaar aan het veld <code>brondata_count</code>. Foto's (<code>mergeFotoinfo</code>): zelfde <code>_id</code> als in <code>Plaatjes</code>. Gegenereerde documenten (<code>brondata.table</code> = <code>generated_*</code>): bij elke generatie een nieuw <code>_id</code></td>
+</tr>
+</tbody>
+</table>
+<p>Daar komen twee nieuwe sporen bij:</p>
+<ul>
+<li><code>Single_Store</code>-documenten die in een incrementele run (opnieuw) zijn geharmoniseerd krijgen het veld <code>delta_run</code> met het run-id. Transform 2 en 3 beperken zich tot die documenten. Ook elk document dat een incrementele run in <code>Single_Store_Clean</code> (opnieuw) schrijft heeft <code>delta_run</code> gelijk aan het run-id (verplaatst, samengevoegd, foto of gegenereerd), zodat fase 3 de gewijzigde rijen kan herkennen. De volledige cyclus zet het veld nergens.</li>
+<li>Een run-document in de collectie <code>Verwerkingsruns</code> (database <code>Arch_Staging</code>) houdt bij welke bestanden, sleutels en projecten geraakt zijn. De vingerafdrukken per bestand staan in de collectie <code>Verwerkingsrun_Bestanden</code> (zie <a href="#run-document">Run-document</a>).</li>
+</ul>
+<h2 id="registratie-van-bronbestanden">Registratie van bronbestanden<a class="headerlink" href="#registratie-van-bronbestanden" title="Permanent link">&para;</a></h2>
+<p>Tabel <code>Def_Bronbestand</code> in PostgreSQL, aangemaakt door de pipeline zelf (<code>CREATE TABLE IF NOT EXISTS</code>), buiten de atomic swap van de volledige load gehouden:</p>
+<table>
+<thead>
+<tr>
+<th>Kolom</th>
+<th>Inhoud</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>pad</code> (<code>TEXT PRIMARY KEY</code>)</td>
+<td>Pad van het bestand zoals de Airflow-container het ziet</td>
+</tr>
+<tr>
+<td><code>categorie</code> (<code>TEXT</code>)</td>
+<td>Invoercategorie: <code>projecten</code>, <code>projectenlijst</code>, <code>magazijnlijst</code>, <code>fotolijst</code>, <code>monsterdatabase</code>, <code>rapporten</code> (de zes MDB-mappen), <code>referentietabellen</code> (<code>FILE_ABREXCEL</code>), <code>extra_projecten</code> (<code>FILE_EXTRA_PROJECTS</code>), <code>bestandenlijst</code> (<code>FILE_IMPORT_FILES_EXCEL</code>), <code>afbeeldingen</code></td>
+</tr>
+<tr>
+<td><code>grootte</code> (<code>BIGINT</code>), <code>mtime</code> (<code>DOUBLE PRECISION</code>)</td>
+<td>Snelle vingerafdruk; bij gelijke waarden wordt de hash niet opnieuw berekend</td>
+</tr>
+<tr>
+<td><code>sha256</code> (<code>CHAR(64)</code>)</td>
+<td>Inhoudelijke vingerafdruk</td>
+</tr>
+<tr>
+<td><code>status</code> (<code>TEXT</code>)</td>
+<td><code>verwerkt</code> of <code>verwijderd</code> (<code>mislukt</code> bestaat voor toekomstig gebruik, zie hieronder)</td>
+</tr>
+<tr>
+<td><code>verwerkt_op</code> (<code>TIMESTAMP</code>, UTC), <code>run_id</code> (<code>TEXT</code>)</td>
+<td>Laatste run die het bestand verwerkte (of als verwijderd registreerde)</td>
+</tr>
+<tr>
+<td><code>aantal_records</code> (<code>INTEGER</code>)</td>
+<td>Aantal staging-documenten uit dit bestand (0 voor afbeeldingen en de bestandenlijst)</td>
+</tr>
+</tbody>
+</table>
+<p>De volledige cyclus registreert aan het eind alle bestanden, zodat een daaropvolgende incrementele run weet wat al verwerkt is.</p>
+<p>Uitwerking in fase 1:</p>
+<ul>
+<li><strong>Selectie.</strong> De zes MDB-mappen worden doorzocht met exact dezelfde selectie als <code>importMDB.sh</code> (<code>**/*.mdb</code> en <code>**/*.accdb</code>: recursief, hoofdlettergevoelige extensie, zonder verborgen bestanden en mappen). Afbeeldingen en rapporten gebruiken dezelfde functie als de extractie (<code>image_import.getImageFilenames()</code>: <code>getImageNamesFromDir</code> voor de afbeeldingen- en rapportenmap plus <code>getImageNamesFromExcelAndDir</code>). Valt een afbeelding door een wijziging in de bestandenlijst-Excel buiten de selectie, dan geldt hij als verwijderd.</li>
+<li><strong><code>bestandenlijst</code></strong> is een extra categorie ten opzichte van het oorspronkelijke ontwerp: <code>FILE_IMPORT_FILES_EXCEL</code> wordt geregistreerd, maar zelf niet verwerkt. Een wijziging werkt door via de selectie van de afbeeldingen.</li>
+<li><strong>Lege Access-databases.</strong> Een Access-database die geen enkel staging-document oplevert (leeg of onleesbaar), wordt als <code>verwerkt</code> geregistreerd met <code>aantal_records</code> 0, met per bestand een waarschuwing in het log van <code>Registreer_Run</code> (of <code>Registreer_Bronbestanden</code>). Zo wordt hij niet bij elke run opnieuw verwerkt, maar blijft een onleesbare database zichtbaar. De status <code>mislukt</code> blijft bestaan voor toekomstig gebruik: een bestand met die status geldt bij de volgende run als <code>gewijzigd</code> en wordt opnieuw verwerkt. Een geregistreerd bestand met status <code>verwijderd</code> dat weer opduikt, geldt als <code>nieuw</code>.</li>
+<li><strong>Atomic swap en index.</strong> <code>Def_Bronbestand</code> staat niet in de tabellenlijst van <code>loadAll()</code> en heeft geen foreign keys, dus de atomic swap laat de tabel met rust. <code>shared.database.getAllTables()</code> slaat de tabel over (constante <code>PIPELINE_TABELLEN</code> in <code>shared/const.py</code>); anders zou de Load-taakgroep er een <code>Index_Def_Bronbestand</code>-taak voor maken die faalt op het ontbrekende <code>primary_key</code>.</li>
+<li><strong>Volledige cyclus.</strong> De taak <code>Registreer_Bronbestanden</code> hangt aan <code>LoadToDatabase_postgres</code> en niet aan het slagen van de Elasticsearch-indexering: een mislukte indexering kan los opnieuw (<code>DAG_Load_Only</code>) zonder de bronbestanden opnieuw te verwerken. Sinds issue 54 wacht de taak wel tot de indexering klaar is (via <code>Index_Klaar</code>, <code>all_done</code>), zoals <code>Registreer_Run</code> in de incrementele cyclus, en registreert hij in het run-document dat de volledige cyclus aan het begin aanmaakt (zie <a href="#run-document">Run-document</a>). De vingerafdrukken worden aan het eind van de cyclus gelezen; een bestand dat tijdens een lange volledige run wijzigt, wordt dus met de nieuwe vingerafdruk geregistreerd.</li>
+</ul>
+<h2 id="verloop-van-een-incrementele-run">Verloop van een incrementele run<a class="headerlink" href="#verloop-van-een-incrementele-run" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Stap</th>
+<th>Taak</th>
+<th>Wat gebeurt er</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0</td>
+<td><code>Start_Run</code></td>
+<td>Maakt het run-document aan (<code>run_id</code>, status <code>actief</code>). Er kan maar één actieve run zijn (gecontroleerd én afgedwongen met een partiële unieke index op <code>status</code>).</td>
+</tr>
+<tr>
+<td>1</td>
+<td><code>Bepaal_Delta</code></td>
+<td>Scant de invoermappen, vergelijkt met <code>Def_Bronbestand</code>, schrijft per categorie de lijsten <code>nieuw</code>, <code>gewijzigd</code>, <code>ongewijzigd</code>, <code>verwijderd</code> in het run-document, de vingerafdrukken in <code>Verwerkingsrun_Bestanden</code> en per MDB-categorie een lijstbestand <code>delta_&lt;categorie&gt;.txt</code> in <code>AIRFLOW_TEMPDIR</code> voor <code>importMDB.sh</code> (nieuwe en gewijzigde bestanden, één pad per regel; leeg als er niets te doen is). Is de registratie leeg, dan geldt alles als nieuw; de staging (en <code>Single_Store</code>) moet dan wel leeg zijn, anders faalt de taak met een verwijzing naar de volledige cyclus.</td>
+</tr>
+<tr>
+<td>2</td>
+<td><code>Opruimen_Oude_Records</code></td>
+<td>Voor gewijzigde en verwijderde bestanden (en nieuwe bestanden, zie hieronder): verzamel de staging-<code>_id</code>s, zoek de bijbehorende <code>Single_Store</code>-documenten (op <code>_id</code> én op <code>brondata.mdbfile</code>/<code>fullFileName</code>) en bewaar hun <code>soort</code>, <code>key</code> en <code>projectcd</code> (Artefact ook <code>key_subnr</code>, <code>artefactsoort</code>) in het run-document (<code>verwijderde_keys</code>, <code>geraakte_projecten</code>). Verwijder daarna de documenten uit <code>Single_Store</code>, uit <code>Single_Store_Clean</code> (op dezelfde <code>_id</code>s, dus de Move-soorten) en uit de staging. Voor afbeeldingen: ook <code>Plaatjes</code>, <code>Filenames</code>, eventuele GridFS-bestanden en de kopieën in <code>AIRFLOW_OUTPUT_MEDIA</code> waarnaar geen ander <code>Plaatjes</code>-document meer verwijst.</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Extract (delta)</td>
+<td><code>importMDB.sh</code> krijgt een lijstbestand en verwerkt alleen die databases. Afbeeldingen: alleen nieuwe en gewijzigde bestanden komen in <code>Filenames</code> met <code>processed: False</code> (de collectie wordt niet geleegd); de import-taken pakken die op, samen met bestanden die in een eerdere run mislukten. Openstaande entries van bestanden die niet meer bestaan (een mislukt nieuw bestand dat is weggehaald voordat een run slaagde) worden eerst verwijderd. Daarna telt <code>Extract_Group.Controleer_Afbeeldingen</code> de verwerkte, overgeslagen en mislukte afbeeldingen van deze run in <code>tellingen.afbeeldingen</code> en faalt boven de drempel, waarna <code>Markeer_Run_Mislukt</code> de run op <code>mislukt</code> zet (zie <a href="../extractie/#afbeeldingen-en-rapporten">Extractie: afbeeldingen en rapporten</a>). ABR en extra projecten alleen als dat bestand nieuw of gewijzigd is.</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Transform 1 (delta)</td>
+<td>Harmonisatie met een extra eerste <code>$match</code> op het padveld van de staging-collectie (<code>mdbfile</code> in de nieuwe en gewijzigde bestanden van de categorie; de projectenlijst-collectie ook de extra projecten) en <code>$addFields {delta_run}</code> vlak vóór de <code>$merge</code>. Geen delta-paden voor een collectie: de taak doet niets. De ABR-referentietabellen alleen (volledig) als het ABR-bestand in de delta zit. <code>ParseFotobestanden</code> alleen voor <code>Plaatjes</code> met <code>fullFileName</code> in de delta van <code>afbeeldingen</code>. <code>fixProjectNames</code> draait zoals nu (idempotent). <code>fixMonsterProjectcds</code> alleen voor delta-documenten. Daarna voegt <code>Werk_Geraakte_Projecten_Bij</code> de projectcodes van de delta-documenten toe aan <code>geraakte_projecten</code>.</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Transform 2 en 3 (delta)</td>
+<td><code>enhanceAllAttributes</code>, <code>extractImagedataFromFileNames</code> en <code>setReferenceKeys</code> (in de eerste <code>$match</code>) krijgen een filter <code>{delta_run: run_id}</code>; de <code>projectcode_correcties</code> blijven op de hele collectie werken. <code>Werk_Geraakte_Projecten_Bij</code> draait aan het eind van Transform 2 nogmaals. Projectbrede stappen (<code>setAndVondstUniqueInProject</code>, <code>mergeRAAPArtefacts</code>) draaien alleen voor de geraakte projecten; <code>setAndVondstUniqueInProject</code> haalt daarbij eerst de vlag <code>vondstkey_met_putnr</code> weg bij alle documenten van die projecten en zet hem opnieuw waar nodig. Voor de soorten waarvan de sleutels van die vlag afhangen (Spoor, Vulling, Artefact, Monster, Vondst) berekent <code>setReferenceKeys</code> de sleutels van alle documenten van de geraakte projecten opnieuw (zie <a href="#de-vlag-vondstkey_met_putnr">De vlag <code>vondstkey_met_putnr</code></a>). <code>Set_Index_SingleStore</code> blijft.</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Transform 5 (delta)</td>
+<td>Geen <code>Drop_SingleStoreClean</code>. Move per soort met filter <code>delta_run</code> (Spoor, Vulling en Artefact: ook alle documenten van de geraakte projecten); elk verplaatst document krijgt <code>delta_run</code>. Merge per soort voor de geraakte sleutels (sleutels van delta-documenten plus <code>verwijderde_keys</code>; Vondst, Artefact en Monster: ook alle sleutels van de geraakte projecten in <code>Single_Store</code> en <code>Single_Store_Clean</code>): zelfde pipeline met een <code>$match</code> op die sleutels en <code>$addFields {delta_run}</code>. Daarna worden samengevoegde documenten met een geraakte sleutel die niet opnieuw zijn geschreven verwijderd. <code>MergeFotoinfo</code> alleen voor foto's met <code>delta_run</code>, in een geraakt project of in een gewijzigde fotolijst. <code>Generate_Missing_*</code>: eerst de gegenereerde documenten van de geraakte projecten verwijderen, dan alleen voor die projecten opnieuw genereren.</td>
+</tr>
+<tr>
+<td>7</td>
+<td>Transform 4 (stabiele sleutels)</td>
+<td><code>setPrimaryKeys(stabiel=True)</code>: een document houdt zijn <code>ID</code>; anders de <code>primary_key</code> uit PostgreSQL (op <code>_id</code>, op een vervangende key, issue 88, anders op een <code>key</code> die precies één keer in de tabel staat, anders op de hulpsleutel uit de bronrij, issue 81); anders een nieuw nummer boven het maximum. <code>setReferences</code> werkt zoals nu: het vult alleen ontbrekende <code>&lt;soort&gt;ID</code>-velden, en vervangen documenten hebben die niet meer.</td>
+</tr>
+<tr>
+<td>8</td>
+<td><code>Load_Upsert</code></td>
+<td>In één transactie: de betrokken FK-constraints tijdelijk verwijderen (bestaande mechaniek), per <code>Def_</code>-tabel een upsert van alle documenten van de soort, verwijderen van rijen waarvan de <code>primary_key</code> niet meer in <code>Single_Store_Clean</code> voorkomt, geometrie bijwerken en de sequence van <code>primary_key</code> op het maximum + 1 zetten; daarna de FK's herstellen met <code>NOT VALID</code>, committen en valideren. Kan een FK niet hersteld worden, dan wordt alles teruggedraaid en faalt de taak. Gebruikerstabellen en <code>Def_Bronbestand</code> blijven ongemoeid. Zie <a href="#uitwerking-in-fase-3">Uitwerking in fase 3</a>.</td>
+</tr>
+<tr>
+<td>9</td>
+<td><code>Index_&lt;tabel&gt;</code> (delta)</td>
+<td>Parallel na <code>Load_Upsert</code>, per tabel uit <code>LOAD_TABELLEN</code>: alle rijen opnieuw indexeren in de index achter de alias (<code>_id</code> = <code>primary_key</code>) en documenten verwijderen waarvan de id niet meer in de tabel staat. Bestaat er nog geen alias, dan een volledige indexering. Deze taken vallen buiten de bewaking van <code>Markeer_Run_Mislukt</code>. Daarna wacht <code>Index_Klaar</code> (<code>trigger_rule=all_done</code>) tot alle Index-taken klaar zijn, ook als er een mislukt.</td>
+</tr>
+<tr>
+<td>10</td>
+<td><code>Registreer_Run</code></td>
+<td>Werkt <code>Def_Bronbestand</code> bij (status, <code>run_id</code>, <code>verwerkt_op</code>, <code>aantal_records</code>; verwijderde bestanden krijgen status <code>verwijderd</code>; bij ongewijzigde bestanden met een nieuwe mtime alleen de vingerafdruk) en zet het run-document op <code>afgerond</code>. Hangt af van <code>Load_Upsert</code> en <code>Index_Klaar</code>: draait alleen als alle taken tot en met <code>Load_Upsert</code> slaagden, en pas als de indexering klaar is, zodat een volgende run niet kan starten terwijl de Index-taken nog lopen. Bij een fout zet de taak <code>Markeer_Run_Mislukt</code> (<code>trigger_rule=one_failed</code>) de run op <code>mislukt</code> en wordt de registratie niet bijgewerkt, zodat de volgende run dezelfde bestanden opnieuw oppakt.</td>
+</tr>
+</tbody>
+</table>
+<p>Aanvullingen op het ontwerp in fase 1:</p>
+<ul>
+<li><strong>Opruimen van nieuwe bestanden.</strong> Stap 2 ruimt ook records op van bestanden met status <code>nieuw</code> (behalve als de registratie leeg was). Normaal zijn die er niet, maar na een mislukte run kan een nieuw bestand al (deels) in de staging staan; zonder deze stap zou de herhaalde run het dubbel inlezen (<code>mongoimport</code> voegt altijd toe).</li>
+<li><strong>Overname uit mislukte runs.</strong> Is een run mislukt nadat <code>Opruimen_Oude_Records</code> al <code>Single_Store</code>-documenten had verwijderd, dan staan die sleutels alleen nog in het run-document van die mislukte run. <code>Start_Run</code> neemt daarom <code>verwijderde_keys</code> en <code>geraakte_projecten</code> over van alle mislukte incrementele runs sinds de laatste geslaagde run (veld <code>overgenomen_van</code>).</li>
+<li><strong><code>Markeer_Run_Mislukt</code></strong> markeert alleen de run die door dezelfde Airflow-run is gestart (veld <code>airflow_run_id</code>, via <code>{{ run_id }}</code>). Faalt <code>Start_Run</code> omdat er al een andere run actief is, dan blijft die andere run ongemoeid. Sinds issue 54 noemt de melding van de run de mislukte taken (<code>Mislukte taak in Airflow-run …: &lt;task_id&gt;.</code>) en staat de foutmelding van elke mislukte taak in de <code>meldingen</code> van het run-document (on_failure_callback, zie <a href="../verwerkingsrapport/">Foutbeleid en verwerkingsrapport</a>). Een vastgelopen run (bijvoorbeeld na het afbreken van de scheduler) zet je handmatig op <code>mislukt</code> met <code>verwerkingsrun.beeindigRun('mislukt', run_id=...)</code>.</li>
+<li><strong>Indexen.</strong> <code>Opruimen_Oude_Records</code> maakt, als er iets op te ruimen is, indexen op <code>mdbfile</code> (staging-collecties), <code>fullFileName</code> (<code>Plaatjes</code>) en <code>brondata.mdbfile</code>/<code>fullFileName</code> (<code>Single_Store</code>), zodat opzoeken niet de hele collectie scant.</li>
+</ul>
+<h2 id="uitwerking-in-fase-2">Uitwerking in fase 2<a class="headerlink" href="#uitwerking-in-fase-2" title="Permanent link">&para;</a></h2>
+<p>De delta-varianten zitten in de bestaande functies, achter een optionele parameter: <code>incrementeel=False</code> (bij <code>setPrimaryKeys</code>: <code>stabiel=False</code>). Zonder die parameter werken ze precies als in de volledige cyclus. De taakgroep-factories (<code>getHarmonizeTaskGroup</code>, <code>getEnhanceAttributesGroup</code>, <code>getSetKeysTaskGroup</code>, <code>getMoveAndMergeTaskGroup</code>) krijgen <code>incrementeel=True</code> in de incrementele DAG; de callables lezen dan zelf het run-document. <code>getSetReferencesTaskGroup()</code> heeft sinds issue 71 geen parameter meer: de <code>Set_PrimaryKey</code>-taken krijgen in elke DAG <code>stabiel=True</code>. De hulpfuncties staan in <code>wasstraat/delta_transform.py</code>. Pipelines uit <code>meta.py</code> en de harmonizer worden altijd eerst gekopieerd (<code>copy.deepcopy</code>) voordat er fasen bij komen.</p>
+<p>Aanvullingen en afwijkingen ten opzichte van het ontwerp:</p>
+<ul>
+<li><strong><code>_id</code> van samengevoegde documenten.</strong> Het ontwerp ging ervan uit dat een samengevoegd document <code>_id = {key}</code> heeft. In werkelijkheid neemt het via <code>$mergeObjects</code> op <code>$$ROOT</code> het <code>_id</code> van het laatste brondocument in de groep over. Een gewijzigde groep (een brondocument vervangen of verdwenen) levert daardoor een nieuw document op in plaats van het oude te vervangen. Daarom verwijdert de delta-merge na het samenvoegen elk samengevoegd document (herkenbaar aan <code>brondata_count</code>) met een geraakte sleutel dat in deze run niet opnieuw is geschreven (<code>delta_run</code> is niet het run-id). Dat dekt ook het geval uit het ontwerp (geen brondocument meer met die sleutel) en een artefactsoort die bij een <code>key_subnr</code> verdwijnt. Verplaatste, gegenereerde en foto-documenten hebben geen <code>brondata_count</code> en blijven staan.</li>
+<li><strong><code>delta_run</code> in <code>Single_Store_Clean</code>.</strong> Elk document dat de run in <code>Single_Store_Clean</code> schrijft krijgt <code>delta_run</code> (zie <a href="#herleidbaarheid-door-de-pipeline">Herleidbaarheid</a>).</li>
+<li><strong>Geraakte projecten</strong> zijn de projectcodes uit het run-document (van verwijderde en vervangen documenten, zie fase 1) plus die van de delta-documenten. De taak <code>Werk_Geraakte_Projecten_Bij</code> schrijft ze aan het eind van Transform 1 én van Transform 2 in het run-document, omdat Transform 2 projectcodes kan aanpassen (gemeenteprofiel, map van een foto). De functies in Transform 3 en 5 bepalen ze zelf opnieuw (run-document plus delta-documenten). Dezelfde taak maakt een (sparse) index op <code>delta_run</code> in <code>Single_Store</code>.</li>
+<li><strong>Een foto kan een ander project raken.</strong> Een foto <code>SY002_F099.jpg</code> in de map van SY003 krijgt projectcode SY002; SY002 wordt dan een geraakt project. Alle foto's van SY002 worden opnieuw samengevoegd (<code>MergeFotoinfo</code>) en de gegenereerde putten en vlakken van SY002 opnieuw gegenereerd; dankzij de stabiele sleutels houden ze hun <code>ID</code>.</li>
+<li><strong>De vlag <code>vondstkey_met_putnr</code></strong> geldt per project en verandert de sleutels van documenten uit andere bronbestanden dan de delta; zie <a href="#de-vlag-vondstkey_met_putnr">De vlag <code>vondstkey_met_putnr</code></a>.</li>
+<li><strong><code>MergeFotoinfo</code></strong> neemt naast de foto's met <code>delta_run</code> en in een geraakt project ook de foto's mee waarvan de bestandsnaam voorkomt in een <code>Fotokoppel</code>-document met <code>delta_run</code> (gewijzigde fotolijst).</li>
+<li><strong>Gegenereerde documenten</strong> (<code>brondata.table</code> begint met <code>generated_</code>) van de geraakte projecten worden verwijderd en opnieuw gegenereerd met een <code>$match</code> op <code>projectcd</code> vooraan in de pipeline. Ze krijgen bij elke generatie een nieuw <code>_id</code>; hun <code>ID</code> komt via de <code>key</code> uit PostgreSQL terug.</li>
+<li><strong>Documenten zonder sleutel</strong> (<code>key</code>, bij Artefact <code>key_subnr</code>, leeg) worden niet opnieuw samengevoegd, net zoals Opruimen ze niet in <code>verwijderde_keys</code> zet.</li>
+<li><strong>Stabiele sleutels.</strong> Een <code>primary_key</code> die al bij een ander document hoort (een document dat zijn <code>ID</code> hield, of eerder in dezelfde toewijzing), wordt niet nog eens uitgedeeld: eerst krijgen documenten met een <code>primary_key</code> uit de bron (ABR) dat nummer, dan worden alle documenten op <code>_id</code> gekoppeld, daarna bestanden op map en bestandsnaam, daarna (issue 88) op een vervangende key, daarna de rest op een unieke <code>key</code> en daarna (issue 81) op de hulpsleutel uit de bronrij (<code>bronsleutel</code>); de overige documenten krijgen nieuwe nummers in een vaste volgorde (op <code>key</code>, dan <code>_id</code>). De stappen op de bron en op map en bestandsnaam kwamen erbij met issue 71, die op de bronsleutel met issue 81 (zie <a href="#hulpsleutel-uit-de-bronrij-issue-81">Hulpsleutel uit de bronrij</a>). Alleen het veld <code>ID</code> wordt geschreven (de volledige cyclus herschrijft het hele document via pandas). Soorten zonder tabel (Fotobeschrijving, Fotokoppel) slaan de stap via PostgreSQL over. Bestaat de tabel niet en heeft nog geen enkel document een <code>ID</code> (eerste run in een lege database), dan kent <code>setPrimaryKeys</code> de sleutels toe zoals de volledige cyclus; heeft een deel van de documenten al een <code>ID</code>, dan houden die hun <code>ID</code> en krijgen de andere nummers daarboven.</li>
+<li><strong>(Opgelost, issue 71) De volledige cyclus nummerde de sleutels opnieuw:</strong> <code>setPrimaryKeys</code> gaf alle documenten een volgnummer vanaf 0 in de volgorde van <code>Single_Store_Clean</code>. Nu kent Transform 4 ook in de volledige cyclus stabiele sleutels toe, zie <a href="#volledige-cyclus-gebruikersdata-en-stabiele-sleutels-issue-71">Volledige cyclus: gebruikersdata en stabiele sleutels</a>.</li>
+<li><strong>Grenzen van de stabiliteit.</strong> <code>Def_Artefact</code> heeft geen kolom <code>key_subnr</code> en <code>key</code> was bij artefacten meestal leeg, zodat een artefact uit een opnieuw ingelezen database een nieuwe <code>primary_key</code> kreeg. Opgelost in fase 3: de load vult <code>key</code> bij een artefact zonder key met de samengestelde sleutel <code>key_subnr|artefactsoort</code> en <code>setStabielePrimaryKeys</code> vergelijkt artefacten op diezelfde sleutel (zie <a href="#uitwerking-in-fase-3">Uitwerking in fase 3</a>). Een document met een <code>key</code> die meer dan één keer in de tabel staat (bijv. foto's <code>PSY001S1</code>: sfeer- en opgravingsfoto met hetzelfde nummer, of twee artefacten met dezelfde <code>key_subnr</code> en artefactsoort) kreeg nog steeds een nieuwe <code>primary_key</code> als zijn <code>_id</code> verandert, en in de volledige cyclus (waar het <code>_id</code> altijd nieuw is) bij elke run. Voor bestanden lost de koppeling op map en bestandsnaam dat op (issue 71), voor de andere rijen de hulpsleutel uit de bronrij (issue 81).</li>
+<li><strong>Tellingen</strong> per run in <code>tellingen.transform</code>: <code>delta_documenten</code>, <code>merge.&lt;soort&gt;</code> (<code>sleutels</code>, <code>verwijderd</code>), <code>gegenereerd.&lt;soort&gt;</code> (<code>verwijderd</code>, <code>toegevoegd</code>) en <code>primary_keys.&lt;soort&gt;</code> (<code>behouden</code>, <code>uit_bron</code>, <code>op_id</code>, <code>op_bestand</code>, <code>op_vervangende_key</code>, <code>op_key</code>, <code>op_bronsleutel</code>, <code>op_bronsleutel_overgang</code>, <code>nieuw</code>, <code>nieuw_bronrij_bekend</code> met <code>voorbeelden</code>, <code>verdwenen</code>, <code>tabel</code>).</li>
+</ul>
+<h3 id="de-vlag-vondstkey_met_putnr">De vlag <code>vondstkey_met_putnr</code><a class="headerlink" href="#de-vlag-vondstkey_met_putnr" title="Permanent link">&para;</a></h3>
+<p><code>setAndVondstUniqueInProject</code> zet de vlag <code>vondstkey_met_putnr</code> op alle documenten (met een <code>vondstnr</code>) van een project waarin hetzelfde vondstnummer in meer dan één put voorkomt. De vlag bepaalt of het putnummer in de sleutel van een vondst staat (<code>aggr_key_vondst</code> in <code>meta.py</code>): de <code>key</code> van Vondst en de <code>key_vondst</code> van Spoor, Vulling, Artefact en Monster (<code>delta_transform.SOORTEN_MET_VONDSTKEY_VLAG</code>; een unit test controleert dat de lijst bij <code>meta.py</code> past). De <code>key_vondst</code> van foto's, tekeningen en fotobeschrijvingen hangt niet van de vlag af.</p>
+<p>Bij een incrementele run kan de vlag voor een geraakt project veranderen, bijvoorbeeld als een vervangen database een vondstnummer niet meer in twee putten heeft. Alleen de vlag zetten voor de projecten die hem nodig hebben is dan niet genoeg: documenten uit bronbestanden buiten de delta (bijv. de fotolijst of de monsterdatabase) zouden de oude vlag en de oude sleutels houden. Daarom:</p>
+<ol>
+<li><strong>Transform 3, <code>Set_Artefactnr_Unique</code>:</strong> haalt de vlag eerst weg (<code>$unset</code>) bij alle documenten van de geraakte projecten en zet hem daarna, zoals in de volledige cyclus, op <code>True</code> voor de projecten die hem nodig hebben.</li>
+<li><strong>Transform 3, <code>Set_ReferenceKeys_&lt;soort&gt;</code>:</strong> voor de soorten uit <code>SOORTEN_MET_VONDSTKEY_VLAG</code> is het filter <code>delta_run</code> van deze run <strong>of</strong> <code>projectcd</code> in de geraakte projecten (<code>delta_transform.getDeltaOfProjectFilter</code>), zodat ook de sleutels van niet opnieuw ingelezen documenten opnieuw worden berekend.</li>
+<li><strong>Transform 5, <code>Move_&lt;soort&gt;</code>:</strong> voor Spoor, Vulling en Artefact hetzelfde filter; elk verplaatst document krijgt <code>delta_run</code>. Het document in <code>Single_Store_Clean</code> wordt vervangen en verliest zo zijn <code>ID</code> en verwijzingen (<code>vondstID</code> enz.), die Transform 4 opnieuw toekent (de <code>primary_key</code> komt via <code>_id</code> uit PostgreSQL terug).</li>
+<li><strong>Transform 5, <code>Merge_&lt;soort&gt;</code>:</strong> voor Vondst, Artefact en Monster tellen ook de sleutels van alle documenten van de geraakte projecten in <code>Single_Store</code> (de nieuwe sleutels) en van de samengevoegde documenten in <code>Single_Store_Clean</code> (de oude sleutels) als geraakt; een vervallen sleutel wordt zo opgeruimd.</li>
+</ol>
+<p>Niet aangepast: <code>MergeFotoinfo</code> neemt de foto's van de geraakte projecten al mee (en daarmee de nieuwe waarde van de vlag), <code>Generate_Missing_Vondst</code> leidt de vlag af uit <code>Single_Store</code> (<code>$max</code>) en draait al voor de geraakte projecten, en Tekening en Rapport hangen niet van de vlag af. De volledige cyclus verandert niet. Een geraakt project wordt hierdoor voor deze vijf soorten in Transform 3 en 5 helemaal opnieuw verwerkt; zonder wijziging van de vlag levert dat inhoudelijk dezelfde documenten op en houden ze hun <code>primary_key</code>. Wel kan de volgorde van de lijst <code>brondata</code> van een samengevoegd document verschillen (<code>$addToSet</code> garandeert geen volgorde), zodat de load zo'n rij soms als <code>bijgewerkt</code> telt (in de testomgeving: één monster van SY002 na het toevoegen van een foto).</p>
+<p>Bij het testen gevonden bestaande problemen (ook in de volledige cyclus, niet opgelost in fase 2):</p>
+<ul>
+<li><code>enhanceAllAttributes</code> geeft voor elke foto de fout <code>identificeer_foto() missing 1 required positional argument: 'projectcd'</code> (het gemeenteprofiel stuurt soort Foto door naar <code>identificeer_foto(doc)</code> zonder projectcode); die documenten worden in Transform 2 niet bijgewerkt.</li>
+<li>De parallelle taken <code>Set_Reference_ABR_Materiaal</code> en <code>Set_Reference_ABR_SubMateriaal</code> schrijven allebei het hulpveld <code>key_abr</code>; welke waarde overblijft hangt van de volgorde af. Het veld wordt niet naar PostgreSQL geladen.</li>
+</ul>
+<h3 id="voor-fase-3-upsert-load">Voor fase 3 (upsert-load)<a class="headerlink" href="#voor-fase-3-upsert-load" title="Permanent link">&para;</a></h3>
+<p>De aandachtspunten die fase 2 meegaf, en hoe fase 3 ze heeft opgelost:</p>
+<ul>
+<li><strong>Gewijzigde rijen:</strong> documenten in <code>Single_Store_Clean</code> met <code>delta_run</code> gelijk aan het run-id. Fase 3 upsert alle documenten van een soort (zoals in het ontwerp) en neemt <code>_id</code> mee in de <code>DO UPDATE</code>.</li>
+<li><strong>Verdwenen rijen per tabel:</strong> <code>delta_transform.bepaalVerdwenenPrimaryKeys(leesPgSleutels(tabel), ids)</code>; fase 3 gebruikt precies die functie (met de cursor van de load).</li>
+<li><strong>Verwijzingen:</strong> opgevangen met de FK-mechaniek (<code>NOT VALID</code>, daarna valideren). Een verwijzing vanuit gebruikersdata naar een verdwenen rij bleef eerst staan, waardoor de constraint <code>NOT VALID</code> bleef; sinds issue 73 wordt hij losgekoppeld of verwijderd (zie hieronder).</li>
+</ul>
+<h2 id="uitwerking-in-fase-3">Uitwerking in fase 3<a class="headerlink" href="#uitwerking-in-fase-3" title="Permanent link">&para;</a></h2>
+<h3 id="load_upsert-loadtodatabase_functionsloadincrementeel">Load_Upsert (<code>loadToDatabase_functions.loadIncrementeel</code>)<a class="headerlink" href="#load_upsert-loadtodatabase_functionsloadincrementeel" title="Permanent link">&para;</a></h3>
+<p>Per tabel uit <code>LOAD_TABELLEN</code> (soort = tabelnaam zonder <code>Def_</code>; <code>Def_Bestand</code> is soort <code>Bestand</code>) bouwt <code>werkTabelBij</code> de rijen precies zoals de volledige load (<code>leesDocumenten</code>, <code>getFields</code>, <code>transformRow</code>) en doet dan:</p>
+<ol>
+<li><code>INSERT ... ON CONFLICT (primary_key) DO UPDATE SET kolom = EXCLUDED.kolom</code> voor alle kolommen, inclusief <code>_id</code> (via <code>psycopg2.extras.execute_values</code>). Een bestaande rij wordt alleen herschreven als een waarde echt verschilt (<code>WHERE ROW(oud::text, ...) IS DISTINCT FROM ROW(nieuw::text, ...)</code>); zo levert een run zonder wijzigingen geen schrijfacties op en zijn de tellingen <code>ingevoegd</code> en <code>bijgewerkt</code> zinvol.</li>
+<li>Rijen verwijderen waarvan de <code>primary_key</code> niet meer als <code>ID</code> in <code>Single_Store_Clean</code> voorkomt (<code>bepaalVerdwenenPrimaryKeys</code>). Vlak ervoor worden bruiklenen en conserveringsregels die naar zo'n rij verwijzen losgekoppeld (<code>koppelVerwijzingenLos</code>), vlak erna worden koppelrijen zonder doel verwijderd (<code>ruimVerwijzingenOp</code>); zie <a href="#gebruikersdata-bij-verdwenen-rijen-issue-73">Gebruikersdata bij verdwenen rijen</a>.</li>
+<li>De geometrie <code>location</code> bijwerken met dezelfde voorwaarde als de volledige load (<code>longitude</code> en <code>latitude</code> gevuld, <code>longitude &gt; 1</code>); alleen rijen waarvan de geometrie verandert, en een rij die niet meer aan de voorwaarde voldoet krijgt <code>NULL</code> (zoals bij een volledige load).</li>
+<li>De sequence van <code>primary_key</code> op <code>max(primary_key) + 1</code> zetten (<code>pg_get_serial_sequence</code> + <code>setval</code>), zodat rijen die de webapplicatie zelf aanmaakt niet botsen.</li>
+</ol>
+<p>Na alle tabellen, nog in dezelfde transactie en vóór het herstel van de FK's, koppelt <code>koppelVerwijzingenTerug</code> losgekoppelde gebruikersdata weer aan een teruggekeerde rij met dezelfde key (issue 73) en herberekent <code>herberekenAfgeleideVelden</code> de afgeleide velden van de webapplicatie (<code>aantal_fotos</code>, <code>aantal_artefacten</code> en de dateringen van artefacten); zie <a href="#afgeleide-velden-issue-72">Afgeleide velden</a>. Daarvóór, in een eigen transactie aan het begin van de load, draait de schemamigratie van de gebruikerstabellen (<code>migreerSchemaGebruikersdata</code>).</p>
+<p>Keuzes:</p>
+<ul>
+<li><strong>FK-mechaniek in plaats van <code>SET CONSTRAINTS ALL DEFERRED</code>.</strong> Niet alle FK's zijn deferrable: in de testomgeving o.a. <code>Def_Bestand.artefactID</code>, <code>Def_Bestand.projectID</code>, <code>Def_Doos.projectID</code>, <code>Def_Doos.stellingID</code>, <code>Def_Vlak.projectID</code> en de koppeltabellen <code>Def_artefact_abr</code> en <code>Def_artefact_conservering</code>. Daarom gebruikt de upsert de mechaniek van <code>loadAll</code>, nu als herbruikbare helpers: <code>leesFkConstraints</code>, <code>verwijderFkConstraints</code>, <code>herstelFkConstraints</code> (<code>NOT VALID</code>, een <code>SAVEPOINT</code> per constraint) en <code>valideerFkConstraints</code> (een <code>SAVEPOINT</code> per constraint). <code>loadAll</code> roept dezelfde helpers aan, en sinds issue 71 ook de helpers voor de gebruikersdata.</li>
+<li><strong>Alleen de betrokken FK's</strong> (<code>getBetrokkenFkConstraints</code>): constraints op of naar een tabel uit <code>LOAD_TABELLEN</code>. Verwijzingen tussen gebruikerstabellen onderling (bijv. <code>Def_Bruikleen.partijID</code>) blijven staan.</li>
+<li><strong>Eén transactie.</strong> Verwijderen van FK's, upsert, verwijderen, geometrie, sequences, de afgeleide velden en het herstel met <code>NOT VALID</code> gebeuren in één transactie: de webapplicatie ziet het oude of het nieuwe geheel, nooit een mengvorm, en bij een fout wordt alles teruggedraaid (de run wordt <code>mislukt</code>, de volgende run pakt dezelfde bestanden opnieuw op). Dat geldt ook als een FK-constraint niet hersteld kan worden (<code>herstelFkConstraints</code> slaagt per constraint in een <code>SAVEPOINT</code>): na een commit zou die constraint definitief ontbreken, dus de load gooit dan een fout met de namen (<code>tabel.constraint</code>) en draait alles terug. <code>loadAll</code> (volledige cyclus) logt in dat geval alleen een waarschuwing, zoals voorheen. Het valideren gebeurt daarna in een eigen transactie. <code>lock_timeout</code> is 30 seconden (<code>LOCK_TIMEOUT_INCREMENTEEL</code>): <code>ALTER TABLE ... DROP CONSTRAINT</code> vraagt een <code>ACCESS EXCLUSIVE</code>-lock, dus houdt de webapplicatie langer een transactie open, dan faalt de load in plaats van eindeloos te wachten.</li>
+<li><strong>Upsert van alle documenten, niet alleen die met <code>delta_run</code>.</strong> Daardoor herstelt de load zichzelf: na een mislukte run, of als <code>Single_Store_Clean</code> om een andere reden afwijkt van PostgreSQL, brengt de volgende run alles weer gelijk. Dankzij de <code>IS DISTINCT FROM</code>-voorwaarde kost een ongewijzigde rij alleen het lezen en vergelijken.</li>
+<li><strong>Kolommen.</strong> Dezelfde kolommen als de volledige load (velden van de documenten die de tabel kent, zonder <code>location</code>), aangevuld met de velden uit <code>getFields</code> die de tabel kent maar die geen document (meer) heeft: die worden leeggemaakt, zoals bij een volledige load. Kolommen die de pipeline niet kent, zoals <code>ft_search</code> en de afgeleide velden (<code>aantal_fotos</code>, <code>aantal_artefacten</code>, <code>datering_vanaf</code> enz.), blijven buiten de upsert. De afgeleide velden worden daarna apart herberekend (<code>herberekenAfgeleideVelden</code>, issue 72).</li>
+<li><strong>Ontbrekende sequence.</strong> De atomic swap van de volledige cyclus verliest de sequence én de default van <code>primary_key</code> (de sequence hoort bij de oude tabel en verdwijnt met <code>DROP TABLE ... CASCADE</code>). Na een volledige cyclus kan de webapplicatie in de <code>Def_</code>-tabellen van de pipeline dus geen rijen aanmaken. De upsert maakt de sequence (<code>&lt;tabel&gt;_primary_key_seq</code>, <code>OWNED BY</code> de kolom) en de default opnieuw aan als hij ontbreekt. <code>loadAll</code> doet dat inmiddels ook zelf, in FASE 3 (<code>zetSequence</code> per tabel na het opruimen van de <code>_old</code>-tabellen).</li>
+<li><strong>Vangnetten.</strong> Bevat <code>Single_Store_Clean</code> geen enkel document van de te laden soorten, dan stopt de load (anders zou hij alle <code>Def_</code>-tabellen leegmaken). Een document zonder <code>ID</code> of een dubbel <code>ID</code> geeft een fout en een rollback (de volledige load faalt daar ook op).</li>
+<li><strong>Verwijzingen naar verdwenen rijen.</strong> Verwijzingen vanuit gebruikerstabellen worden losgekoppeld of verwijderd (issue 73, zie hieronder), zodat hun constraints weer valideren. Verwijst een rij in een andere <code>Def_</code>-tabel van de pipeline naar een rij die verdwijnt, dan blijft die verwijzing staan; de constraint wordt hersteld met <code>NOT VALID</code> en kan daarna niet gevalideerd worden: hij blijft <code>NOT VALID</code> (nieuwe en gewijzigde rijen worden wel gecontroleerd). De namen staan in <code>tellingen.load.fk_niet_gevalideerd</code> en in het log.</li>
+</ul>
+<p>Tellingen in het run-document onder <code>tellingen.load</code>: per tabel <code>upsert</code> (aangeboden rijen), <code>ingevoegd</code>, <code>bijgewerkt</code> (alleen echte wijzigingen) en <code>verwijderd</code>; verder <code>totaal</code>, <code>fk_niet_hersteld</code> (na een geslaagde load altijd 0, want anders faalt de load) en <code>fk_niet_gevalideerd</code>. De herberekening van de afgeleide velden staat onder <code>tellingen.afgeleide_velden</code>, de verwijzingen vanuit gebruikerstabellen onder <code>tellingen.gebruikersdata</code>.</p>
+<h3 id="gebruikersdata-bij-verdwenen-rijen-issue-73">Gebruikersdata bij verdwenen rijen (issue 73)<a class="headerlink" href="#gebruikersdata-bij-verdwenen-rijen-issue-73" title="Permanent link">&para;</a></h3>
+<p>Gebruikers voeren in de webapplicatie gegevens in die verwijzen naar rijen van de pipeline. Verdwijnt zo'n rij bij een incrementele run (een bronbestand is gewijzigd of verwijderd), dan bleef de verwijzing eerst staan en bleef de FK-constraint <code>NOT VALID</code>. Nu bepaalt <code>shared/gebruikersdata.VERWIJZINGEN</code> per verwijzing wat er gebeurt. De opdrachtgever besliste voor de bruikleen: <strong>de bruikleen blijft bestaan en krijgt een lege verwijzing, met een markering waaruit blijkt naar welk artefact hij verwees</strong>.</p>
+<table>
+<thead>
+<tr>
+<th>Verwijzing</th>
+<th>Naar</th>
+<th>Beleid</th>
+<th>Waarom</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Def_Bruikleen.artefactID</code></td>
+<td><code>Def_Artefact</code></td>
+<td>loskoppelen, markering <code>artefact_verdwenen_key</code>/<code>_op</code></td>
+<td>Een bruikleen is een eigen registratie (partij, datums) van een voorwerp dat het depot uit is (besluit opdrachtgever)</td>
+</tr>
+<tr>
+<td><code>Def_Bruikleen.projectID</code></td>
+<td><code>Def_Project</code></td>
+<td>loskoppelen, markering <code>project_verdwenen_key</code>/<code>_op</code></td>
+<td>Idem; een project verdwijnt als het uit de projectenlijst wordt gehaald</td>
+</tr>
+<tr>
+<td><code>Def_artefact_conservering.artefact_id</code></td>
+<td><code>Def_Artefact</code></td>
+<td>loskoppelen, markering <code>artefact_verdwenen_key</code>/<code>_op</code></td>
+<td>De regel legt vast welke artefacten een conserveringsproject heeft behandeld: geschiedenis van het project, dat zelf blijft bestaan</td>
+</tr>
+<tr>
+<td><code>Def_artefact_abr.artefact_id</code></td>
+<td><code>Def_Artefact</code></td>
+<td>verwijderen</td>
+<td>Extra ABR-materiaal van een artefact: een pure koppelrij zonder eigen gegevens, zonder het artefact betekenisloos</td>
+</tr>
+<tr>
+<td><code>Def_artefact_abr.abr_materiaal_id</code></td>
+<td><code>Def_ABR</code></td>
+<td>verwijderen</td>
+<td>Idem, zonder het ABR-begrip</td>
+</tr>
+</tbody>
+</table>
+<p><code>Def_artefact_conservering.conservering_id</code>, <code>Def_Bruikleen.partijID</code> en <code>Def_Conserveringsproject.uitvoerderID</code> verwijzen naar gebruikerstabellen, die de pipeline niet bijwerkt.</p>
+<p><strong>Loskoppelen</strong> (<code>koppelVerwijzingenLos</code>, in <code>werkTabelBij</code> vlak vóór het verwijderen van de rijen uit de doeltabel, want de key komt uit die rij): de verwijzing wordt <code>NULL</code>, <code>&lt;markering&gt;_key</code> krijgt de <code>key</code> van de verdwijnende rij (bij een artefact <code>key_subnr|artefactsoort</code>, bij een project bijv. <code>PSY002</code>) en <code>&lt;markering&gt;_op</code> het tijdstip (<code>CURRENT_TIMESTAMP</code>: het begin van de transactie, voor alle rijen van een run gelijk). <strong>Verwijderen</strong> en een <strong>vangnet</strong> (<code>ruimVerwijzingenOp</code>, vlak na het verwijderen): koppelrijen waarvan het doel niet (meer) bestaat worden verwijderd; een losgekoppelde verwijzing die naar een niet-bestaande rij wijst zonder dat de load die rij zag verdwijnen (bijvoorbeeld uit een run van vóór issue 73) wordt <code>NULL</code> met alleen het tijdstip (de key is dan niet meer bekend). <strong>Terugkoppelen</strong> (<code>koppelVerwijzingenTerug</code>, na alle tabellen): keert een rij met dezelfde key terug (met een nieuwe <code>primary_key</code>, want de oude rij is verwijderd), dan krijgen losgekoppelde rijen met die key in hun markering de nieuwe <code>primary_key</code> en wordt de markering gewist. Alleen als de key precies één keer in de doeltabel voorkomt, dezelfde regel als bij de stabiele sleutels (<code>bepaalStabieleIds</code>); anders blijft de rij losgekoppeld en telt hij als <code>dubbele_key</code>. Alles gebeurt in de transactie van de upsert, terwijl de betrokken FK's verwijderd zijn; daarna valideren de constraints van de gebruikerstabellen weer.</p>
+<p><strong>Schema.</strong> <code>Def_Bruikleen.artefactID</code> en <code>.projectID</code> zijn nullable (<code>Def_artefact_conservering.artefact_id</code> was dat al) en de markering is nieuw: <code>artefact_verdwenen_key</code> (<code>TEXT</code>), <code>artefact_verdwenen_op</code> (<code>TIMESTAMP</code>), en bij de bruikleen ook <code>project_verdwenen_key</code> en <code>project_verdwenen_op</code>. <code>db.create_all()</code> van de webapplicatie maakt alleen ontbrekende tabellen aan, dus een bestaande installatie (ook uit <code>deploy/</code>) wordt gemigreerd door <code>gebruikersdata.migreerSchema</code>: die leest <code>information_schema.columns</code> en voert alleen de nodige <code>ALTER TABLE ... ALTER COLUMN ... DROP NOT NULL</code> en <code>ADD COLUMN IF NOT EXISTS</code> uit (idempotent; als het schema klopt wordt er alleen gelezen). De migratie draait aan het begin van elke load, <code>loadAll</code> én <code>loadIncrementeel</code>, in een eigen transactie met een <code>lock_timeout</code> (<code>migreerSchemaGebruikersdata</code>), en ook in de webapplicatie bij het starten, direct na <code>db.create_all()</code> in <code>views.py</code> (een fout wordt daar gelogd en houdt het starten niet tegen). Zonder die laatste zou de webapplicatie na een update van de images tot de eerste load op de ontbrekende kolommen stuiten (bijvoorbeeld op de detailpagina van een artefact, die de bruiklenen toont). Ontbreken de kolommen toch, dan slaat de load de verwijzingen van die tabel over met een waarschuwing.</p>
+<p><strong>Webapplicatie.</strong> De lijst Bruiklenen heeft een kolom "Verdwenen uit de brondata" (bijv. <code>Artefact PSY003P1V1A1|Glas verdwenen op 22-10-2026</code>), het detail een blok met de vier kolommen van de markering, en het detail van een conserveringsproject toont zijn verdwenen artefacten. De markering is alleen te lezen; kiest de gebruiker bij het bewerken weer een artefact of project, dan vervalt de markering. Een nieuwe bruikleen vraagt nog steeds een project en een artefact (<code>pre_add</code>; voorheen dwong <code>NOT NULL</code> dat af), en een bestaande alleen als de verwijzing niet door de laadstap is losgekoppeld. Verwijdert een gebruiker zelf een artefact of project, dan maakt de ORM de verwijzing van de bruikleen leeg en vult <code>modelevents.py</code> dezelfde markering; een conserveringsproject met losgekoppelde regels kan gewoon verwijderd worden (<code>before_delete</code> ruimt die regels op).</p>
+<p><strong>Tellingen</strong> in het run-document onder <code>tellingen.gebruikersdata</code> en in het log, per gebruikerstabel en kolom: bij loskoppelen <code>losgekoppeld</code>, <code>teruggekoppeld</code> en <code>dubbele_key</code> (losgekoppelde rijen die niet terug konden omdat hun key meer dan één keer voorkomt), bij verwijderen <code>verwijderd</code>. Bijvoorbeeld <code>{"Def_Bruikleen": {"artefactID": {"losgekoppeld": 1, "teruggekoppeld": 0, "dubbele_key": 0}, "projectID": {...}}, "Def_artefact_conservering": {"artefact_id": {...}}, "Def_artefact_abr": {"artefact_id": {"verwijderd": 0}, "abr_materiaal_id": {"verwijderd": 0}}}</code>. Tabellen die niet bestaan ontbreken.</p>
+<p>In de volledige cyclus gebeurt sinds issue 71 hetzelfde rond de atomic swap, zie hieronder.</p>
+<h3 id="volledige-cyclus-gebruikersdata-en-stabiele-sleutels-issue-71">Volledige cyclus: gebruikersdata en stabiele sleutels (issue 71)<a class="headerlink" href="#volledige-cyclus-gebruikersdata-en-stabiele-sleutels-issue-71" title="Permanent link">&para;</a></h3>
+<p>Tot issue 71 nummerde de volledige cyclus in Transform 4 alle <code>primary_key</code>s opnieuw (volgnummers vanaf 0 in de volgorde van <code>Single_Store_Clean</code>). Daarom leegde <code>loadAll</code> na de swap <code>Def_Bruikleen</code>, <code>Def_Conserveringsproject</code>, <code>Def_artefact_conservering</code> en <code>Def_artefact_abr</code> met <code>TRUNCATE ... CASCADE</code>: hun verwijzingen wezen anders naar willekeurige rijen. <code>Def_Partij</code> bleef staan; de gebruikerstabellen zelf zaten nooit in de swap. Bruiklenen en conserveringsgegevens gingen zo verloren, en verwijzingen van buitenaf naar <code>primary_key</code>s vervielen.</p>
+<p>Nu:</p>
+<ol>
+<li><strong>Stabiele sleutels in elke DAG.</strong> <code>getSetReferencesTaskGroup()</code> geeft de <code>Set_PrimaryKey</code>-taken altijd <code>stabiel=True</code>, ook in de volledige cyclus en in <code>DAG_Transform_Only</code>, <code>DAG_Transform_Load_Only</code> en dergelijke. De volledige cyclus leegt alleen MongoDB: tijdens Transform 4 staan de tabellen van de vorige load nog in PostgreSQL, dus <code>setStabielePrimaryKeys</code> vindt de oude nummers terug. Het <code>_id</code> is na een nieuwe extractie altijd nieuw; de koppeling loopt daarom via de <code>primary_key</code> uit de bron (alleen de ABR-thesaurus: <code>parentID</code> en de webapplicatie verwijzen naar die nummers, en de ABR-uri's zijn niet uniek), via map en bestandsnaam (<code>directory</code>/<code>fileName</code> van <code>Def_Bestand</code>; foto's hebben vaak dezelfde key, bijv. <code>PSY001S1</code> voor een sfeer- en een opgravingsfoto) of via een <code>key</code> die precies één keer in de tabel staat, en sinds issue 81 via de hulpsleutel uit de bronrij. Andere documenten krijgen een nummer boven het maximum. Bij de eerste run (de tabel bestaat nog niet en geen document heeft een <code>ID</code>) nummert <code>setPrimaryKeys</code> zoals voorheen vanaf 0; een lege tabel (aangemaakt door de webapplicatie) geeft ook nummers vanaf 0, op volgorde van key.</li>
+<li><strong>Gebruikerstabellen blijven staan.</strong> <code>loadAll</code> laadt, swapt en leegt ze niet. Na het laden van de <code>_new</code>-tabellen (FASE 1, buiten de swap-transactie) bepaalt <code>bepaalVervallenSleutels</code> per tabel welke rijen hun <code>primary_key</code> verliezen: <em>verdwenen</em> (de <code>primary_key</code> komt in de nieuwe tabel niet voor: de entiteit is weg of heeft een nieuw nummer) of <em>hernummerd</em> (de <code>primary_key</code> hoort in de nieuwe tabel bij een andere key; alleen gecontroleerd in <code>Def_Artefact</code> en <code>Def_Project</code>, de tabellen waarnaar gebruikersdata verwijst en waarin de key de identiteit is. Bij <code>Def_ABR</code> is de <code>primary_key</code> uit de bron de identiteit, zodat een nieuwe uri in een nieuwe ABR-versie de koppelrijen laat staan; een bestand kan zijn <code>primary_key</code> houden terwijl zijn key verandert). In de transactie van de swap (FASE 2a), na het verwijderen van de FK's en vóór de rename, koppelt <code>koppelGebruikersdataLos</code> verwijzingen naar die rijen los met markering (<code>koppelVerwijzingenLos</code>; de key komt uit de oude tabel) en verwijdert het koppelrijen (<code>verwijderKoppelrijen</code>). Na de rename ruimt <code>werkGebruikersdataBijNaSwap</code> verwijzingen zonder doel op (<code>ruimVerwijzingenOp</code>) en koppelt het losgekoppelde rijen, ook uit eerdere runs, terug aan een rij met dezelfde, unieke key (<code>koppelVerwijzingenTerug</code>). Daarna worden de FK's hersteld en gevalideerd zoals altijd; die van de gebruikerstabellen valideren weer.</li>
+<li><strong>Sequences.</strong> <code>zetSequence</code> zet na de swap de sequence van elke <code>Def_</code>-tabel van de pipeline op het maximum plus één; de gebruikerstabellen houden hun eigen sequence.</li>
+</ol>
+<p><strong>Vangnet voor sleutels die niet stabiel zijn.</strong> <code>DAG_Load_Only</code> laadt <code>Single_Store_Clean</code> zonder Transform 4 opnieuw te draaien. Na een cyclus met deze versie zijn de sleutels in MongoDB stabiel, en na een volledige cyclus van vóór issue 71 zijn ze gelijk aan die in PostgreSQL (dezelfde load). Wijkt MongoDB toch af (bijvoorbeeld na een <code>make restore</code> van een andere backup), dan ziet <code>loadAll</code> hernummerde rijen en logt het een waarschuwing (<code>Sleutels niet stabiel ...</code>). De gebruikersdata gaat dan niet verloren: bruiklenen en conserveringsregels worden losgekoppeld en meteen op key weer gekoppeld (bij een unieke key), alleen koppelrijen naar hernummerde rijen (extra ABR-materiaal) worden verwijderd. Draai daarna de volledige cyclus.</p>
+<p><strong>Grenzen.</strong> Tot issue 81 kreeg een entiteit waarvan de key meer dan één keer voorkomt of ontbreekt (zoals <code>Def_Plaatsing</code> en <code>Def_Standplaats</code>, of artefacten met dezelfde <code>key_subnr</code> en artefactsoort) bij elke volledige cyclus een nieuw nummer boven het maximum. Bij de eerste volledige cyclus met stabiele sleutels op de productie-installatie (22 oktober 2026) ging het om ruim 60.000 rijen. Die rijen worden nu op hun hulpsleutel teruggevonden, zie <a href="#hulpsleutel-uit-de-bronrij-issue-81">Hulpsleutel uit de bronrij</a>; wat overblijft staat daar. Gebruikersdata die naar een rij met een dubbele key verwijst en wordt losgekoppeld, telt bij het terugkoppelen als <code>dubbele_key</code>.</p>
+<p><strong>Tellingen.</strong> <code>loadAll</code> logt per tabel de vervallen rijen en de tellingen van de gebruikersdata (<code>losgekoppeld</code>, <code>teruggekoppeld</code>, <code>dubbele_key</code>, <code>verwijderd</code>) en geeft ze terug als resultaat van de taak <code>LoadToDatabase_postgres</code> (<code>vervallen</code> en <code>gebruikersdata</code>). Sinds issue 54 heeft de volledige cyclus (en <code>DAG_Load_Only</code>) een run-document en schrijft <code>loadAll</code> daar ook <code>tellingen.load</code> (per tabel <code>rijen_voor</code>, <code>rijen</code>, <code>ingevoegd</code>, <code>verwijderd</code> en <code>hernummerd</code>, plus <code>totaal</code>, <code>fk_niet_hersteld</code>, <code>fk_niet_hersteld_namen</code> en <code>fk_niet_gevalideerd</code>), <code>tellingen.gebruikersdata</code> en <code>tellingen.afgeleide_velden</code>; hernummerde sleutels en niet herstelde of niet gevalideerde FK's worden een waarschuwing in de meldingen. Transform 4 logt per soort <code>behouden</code>, <code>uit_bron</code>, <code>op_id</code>, <code>op_bestand</code>, <code>op_vervangende_key</code>, <code>op_key</code>, <code>op_bronsleutel</code>, <code>op_bronsleutel_overgang</code>, <code>nieuw</code>, <code>nieuw_bronrij_bekend</code> en <code>verdwenen</code>.</p>
+<p><strong>Prestaties.</strong> Transform 4 leest per soort <code>primary_key</code>, <code>_id</code> en <code>key</code> (bij <code>Def_Bestand</code> ook map en bestandsnaam) uit PostgreSQL, en alleen voor de rijen die daarna nog vrij zijn ook <code>brondata</code> (issue 81), en schrijft alleen het veld <code>ID</code>; dat is minder werk dan het herschrijven van alle documenten via pandas zoals voorheen. <code>loadAll</code> vergelijkt per tabel de oude en de nieuwe tabel op <code>primary_key</code> (geïndexeerd) in FASE 1, dus buiten de swap-transactie; de bewerkingen op de gebruikerstabellen in de swap-transactie zijn klein. Transform 4 heeft in elke DAG een bereikbare PostgreSQL nodig.</p>
+<p><strong>Elasticsearch.</strong> De volledige cyclus bouwt elke index opnieuw (<code>indexTable</code>), ook die van de gebruikerstabellen (<code>getAllTables</code>); met stabiele sleutels houden de documenten hun id. De koppeltabellen <code>Def_artefact_abr</code> en <code>Def_artefact_conservering</code> hebben geen <code>primary_key</code> en zijn geen entiteit om te doorzoeken: <code>indexTable</code> slaat ze over. Dat viel vroeger niet op omdat ze na de volledige load leeg waren; met rijen faalde hun taak <code>Index_&lt;tabel&gt;</code>.</p>
+<h3 id="afgeleide-velden-issue-72">Afgeleide velden (issue 72)<a class="headerlink" href="#afgeleide-velden-issue-72" title="Permanent link">&para;</a></h3>
+<p>De webapplicatie toont velden die niet uit de brondata komen maar daaruit worden afgeleid: het aantal objectfoto's per artefact (lijst "Alle Artefacten met foto"), het aantal artefacten per project en de dateringen van een artefact. Voorheen vulde alleen <code>init.init()</code> van de webapplicatie (<code>app/app/init.py</code>) ze, en alleen bij het starten van Flask als nog geen enkel artefact een <code>aantal_fotos</code> had. Na een volledige cyclus bleven ze dus leeg tot Flask herstartte, en na een incrementele run werden ze nooit bijgewerkt. Nu berekent de laadstap ze zelf: <code>loadToDatabase_functions.herberekenAfgeleideVelden(cursor)</code>, met set-based SQL (<code>UPDATE ... FROM</code> met een aggregatie of join per tabel, constante <code>AFGELEIDE_VELDEN</code>).</p>
+<table>
+<thead>
+<tr>
+<th>Kolom</th>
+<th>Waarde (dezelfde uitkomst als <code>init.init()</code>)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Def_Artefact.aantal_fotos</code></td>
+<td>Aantal rijen in <code>Def_Bestand</code> met <code>bestandsoort</code> <code>Objectfoto</code> (het model <code>Objectfoto</code>) en een <code>artefactID</code> naar het artefact; 0 zonder foto's</td>
+</tr>
+<tr>
+<td><code>Def_Artefact.vondstdatering_vanaf</code>, <code>_tot</code></td>
+<td>De datering van de vondst (<code>vondstID</code>); <code>NULL</code> zonder (bestaande) vondst</td>
+</tr>
+<tr>
+<td><code>Def_Artefact.spoordatering_vanaf</code>, <code>_tot</code></td>
+<td>De datering van het spoor (<code>spoorID</code>) van die vondst; <code>NULL</code> zonder</td>
+</tr>
+<tr>
+<td><code>Def_Artefact.datering_vanaf</code></td>
+<td>De artefactdatering, anders de vondstdatering, anders de spoordatering</td>
+</tr>
+<tr>
+<td><code>Def_Artefact.datering_tot</code></td>
+<td>De artefactdatering, anders de vondstdatering (geen spoordatering)</td>
+</tr>
+<tr>
+<td><code>Def_Project.aantal_artefacten</code></td>
+<td>Aantal artefacten met een <code>projectID</code> naar het project; 0 zonder</td>
+</tr>
+</tbody>
+</table>
+<p>"Anders" betekent leeg of 0. <code>init.init()</code> zet zelf alleen <code>datering_vanaf</code>/<code>_tot</code> uit de artefactdatering, maar bij elke flush van een gewijzigd artefact lopen de observers van <code>models.py</code> (<code>@observes</code> van sqlalchemy_utils) mee: die vullen de vondst- en spoordatering in met <code>if not ...</code>. Tot oktober 2026 viel <code>datering_tot</code> niet terug op de spoordatering, omdat in <code>models.py</code> twee observers dezelfde naam <code>spoor_observer</code> hadden en de tweede (voor <code>spoordatering_vanaf</code>) de eerste (voor <code>spoordatering_tot</code>) overschreef; dat is hersteld (<code>spoordattot_observer</code> en <code>spoordatvanaf_observer</code>), zodat <code>init.init()</code> en de pipeline voor vanaf en tot dezelfde voorrang hanteren. <code>tests/unit/test_afgeleide_velden.py</code> draait het echte <code>init.init()</code> op SQLite en eist dezelfde uitkomst.</p>
+<p>Keuzes:</p>
+<ul>
+<li><strong>Binnen de bestaande laadfuncties, geen aparte Airflow-taak.</strong> In de incrementele cyclus gebeurt de herberekening in de transactie van <code>Load_Upsert</code>, na de upsert van alle tabellen en vóór het herstel van de FK's. Zo ziet de webapplicatie nooit nieuwe rijen met lege of verouderde afgeleide velden, valt de stap vanzelf onder <code>Markeer_Run_Mislukt</code> en draait hij vóór de Index-taken en <code>Registreer_Run</code>. Sinds issue 54 staat de herberekening in een <code>SAVEPOINT</code> (<code>herberekenAfgeleideVeldenInSavepoint</code>): een fout draait alleen de herberekening terug, de upsert gaat door en de fout wordt een waarschuwing in het run-document (tot dan draaide een fout de hele upsert terug). In <code>loadAll</code> is een fout in FASE 4 om dezelfde reden een waarschuwing (de swap is dan al gecommit). Vóór het herstel van de FK's, omdat PostgreSQL na <code>ADD CONSTRAINT ... NOT VALID</code> bij een <code>UPDATE</code> van een rij die in dezelfde transactie is ingevoegd alle FK's van die rij opnieuw controleert. In de volledige cyclus is het FASE 4 van <code>loadAll</code>, in een eigen transactie na de swap, het herstel en de validatie van de FK's; daarmee hebben ook <code>DAG_Load_Only</code> en <code>DAG_Transform_Load_Only</code> de velden direct gevuld. Een aparte taak had een extra venster met verouderde waarden gegeven en had in drie DAG's toegevoegd moeten worden.</li>
+<li><strong>Alle rijen, niet alleen de geraakte projecten.</strong> Set-based gaat dat snel (een paar joins en aggregaties; Delft heeft ongeveer 32.000 artefacten en 100.000 bestanden), het is eenvoudiger en het herstelt zichzelf, net als de upsert. Alleen rijen waarvan een waarde echt verandert worden herschreven (<code>IS DISTINCT FROM</code>), dus een run zonder wijzigingen schrijft niets.</li>
+<li><strong>Tellingen.</strong> Per tabel en per kolom het aantal rijen dat een nieuwe waarde krijgt, plus <code>rijen</code> (het aantal herschreven rijen), in het log en in het run-document onder <code>tellingen.afgeleide_velden</code>, bijvoorbeeld <code>{"Def_Artefact": {"aantal_fotos": 12, ..., "datering_tot": 3, "rijen": 12}, "Def_Project": {"aantal_artefacten": 1, "rijen": 1}}</code>. Sinds issue 54 ook in het run-document van de volledige cyclus en van <code>DAG_Load_Only</code>; mislukt de herberekening, dan ontbreekt <code>tellingen.afgeleide_velden</code> en staat er een waarschuwing (<code>afgeleide_velden_mislukt</code>) in de meldingen.</li>
+<li><strong>Elasticsearch.</strong> <code>shared/fulltext.getCols</code> indexeert alleen <code>primary_key</code> en tekstkolommen; de afgeleide velden zijn getallen en staan niet in de index. De volgorde ten opzichte van de Index-taken maakt dus niet uit (en de herberekening gaat er toch aan vooraf).</li>
+<li><strong><code>init.init()</code> blijft als vangnet.</strong> De webapplicatie roept het bij het starten nog steeds aan als geen enkel artefact <code>aantal_fotos &gt; 0</code> heeft (data zonder objectfoto's of een database die vóór deze wijziging is geladen); de uitkomst is dan dezelfde. Alleen de logregels zeggen nu dat de pipeline dit normaal doet. De observers in <code>models.py</code> werken bij wijzigingen via de webapplicatie zoals voorheen; de volgende load zet de waarden weer volgens de tabel hierboven.</li>
+</ul>
+<h3 id="stabiele-sleutels-voor-artefacten">Stabiele sleutels voor artefacten<a class="headerlink" href="#stabiele-sleutels-voor-artefacten" title="Permanent link">&para;</a></h3>
+<p><code>delta_transform.getArtefactKey(doc)</code> geeft de <code>key</code> van een artefact, of anders de samengestelde sleutel <code>key_subnr|artefactsoort</code> (de sleutel waarop de merge artefacten samenvoegt). De load vult daarmee de kolom <code>key</code> van <code>Def_Artefact</code> (sinds issue 81 <code>vulLaadKey</code> in <code>leesDocumenten</code>, met <code>getLaadKey</code>; artefacten zonder <code>key_subnr</code> krijgen de hulpsleutel uit hun bronrij, zie hieronder), in de volledige én de incrementele cyclus; de kolom was leeg en werd nergens gebruikt (en <code>key</code> staat in <code>SKIP_FULLTEXT</code>). <code>setStabielePrimaryKeys</code> vergelijkt artefacten op dezelfde sleutel. Een artefact uit een opnieuw ingelezen database (nieuw <code>_id</code>) houdt zo zijn <code>primary_key</code>, zolang de combinatie uniek is in <code>Def_Artefact</code>.</p>
+<p>Overgang: in een database die nog is geladen vóór fase 3 is <code>key</code> van de artefacten leeg. De eerste incrementele run vult de kolom (alle artefacten tellen dan als <code>bijgewerkt</code>); pas in de runs daarna werkt het terugvinden op de samengestelde sleutel. Begin daarom met een volledige cyclus (zie <a href="#gebruik">Gebruik</a>).</p>
+<h3 id="hulpsleutel-uit-de-bronrij-issue-81">Hulpsleutel uit de bronrij (issue 81)<a class="headerlink" href="#hulpsleutel-uit-de-bronrij-issue-81" title="Permanent link">&para;</a></h3>
+<p><strong>Probleem.</strong> Bij de eerste volledige cyclus met stabiele sleutels op de productie-installatie (22 oktober 2026) bleek dat een groot deel van de rijen geen key heeft of een key die vaker voorkomt. Die rijen kregen bij elke volledige cyclus een nieuw nummer boven het maximum: geen dataverlies, wel instabiele id's en links, groeiende nummers, en een bruikleen op zo'n artefact raakte bij elke volledige cyclus zijn koppeling kwijt.</p>
+<p><strong>Waarom geen (unieke) key.</strong> Gemeten op de productiedata (Single_Store_Clean en de <code>Def_</code>-tabellen):</p>
+<table>
+<thead>
+<tr>
+<th>Soort</th>
+<th style="text-align: right;">Rijen</th>
+<th style="text-align: right;">Unieke key</th>
+<th style="text-align: right;">Geen key</th>
+<th style="text-align: right;">Dubbele key</th>
+<th>Oorzaak</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Artefact</td>
+<td style="text-align: right;">32.527</td>
+<td style="text-align: right;">4.733</td>
+<td style="text-align: right;">20.845</td>
+<td style="text-align: right;">6.949</td>
+<td>Zonder key: determinatie- en codetabellen zonder subnummer (ARTF_AW 4.400, AARDEWERK 1 4.345, Aardewerk 4.219, BOT 2.472, Determinaties 1.760, ARTF_AW1 880, AW1DeterminatiesJohan 780, ROMEINS AARDEWERK 594, Spijkers 400, Spijkeranalyse Koningsveld 285, SkeletKV4 273, ARTF_PIJP 115 en de codetabellen uit #75); zonder <code>subnr</code> is <code>key_subnr</code> leeg en zonder <code>artefactnr</code> ook <code>key</code>. Spijkeranalyse Koningsveld (<code>Subnummer</code>) en ARTF_PIJP (<code>SUB_NO</code>) hebben wel een subnummer, maar de harmonisatie neemt het niet over. Dubbel (bij de meting): artefacten die werden samengevoegd, werden ook verplaatst, zodat naast het samengevoegde document losse exemplaren met dezelfde <code>key_subnr|artefactsoort</code> bleven staan; daarnaast kwamen kopieën van de databases van DC024 uit een werkmap mee. Beide zijn eind oktober 2026 opgelost: verplaatsen is nu het complement van samenvoegen (zie <a href="../transformatie/#verplaatsen-en-samenvoegen-van-artefacten">Transformatie</a>) en de extractie slaat de werkmap over met <code>paden_overslaan</code> (zie <a href="../extractie/#paden-overslaan">Extractie</a>)</td>
+</tr>
+<tr>
+<td>Monster_Botanie</td>
+<td style="text-align: right;">21.381</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">21.381</td>
+<td style="text-align: right;">0</td>
+<td>De key in <code>meta.py</code> is <code>M&lt;monstercd&gt;ID&lt;Id&gt;</code>, maar de harmonisatie neemt de kolom <code>Id</code> niet over, dus de key was altijd leeg. Opgelost: Transform 3 valt terug op <code>brondata.Id</code> (in de synthetische data <code>brondata.ID</code>)</td>
+</tr>
+<tr>
+<td>Monster_Schelp</td>
+<td style="text-align: right;">1.191</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1.191</td>
+<td style="text-align: right;">0</td>
+<td>Idem</td>
+</tr>
+<tr>
+<td>Plaatsing</td>
+<td style="text-align: right;">5.902</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">5.902</td>
+<td style="text-align: right;">0</td>
+<td><code>meta.py</code> definieert geen key</td>
+</tr>
+<tr>
+<td>Vindplaats</td>
+<td style="text-align: right;">37</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">37</td>
+<td style="text-align: right;">0</td>
+<td>Idem</td>
+</tr>
+<tr>
+<td>Standplaats</td>
+<td style="text-align: right;">8.675</td>
+<td style="text-align: right;">5.865</td>
+<td style="text-align: right;">26</td>
+<td style="text-align: right;">2.784</td>
+<td>Eén document per rij van de magazijnlijst (tabellen <code>magazijnlijst</code> en <code>doosnr</code>); de key is de plek (<code>S&lt;stelling&gt;V&lt;vak&gt;L&lt;letter&gt;</code>), dus dozen op dezelfde plek hebben dezelfde key</td>
+</tr>
+<tr>
+<td>Spoor</td>
+<td style="text-align: right;">1.807</td>
+<td style="text-align: right;">936</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">871</td>
+<td>Dezelfde sporen in meer tabellen of databases van een project (SPOOR, SPOREN, Sporen2)</td>
+</tr>
+<tr>
+<td>Doos</td>
+<td style="text-align: right;">4.473</td>
+<td style="text-align: right;">4.300</td>
+<td style="text-align: right;">42</td>
+<td style="text-align: right;">131</td>
+<td>Meer magazijnregels per doos; zonder projectcode of doosnummer geen key</td>
+</tr>
+<tr>
+<td>Vulling</td>
+<td style="text-align: right;">1.092</td>
+<td style="text-align: right;">796</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">296</td>
+<td>Zoals bij sporen</td>
+</tr>
+<tr>
+<td>Put, Vlak</td>
+<td style="text-align: right;">372, 89</td>
+<td style="text-align: right;">357, 74</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">15, 15</td>
+<td>Dezelfde put of hetzelfde vlak in meer databases van een project</td>
+</tr>
+<tr>
+<td>Vondst, Monster</td>
+<td style="text-align: right;">6.268, 1.613</td>
+<td style="text-align: right;">alle op één na</td>
+<td style="text-align: right;">1, 1</td>
+<td style="text-align: right;">0</td>
+<td>Eén samengevoegd document voor alle bronrijen zonder key</td>
+</tr>
+<tr>
+<td>DT_Soort_Schelp</td>
+<td style="text-align: right;">124</td>
+<td style="text-align: right;">122</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">2</td>
+<td>Dubbele wetenschappelijke naam</td>
+</tr>
+</tbody>
+</table>
+<p><strong>De hulpsleutel</strong> (<code>delta_transform.getBronsleutel</code>) is de identiteit van de bronrij(en) van een document, afgeleid uit <code>brondata</code>:</p>
+<ul>
+<li>één bronrij (<code>getBronrijId</code>): <code>&lt;pad&gt;:&lt;tabel&gt;:&lt;autonummer&gt;</code>, bijvoorbeeld <code>projecten/DB034_Koningsveld IV/C Database/opgravingDB34.mdb:AW1DeterminatiesJohan:4</code>. Het pad is <code>mdbfile</code> zonder <code>/input/</code>; het autonummer komt uit de eerste kolom <code>ID</code>, <code>Id</code> of <code>id</code> met een geheel getal. De meeste Delftse tabellen hebben er een (onder meer ARTF_AW, AARDEWERK 1, BOT, de monstertabellen, de magazijnlijst, SPOREN, VONDSTENLIJST en VULLINGEN). Zonder autonummer zijn onder meer de andere ARTF_-tabellen (ARTF_AW1, ARTF_MET, ARTF_ODL, ARTF_OPH, ARTF_PIJP), CATALOGUS AW1, SkeletKV4, de codetabellen uit #75, PUT, VLAK, SPOOR, Sporen2, VONDST, VULLING, MUUR, de tabellen <code>doosnr</code> en <code>stellingen</code> en de referentietabellen R_PLANT, R_SCHELP en R_DEEL. Daar is het <code>&lt;pad&gt;:&lt;tabel&gt;:#&lt;hash&gt;</code>, een sha1 over de inhoud van de rij (alle velden behalve <code>_id</code>, <code>loadtime</code>, <code>bron</code>, <code>mdbfile</code>, <code>table</code> en <code>projectcd</code>);</li>
+<li>een samengevoegd document (merge in Transform 5): de gesorteerde, unieke lijst van al zijn bronrijen, gescheiden door <code>;</code> (langer dan 400 tekens: het aantal en een hash). Zo botst het niet met het verplaatste document van een van zijn bronrijen, en de volgorde van <code>brondata</code> (<code>$addToSet</code>) maakt niet uit;</li>
+<li>geen bronrij uit een bestand (gegenereerde putten, vlakken, sporen, vondsten en dozen): geen hulpsleutel; hun natuurlijke key is uniek. Bestanden (<code>Def_Bestand</code>, op map en bestandsnaam) en de ABR (op de <code>primary_key</code> uit de bron) krijgen geen hulpsleutel.</li>
+</ul>
+<p>Een ongewijzigde bronrij geeft bij elke extractie dezelfde hulpsleutel; <code>_id</code> en <code>loadtime</code> zijn wel elke keer nieuw. Het volledige pad is nodig: bij de meting van 22 oktober 2026 waren met alleen de bestandsnaam 4.833 artefacten niet uniek (kopieën van dezelfde database in een werkmap, die de extractie inmiddels overslaat), zonder bestand zelfs 9.301. Ook buiten die werkmap staan mogelijk kopieën met dezelfde bestandsnaam.</p>
+<p><strong>Geen eigen kolom.</strong> De hulpsleutel staat niet in een eigen kolom in PostgreSQL: hij volgt uit de kolom <code>brondata</code>, die de load al vult met <code>str()</code> van de bronrijen uit MongoDB. <code>delta_transform.leesBrondataTekst</code> leest die tekst veilig terug (een syntaxboom met alleen literals, <code>ObjectId</code>, <code>Int64</code>, <code>datetime</code> en <code>nan</code>; geen <code>eval</code>), en <code>getBronsleutel</code> geeft dan dezelfde uitkomst als op het document in MongoDB. Op de productiedata klopt dat voor alle 92.581 rijen van de tabellen met een hulpsleutel, en het lezen kost ongeveer 2 seconden voor de 32.527 artefacten. Bij het onderzoek van issue 88 opnieuw gecontroleerd: op de backup van 22 oktober en op de tabellen na de cyclus van 29 oktober geeft de parser voor geen enkele rij <code>None</code>, en voor elke rij dezelfde bronsleutel als het document in MongoDB (de Delftse brondata bevat alleen <code>ObjectId</code>, <code>nan</code>, <code>False</code> en teksten met aanhalingstekens, regeleinden en backslashes; de langste tekst is 81.909 tekens). De parser leest sindsdien ook <code>Decimal128</code>, <code>Decimal</code> en <code>Timestamp</code>; teksten uit de productie staan als fixture in de unit tests. Daarmee is er geen schemawijziging nodig (geen kolom in <code>models.py</code>, geen migratie voor bestaande installaties en <code>deploy/</code>), en werkt de koppeling ook op rijen die vóór issue 81 zijn geladen: de eerste cyclus na de update hernummert niets (zie hieronder).</p>
+<p><strong>In de kolom key.</strong> Een document zonder natuurlijke key krijgt in PostgreSQL een leesbare key met de hulpsleutel (<code>delta_transform.getLaadKey</code>, gevuld door <code>vulLaadKey</code> in <code>leesDocumenten</code>, in beide cycli):</p>
+<ul>
+<li>artefact: <code>P&lt;project&gt;[P&lt;put&gt;][V&lt;vondst&gt;]|&lt;artefactsoort&gt;|bron:&lt;hulpsleutel&gt;</code>, zoals <code>PDB034P10V460|Aardewerk|bron:projecten/DB034_Koningsveld IV/C Database/opgravingDB34.mdb:AW1DeterminatiesJohan:4</code>; het begin volgt <code>key_subnr</code> zonder subnummer en zonder de projectbrede vlag <code>vondstkey_met_putnr</code>;</li>
+<li>andere soorten: <code>bron:&lt;hulpsleutel&gt;</code>, zoals <code>bron:magazijnlijst/MAGAZIJN.mdb:magazijnlijst:1</code> voor een plaatsing.</li>
+</ul>
+<p>Een natuurlijke key, ook een die vaker voorkomt, blijft ongewijzigd, en het veld <code>key</code> in MongoDB verandert niet: <code>setReferences</code> koppelt op die keys (een spoor wordt via <code>key_spoor</code> gevonden), dus een andere key in MongoDB zou verwijzingen breken. Transform 4 vergelijkt in het geheugen op dezelfde key als de load schrijft. De markering van losgekoppelde gebruikersdata (<code>&lt;markering&gt;_key</code>, issue 73) bevat zo ook bij een artefact zonder subnr een key, en <code>koppelVerwijzingenTerug</code> koppelt een teruggekeerd artefact op die key terug. <code>bepaalVervallenRijen</code> vergelijkt nog steeds op <code>key</code>; een rij die vóór issue 81 geen key had telt niet als hernummerd.</p>
+<p><strong>Koppelen in Transform 4</strong> (<code>bepaalStabieleIds</code>), na de koppeling op de bron, <code>_id</code> en map en bestandsnaam en (issue 88) op een vervangende key (zie <a href="#verloren-keys-in-transform-3-issue-88">Verloren keys in Transform 3</a>):</p>
+<ol>
+<li>op een <code>key</code> die precies één keer in de tabel staat, maar niet voor een document met een hulpsleutel waarvan de key ook onder de documenten vaker voorkomt: welke rij bij welk document hoort beslist dan de hulpsleutel. De natuurlijke key houdt zo voorrang en rijen met een unieke key veranderen niet;</li>
+<li>op hulpsleutel én key van een rij die nog vrij is. De hulpsleutels van de rijen in PostgreSQL komen uit de kolom <code>brondata</code> (<code>leesPgBronsleutels</code>, alleen voor de rijen die na stap 1 nog vrij zijn). Komt de combinatie vaker voor, dan gaat het om identieke bronrijen (een tabel zonder autonummer met gelijke rijen): documenten (op <code>_id</code>) en rijen (op <code>primary_key</code>) worden paarsgewijs gekoppeld (<code>_koppelOpGroep</code>); ze zijn onderling uitwisselbaar. Daarna (issue 89, stap 5b in de code) op de hulpsleutel bij een key die alleen verschilt in een deel dat van de harmonisatie afhangt (<code>getBronsleutelWaarde</code>): twee hulpsleutel-keys met dezelfde hulpsleutel, of twee keys <code>key_subnr|artefactsoort</code> met dezelfde <code>key_subnr</code>. Een andere artefactsoort of een gecorrigeerd vondst- of putnummer in een bronrij met autonummer geeft zo geen nieuw nummer (zie <a href="#andere-artefactsoort-door-de-harmonisatie-issue-89">Andere artefactsoort door de harmonisatie</a>);</li>
+<li>op de hulpsleutel alleen, voor rijen zonder key in PostgreSQL: de overgang voor rijen die vóór issue 81 zijn geladen. Een groep met documenten met verschillende keys (één bronrij die bij twee artefactsoorten hoort) koppelt alleen bij precies één document en één rij;</li>
+<li>de rest op een unieke key zoals vóór issue 81 (het eerste document krijgt het nummer), en daarna nieuwe nummers.</li>
+</ol>
+<p>De tellingen staan per soort onder <code>op_bronsleutel</code> (stap 2, op hulpsleutel én key), <code>op_bronsleutel_andere_key</code> (stap 2, bij een andere artefactsoort of hulpsleutel-key) en <code>op_bronsleutel_overgang</code> (stap 3). Krijgt een document daarna toch een nieuw nummer terwijl een vrije rij met dezelfde bronsleutel en een andere key in de tabel staat, dan telt het als <code>nieuw_bronrij_bekend</code> (met tot vijf voorbeelden) en meldt Transform 4 een waarschuwing (<code>sleutels_niet_stabiel</code>) in het run-document: de key van die bronrij is veranderd of ontbreekt, zoals bij issue 88.</p>
+<p><strong>Dekking op de productiedata.</strong> Een simulatie van de volgende volledige cycli op de productie-installatie (alleen lezen: de documenten uit <code>Single_Store_Clean</code> met nieuwe <code>_id</code>'s en zonder <code>ID</code>, tegen de <code>Def_</code>-tabellen van na de cyclus van 22 oktober):</p>
+<table>
+<thead>
+<tr>
+<th>Tabel</th>
+<th style="text-align: right;">Rijen</th>
+<th style="text-align: right;">Unieke key (na issue 81)</th>
+<th style="text-align: right;">Via hulpsleutel</th>
+<th style="text-align: right;">Niet uniek</th>
+<th style="text-align: right;">Stabiel</th>
+<th style="text-align: right;">Nieuw nummer bij de eerste cyclus</th>
+<th style="text-align: right;">Bij de tweede</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Def_Artefact</code></td>
+<td style="text-align: right;">32.527</td>
+<td style="text-align: right;">24.959</td>
+<td style="text-align: right;">6.949</td>
+<td style="text-align: right;">619</td>
+<td style="text-align: right;">98,1% (100% met paarsgewijs koppelen)</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td><code>Def_Monster_Botanie</code></td>
+<td style="text-align: right;">21.381</td>
+<td style="text-align: right;">21.381</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">100%</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td><code>Def_Monster_Schelp</code></td>
+<td style="text-align: right;">1.191</td>
+<td style="text-align: right;">1.191</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">100%</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td><code>Def_Plaatsing</code></td>
+<td style="text-align: right;">5.902</td>
+<td style="text-align: right;">5.902</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">100%</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td><code>Def_Vindplaats</code></td>
+<td style="text-align: right;">37</td>
+<td style="text-align: right;">37</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">100%</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td><code>Def_Standplaats</code></td>
+<td style="text-align: right;">8.675</td>
+<td style="text-align: right;">5.891</td>
+<td style="text-align: right;">2.784</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">100%</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td><code>Def_Spoor</code></td>
+<td style="text-align: right;">1.807</td>
+<td style="text-align: right;">936</td>
+<td style="text-align: right;">871</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">100%</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td><code>Def_Doos</code></td>
+<td style="text-align: right;">4.473</td>
+<td style="text-align: right;">4.342</td>
+<td style="text-align: right;">131</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">100%</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td><code>Def_Vulling</code></td>
+<td style="text-align: right;">1.092</td>
+<td style="text-align: right;">796</td>
+<td style="text-align: right;">296</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">100%</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td><code>Def_Put</code>, <code>Def_Vlak</code></td>
+<td style="text-align: right;">372, 89</td>
+<td style="text-align: right;">357, 74</td>
+<td style="text-align: right;">15, 15</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">100%</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td>overige tabellen (zonder <code>Def_Bestand</code>)</td>
+<td style="text-align: right;">15.035</td>
+<td style="text-align: right;">15.031</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">2 (ABR: op de <code>primary_key</code> uit de bron)</td>
+<td style="text-align: right;">100%</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+</tr>
+</tbody>
+</table>
+<p>In de Delftse testomgeving (DB034 met de centrale lijsten, 61.466 rijen in 21 tabellen) heeft na twee volledige cycli achter elkaar geen enkele rij een ander nummer; Transform 4 vindt daar onder meer 522 artefacten, 2.784 standplaatsen, 131 dozen en 2 schelpsoorten op de hulpsleutel terug, en de referentie-uitkomst (<code>tests/integration/fixtures/delft_golden_snapshot.json</code>: tellingen per soort en de voorbeeldkeys) is ongewijzigd.</p>
+<p>De 619 artefacten die in deze simulatie ook met de hulpsleutel niet uniek waren, kwamen uit de tabel ARTF_AW1 zonder autonummer met rijen die volledig gelijk zijn (bijv. vondst 8, type <code>r-pot</code>). Alle ARTF_AW1-rijen op de productie-installatie staan in <code>DC024_Stadskantoor/K Overig/werkmap joris/test.mdb</code>, een van de kopieën die de extractie sinds eind oktober 2026 overslaat; met die rijen verdwijnen ook deze niet-unieke artefacten. Het mechanisme blijft: identieke rijen in een tabel zonder autonummer houden hun nummers door het paarsgewijs koppelen, maar welke rij welk nummer heeft is niet te zeggen, en hun key is niet uniek, zodat gebruikersdata op zo'n rij na loskoppelen niet automatisch wordt teruggekoppeld (<code>dubbele_key</code>).</p>
+<p><strong>Na het samenvoegen en het overslaan van de werkmap.</strong> Een simulatie op de productie-installatie met beide wijzigingen (eind oktober 2026) geeft bij de eerstvolgende volledige cyclus 22.551 artefacten in plaats van 32.527: 3.313 losse exemplaren uit merge-groepen en 6.663 artefacten die alleen uit de kopieën in de werkmap kwamen vervallen. Geen enkel artefact krijgt een nieuw nummer; één vondst wordt eenmalig hernummerd (het samengevoegde document van alle vondstrijen zonder key, dat bronrijen uit de werkmap verliest en daardoor een andere hulpsleutel krijgt). Draai na het bijwerken eerst de volledige cyclus.</p>
+<p><strong>Wat de hulpsleutel niet oplost.</strong></p>
+<ul>
+<li>Een bronrij in een tabel zonder autonummer die inhoudelijk verandert, krijgt een andere hash en dus een nieuw nummer (als hij geen unieke natuurlijke key heeft). Met een autonummer blijft de hulpsleutel gelijk; verandert daarbij het vondst- of putnummer van een artefact zonder subnr, dan verandert het leesbare begin van de key, maar sinds issue 89 houdt de rij zijn nummer. Een artefact met een artefactnummer of met <code>key_subnr</code> krijgt bij een ander vondst- of putnummer wel een nieuw nummer: die key is de identiteit (alleen een andere artefactsoort in <code>key_subnr|artefactsoort</code> telt niet).</li>
+<li>Een samengevoegd document waarvan een bronrij verdwijnt of bijkomt, krijgt een andere hulpsleutel; het houdt zijn nummer alleen via een unieke natuurlijke key (bij de dubbele artefacten is die er niet).</li>
+<li>Een database die verplaatst of hernoemd wordt (ander pad), of opnieuw wordt opgebouwd met nieuwe autonummers, geeft nieuwe hulpsleutels en dus nieuwe nummers voor de rijen zonder unieke natuurlijke key.</li>
+<li>Dubbele keys die een eigenschap van de data zijn, blijven bestaan: één standplaats per magazijnregel, sporen en vullingen die in meer tabellen van een project staan, en artefacten die bewust apart blijven (<code>artefact_niet_mergen</code>, <code>ROMEINS AARDEWERK</code>) of een dubbele natuurlijke key in de bron hebben (zie <a href="../transformatie/#verplaatsen-en-samenvoegen-van-artefacten">Transformatie</a>). De dubbele artefacten door de oude merge-regel en de kopieën in de werkmap van DC024 zijn sinds eind oktober 2026 verdwenen.</li>
+</ul>
+<p><strong>Eerste cyclus op een bestaande installatie.</strong> De rijen die al een nummer hebben maar nog geen key met hulpsleutel (artefacten zonder subnr, monsters, plaatsingen, vindplaatsen en de rijen met een lege key) worden in stap 3 op hun hulpsleutel uit de kolom <code>brondata</code> teruggevonden; de rijen met een dubbele key in stap 2. In de simulatie op de productiedata houden alle 92.581 rijen (alle tabellen behalve <code>Def_Bestand</code>, dat ongewijzigd op map en bestandsnaam koppelt) hun nummer, ook bij de cyclus daarna. De load vult daarbij de kolom <code>key</code> van die rijen; in een incrementele run tellen ze dan eenmalig als <code>bijgewerkt</code>. Draai na de update eerst de volledige cyclus: de nieuwe key van <code>Monster_Botanie</code> en <code>Monster_Schelp</code> (<code>M&lt;monstercd&gt;ID&lt;Id&gt;</code>) zet alleen Transform 3, en een incrementele run doet dat alleen voor de documenten uit de delta. Rijen die vóór issue 81 al bij elke cyclus een nieuw nummer kregen, houden het nummer van de laatste cyclus; de oude nummers komen niet terug.</p>
+<h3 id="verloren-keys-in-transform-3-issue-88">Verloren keys in Transform 3 (issue 88)<a class="headerlink" href="#verloren-keys-in-transform-3-issue-88" title="Permanent link">&para;</a></h3>
+<p><strong>Wat er gebeurde.</strong> In de eerste volledige cyclus met release 1.2.0 op de productie-installatie (29 oktober 2026) kregen 8.438 standplaatsen, de sporen en vullingen uit de bron, en enkele putten en vlakken een nieuw nummer; de 22 stellingen verdwenen uit <code>Def_Stelling</code> en 934 tekeningen uit <code>Def_Bestand</code>. De artefacten en monsters leken stabiel. De hulpsleutel en het teruglezen van <code>brondata</code> werkten wel (zie hierboven): de natuurlijke key van die documenten ontbrak in <code>Single_Store</code>.</p>
+<p><strong>Oorzaak.</strong> De taken <code>Set_ReferenceKeys_&lt;soort&gt;</code> van Transform 3 draaien onder de scheduler parallel. <code>setReferenceKeys</code> las de uitkomst van de sleutelpipeline in een DataFrame en schreef elk document volledig terug, met <code>key</code> en <code>soort</code> ook als ze leeg waren. De pipeline van <code>Fotokoppel</code> is leeg (<code>[[]]</code> in <code>meta.py</code>): zonder <code>$match</code> las die taak de hele <code>Single_Store</code> (circa 130.000 documenten, 15 seconden) en schreef alles terug zoals hij het had gelezen. Elke key die een andere taak in die tijd berekende, werd zo weer <code>None</code>, en stellingen kregen hun soort <code>stelling</code> terug. Welke documenten het trof hangt af van de timing: op 29 oktober onder meer alle sporen, vullingen, stellingen en tekeningen, de meeste standplaatsen, alle monsters (Monster_Botanie) en de artefacten met een artefactnummer; op 21 en 22 oktober onder meer alle artefacten met een artefactnummer. De integratietests draaien de DAG's met <code>airflow dags test</code>, dat de taken na elkaar uitvoert: daar gebeurt het niet. In de Delftse testomgeving is het nagebootst door de taak van <code>Fotokoppel</code> tegelijk met de andere sleuteltaken te draaien: daarna misten 8.649 van de 8.675 standplaatsen, alle sporen, vullingen, tekeningen en botaniemonsters hun key en hadden de stellingen hun soort kwijt.</p>
+<p><strong>Gevolgen.</strong> Een document zonder natuurlijke key krijgt in PostgreSQL de hulpsleutel-key (<code>bron:&lt;bronsleutel&gt;</code>; een artefact met artefactnummer <code>key_subnr|artefactsoort</code>). Transform 4 vond de rij met de natuurlijke key dan niet terug (stap 1 en 2 vergelijken op de key, stap 3 alleen voor rijen zonder key): een nieuw nummer. Daarnaast: een spoor, put of vlak zonder key liet Transform 5 een dubbel spoor, put of vlak genereren; tekeningen zonder key werden in <code>Merge_Tekening</code> tot één document samengevoegd; de stellingen kwamen niet in <code>Single_Store_Clean</code>; verwijzingen op key (<code>key_standplaats</code>, <code>key_spoor</code>, <code>key_stelling</code>, ABR-materiaal) liepen leeg. De gebruikerstabellen (bruiklenen, conservering, partijen, extra ABR-materiaal) waren op 29 oktober leeg; er is geen gebruikersdata losgekoppeld.</p>
+<p><strong>Herstel.</strong></p>
+<ol>
+<li><code>setReferenceKeys</code> schrijft alleen de velden die de pipeline berekent (de <code>$addFields</code>- en <code>$set</code>-fasen, <code>getPipelineVelden</code>), zonder <code>upsert</code>, en een lege pipeline doet niets. Parallelle taken raken elkaars velden dan niet meer. Een pipeline zonder <code>$match</code> vooraan krijgt <code>{'soort': &lt;soort&gt;}</code>; een pipeline met andere fasen schrijft (met een waarschuwing) nog het hele document. Een unit test eist dat alle sleutelpipelines in <code>meta.py</code> met <code>$match</code> beginnen en alleen <code>$addFields</code> hebben.</li>
+<li>Transform 4 vindt rijen terug die met een vervangende key zijn geladen (<code>getVervangendeKeys</code>, stap 3b in <code>bepaalStabieleIds</code>, <code>_koppelOpVervangendeKey</code>): de hulpsleutel-key van het document en bij een artefact met artefactnummer ook <code>key_subnr|artefactsoort</code>. Bij de hulpsleutel-key volstaat de key (de bronsleutel zit erin); bij <code>key_subnr|artefactsoort</code> moet ook de bronsleutel van de rij gelijk zijn, want die key kan vaker voorkomen. Sinds issue 89 volgt een tweede ronde waarin een andere artefactsoort (of ander project, put of vondst in de hulpsleutel-key) niet meer telt. Deze stap komt vóór de unieke key, zodat een spoor zijn eigen rij houdt en niet die van het dubbele spoor dat Transform 5 genereerde. Hetzelfde geldt voor een document dat later een natuurlijke key krijgt (een artefact dat een artefactnummer krijgt, een monster waarvan de key sinds issue 81 het autonummer bevat).</li>
+<li>De load telt een rij die zijn nummer houdt met een andere key niet als hernummerd als de bronsleutel gelijk blijft (<code>bepaalVervallenRijen</code>): dat is dezelfde bronrij, teruggevonden op een vervangende key. Zo geeft de overgang van <code>key_subnr|artefactsoort</code> naar de natuurlijke key van een artefact geen waarschuwing "Sleutels niet stabiel" en wordt gebruikersdata niet losgekoppeld.</li>
+<li>Krijgt een document toch een nieuw nummer terwijl zijn bronrij met een andere key in de tabel staat, dan meldt Transform 4 dat (<code>nieuw_bronrij_bekend</code>, waarschuwing in het run-document).</li>
+</ol>
+<p><strong>Geen eigen kolom voor de hulpsleutel.</strong> Overwogen is de hulpsleutel voortaan in een eigen kolom op te slaan. Dat is niet gedaan: het teruglezen uit <code>brondata</code> bleek niet de oorzaak en werkt voor elke rij op de productie-installatie, en een kolom vraagt een schemawijziging in <code>models.py</code>, een migratie (<code>migreerSchema</code>) voor bestaande installaties en <code>deploy/</code>, plus een overgangsregel voor rijen zonder die kolom.</p>
+<p><strong>Volgende volledige cyclus op productie.</strong> Een simulatie op de productie-installatie (alleen lezen: de documenten uit <code>Single_Store_Clean</code> met de natuurlijke key die Transform 3 zonder verlies zet, nieuwe <code>_id</code>'s, tegen de tabellen na 29 oktober):</p>
+<table>
+<thead>
+<tr>
+<th>Tabel</th>
+<th style="text-align: right;">Rijen</th>
+<th>Met de fix</th>
+<th>Zonder de fix (en zonder nieuwe verliezen)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Def_Standplaats</code></td>
+<td style="text-align: right;">8.675</td>
+<td>8.438 op vervangende key, 0 nieuw</td>
+<td>8.438 nieuw</td>
+</tr>
+<tr>
+<td><code>Def_Spoor</code></td>
+<td style="text-align: right;">1.873</td>
+<td>1.243 op vervangende key, 0 nieuw; 338 dubbele gegenereerde sporen vervallen</td>
+<td>905 nieuw, 1.243 vervallen</td>
+</tr>
+<tr>
+<td><code>Def_Vulling</code></td>
+<td style="text-align: right;">1.091</td>
+<td>1.091 op vervangende key, 0 nieuw</td>
+<td>1.091 nieuw</td>
+</tr>
+<tr>
+<td><code>Def_Put</code>, <code>Def_Vlak</code></td>
+<td style="text-align: right;">364, 79</td>
+<td>4 en 6 op vervangende key, 0 nieuw; 4 en 2 dubbele gegenereerde vervallen</td>
+<td>0 en 4 nieuw</td>
+</tr>
+<tr>
+<td><code>Def_Artefact</code></td>
+<td style="text-align: right;">22.551</td>
+<td>384 op vervangende key (krijgen hun natuurlijke key), 0 nieuw</td>
+<td>384 nieuw</td>
+</tr>
+<tr>
+<td><code>Def_Monster_Botanie</code></td>
+<td style="text-align: right;">21.381</td>
+<td>21.381 op vervangende key (krijgen <code>M&lt;monstercd&gt;ID&lt;Id&gt;</code>), 0 nieuw</td>
+<td>21.381 nieuw</td>
+</tr>
+<tr>
+<td><code>Def_Stelling</code></td>
+<td style="text-align: right;">0</td>
+<td>22 nieuw, in een lege tabel genummerd op key: dezelfde nummers 0 t/m 21 als vóór 29 oktober</td>
+<td>idem</td>
+</tr>
+<tr>
+<td>overige tabellen</td>
+<td style="text-align: right;"></td>
+<td>0 nieuw</td>
+<td>0 nieuw</td>
+</tr>
+</tbody>
+</table>
+<p>De 934 tekeningen die op 29 oktober uit <code>Def_Bestand</code> verdwenen, komen terug met een nieuw nummer boven het maximum; hun oude nummers zijn alleen in de backup van 22 oktober bekend. Een eenmalige herstelkoppeling naar de nummers van vóór 29 oktober is niet gemaakt: er verwees geen gebruikersdata naar deze rijen, de nummers van 29 oktober staan intussen in de zoekindex en in links van de webapplicatie, en voor de rijen die op 22 oktober al een nieuw nummer kregen (dubbele keys) staan de nummers in geen enkele backup. Draai na het bijwerken de volledige cyclus.</p>
+<p>In de Delftse testomgeving is dit nagespeeld: na een nagebootste cyclus met verloren keys (zoals op 29 oktober) hield de eerste volledige cyclus met de fix alle 30.911 rijen met een vervangende key op hun nummer (8.649 standplaatsen, 456 sporen, 425 vullingen, 21.381 botaniemonsters), vervielen de 256 dubbele gegenereerde sporen en kregen de 22 stellingen hun nummers terug; de cyclus daarna veranderde in geen van de 21 tabellen (61.205 rijen) een nummer of key. Zonder de fix kregen in de cyclus na het verlies 30.655 rijen een nieuw nummer.</p>
+<h3 id="andere-artefactsoort-door-de-harmonisatie-issue-89">Andere artefactsoort door de harmonisatie (issue 89)<a class="headerlink" href="#andere-artefactsoort-door-de-harmonisatie-issue-89" title="Permanent link">&para;</a></h3>
+<p><strong>Wat er gebeurde.</strong> In de volledige cyclus van 29 oktober 2026 om 17:49 kregen 801 artefacten van DB034 een nieuw nummer (60321 t/m 61121) en vervielen er 799 nummers. Ze kwamen uit de tabel <code>AW1DeterminatiesJohan</code>, die zowel de pipeline van <code>Aardewerk</code> (patroon <code>AW1.*</code>) als die van <code>Artefact</code> (<code>Determinaties</code>) selecteert. De taken <code>Harmonize_&lt;soort&gt;</code> draaien parallel en de laatste schrijver won: om 16:10 <code>Aardewerk</code>, om 17:49 <code>Artefact</code>, zonder artefactsoort, baksel, decoratie en ABR-materiaal. De artefactsoort zit in de key van een artefact zonder artefactnummer: de hulpsleutel-key <code>PDB034P10V460|Aardewerk|bron:…</code> werd <code>PDB034P10V460||bron:…</code>, en bij de 20 rijen met een subnummer werd <code>PDB034P10V630A2|Aardewerk</code> <code>PDB034P10V630A2|Onbekend</code>. Transform 4 koppelde op hulpsleutel én key en vond de rijen dus niet terug; de waarschuwing <code>nieuw_bronrij_bekend</code> (799) meldde het wel.</p>
+<p><strong>Herstel.</strong></p>
+<ol>
+<li>De harmonisatie is deterministisch: een tabel die meer pipelines selecteren, harmoniseert precies één soort, gekozen met <a href="../configuratie/#36-harmonisatie_voorrang"><code>harmonisatie_voorrang</code></a> in <code>correcties.yml</code> of met de voorrangsregel (specifieke artefactsoort vóór <code>Artefact</code>), met een waarschuwing als er geen instelling is (zie <a href="../transformatie/#voorrang-bij-een-tabel-die-meer-soorten-selecteren">Transformatie</a>). Delft kiest <code>Aardewerk</code> voor <code>AW1DeterminatiesJohan</code>.</li>
+<li>Transform 4 vindt een rij met een andere artefactsoort in zijn key terug (<code>getBronsleutelWaarde</code>). Na het koppelen op hulpsleutel én key volgt een tweede ronde, in stap 3b (vervangende keys, <code>_koppelOpVervangendeKey</code>) en in stap 5b van <code>bepaalStabieleIds</code>: een hulpsleutel-key telt daar alleen met zijn hulpsleutel, een key <code>key_subnr|artefactsoort</code> met hulpsleutel en <code>key_subnr</code>. Eerst exact, dan pas los: twee documenten uit dezelfde bronrij met verschillende artefactsoorten houden zo elk hun eigen rij. Een document met een hulpsleutel-key koppelt niet aan een rij met een natuurlijke key of met <code>key_subnr|artefactsoort</code>, en andersom: dat blijft een nieuw nummer met de waarschuwing <code>nieuw_bronrij_bekend</code>, het signaal voor een verloren key zoals bij issue 88. Een andere natuurlijke key (artefactnummer, spoor, standplaats) blijft een andere entiteit. De telling is <code>op_bronsleutel_andere_key</code> (in stap 3b <code>op_vervangende_key</code>).</li>
+<li>De load schrijft de nieuwe key bij het bestaande nummer (<code>vulLaadKey</code>) en telt zo'n rij niet als hernummerd: <code>bepaalVervallenRijen</code> laat een rij met dezelfde bronsleutel weg (issue 88). Gebruikersdata blijft gekoppeld.</li>
+</ol>
+<p><strong>Volgende volledige cyclus op productie.</strong> Simulatie op de productie-installatie (alleen lezen): de documenten uit <code>Single_Store_Clean</code> met nieuwe <code>_id</code>'s, waarbij de 804 documenten met een bronrij uit een <code>AW1DeterminatiesJohan</code>-document van de cyclus van 16:10 (toen <code>Aardewerk</code> won, uit de Mongo-backup van 17:49) door die 802 documenten zijn vervangen, tegen de tabellen van na 17:49:</p>
+<table>
+<thead>
+<tr>
+<th>Tabel</th>
+<th style="text-align: right;">Rijen</th>
+<th>Met beide fixes</th>
+<th>Alleen de deterministische harmonisatie</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Def_Artefact</code></td>
+<td style="text-align: right;">22.553</td>
+<td>22.551 teruggevonden, 0 nieuw, 0 hernummerd. 799 rijen houden hun nummer en krijgen hun <code>Aardewerk</code>-key terug (779 hulpsleutel-keys, 20 met <code>key_subnr</code>). 61017 en 61019 vervallen: hun bronrij gaat weer op in de samengevoegde artefacten 54037 en 54041 (<code>PDB034P10V630A49</code> en <code>A50</code>, samen met rijen uit AARDEWERK 1, Aardewerk en CATALOGUS AW1), die hun nummer houden, zoals vóór 17:49</td>
+<td>799 nieuw (<code>nieuw_bronrij_bekend</code> 799), 801 vervallen</td>
+</tr>
+<tr>
+<td>20 andere tabellen (zonder <code>Def_Artefact</code>)</td>
+<td style="text-align: right;">68.627</td>
+<td>0 nieuw, 0 hernummerd, 0 vervallen</td>
+<td>idem</td>
+</tr>
+</tbody>
+</table>
+<p>Zonder beide fixes hangt de uitkomst af van de timing: wint <code>Artefact</code> opnieuw, dan verandert er niets (en blijven de determinaties weg); wint <code>Aardewerk</code>, dan krijgen de 799 rijen opnieuw een nieuw nummer.</p>
+<h3 id="codetabellen-spijkers-raap-koppen-en-tussenversies-issues-75-85-en-86">Codetabellen, spijkers, RAAP-koppen en tussenversies (issues 75, 85 en 86)<a class="headerlink" href="#codetabellen-spijkers-raap-koppen-en-tussenversies-issues-75-85-en-86" title="Permanent link">&para;</a></h3>
+<p>Vier wijzigingen in de configuratie en de code veranderen welke bronrijen in <code>Single_Store_Clean</code> komen: de codetabellen <code>AARDEWERK 1&amp;2 VOORWERP</code> en <code>AARDEWERK 1 BAKSEL</code> gaan uit de harmonisatie (lege waarde in <code>harmonisatie_voorrang</code>, issue 75), de spijkers uit <code>Spijkeranalyse Koningsveld</code> krijgen subnummer, vondst en put (blad <code>Artefact</code> van de harmonisatie-Excel, issue 85), de RAAP-tabel <code>ARTEFACT</code> wordt geladen met een artefactsoort uit de materiaalcode, en de tussenversies <code>HHD2.mdb</code> en <code>dc79a1.mdb</code> van DC097 staan in <code>paden_overslaan</code> (issue 86).</p>
+<p><strong>Samengevoegde documenten die bronrijen verliezen.</strong> Na het overslaan van de tussenversies verliezen 533 samengevoegde artefacten en 351 samengevoegde vondsten van DC097 twee van hun drie bronrijen, en daarmee hun hulpsleutel (de lijst van hun bronrijen). Ze houden hun nummer toch: hun natuurlijke key (<code>key_subnr|artefactsoort</code> en <code>P&lt;project&gt;[P&lt;put&gt;]V&lt;vondst&gt;</code>) verandert niet en staat precies één keer in de tabel (stap 4). Sporen en vullingen van DC097 stonden drie keer in de tabel, één keer per database (verplaatst, niet samengevoegd); de rij uit <code>opgravingDC97.mdb</code> wordt teruggevonden op hulpsleutel en key (stap 5), de twee andere vervallen. Een extra regel voor een document waarvan de hulpsleutel een deel is van die van een bestaande rij is daarom niet nodig.</p>
+<p><strong>Spijkers met een subnummer.</strong> De 285 spijkers stonden met een hulpsleutel-key in <code>Def_Artefact</code> (<code>PDB034|Metaal|bron:…</code>). Met subnummer, vondst en put krijgen 254 van hen een eigen key <code>key_subnr|Metaal</code>; Transform 4 vindt hun rij terug op de hulpsleutel-key als vervangende key (stap 3b) en de load schrijft de nieuwe key bij het bestaande nummer. De andere 31 worden samengevoegd zoals elk artefact met een subnummer: 16 met een artefact uit de tabel <code>METAAL</code> met hetzelfde project, dezelfde put, vondst en subnummer (in één geval samen met een tweede spijker; dat artefact houdt zijn nummer via zijn key), en 15 in 6 groepen van 2 tot 4 spijkers met hetzelfde nummer (vooral vondstnummer 0), die een nieuw nummer krijgen. Hun 31 oude nummers vervallen.</p>
+<p><strong>Volgende volledige cyclus op productie.</strong> Simulatie (alleen lezen) van Transform 1 tot en met het toekennen van de <code>primary_key</code>s in Transform 4, met de code van de repository, op een kopie van de staging van de productie-installatie in een aparte MongoDB, met nieuwe <code>_id</code>'s zoals na een nieuwe extractie, de documenten van de tussenversies weggelaten zoals de extractie ze overslaat, en vergeleken met de tabellen in PostgreSQL na de cyclus van 29 oktober 2026 19:01. Met de code en configuratie van vóór deze wijzigingen geeft dezelfde simulatie in alle 21 tabellen 0 nieuw, 0 gewijzigd en 0 vervallen.</p>
+<table>
+<thead>
+<tr>
+<th>Tabel</th>
+<th style="text-align: right;">Rijen</th>
+<th style="text-align: right;">Teruggevonden</th>
+<th style="text-align: right;">Nieuw</th>
+<th style="text-align: right;">Vervallen</th>
+<th>Toelichting</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Def_Artefact</code></td>
+<td style="text-align: right;">22.551</td>
+<td style="text-align: right;">22.263</td>
+<td style="text-align: right;">138</td>
+<td style="text-align: right;">288</td>
+<td>Nieuw: 132 RAAP-koppen en 6 groepen spijkers. Vervallen: 142 rijen uit de codetabellen, 115 artefacten die alleen in de tussenversies van DC097 stonden en 31 spijkers die opgaan in een ander artefact. Van de teruggevonden rijen krijgen 254 spijkers een nieuwe key en hebben 548 artefacten (533 van DC097, 15 uit <code>METAAL</code>) andere bronrijen; geen enkel nummer gaat naar een andere bronrij</td>
+</tr>
+<tr>
+<td><code>Def_Spoor</code></td>
+<td style="text-align: right;">1.535</td>
+<td style="text-align: right;">1.353</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">182</td>
+<td>Nieuw: het spoor <code>PDB034P10S288</code> uit de spijkeranalyse (gegenereerd). Vervallen: de sporen uit de tussenversies van DC097</td>
+</tr>
+<tr>
+<td><code>Def_Vulling</code></td>
+<td style="text-align: right;">1.091</td>
+<td style="text-align: right;">895</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">196</td>
+<td>Vervallen: de vullingen uit de tussenversies van DC097</td>
+</tr>
+<tr>
+<td><code>Def_Vondst</code></td>
+<td style="text-align: right;">6.266</td>
+<td style="text-align: right;">6.266</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+<td>Nieuw: de vondst <code>PDB034P11V318</code> uit de spijkeranalyse (gegenereerd); 351 vondsten van DC097 met minder bronrijen houden hun nummer</td>
+</tr>
+<tr>
+<td>17 andere tabellen</td>
+<td style="text-align: right;"></td>
+<td style="text-align: right;">alle</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>Geen van de vervallen rijen heeft gebruikersdata (bruiklenen, conservering, extra ABR-materiaal) of een gekoppelde foto. Draai na het bijwerken de volledige cyclus.</p>
+<h3 id="elasticsearch-delta-fulltextindextableincrementeel">Elasticsearch-delta (<code>fulltext.indexTableIncrementeel</code>)<a class="headerlink" href="#elasticsearch-delta-fulltextindextableincrementeel" title="Permanent link">&para;</a></h3>
+<p>Per tabel uit <code>LOAD_TABELLEN</code> een taak <code>Index_&lt;tabel&gt;</code>, parallel na <code>Load_Upsert</code>. Bestaat de alias van de tabel (aangemaakt door <code>indexTable</code>), dan worden alle rijen in de index achter de alias geïndexeerd met dezelfde documenten als <code>generate_docs</code> (<code>_id</code> = <code>primary_key</code>, een bestaand document wordt overschreven) en daarna de documenten verwijderd waarvan de <code>_id</code> niet meer in de tabel staat (id's uit Elasticsearch met <code>helpers.scan</code> zonder <code>_source</code>, verschil bepalen, bulk delete). Zonder alias, of als de alias naar meer dan één index wijst, volgt een volledige indexering met <code>indexTable</code>. Alleen <code>LOAD_TABELLEN</code> worden geïndexeerd: de gebruikerstabellen verandert de incrementele cyclus niet.</p>
+<p>De Index-taken staan <strong>niet</strong> in de lijst <code>bewaakt</code> van <code>Markeer_Run_Mislukt</code>. Een haperende Elasticsearch maakt de run niet ongeldig: de data in PostgreSQL klopt dan al. <code>Registreer_Run</code> wacht via <code>Index_Klaar</code> (<code>trigger_rule=all_done</code>) tot alle Index-taken klaar zijn, geslaagd of niet, en zet de run daarna op <code>afgerond</code>; zo kan een volgende run niet starten terwijl de indexering nog loopt. Faalt <code>Load_Upsert</code>, dan slaagt <code>Index_Klaar</code> wel (all_done), maar draait <code>Registreer_Run</code> niet en zet <code>Markeer_Run_Mislukt</code> de run op <code>mislukt</code>. Sinds issue 54 slaagt de Airflow-run bij een mislukte Index-taak (de eindtaak hangt niet meer aan de Index-taken); de fout is een waarschuwing in de meldingen van het run-document en in het verwerkingsrapport. Tot dan was de run rood. Herstel: wis de mislukte Index-taak in Airflow zodat hij opnieuw draait, of wacht op de volgende incrementele run (die indexeert alle rijen opnieuw). Dit volgt dezelfde gedachte als de volledige cyclus, waar <code>Registreer_Bronbestanden</code> aan <code>LoadToDatabase_postgres</code> hangt en niet aan het slagen van de indexering; ook daar is een mislukte Index-taak sinds issue 54 een waarschuwing.</p>
+<h3 id="testomgeving">Testomgeving<a class="headerlink" href="#testomgeving" title="Permanent link">&para;</a></h3>
+<p><code>docker-compose.test.yml</code> heeft een eigen Elasticsearch (<code>elasticsearch-test</code>, zonder hostpoort) en Airflow wacht op een gezonde Elasticsearch. De Index_*-taken van de volledige cyclus en van <code>DAG_Load_Only</code> slagen daardoor nu ook in de testomgeving. Zie <a href="../../testen/#elasticsearch-in-de-testomgeving">Testen</a>.</p>
+<h2 id="run-document">Run-document<a class="headerlink" href="#run-document" title="Permanent link">&para;</a></h2>
+<p>Elke run van de incrementele cyclus, de volledige cyclus en <code>DAG_Load_Only</code> krijgt een document in <code>Arch_Staging.Verwerkingsruns</code>. Tot issue 54 kreeg de volledige cyclus pas bij de registratie aan het eind een run-document; nu maakt <code>Start_Run</code> het aan het begin aan (vóór <code>Drop_All_Databases</code>, die de collectie laat staan) en sluit <code>Registreer_Bronbestanden</code> erbij aan (<code>startRun('volledig')</code> zonder Airflow-run geeft de lopende volledige run terug). Faalt een cruciale taak, dan zet <code>Markeer_Run_Mislukt</code> ook deze runs op <code>mislukt</code>. De taken lezen het met <code>verwerkingsrun.huidigeRun()</code> in plaats van via XCom, zodat <code>airflow dags test</code> en handmatige aanroepen hetzelfde werken.</p>
+<table>
+<thead>
+<tr>
+<th>Veld</th>
+<th>Inhoud</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>_id</code>, <code>run_id</code></td>
+<td>Tijdstempel van de start in UTC, bijv. <code>20261021T143005</code> (bij twee starts in dezelfde seconde met volgnummer <code>_2</code>)</td>
+</tr>
+<tr>
+<td><code>soort</code></td>
+<td><code>incrementeel</code>, <code>volledig</code> of <code>laden</code> (<code>DAG_Load_Only</code>, issue 54)</td>
+</tr>
+<tr>
+<td><code>status</code></td>
+<td><code>actief</code>, <code>afgerond</code> of <code>mislukt</code></td>
+</tr>
+<tr>
+<td><code>airflow_run_id</code></td>
+<td><code>run_id</code> van de Airflow-DagRun die de run startte</td>
+</tr>
+<tr>
+<td><code>dag_id</code></td>
+<td>De DAG van die DagRun (issue 54)</td>
+</tr>
+<tr>
+<td><code>gestart_op</code>, <code>beeindigd_op</code></td>
+<td>Tijdstippen (UTC)</td>
+</tr>
+<tr>
+<td><code>registratie_leeg</code></td>
+<td><code>True</code> als <code>Def_Bronbestand</code> leeg was</td>
+</tr>
+<tr>
+<td><code>nieuw</code>, <code>gewijzigd</code>, <code>ongewijzigd</code>, <code>verwijderd</code></td>
+<td>Per categorie een gesorteerde lijst met paden, bijv. <code>{"projecten": ["/input/projecten/SY003/C Database/opgravingSY002.mdb"], "afbeeldingen": [...]}</code></td>
+</tr>
+<tr>
+<td><code>ongewijzigd_weggelaten</code></td>
+<td><code>True</code> als de lijst <code>ongewijzigd</code> is weggelaten omdat het document anders te groot wordt (MongoDB: max. 16 MB; de grens ligt op 12 MB aan padlijsten)</td>
+</tr>
+<tr>
+<td><code>verwijderde_keys</code></td>
+<td>Per soort een lijst <code>{key, projectcd}</code>; voor Artefact ook <code>key_subnr</code> en <code>artefactsoort</code>. Artefacten hebben in <code>Single_Store</code> vaak <code>key: null</code> en worden samengevoegd op <code>key_subnr</code>; ze tellen mee zodra <code>key_subnr</code> gevuld is. Documenten zonder sleutel (bijv. <code>Fotobeschrijving</code>) leveren geen entry op</td>
+</tr>
+<tr>
+<td><code>geraakte_projecten</code></td>
+<td>Gesorteerde lijst met projectcodes van verwijderde of vervangen <code>Single_Store</code>-documenten. Dat kunnen ook andere projecten zijn dan het project van het bestand: een foto <code>SY002_F001.jpg</code> in de map van SY003 krijgt projectcode <code>SY002</code> uit de bestandsnaam</td>
+</tr>
+<tr>
+<td><code>tellingen</code></td>
+<td><code>delta</code> (per categorie en status, plus <code>totaal</code>), <code>hash_berekend</code>, <code>opruimen</code> (per categorie: verwijderde documenten per collectie, <code>filenames</code>, <code>media</code>, <code>gridfs</code>), <code>transform</code> (fase 2: <code>delta_documenten</code>, <code>merge</code>, <code>gegenereerd</code>, <code>primary_keys</code> per soort, zie <a href="#uitwerking-in-fase-2">Uitwerking in fase 2</a>), <code>load</code> (fase 3: per tabel <code>upsert</code>, <code>ingevoegd</code>, <code>bijgewerkt</code>, <code>verwijderd</code>, plus <code>totaal</code>, <code>fk_niet_hersteld</code>, <code>fk_niet_gevalideerd</code>), <code>afgeleide_velden</code> (issue 72: per tabel en per afgeleide kolom het aantal rijen met een nieuwe waarde, plus <code>rijen</code>, zie <a href="#afgeleide-velden-issue-72">Afgeleide velden</a>), <code>gebruikersdata</code> (issue 73: per gebruikerstabel en kolom <code>losgekoppeld</code>, <code>teruggekoppeld</code> en <code>dubbele_key</code>, of <code>verwijderd</code>, zie <a href="#gebruikersdata-bij-verdwenen-rijen-issue-73">Gebruikersdata bij verdwenen rijen</a>), <code>registratie</code> (<code>verwerkt</code>, <code>mislukt</code>, <code>verwijderd</code>, <code>vingerafdruk_bijgewerkt</code>), <code>afbeeldingen</code> (issue 70, taak <code>Controleer_Afbeeldingen</code>: <code>totaal</code>, <code>verwerkt</code>, <code>overgeslagen</code>, <code>overgeslagen_per_reden</code>, <code>mislukt</code>, <code>onverwerkt</code>, <code>voorbeelden</code> met <code>filename</code>, <code>fout</code> en <code>fout_op</code> van de eerste tien niet-verwerkte bestanden, <code>drempel</code>, <code>max_aantal</code>, <code>max_pct</code> en <code>boven_drempel</code>; in de incrementele cyclus geteld over de afbeeldingen die in deze run zijn verwerkt of overgeslagen (<code>verwerkt_op</code> na <code>gestart_op</code>) plus alle afbeeldingen die nog openstaan, in de volledige cyclus over de hele collectie <code>Filenames</code>; ook geschreven als de controle faalt), <code>extractie</code> (taak <code>Controleer_Databases</code>: onleesbare en lege databases, overgeslagen tabellen en de drempel, zie <a href="../verwerkingsrapport/#controle-van-de-access-databases-controleer_databases">Foutbeleid en verwerkingsrapport</a>), <code>paden_overgeslagen</code> (aantallen per categorie van de paden die <code>paden_overslaan</code> overslaat; de paden zelf staan in het veld <code>paden_overgeslagen</code> van het run-document)</td>
+</tr>
+<tr>
+<td><code>overgenomen_van</code></td>
+<td><code>run_id</code>s van mislukte runs waarvan sleutels zijn overgenomen (alleen incrementele runs na de laatste geslaagde incrementele of volledige run en na de start van de laatste volledige cyclus)</td>
+</tr>
+<tr>
+<td><code>melding</code></td>
+<td>Toelichting bij een mislukte run, met de mislukte taken</td>
+</tr>
+<tr>
+<td><code>meldingen</code></td>
+<td>Issue 54: lijst met waarschuwingen en fouten, elk met <code>niveau</code> (<code>waarschuwing</code> of <code>fout</code>), <code>stap</code>, <code>taak</code>, <code>soort</code>, <code>melding</code>, <code>aantal</code>, <code>details</code> en <code>tijdstip</code>; hoogstens 500. Zie <a href="../verwerkingsrapport/#meldingen-in-het-run-document">Foutbeleid en verwerkingsrapport</a></td>
+</tr>
+<tr>
+<td><code>rapport</code></td>
+<td>Issue 62: <code>json</code> en <code>markdown</code> (paden van het verwerkingsrapport in de Airflow-container), <code>map_terugval</code>, <code>gemaakt_op</code> en <code>samenvatting</code> (<code>uitkomst</code>, <code>status</code>, <code>duur_seconden</code>, <code>fouten</code>, <code>waarschuwingen</code>, <code>gestopt_door</code>, <code>bronbestanden</code>, <code>objecten</code>, <code>verwerkingsfouten</code>, <code>afbeeldingen_mislukt</code>, <code>databases_onleesbaar</code>, <code>secties_niet_beschikbaar</code>)</td>
+</tr>
+</tbody>
+</table>
+<p>De vingerafdrukken per bestand (<code>pad</code>, <code>categorie</code>, <code>status</code>, <code>grootte</code>, <code>mtime</code>, <code>sha256</code>, <code>vingerafdruk_bijgewerkt</code>) staan niet in het run-document maar in <code>Arch_Staging.Verwerkingsrun_Bestanden</code>, één document per bestand per run: bij ~100.000 foto's zouden ze de documentlimiet overschrijden. <code>Start_Run</code> verwijdert de records van eerdere runs. De volledige cyclus leegt <code>Arch_Staging</code> aan het begin, maar laat sinds issue 54 de collectie <code>Verwerkingsruns</code> staan (<code>mongoUtils.BEWAARDE_STAGING_COLLECTIES</code>): de geschiedenis van runs en verwerkingsrapporten blijft bewaard. <code>Verwerkingsrun_Bestanden</code> wordt wel geleegd.</p>
+<h2 id="modules-en-taken">Modules en taken<a class="headerlink" href="#modules-en-taken" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Onderdeel</th>
+<th>Inhoud</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>airflow_app/dags/DAG_Extract_Transform_Load_Incremental.py</code></td>
+<td>DAG <code>Extract_Transform_Load_Incremental</code>: <code>Start_Run</code> → <code>Bepaal_Delta</code> → <code>Opruimen_Oude_Records</code> → <code>Extract_Group</code> (delta) → Transform 1 → 2 → 3 → 5 → 4 (delta) → <code>Load_Upsert</code> → <code>Index_&lt;tabel&gt;</code> (parallel) → <code>Index_Klaar</code> (all_done) → <code>Registreer_Run</code> (hangt af van <code>Load_Upsert</code> en <code>Index_Klaar</code>) → einde, plus <code>Markeer_Run_Mislukt</code> (bewaakt alle taken tot en met <code>Registreer_Run</code>, niet de Index-taken) en <code>Verwerkingsrapport</code> (na alle andere taken, vóór de eindtaak; issue 62).</td>
+</tr>
+<tr>
+<td><code>airflow_app/dags/wasstraat/verwerkingsrun.py</code></td>
+<td><code>startRun(soort, airflow_run_id, dag_id)</code>, <code>huidigeRun()</code>, <code>werkRunBij(velden)</code>, <code>beeindigRun(status)</code>, <code>markeerRunMislukt(airflow_run_id)</code>, <code>getDeltaPaden(categorie, statussen)</code>, <code>isInDelta(pad, categorie)</code>; issue 54: <code>zoekRunVanAirflowRun</code>, <code>runVanTaak</code>, <code>voegMeldingToe</code>, <code>rondRunAf</code>, <code>getMislukteTaken</code></td>
+</tr>
+<tr>
+<td><code>airflow_app/dags/wasstraat/bronbestanden.py</code></td>
+<td><code>scanBronbestanden()</code>, <code>bepaalStatussen()</code>, <code>bepaalDelta()</code> (taak), <code>registreerBronbestanden()</code> (taak), <code>registreerVolledigeCyclus()</code> (taak in de volledige cyclus), <code>getLijstbestandPad(categorie)</code>, <code>telStagingRecords()</code></td>
+</tr>
+<tr>
+<td><code>airflow_app/dags/wasstraat/opruimen.py</code></td>
+<td><code>verwijderOudeRecords()</code> (taak), <code>getStagingBronnen(categorie)</code></td>
+</tr>
+<tr>
+<td><code>airflow_app/scripts/importMDB.sh</code></td>
+<td>Optioneel derde argument: lijstbestand. Zonder derde argument ongewijzigd; met een lege lijst niets doen, wel het rapport, exit 0; een ontbrekend lijstbestand geeft exit 1</td>
+</tr>
+<tr>
+<td><code>tasks_extract.getExtractTaskGroup(incrementeel=False)</code></td>
+<td>Bij <code>True</code> gebruiken de BashOperators de lijstbestanden en lezen <code>getAndStoreImageFilenames</code>, <code>extractAllRefs</code> en <code>extractExtraProjects</code> de delta uit het run-document, en schrijft <code>Controleer_Afbeeldingen</code> (<code>image_import.controleerAfbeeldingen</code>) zijn tellingen in het run-document. De controletaak zit in de groep, dus valt onder <code>Markeer_Run_Mislukt</code></td>
+</tr>
+<tr>
+<td><code>airflow_app/dags/wasstraat/delta_transform.py</code> (fase 2)</td>
+<td>Delta-pipelines (<code>maakDeltaHarmonizePipeline</code>, <code>maakDeltaMergePipeline</code>, <code>maakProjectMatchPipeline</code>, <code>voegToeAanEersteMatch</code>), <code>getStagingDeltaFilter</code>, <code>getGeraakteProjecten</code>, <code>werkGeraakteProjectenBij()</code> (taak), <code>bepaalGeraakteSleutels</code>, <code>getVondstkeyProjecten</code>, <code>getDeltaOfProjectFilter</code>, <code>verwijderVerdwenenSleutels</code>, <code>verwijderGegenereerdeDocumenten</code>, <code>getFotoDeltaFilter</code>, en voor de stabiele sleutels <code>getTabelVoorSoort</code>, <code>leesPgSleutels</code>, <code>bepaalStabieleIds</code>, <code>setStabielePrimaryKeys</code>, <code>bepaalVerdwenenPrimaryKeys</code></td>
+</tr>
+<tr>
+<td>Transformatiefuncties (fase 2)</td>
+<td>Optionele parameter <code>incrementeel</code> bij <code>harmonize</code>, <code>parseFotobestanden</code>, <code>fixMonsterProjectcds</code>, <code>enhanceAllAttributes</code>, <code>extractImagedataFromFileNames</code>, <code>setReferenceKeys</code>, <code>setAndVondstUniqueInProject</code>, <code>mergeRAAPArtefacts</code>, <code>moveSoort</code>, <code>mergeSoort</code>, <code>mergeFotoinfo</code>, <code>mergeMissing</code>; <code>stabiel</code> bij <code>setPrimaryKeys</code></td>
+</tr>
+<tr>
+<td>Taakgroepen T1–T5 (fase 2)</td>
+<td><code>getHarmonizeTaskGroup</code>, <code>getEnhanceAttributesGroup</code>, <code>getSetKeysTaskGroup</code>, <code>getMoveAndMergeTaskGroup</code> met <code>incrementeel=False</code>; bij <code>True</code> de delta-varianten, extra taken <code>Werk_Geraakte_Projecten_Bij</code> (T1 en T2) en geen <code>Drop_SingleStoreClean</code> (T5). <code>getSetReferencesTaskGroup()</code> (T4) zonder parameter: altijd stabiele sleutels (issue 71)</td>
+</tr>
+<tr>
+<td><code>loadToDatabase_functions.LOAD_TABELLEN</code></td>
+<td>De <code>Def_</code>-tabellen die <code>loadAll()</code> en <code>loadIncrementeel()</code> laden (voorheen een lokale lijst in <code>loadAll</code>); gebruikt voor de tabel per soort en de Index-taken van de incrementele cyclus</td>
+</tr>
+<tr>
+<td><code>loadToDatabase_functions</code> (fase 3)</td>
+<td><code>loadIncrementeel()</code> (taak <code>Load_Upsert</code>), <code>werkTabelBij</code>, <code>bereidTabelVoor</code>, <code>upsertRijen</code>, <code>verwijderRijen</code>, <code>werkGeometrieBij</code>, <code>zetSequence</code>, <code>bepaalUpsertKolommen</code>, <code>getBetrokkenFkConstraints</code>; gedeeld met <code>loadAll</code>: <code>leesDocumenten</code> (met <code>vulLaadKey</code>, issue 81; <code>vulArtefactKey</code> blijft als verkorte vorm), <code>getDocumentKolommen</code>, <code>leesFkConstraints</code>, <code>verwijderFkConstraints</code>, <code>herstelFkConstraints</code>, <code>valideerFkConstraints</code>, en (issue 72) <code>herberekenAfgeleideVelden</code>, <code>werkAfgeleideKolommenBij</code>, en (issue 73) <code>migreerSchemaGebruikersdata</code>; (issue 73, sinds issue 71 ook in <code>loadAll</code>) <code>bepaalVerwijzingen</code>, <code>koppelVerwijzingenLos</code>, <code>ruimVerwijzingenOp</code>, <code>koppelVerwijzingenTerug</code>; alleen <code>loadAll</code> (issue 71): <code>bepaalVervallenRijen</code>, <code>bepaalVervallenSleutels</code>, <code>koppelGebruikersdataLos</code>, <code>verwijderKoppelrijen</code>, <code>werkGebruikersdataBijNaSwap</code>; constanten <code>GEBRUIKERS_TABELLEN</code>, <code>LOCK_TIMEOUT_INCREMENTEEL</code>, <code>AFGELEIDE_VELDEN</code></td>
+</tr>
+<tr>
+<td><code>shared/gebruikersdata.py</code> (issue 73)</td>
+<td><code>VERWIJZINGEN</code> (beleid per verwijzing vanuit een gebruikerstabel), <code>getMarkeringKolommen</code>, <code>bepaalSchemawijzigingen</code>, <code>migreerSchema(cursor)</code>, <code>migreerSchemaInTransactie(conn, lock_timeout)</code>; gebruikt door de laadstap en door de webapplicatie (<code>views.py</code>, na <code>db.create_all()</code>)</td>
+</tr>
+<tr>
+<td><code>delta_transform</code> (fase 3)</td>
+<td><code>getArtefactKey</code> (samengestelde sleutel van artefacten), <code>leesPgSleutels(tabel, cursor=None)</code> (met de cursor van de load); issue 71: <code>getBronPrimaryKey</code>, <code>getBestandIdentiteit</code>, <code>BESTAND_IDENTITEIT</code>; issue 81: <code>getBronrijId</code>, <code>getBronsleutel</code>, <code>getLaadKey</code>, <code>leesBrondataTekst</code>, <code>leesPgBronsleutels</code>, <code>_koppelOpGroep</code>, <code>SOORTEN_ZONDER_BRONSLEUTEL</code>; issue 88: <code>getHulpsleutelKey</code>, <code>isHulpsleutelKey</code>, <code>getVervangendeKeys</code>, <code>_koppelOpVervangendeKey</code> (en in <code>references_functions</code>: <code>getPipelineVelden</code>, <code>maakSleutelUpdate</code>); issue 89: <code>getBronsleutelUitKey</code>, <code>getBronsleutelWaarde</code></td>
+</tr>
+<tr>
+<td><code>airflow_app/dags/wasstraat/harmonisatie_voorrang.py</code> (issue 89)</td>
+<td>Voorrang bij een tabel die meer harmonisatie-pipelines selecteren, in beide cycli: <code>bepaalVoorrang</code> (aangeroepen door <code>harmonize</code>), <code>bepaalClaims</code>, <code>bepaalBesluiten</code>, <code>pasUitsluitingToe</code>, <code>leesVoorrangInstellingen</code>, <code>getVoorrangVolgorde</code></td>
+</tr>
+<tr>
+<td><code>shared/fulltext.py</code> (fase 3)</td>
+<td><code>indexTableIncrementeel(table)</code> (taken <code>Index_&lt;tabel&gt;</code>), <code>getIndexenVanAlias</code>, <code>leesIdsUitIndex</code></td>
+</tr>
+<tr>
+<td><code>DAG_Extract_Transform_Load_Full_Cycle.py</code></td>
+<td>Extra taak <code>Registreer_Bronbestanden</code> na de load-groep (dus na <code>LoadToDatabase_postgres</code> en <code>Index_Klaar</code>); sinds issue 54 ook <code>Start_Run</code>, <code>Markeer_Run_Mislukt</code> en <code>Verwerkingsrapport</code> (zie <a href="../verwerkingsrapport/#opbouw-van-de-dags">Foutbeleid en verwerkingsrapport</a>)</td>
+</tr>
+</tbody>
+</table>
+<h2 id="gebruik">Gebruik<a class="headerlink" href="#gebruik" title="Permanent link">&para;</a></h2>
+<p><strong>Ingebruikname.</strong> Draai na het installeren van deze versie eerst één keer de volledige cyclus (<code>Extract_Transform_Load_Full_Cycle</code>). Die leegt de databases, verwerkt alles en registreert aan het eind alle bronbestanden in <code>Def_Bronbestand</code> (taak <code>Registreer_Bronbestanden</code>). Daarbij wordt van elk bestand de sha256 berekend: bij ~1 TB brondata duurt dat even (orde van grootte een uur, afhankelijk van de schijf). Daarna gebruikt elke run eerst grootte en wijzigingstijd en berekent alleen bij een afwijking de hash opnieuw. Die eerste volledige cyclus vult ook de kolom <code>key</code> van <code>Def_Artefact</code>, zodat artefacten vanaf de eerste incrementele run hun <code>primary_key</code> houden. Sinds issue 71 laat de volledige cyclus de bruiklenen en de conserveringsgegevens staan en houdt hij de bestaande <code>primary_key</code>s; een backup vooraf (<code>make backup</code>) blijft verstandig.</p>
+<p><strong>Daarna: de incrementele cyclus.</strong> Zet nieuwe of gewijzigde bestanden in de invoermappen (of haal ze weg) en trigger <code>Extract_Transform_Load_Incremental</code>. De run verwerkt alleen de delta, werkt PostgreSQL bij met stabiele <code>primary_key</code>s, laat bruiklenen en conservering staan en werkt daarna de zoekindex bij. Het verloop staat in het run-document (<code>Arch_Staging.Verwerkingsruns</code>, zie <a href="#run-document">Run-document</a>) en in de logs van de taken. Er kan maar één run tegelijk actief zijn; een vastgelopen run zet je op <code>mislukt</code> met <code>verwerkingsrun.beeindigRun('mislukt', run_id=...)</code>. Een mislukte run kun je gewoon opnieuw starten: de registratie is dan niet bijgewerkt, dus dezelfde bestanden worden opnieuw opgepakt.</p>
+<p><strong>Wanneer toch de volledige cyclus?</strong></p>
+<ul>
+<li>na een wijziging in de harmonisatie-Excel (<code>Wasstraat_Config_HarmonizeV3.xlsx</code>), <code>correcties.yml</code>, het gemeenteprofiel of de code van de pipeline: de incrementele cyclus herkent zulke wijzigingen niet;</li>
+<li>als <code>Single_Store</code> of <code>Single_Store_Clean</code> beschadigd of leeg is (de load weigert dan), of als de staging-collecties niet meer bij de registratie passen;</li>
+<li>bij een upgrade van de pipeline die dat in de release notes vraagt.</li>
+</ul>
+<p>Sinds issue 71 houdt de volledige cyclus de <code>primary_key</code>s stabiel en laat hij de gebruikerstabellen staan, en sinds issue 81 geldt dat ook voor rijen zonder (unieke) natuurlijke key, via de hulpsleutel uit hun bronrij. Alleen entiteiten die ook met de hulpsleutel niet terug te vinden zijn krijgen een nieuw nummer (zie <a href="#hulpsleutel-uit-de-bronrij-issue-81">Hulpsleutel uit de bronrij</a>); gebruikersdata die daarnaar verwees wordt losgekoppeld met markering (zie <a href="#volledige-cyclus-gebruikersdata-en-stabiele-sleutels-issue-71">Volledige cyclus</a>).</p>
+<h2 id="wat-de-incrementele-cyclus-niet-doet">Wat de incrementele cyclus niet doet<a class="headerlink" href="#wat-de-incrementele-cyclus-niet-doet" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Geen wijzigingen aan de harmonisatie-Excel of <code>correcties.yml</code> detecteren. Verandert de configuratie, draai dan de volledige cyclus.</li>
+<li>(Opgelost, issue 72) De afgeleide velden van de webapplicatie (<code>aantal_fotos</code>, <code>aantal_artefacten</code>, de dateringen) werden na een incrementele run niet herberekend. <code>Load_Upsert</code> (en <code>loadAll</code> in de volledige cyclus) herberekent ze nu zelf, zie <a href="#afgeleide-velden-issue-72">Afgeleide velden</a>.</li>
+<li>Geen korte lock: de upsert houdt tijdens de hele transactie <code>ACCESS EXCLUSIVE</code>-locks op de <code>Def_</code>-tabellen met betrokken FK's, en de webapplicatie wacht zolang. In de testomgeving duurt dat ongeveer een seconde voor ruim 5.000 rijen; de tijd groeit met het aantal rijen (alle documenten worden gelezen en vergeleken), bij de Delftse data naar schatting enkele minuten. Draai de incrementele cyclus daarom bij voorkeur buiten kantooruren.</li>
+<li>(Opgelost, issue 73) Verwijzingen vanuit gebruikersdata naar verdwenen rijen bleven staan (een bruikleen van een verdwenen artefact verwees naar een niet-bestaand artefact en de FK bleef <code>NOT VALID</code>). Ze worden nu losgekoppeld met een markering of verwijderd, zie <a href="#gebruikersdata-bij-verdwenen-rijen-issue-73">Gebruikersdata bij verdwenen rijen</a>. Verwijzingen tussen <code>Def_</code>-tabellen van de pipeline naar een verdwenen rij blijven wel staan.</li>
+<li>Geen rijen in <code>Def_</code>-tabellen van de pipeline beschermen die een gebruiker in de webapplicatie heeft aangepast of aangemaakt: de pipeline is leidend voor die tabellen, net als bij de volledige cyclus. Een aangepaste kolom die de pipeline vult wordt overschreven; een rij die niet in <code>Single_Store_Clean</code> voorkomt wordt verwijderd.</li>
+<li>Geen opruiming van de metadata in <code>Kolominformatie</code>: <code>importMDB.sh</code> geeft die documenten geen <code>mdbfile</code>, dus bij een gewijzigde database komt er een tweede set bij. De collectie wordt verder nergens gebruikt.</li>
+<li>Geen opruiming van extra-projectdocumenten die zijn ingelezen vóór fase 1 (zonder veld <code>mdbfile</code>). Draai na het invoeren van fase 1 eerst één keer de volledige cyclus.</li>
+<li>(Opgelost) Staging-documenten zonder <code>mdbfile</code> door een komma in een kolomnaam komen niet meer voor: <code>importMDB.sh</code> schrijft de kopregel nu zelf tussen aanhalingstekens en voegt ook tabelnamen met <code>&amp;</code>, <code>\</code> of komma's veilig toe.</li>
+</ul>
+<h2 id="testen">Testen<a class="headerlink" href="#testen" title="Permanent link">&para;</a></h2>
+<p>Unit tests (fase 1): <code>test_verwerkingsrun.py</code>, <code>test_bronbestanden.py</code> (selectie, vingerafdruk, statusbepaling, lijstbestanden, registratie), <code>test_opruimen.py</code> (filters en de volledige opruimstap met een nagebootste MongoDB uit <code>tests/unit/nep_mongo.py</code>, plus de delta-varianten van de extractie) en <code>test_importMDB_lijstbestand.py</code>. In de testomgeving is de mount van <code>data/synthetic/data/projecten</code> schrijfbaar, zodat een test een project <code>SY003</code> kan toevoegen (genegeerd door git).</p>
+<p>Unit tests (fase 2): <code>test_delta_transform.py</code> — opbouw van de delta-pipelines (positie van de extra <code>$match</code> en van <code>$addFields {delta_run}</code>, geen mutatie van de pipelines uit <code>meta.py</code> en de harmonizer), het filter per staging-collectie, de geraakte sleutels (met <code>verwijderde_keys</code> en het Artefact-geval) en projecten, het verwijderen van verdwenen sleutels en gegenereerde documenten, en de stabiele sleutels met een nagebootste PostgreSQL-mapping (behouden, op <code>_id</code>, op unieke <code>key</code>, dubbele keys, nieuwe nummers, <code>primary_key</code> al in gebruik).</p>
+<p>Unit tests (fase 3): <code>test_delta_transform.py</code> (klasse <code>TestArtefactSleutel</code>: samengestelde sleutel, terugvinden van een opnieuw ingelezen artefact, dubbele sleutels, <code>leesPgSleutels</code> met cursor) en <code>test_load_incrementeel.py</code> — de SQL van de upsert, de kolomkeuze, de betrokken FK's, de sequence (ook een ontbrekende), de geometrie, de key van artefacten in de volledige en de incrementele load, en <code>loadIncrementeel</code> met een nagebootste PostgreSQL (upsert, verwijderen, tellingen in het run-document, gebruikerstabellen ongemoeid, volgorde van de FK-mechaniek, vangnetten, tweede run zonder wijzigingen), plus <code>indexTableIncrementeel</code> met een nagebootste Elasticsearch. <code>test_fixes_1_to_4.py</code> controleert de FK-mechaniek nu in <code>loadAll</code> plus de gedeelde helpers. Na de codereview: <code>test_load_incrementeel.py</code> controleert dat een FK-constraint die niet hersteld kan worden de hele load terugdraait, <code>test_delta_transform.py</code> (klasse <code>TestVondstkeyVlag</code>) het opnieuw bepalen van de vlag <code>vondstkey_met_putnr</code> en de filters van Transform 3 en 5, <code>test_bronbestanden.py</code> de registratie van een lege Access-database en <code>test_harmonizer.py</code> dat <code>getHarmonizeAggr</code> de gecachete pipeline niet wijzigt.</p>
+<p>Unit tests (issue 72): <code>test_afgeleide_velden.py</code> — de SQL van <code>herberekenAfgeleideVelden</code> (alleen objectfoto's, LEFT JOIN's, voorrang van de dateringen, <code>UPDATE</code> alleen bij een verschil, tellingen per kolom), de uitkomst op een SQLite-database met de randgevallen (0 als lege datering, vondst zonder spoor, niet-bestaande vondst of spoor, foto zonder of met niet-bestaand artefact; een tweede aanroep schrijft niets) en een vergelijking met het echte <code>init.init()</code> (ORM, <code>models.py</code> en de observers) op dezelfde database met willekeurige data. <code>test_load_incrementeel.py</code> controleert dat <code>loadIncrementeel</code> de herberekening na de upsert en vóór het herstel van de FK's in dezelfde transactie doet, dat de tellingen onder <code>tellingen.afgeleide_velden</code> komen en dat een fout alles terugdraait; <code>test_loadToDatabase.py</code> dat <code>loadAll</code> ze als FASE 4 na de commit van FASE 3 in een eigen transactie doet.</p>
+<p>Unit tests (issue 73): <code>test_load_incrementeel.py</code>, klassen <code>TestSchemamigratieGebruikersdata</code> (de statements voor een oud en een bijgewerkt schema, de migratie aan het begin van de load in een eigen transactie, idempotent bij een tweede load, een ontbrekende gebruikerstabel, een fout in de migratie die niets laadt, <code>SET LOCAL lock_timeout</code>) en <code>TestVerwijzingenGebruikersdata</code> (loskoppelen van bruikleen en conservering met key en tijdstip, verwijderen van extra ABR-materiaal, de volgorde vóór het verwijderen in de transactie van de upsert, terugkoppelen bij een teruggekeerde key, niet terugkoppelen bij een dubbele key, het vangnet voor een verwijzing naar een niet-bestaande rij, de tellingen in het run-document), met de nagebootste PostgreSQL die de statements uitvoert. <code>test_loadToDatabase.py</code> controleert dat <code>loadAll</code> de migratie als eerste doet; <code>test_flask_models.py</code> dat het schema van <code>models.py</code> past bij <code>VERWIJZINGEN</code>, de tekst van de markering en de markering bij verwijderen in de webapplicatie (<code>modelevents.markeerBruiklenen</code>).</p>
+<p>Unit tests (issue 71): <code>test_load_volledig.py</code> — <code>bepaalVervallenRijen</code> (verdwenen en hernummerde rijen, rij zonder key, lege tabel, tabel zonder kolom <code>key</code>), de waarschuwing bij hernummerde rijen en de controle daarop alleen in <code>Def_Artefact</code> en <code>Def_Project</code> (een andere key bij een bestand of ABR-begrip is geen hernummering; de koppelrij naar een ABR-begrip met een nieuwe uri blijft staan), en <code>loadAll</code> op een nagebootste PostgreSQL met de atomic swap: gebruikersdata blijft gekoppeld bij stabiele sleutels, een verdwenen artefact geeft een losgekoppelde bruikleen en conserveringsregel en een verwijderde koppelrij, een eerder losgekoppelde bruikleen wordt teruggekoppeld, hernummerde sleutels worden op key teruggekoppeld (dubbele key blijft los), een eerste run op een lege database, en de volgorde (loskoppelen vóór de rename, terugkoppelen erna, in de swap-transactie, FK-herstel daarna); verder <code>verwijderKoppelrijen</code> en dat <code>indexTable</code> een koppeltabel zonder <code>primary_key</code> overslaat. <code>test_loadToDatabase.py</code> controleert dat <code>loadAll</code> geen <code>TRUNCATE</code> meer doet en geen statement op een gebruikerstabel uitvoert, en de plaats van de nieuwe helpers; <code>test_fixes_1_to_4.py</code> dat <code>loadAll</code> geen <code>TRUNCATE</code> bevat. <code>test_delta_transform.py</code> (klasse <code>TestStabieleSleutelsVolledigeCyclus</code>): de taakgroep van Transform 4 geeft altijd <code>stabiel=True</code> (met een nagebootst Airflow), toewijzing na een nieuwe extractie (nieuwe <code>_id</code>'s), twee documenten met dezelfde key, de <code>primary_key</code> uit de bron (ABR), map en bestandsnaam bij foto's met dezelfde key, <code>leesPgSleutels</code> met de bestandskolommen, en <code>setPrimaryKeys(stabiel=True)</code> bij een volledige extractie, een lege tabel, een ontbrekende tabel en de ABR.</p>
+<p>Unit tests (issue 81): <code>test_bronsleutel.py</code> — de identiteit van een bronrij (autonummer <code>ID</code>/<code>Id</code>/<code>id</code>, ook als float of <code>Int64</code>; een hash zonder autonummer die niet afhangt van <code>_id</code>, <code>loadtime</code> of de volgorde van de velden; bestand en tabel horen erbij), de hulpsleutel van een samengevoegd document (onafhankelijk van de volgorde van <code>brondata</code>, anders dan die van zijn bronrijen, ingekort tot een hash), <code>leesBrondataTekst</code> (<code>str()</code> van brondata met <code>ObjectId</code>, <code>datetime</code>, <code>nan</code> en <code>Int64</code> terug lezen, met dezelfde hulpsleutel; onleesbare en onveilige tekst geeft <code>None</code>), <code>getLaadKey</code> en <code>vulLaadKey</code> (natuurlijke key heeft voorrang, leesbare key voor artefacten zonder subnr en voor plaatsingen, geen hulpsleutel voor bestanden en de ABR), de key van <code>Monster_Botanie</code> en <code>Monster_Schelp</code> in <code>meta.py</code>, en <code>bepaalStabieleIds</code> met hulpsleutels: dubbele keys in beide volgorden, een key die een tweede keer voorkomt, voorrang van de unieke key, de overgang voor rijen zonder key (met de bronsleutels alleen van de vrije rijen), identieke bronrijen paarsgewijs, een bronrij met twee artefactsoorten, de terugval op de unieke key en een samengevoegd document waarvan een bronrij verdwijnt; verder <code>leesPgBronsleutels</code> en <code>setStabielePrimaryKeys</code> met een nagebootste PostgreSQL en MongoDB.</p>
+<p>Unit tests (issue 88): <code>test_set_reference_keys.py</code> — <code>setReferenceKeys</code> met een lege pipeline leest en schrijft niets (ook incrementeel), schrijft alleen de velden uit de <code>$addFields</code>-fasen (key en soort ook leeg, andere lege velden niet, geen <code>upsert</code>), stellingen krijgen soort en key, een verouderde uitkomst van een andere taak overschrijft een berekende key niet meer, en alle sleutelpipelines in <code>meta.py</code> beginnen met <code>$match</code> en hebben alleen <code>$addFields</code>. <code>test_bronsleutel.py</code> (klassen <code>TestLeesBrondataTekstProductie</code>, <code>TestVervangendeKeys</code>, <code>TestStabieleIdsMetVervangendeKey</code>): <code>leesBrondataTekst</code> op echte teksten uit de productie-installatie (<code>tests/unit/fixtures/brondata_delft.json</code>, namen geanonimiseerd), op <code>Decimal128</code>, <code>Decimal</code>, <code>datetime</code>, <code>nan</code>, geneste waarden, <code>Timestamp</code> en een tekst van meer dan 80.000 tekens; <code>getVervangendeKeys</code>; stap 3b (standplaats, een spoor met een gegenereerde tweeling, artefacten met dezelfde <code>key_subnr|artefactsoort</code>, geen rij van een ander artefact, monsters, identieke rijen) en de telling <code>nieuw_bronrij_bekend</code>. <code>test_stabiele_sleutels_cycli.py</code> speelt opeenvolgende volledige cycli na met productie-achtige documenten (standplaatsen met dubbele en lege key, stellingen, sporen uit twee tabellen en samengevoegd, vullingen, artefacten met en zonder artefactnummer en subnr, monsters; brondata met <code>Decimal128</code>, <code>Decimal</code>, <code>datetime</code>, <code>nan</code> en geneste waarden): na een cyclus met verloren keys houdt de volgende cyclus elk nummer en krijgen de stellingen hun nummers terug, de cyclus daarna verandert niets; en na een eerste load zonder hulpsleutel geven twee cycli 0 hernummerde rijen. <code>test_load_volledig.py</code>: een andere key bij dezelfde bronrij is geen hernummering.</p>
+<p>Unit tests (issue 89): <code>test_bronsleutel.py</code> (klassen <code>TestBronsleutelUitKey</code> en <code>TestStabieleIdsAndereArtefactsoort</code>) — de bronsleutel uit een hulpsleutel-key, de waarde voor de tweede ronde (hulpsleutel alleen, <code>key_subnr</code> zonder artefactsoort, geen waarde bij een natuurlijke key), een andere artefactsoort en een gecorrigeerd vondstnummer houden hun nummer (ook met onleesbare <code>brondata</code> en via <code>setStabielePrimaryKeys</code>, met de nieuwe key in de load), een verloren natuurlijke key blijft een melding, exacte koppeling gaat voor, twee documenten uit één bronrij worden niet gegokt, en stap 3b met een andere artefactsoort; <code>test_stabiele_sleutels_cycli.py</code> (klasse <code>TestCycliMetAndereArtefactsoort</code>) — vier cycli met een wisselende artefactsoort en een gecorrigeerd vondstnummer: 0 nieuw, 0 hernummerd, elke bronrij houdt zijn nummer. De voorrang bij de harmonisatie: <code>test_harmonisatie_voorrang.py</code> en <code>test_correcties_yml.py</code> (klasse <code>TestHarmonisatieVoorrang</code>).</p>
+<p>Unit tests (issue 70): <code>test_image_import.py</code> — de status per bestand in <code>Filenames</code> (verwerkt, overgeslagen, mislukt), de harde fout bij een vol volume of een niet-schrijfbare uitvoermap, de tellingen en de drempel van <code>Controleer_Afbeeldingen</code>, de tellingen in het run-document (alleen de afbeeldingen van deze run plus de openstaande) en het opruimen van openstaande entries van verdwenen bestanden.</p>
+<p>Handmatige controle van fase 2 in de testomgeving (synthetische data, <code>airflow dags test</code>): na de volledige cyclus verandert een incrementele run zonder wijzigingen niets; een nieuw project SY003 (kopie van SY002) komt erbij met nieuwe <code>ID</code>'s boven het oude maximum terwijl alle <code>ID</code>'s en <code>primary_key</code>s van SY001 en SY002 gelijk blijven; een vervangen database en een verwijderde foto worden correct verwerkt; na het verwijderen van SY003 is <code>Single_Store_Clean</code> (aantallen, sleutels, <code>ID</code>'s en verwijzingen) gelijk aan die na de volledige cyclus. Het resultaat van een incrementele run is inhoudelijk gelijk aan dat van een volledige cyclus op dezelfde data.</p>
+<p>Na elke geslaagde run controleert de test ook het verwerkingsrapport (issue 62): secties en koppen, totalen per tabel gelijk aan PostgreSQL en, na de volledige cyclus, de bronbestanden gelijk aan de registratie; zie <a href="../verwerkingsrapport/#testen">Foutbeleid en verwerkingsrapport</a>.</p>
+<p>De integratietest <code>tests/integration/test_incremental_synthetic_data.py</code> (fase 3, markers <code>integration</code> en <code>load</code>, onderdeel van <code>make integration</code>) draait eerst de volledige cyclus op SY001 en SY002, legt de aantallen, de sleutels (<code>key</code> → <code>primary_key</code>) en de aantallen per Elasticsearch-index vast en voegt een partij en een bruikleen toe. Na de volledige cyclus controleert hij ook de afgeleide velden (issue 72), zonder Flask te herstarten: <code>aantal_fotos</code> en <code>aantal_artefacten</code> tegen een eigen telling in SQL, de dateringen tegen de voorrangsregels, en daarna maakt hij de velden leeg en laat hij <code>init.init()</code> ze in de Flask-container (<code>docker exec wasstraat_flask_test python -c ...</code>) opnieuw berekenen: dat moet precies dezelfde waarden geven. Daarna acht incrementele runs en tot slot opnieuw de volledige cyclus (na elke geslaagde incrementele run ook: <code>tellingen.afbeeldingen</code> zonder mislukte bestanden, het totaal gelijk aan de nieuwe en gewijzigde afbeeldingen uit de delta, en <code>tellingen.afgeleide_velden</code> aanwezig):</p>
+<ol>
+<li>zonder wijzigingen: alle bronbestanden ongewijzigd, niets ingevoegd, bijgewerkt of verwijderd, alle aantallen en sleutels gelijk, bruikleen aanwezig, Elasticsearch gelijk, geen afgeleid veld herschreven;
+1b. (issue 81) de database van SY002 opnieuw verwerkt zonder inhoudelijke wijziging (de registratie krijgt een andere vingerafdruk): alle documenten van SY002 krijgen een nieuw <code>_id</code>, Transform 4 deelt geen enkel nieuw nummer uit (de artefacten met de dubbele key op de bronsleutel), niets ingevoegd of verwijderd, en elke rij van elke tabel heeft dezelfde <code>primary_key</code>, key en bronsleutel als na de volledige cyclus;</li>
+<li>een nieuw project SY003 (kopie van SY002): SY003 krijgt evenveel rijen als SY002 met <code>primary_key</code>s boven het oude maximum, SY001/SY002 ongewijzigd, bruikleen en zijn artefact ongewijzigd, Elasticsearch gelijk aan de tabellen; de afgeleide velden van alle nieuwe artefacten zijn gevuld (gelijk aan die van SY002, en weer gelijk aan wat <code>init.init()</code> geeft), die van SY001/SY002 ongewijzigd (SY003 staat niet in de projectenlijst en krijgt dus geen rij in <code>Def_Project</code>). Daarna een tweede bruikleen voor een artefact van SY003 waarvan de key niet bij SY001 voorkomt (project SY002);</li>
+<li>de database van SY003 vervangen door die van SY001 en een foto verwijderd: SY003 volgt SY001 (4 vondsten), geen rij meer voor de verwijderde foto, geen achtergebleven rijen, verdwenen id's ook uit Elasticsearch, afgeleide velden kloppen; de bruikleen van het verdwenen artefact bestaat nog met <code>artefactID</code> leeg, de key en een tijdstip binnen de run als markering en project SY002 (issue 73), de bruikleen uit stap b heeft geen markering, en geen enkele FK is <code>NOT VALID</code> (<code>pg_constraint.convalidated</code>);</li>
+<li>de database van SY003 weer die van SY002: het artefact keert terug met dezelfde key, de bruikleen is er weer aan gekoppeld en de markering is leeg (<code>teruggekoppeld</code> 1), FK's geldig;</li>
+<li>SY003 verwijderd: geen SY003-rijen meer in PostgreSQL en Elasticsearch, <code>Def_Bronbestand</code> op <code>verwijderd</code>, alle aantallen, sleutels en afgeleide velden gelijk aan die na de volledige cyclus; de bruikleen van het SY003-artefact is weer losgekoppeld en bestaat nog, FK's geldig;</li>
+<li>een onleesbare foto in SY003 met drempel 0 (<code>docker exec -e AIRFLOW_MAX_MISLUKTE_AFBEELDINGEN=0 -e AIRFLOW_MAX_MISLUKTE_AFBEELDINGEN_PCT=0</code>): alleen <code>Extract_Group.Controleer_Afbeeldingen</code> faalt, <code>Markeer_Run_Mislukt</code> zet de run op <code>mislukt</code>, <code>tellingen.afbeeldingen</code> noemt de foto, <code>Filenames</code> heeft <code>fout</code> en <code>fout_op</code>, en PostgreSQL is ongewijzigd; sinds issue 54/62 noemt de melding van de run de taak, staat de fout met de foto in de meldingen en noemt het verwerkingsrapport de taak die de run stopte en de foto als mislukt;</li>
+<li>de foto weggehaald: de run slaagt, de openstaande entry in <code>Filenames</code> is opgeruimd en alles is gelijk aan de toestand na de volledige cyclus;
+7b. (issue 54) een onleesbare Access-database (<code>SY003/C Database/kapot.mdb</code>, geen MDB-inhoud): <code>Extract_Group.Controleer_Databases</code> meldt een waarschuwing, de run slaagt, het rapport noemt de database als mislukt met de reden, en PostgreSQL is gelijk aan de toestand na de volledige cyclus. De database blijft staan voor stap 8, waar hij ook in de volledige cyclus een waarschuwing geeft;</li>
+<li>opnieuw de volledige cyclus (issue 71), na een conserveringsproject met een regel voor het artefact van de bruikleen en een extra ABR-materiaal: de inhoud van alle gebruikerstabellen is ongewijzigd (ook de markering van de losgekoppelde SY003-bruikleen), de bruikleen hangt aan hetzelfde artefact met dezelfde <code>primary_key</code> en key, alle aantallen, sleutels (ook die van de foto's in <code>Def_Bestand</code>), Elasticsearch-aantallen en afgeleide velden zijn gelijk aan die na de eerste volledige cyclus, het log meldt geen hernummerde sleutels, geen FK is <code>NOT VALID</code> en elke sequence staat boven het maximum. Elke rij van elke tabel uit <code>LOAD_TABELLEN</code> heeft dezelfde <code>primary_key</code> als na de eerste volledige cyclus (issue 81; vergeleken op key, de bronsleutel uit <code>brondata</code> en bij <code>Def_Bestand</code> map en bestandsnaam).</li>
+</ol>
+<p>De synthetische data heeft daarvoor sinds issue 81 in SY002 twee scherven zonder subnummer (tabel AARDEWERK 1, ID 9 en 10) en een tweede rij met hetzelfde subnummer als een bestaande (put 1, vondst 1, subnr 2), waardoor de key <code>PSY002P1V1A2|Aardewerk</code> tot issue 83 twee keer voorkwam; sinds issue 83 zijn de twee bronrijen één artefact en vindt Transform 4 het op de key terug. Na de volledige cyclus controleert de test dat die artefacten de leesbare hulpsleutel hebben, dat monsters, plaatsingen en artefacten allemaal een key hebben en dat elke rij (behalve in <code>Def_ABR</code>) op key, bronsleutel en bestand van de andere te onderscheiden is.</p>
+<p>Op de synthetische data duurt de volledige cyclus ongeveer 25 seconden en een incrementele run 11 tot 15 seconden. De run met de mislukte controle (stap 6) duurt ongeveer een minuut: <code>airflow dags test</code> wacht na een mislukte taak nog tot alle taken erna als <code>upstream_failed</code> zijn afgehandeld (meldingen <code>No tasks to run. unrunnable tasks</code>); de controletaak zelf wordt niet herhaald. De hele test duurt ongeveer drie minuten.</p>
+              
+            </div>
+          </div>
+<footer role="contentinfo" class="wasstraat-footer"
+        itemscope itemtype="https://schema.org/WPFooter">
+  <hr>
+  <p class="wasstraat-credits">
+    Gebouwd door
+    <span itemprop="publisher" itemscope itemtype="https://schema.org/Organization">
+      <strong itemprop="name">E-Space</strong>
+    </span>
+    —
+    <span itemprop="author" itemscope itemtype="https://schema.org/Person">
+      <strong itemprop="name">Arjen Brienen</strong><meta itemprop="affiliation" content="E-Space">
+      <link itemprop="sameAs" href="https://www.linkedin.com/in/arjenbrienen/">
+      <link itemprop="sameAs" href="https://github.com/brienen">
+    </span>
+  </p>
+  <p class="wasstraat-license">
+    Uitgegeven onder de
+    <a href="https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12"
+       rel="license">EUPL v1.2</a>.
+    Broncode:
+    <a href="https://github.com/brienen/wasstraat_archeologische_data"
+       rel="external">github.com/brienen/wasstraat_archeologische_data</a>.
+  </p>
+  
+    <p class="wasstraat-copyright"><small>© E-Space — Arjen Brienen. Uitgegeven onder de EUPL v1.2 licentie.</small></p>
+  
+</footer>
+<footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footernavigatie">
+        <a href="../transformatie/" class="btn btn-neutral float-left" title="Transformatie"><span class="icon icon-circle-arrow-left"></span> Vorige</a>
+        <a href="../verwerkingsrapport/" class="btn btn-neutral float-right" title="Foutbeleid en verwerkingsrapport">Volgende <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+      <p>© E-Space — Arjen Brienen. Uitgegeven onder de EUPL v1.2 licentie.</p>
+  </div>
+
+  Gemaakt met <a href="https://www.mkdocs.org/">MkDocs</a> met behulp van een <a href="https://github.com/readthedocs/sphinx_rtd_theme">Thema</a> geleverd door <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versies">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../transformatie/" style="color: #fcfcfc">&laquo; Vorige</a></span>
+    
+    
+      <span><a href="../verwerkingsrapport/" style="color: #fcfcfc">Volgende &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../..";</script>
+    <script src="../../js/theme_extra.js"></script>
+    <script src="../../js/theme.js"></script>
+      <script src="../../assets/lightbox.js"></script>
+      <script src="../../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

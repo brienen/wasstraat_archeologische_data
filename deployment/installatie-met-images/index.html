@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="nl" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="author" content="E-Space / Arjen Brienen" /><link rel="canonical" href="https://brienen.github.io/wasstraat_archeologische_data/deployment/installatie-met-images/" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>Installatie met images - Wasstraat Archeologische Data</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+        <link href="../../assets/extra.css" rel="stylesheet" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Installatie met images";
+        var mkdocs_page_input_path = "deployment/installatie-met-images.md";
+        var mkdocs_page_url = "/wasstraat_archeologische_data/deployment/installatie-met-images/";
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script>
+  
+  <meta name="author" content="Arjen Brienen">
+  <meta name="publisher" content="E-Space">
+  <meta name="description" content="Technische documentatie voor de Wasstraat Archeologische Data - een open source verwerkingsplatform voor archeologische datasets">
+  <meta name="keywords" content="archeologie, wasstraat, ETL, open data, erfgoed, ABR, CIDOC CRM, Delft, Airflow, open source">
+  <meta name="generator" content="MkDocs">
+  <meta name="robots" content="index, follow">
+  <meta http-equiv="Content-Language" content="nl">
+
+  
+  <meta name="DC.title" content="Installatie met images">
+  <meta name="DC.creator" content="Arjen Brienen">
+  <meta name="DC.publisher" content="E-Space">
+  <meta name="DC.language" content="nl">
+  <meta name="DC.rights" content="EUPL v1.2">
+  <meta name="DC.type" content="Text">
+  <meta name="DC.format" content="text/html">
+
+  
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Wasstraat Archeologische Data">
+  <meta property="og:title" content="Installatie met images">
+  <meta property="og:description" content="Technische documentatie voor de Wasstraat Archeologische Data - een open source verwerkingsplatform voor archeologische datasets">
+  <meta property="og:locale" content="nl_NL">
+  <meta property="og:url" content="https://brienen.github.io/wasstraat_archeologische_data/deployment/installatie-met-images/">
+
+  
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Installatie met images">
+  <meta name="twitter:description" content="Technische documentatie voor de Wasstraat Archeologische Data - een open source verwerkingsplatform voor archeologische datasets">
+
+  
+  <link rel="canonical" href="https://brienen.github.io/wasstraat_archeologische_data/deployment/installatie-met-images/">
+
+  
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://brienen.github.io/wasstraat_archeologische_data/#org-espace",
+        "name": "E-Space",
+        "description": "Ontwikkelaar van de Wasstraat Archeologische Data.",
+        "inLanguage": "nl"
+      },
+      {
+        "@type": "Person",
+        "@id": "https://brienen.github.io/wasstraat_archeologische_data/#person-arjen",
+        "name": "Arjen Brienen",
+        "jobTitle": "Architect en ontwikkelaar",
+        "affiliation": { "@id": "https://brienen.github.io/wasstraat_archeologische_data/#org-espace" },
+        "sameAs": [
+          "https://www.linkedin.com/in/arjenbrienen/",
+          "https://github.com/brienen"
+        ]
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://brienen.github.io/wasstraat_archeologische_data/#website",
+        "url": "https://brienen.github.io/wasstraat_archeologische_data/",
+        "name": "Wasstraat Archeologische Data",
+        "description": "Technische documentatie voor de Wasstraat Archeologische Data - een open source verwerkingsplatform voor archeologische datasets",
+        "inLanguage": "nl",
+        "publisher": { "@id": "https://brienen.github.io/wasstraat_archeologische_data/#org-espace" },
+        "author": { "@id": "https://brienen.github.io/wasstraat_archeologische_data/#person-arjen" },
+        "creator": { "@id": "https://brienen.github.io/wasstraat_archeologische_data/#person-arjen" },
+        "copyrightHolder": { "@id": "https://brienen.github.io/wasstraat_archeologische_data/#org-espace" },
+        "license": "https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12"
+      },
+      {
+        "@type": "SoftwareSourceCode",
+        "@id": "https://brienen.github.io/wasstraat_archeologische_data/#software",
+        "name": "Wasstraat Archeologische Data",
+        "alternateName": "Wasstraat",
+        "description": "Open-source ETL-platform dat archeologische gegevens verzamelt, verwerkt en toegankelijk maakt. Ontwikkeld voor de gemeente Delft en uitgebreid tot een generiek platform voor Nederlandse gemeenten.",
+        "programmingLanguage": ["Python", "SQL", "YAML"],
+        "runtimePlatform": "Docker Compose",
+        "codeRepository": "https://github.com/brienen/wasstraat_archeologische_data",
+        "license": "https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12",
+        "author": { "@id": "https://brienen.github.io/wasstraat_archeologische_data/#person-arjen" },
+        "creator": { "@id": "https://brienen.github.io/wasstraat_archeologische_data/#person-arjen" },
+        "publisher": { "@id": "https://brienen.github.io/wasstraat_archeologische_data/#org-espace" },
+        "maintainer": { "@id": "https://brienen.github.io/wasstraat_archeologische_data/#person-arjen" },
+        "copyrightHolder": { "@id": "https://brienen.github.io/wasstraat_archeologische_data/#org-espace" },
+        "inLanguage": "nl",
+        "keywords": "archeologie, ETL, Airflow, PostgreSQL, MongoDB, Elasticsearch, ABR, CIDOC CRM, GGM, erfgoed, open data",
+        "about": [
+          { "@type": "Thing", "name": "Archeologisch Basisregister (ABR)" },
+          { "@type": "Thing", "name": "CIDOC CRM" },
+          { "@type": "Thing", "name": "Gemeentelijk Gegevensmodel (GGM)" },
+          { "@type": "Thing", "name": "DANS e-Depot" },
+          { "@type": "Thing", "name": "Archis" }
+        ]
+      }
+      
+      ,{
+        "@type": "TechArticle",
+        "@id": "https://brienen.github.io/wasstraat_archeologische_data/deployment/installatie-met-images/#article",
+        "url": "https://brienen.github.io/wasstraat_archeologische_data/deployment/installatie-met-images/",
+        "name": "Installatie met images",
+        "headline": "Installatie met images",
+        "description": "Technische documentatie voor de Wasstraat Archeologische Data - een open source verwerkingsplatform voor archeologische datasets",
+        "inLanguage": "nl",
+        "isPartOf": { "@id": "https://brienen.github.io/wasstraat_archeologische_data/#website" },
+        "author": { "@id": "https://brienen.github.io/wasstraat_archeologische_data/#person-arjen" },
+        "publisher": { "@id": "https://brienen.github.io/wasstraat_archeologische_data/#org-espace" },
+        "license": "https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12"
+      }
+      
+    ]
+  }
+  </script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> Wasstraat Archeologische Data
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Doorzoek documentatie" aria-label="Doorzoek documentatie" title="Typ hier uw zoekterm" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigatiemenu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Home</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Aan de slag</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../../aan-de-slag/">Handleiding (ontwikkelomgeving)</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Installatie met images</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#wat-je-krijgt">Wat je krijgt</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#1-vereisten">1. Vereisten</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#2-de-map-deploy-ophalen">2. De map deploy ophalen</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#3-configureren">3. Configureren</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#4-eigen-data-klaarzetten">4. Eigen data klaarzetten</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#5-starten">5. Starten</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#6-inloggen">6. Inloggen</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#7-de-eerste-volledige-verwerking">7. De eerste volledige verwerking</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#8-bijwerken-naar-een-nieuwe-versie">8. Bijwerken naar een nieuwe versie</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#9-backup-en-restore">9. Backup en restore</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#10-wat-je-niet-moet-doen">10. Wat je niet moet doen</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#veelvoorkomende-problemen">Veelvoorkomende problemen</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#voor-beheerders-van-de-wasstraat-zelf">Voor beheerders van de Wasstraat zelf</a>
+    </li>
+    </ul>
+                  </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../componenten/configuratie/">Configuratie</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Projectoverzicht</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../overzicht/inleiding/">Inleiding</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../overzicht/probleemstelling/">Probleemstelling</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../overzicht/doelstellingen/">Doelstellingen</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Architectuur</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../architectuur/systeem/">Systeemarchitectuur</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../architectuur/dataflow/">Verwerkingspipeline</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../architectuur/componenten/">Componentenmodel</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../architectuur/gegevensmodel/">Gegevensmodel</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../architectuur/stack/">Technische stack</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Componenten</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../componenten/extractie/">Extractie</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../componenten/singlestore/">MongoDB en Single_Store</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../componenten/transformatie/">Transformatie</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../componenten/incrementeel-laden/">Incrementeel laden</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../componenten/verwerkingsrapport/">Foutbeleid en verwerkingsrapport</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../componenten/validatie/">Validatie en kwaliteitscontroles</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../componenten/gemeenteprofielen/">Gemeenteprofielen</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../componenten/zoeken/">Zoeken en indexering</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Deployment</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../omgevingen/">Omgevingen en Docker Compose</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../airflow-vs-app/">Airflow en webapplicatie</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../voorbeelddata/">Voorbeelddata</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../proefdata/">Proefdata inlezen</a>
+                  </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../testen/">Testen</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../diagrammen/">Diagrammen</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../toekomstvisie/">Toekomstvisie</a>
+                </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobiel navigatiemenu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">Wasstraat Archeologische Data</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" aria-label="Documentatie"></a></li>
+          <li class="breadcrumb-item">Aan de slag</li>
+      <li class="breadcrumb-item active">Installatie met images</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="installatie-met-images">Installatie met images<a class="headerlink" href="#installatie-met-images" title="Permanent link">&para;</a></h1>
+<p>Deze handleiding is voor gemeenten en andere organisaties die de Wasstraat willen <strong>gebruiken</strong>. Je installeert haar vanuit de gepubliceerde Docker-images op de GitHub Container Registry (<code>ghcr.io/brienen</code>), zonder de broncode te clonen en zonder iets te bouwen. Alles wat je nodig hebt staat in één map, <code>deploy/</code>.</p>
+<p>De repository zelf is de <strong>ontwikkelomgeving</strong>: daar bouw je de images uit de broncode, draai je de tests en publiceer je nieuwe versies. Wil je aan de Wasstraat ontwikkelen, volg dan <a href="../../aan-de-slag/">Aan de slag</a>.</p>
+<h2 id="wat-je-krijgt">Wat je krijgt<a class="headerlink" href="#wat-je-krijgt" title="Permanent link">&para;</a></h2>
+<p>Zeven containers uit vaste images:</p>
+<table>
+<thead>
+<tr>
+<th>Service</th>
+<th>Image</th>
+<th>Rol</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Airflow</td>
+<td><code>ghcr.io/brienen/wasstraat-airflow</code></td>
+<td>Verwerkingspipeline (ETL), inclusief de pipelinecode</td>
+</tr>
+<tr>
+<td>Flask App</td>
+<td><code>ghcr.io/brienen/wasstraat-flask</code></td>
+<td>Webapplicatie om de verwerkte data te bekijken en te beheren</td>
+</tr>
+<tr>
+<td>PostgreSQL</td>
+<td><code>ghcr.io/brienen/wasstraat-postgres</code></td>
+<td>PostgreSQL 18 met PostGIS, definitieve opslag</td>
+</tr>
+<tr>
+<td>Apache</td>
+<td><code>ghcr.io/brienen/wasstraat-apache</code></td>
+<td>Voordeur van de webapplicatie: stuurt door naar Flask en serveert de verwerkte foto's en documenten</td>
+</tr>
+<tr>
+<td>MongoDB</td>
+<td><code>mongo:7.0</code></td>
+<td>Tussenopslag van de pipeline</td>
+</tr>
+<tr>
+<td>Elasticsearch</td>
+<td><code>elasticsearch:8.17.0</code></td>
+<td>Zoekindex, alleen bereikbaar binnen de installatie</td>
+</tr>
+<tr>
+<td>Redis</td>
+<td><code>redis:7.2-alpine</code></td>
+<td>Cache van de webapplicatie</td>
+</tr>
+</tbody>
+</table>
+<p>Elke eigen image heeft twee tags: het versienummer (bijvoorbeeld <code>1.1.0</code>) en <code>latest</code>. Gebruik in een installatie altijd een versienummer, zodat een <code>docker compose pull</code> nooit onverwacht een nieuwe versie binnenhaalt.</p>
+<p>Jupyter Lab, dat in de ontwikkelomgeving meedraait voor analyses op de broncode, maakt geen deel uit van de live installatie. Het is een ontwikkelvoorziening van de repository.</p>
+<p>Van jouw kant komen alleen configuratie en data. De containers lezen en schrijven in deze mappen op de host:</p>
+<table>
+<thead>
+<tr>
+<th>Map</th>
+<th>Inhoud</th>
+<th>Wie schrijft</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>config/*.env</code></td>
+<td>Wachtwoorden en instellingen van de services</td>
+<td>Jij (eenmalig gegenereerd)</td>
+</tr>
+<tr>
+<td><code>wasstraat_config/</code></td>
+<td>Harmonisatie-Excel en <code>correcties.yml</code></td>
+<td>Jij</td>
+</tr>
+<tr>
+<td><code>data/input/</code></td>
+<td>Brondata: Access-databases, foto's, rapporten</td>
+<td>Jij; de containers lezen alleen</td>
+</tr>
+<tr>
+<td><code>data/output/</code></td>
+<td>Verwerkte foto's en documenten in drie formaten (<code>archeomedia/</code>) en de verwerkingsrapporten per run (<code>rapporten/</code>)</td>
+<td>Airflow en Flask</td>
+</tr>
+<tr>
+<td><code>data/backup/</code></td>
+<td>Backups van PostgreSQL en MongoDB</td>
+<td><code>make backup</code></td>
+</tr>
+</tbody>
+</table>
+<p>De databases staan in Docker-volumes (<code>wasstraat_postgres</code>, <code>wasstraat_mongo</code>, <code>wasstraat_mongo_config</code>, <code>wasstraat_elasticsearch</code>) en de taaklogs van Airflow in <code>wasstraat_airflow_logs</code>. Die blijven bestaan bij het bijwerken en bij <code>docker compose down</code>.</p>
+<h2 id="1-vereisten">1. Vereisten<a class="headerlink" href="#1-vereisten" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Docker</strong> met Docker Compose v2.20 of nieuwer: Docker Engine op een Linux-server (aanbevolen voor een installatie die blijft draaien) of Docker Desktop op macOS of Windows. De images zijn er voor <code>linux/amd64</code> en <code>linux/arm64</code>.</li>
+<li><strong>GNU Make en bash</strong> voor de meegeleverde <code>Makefile</code>. Elk commando is één <code>docker compose</code>-aanroep; zonder Make typ je die zelf (zie <code>make -n &lt;commando&gt;</code>). Op Windows gebruik je WSL 2.</li>
+<li><strong>Geheugen</strong>: minimaal 8 GB voor Docker, 12 GB aanbevolen. Voor de Delftse dataset (ruim 1.000 opgravingen) is gewerkt met 32 GB en 10 cores.</li>
+<li><strong>Schijfruimte</strong>: ongeveer 15 GB voor de images, plus ruimte voor je brondata, de verwerkte media (ordegrootte van de foto's in de brondata) en de databases (in Delft tientallen GB).</li>
+<li><strong>Netwerk</strong>: toegang tot <code>ghcr.io</code> en Docker Hub om de images op te halen. Op een Linux-server maak je een gebruiker met rechten op Docker (<code>docker</code>-groep).</li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Vrije poorten</p>
+<p>Standaard gebruikt de installatie de poorten 8080 (Airflow) en 5052 (de webapplicatie via Apache, inclusief de media) op alle netwerkkaarten, en 5432 (PostgreSQL) en 27017 (MongoDB) alleen op <code>127.0.0.1</code>. Flask, Elasticsearch en Redis krijgen geen hostpoort. Alle poorten zijn in te stellen in <code>.env</code>.</p>
+</div>
+<h2 id="2-de-map-deploy-ophalen">2. De map deploy ophalen<a class="headerlink" href="#2-de-map-deploy-ophalen" title="Permanent link">&para;</a></h2>
+<p>Haal de map <code>deploy/</code> van de gewenste versie op. Zonder Git, met één opdracht:</p>
+<div class="codehilite"><pre><span></span><code><span class="nv">VERSIE</span><span class="o">=</span><span class="m">1</span>.1.0
+curl<span class="w"> </span>-L<span class="w"> </span><span class="s2">"https://github.com/brienen/wasstraat_archeologische_data/archive/refs/tags/</span><span class="nv">$VERSIE</span><span class="s2">.tar.gz"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span><span class="p">|</span><span class="w"> </span>tar<span class="w"> </span>xz<span class="w"> </span>--strip-components<span class="o">=</span><span class="m">1</span><span class="w"> </span><span class="s2">"wasstraat_archeologische_data-</span><span class="nv">$VERSIE</span><span class="s2">/deploy"</span>
+<span class="nb">cd</span><span class="w"> </span>deploy
+</code></pre></div>
+
+<p>Je kunt ook het zip-bestand van de release downloaden op <a href="https://github.com/brienen/wasstraat_archeologische_data/releases">https://github.com/brienen/wasstraat_archeologische_data/releases</a> en alleen de map <code>deploy/</code> bewaren. Hernoem de map gerust, bijvoorbeeld naar <code>wasstraat/</code>.</p>
+<p>De map bevat:</p>
+<div class="codehilite"><pre><span></span><code><span class="s s-Atom">deploy</span><span class="o">/</span>
+<span class="s s-Atom">├──</span> <span class="s s-Atom">docker</span><span class="o">-</span><span class="s s-Atom">compose</span><span class="p">.</span><span class="s s-Atom">yml</span>    <span class="s s-Atom">#</span> <span class="nv">De</span> <span class="s s-Atom">services</span><span class="p">,</span> <span class="s s-Atom">alleen</span> <span class="s s-Atom">image</span><span class="p">:</span><span class="o">-</span><span class="s s-Atom">regels</span> <span class="s s-Atom">naar</span> <span class="s s-Atom">ghcr</span><span class="p">.</span><span class="s s-Atom">io</span><span class="o">/</span><span class="s s-Atom">brienen</span>
+<span class="s s-Atom">├──</span> <span class="p">.</span><span class="s s-Atom">env</span><span class="p">.</span><span class="s s-Atom">example</span>          <span class="s s-Atom">#</span> <span class="nv">Versie</span><span class="p">,</span> <span class="s s-Atom">mappen</span> <span class="s s-Atom">en</span> <span class="s s-Atom">poorten</span> <span class="s s-Atom">→</span> <span class="s s-Atom">kopiëren</span> <span class="s s-Atom">naar</span> <span class="p">.</span><span class="s s-Atom">env</span>
+<span class="s s-Atom">├──</span> <span class="nv">Makefile</span>              <span class="s s-Atom">#</span> <span class="s s-Atom">make</span> <span class="s s-Atom">help</span> <span class="s s-Atom">toont</span> <span class="s s-Atom">alle</span> <span class="s s-Atom">commando</span><span class="err">'</span><span class="s s-Atom">s</span>
+<span class="s s-Atom">├──</span> <span class="s s-Atom">init</span><span class="o">-</span><span class="s s-Atom">config</span><span class="p">.</span><span class="s s-Atom">sh</span>        <span class="s s-Atom">#</span> <span class="nv">Maakt</span> <span class="s s-Atom">config</span><span class="cm">/*.env aan met unieke wachtwoorden</span>
+<span class="cm">├── config/               # Sjablonen (*.env.example) voor de configuratie van de services</span>
+<span class="cm">├── wasstraat_config/     # Harmonisatie-Excel en correcties.yml voor de pipeline</span>
+<span class="cm">└── data/</span>
+<span class="cm">    ├── input/            # Brondata (zeven mappen, zie stap 4)</span>
+<span class="cm">    ├── output/           # Verwerkte media (archeomedia/) en verwerkingsrapporten (rapporten/)</span>
+<span class="cm">    └── backup/           # Backups</span>
+</code></pre></div>
+
+<h2 id="3-configureren">3. Configureren<a class="headerlink" href="#3-configureren" title="Permanent link">&para;</a></h2>
+<div class="codehilite"><pre><span></span><code>make<span class="w"> </span>init
+</code></pre></div>
+
+<p>Dit maakt drie dingen aan:</p>
+<ol>
+<li><strong><code>.env</code></strong> uit <code>.env.example</code>, met de versie (<code>WASSTRAAT_VERSION</code>), de mappen, de poorten en het gemeenteprofiel. Pas dit bestand aan als je data op een andere schijf staat (<code>WASSTRAAT_INPUT</code>, <code>WASSTRAAT_OUTPUT</code>, <code>WASSTRAAT_BACKUP</code>) of als poorten bezet zijn.</li>
+<li><strong><code>config/*.env</code></strong> uit de sjablonen, met voor elke installatie unieke wachtwoorden. Ze worden eenmalig in de terminal getoond en staan daarna in de bestanden. Bestaande bestanden blijven ongemoeid.</li>
+<li>De <strong>datamappen</strong> uit <code>.env</code>, schrijfbaar voor de containers.</li>
+</ol>
+<p>Instellingen die je mogelijk wilt aanpassen (alle instellingen met hun standaardwaarden staan in <a href="../../componenten/configuratie/">Configuratie</a>):</p>
+<table>
+<thead>
+<tr>
+<th>Bestand</th>
+<th>Instelling</th>
+<th>Wanneer</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>.env</code></td>
+<td><code>WASSTRAAT_GEMEENTE</code></td>
+<td>Het gemeenteprofiel van de pipeline: <code>delft</code> (standaard) of <code>voorbeeld</code>. Zie <a href="../../componenten/gemeenteprofielen/">Gemeenteprofielen</a>.</td>
+</tr>
+<tr>
+<td><code>.env</code></td>
+<td><code>WASSTRAAT_BIND</code></td>
+<td><code>127.0.0.1</code> als de webapplicaties alleen op de server zelf bereikbaar mogen zijn, bijvoorbeeld achter een reverse proxy.</td>
+</tr>
+<tr>
+<td><code>.env</code></td>
+<td><code>WASSTRAAT_ES_GEHEUGEN</code></td>
+<td>Meer geheugen voor Elasticsearch bij grote datasets, bijvoorbeeld <code>2g</code>.</td>
+</tr>
+<tr>
+<td><code>config/flask.env</code></td>
+<td><code>MAIL_*</code></td>
+<td>Mailserver voor meldingen vanuit de webapplicatie (optioneel).</td>
+</tr>
+<tr>
+<td><code>config/airflow.env</code></td>
+<td><code>AIRFLOW_MAX_MISLUKTE_AFBEELDINGEN</code>, <code>AIRFLOW_MAX_MISLUKTE_DATABASES</code>, <code>AIRFLOW_MAX_VERWERKINGSFOUTEN</code> (en <code>_PCT</code>)</td>
+<td>Drempels waarboven losse fouten een run stoppen. Zie <a href="../../componenten/verwerkingsrapport/">Foutbeleid en verwerkingsrapport</a>.</td>
+</tr>
+<tr>
+<td><code>config/airflow.env</code></td>
+<td><code>AIRFLOW__SCHEDULER__*</code></td>
+<td>Alleen voor gevorderden.</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition danger">
+<p class="admonition-title">Niet aanpassen</p>
+<p><code>PGDATA</code> staat vast in <code>docker-compose.yml</code> op <code>/data/postgres</code>, hetzelfde pad als het volume. Wijzig je het een, wijzig dan ook het ander, anders komt de database in de container terecht en verdwijnt die bij het bijwerken. De hostnamen in <code>config/*.env</code> (<code>postgres</code>, <code>wasstraat_postgres</code>, <code>mongo</code>, <code>redis</code>, <code>elasticsearch</code>) zijn de namen van de services en horen ook niet te veranderen.</p>
+</div>
+<h2 id="4-eigen-data-klaarzetten">4. Eigen data klaarzetten<a class="headerlink" href="#4-eigen-data-klaarzetten" title="Permanent link">&para;</a></h2>
+<p>Zet je brondata in <code>data/input/</code> (of in de map uit <code>WASSTRAAT_INPUT</code>). De structuur is dezelfde als in de ontwikkelomgeving; <a href="../../aan-de-slag/#4-bestanden-klaarzetten">Aan de slag, stap 4</a> beschrijft per map welke bestanden en tabellen de pipeline verwacht.</p>
+<div class="codehilite"><pre><span></span><code><span class="n">data</span><span class="o">/</span><span class="k">input</span><span class="o">/</span>
+<span class="err">├──</span><span class="w"> </span><span class="n">projecten</span><span class="o">/</span><span class="w">           </span><span class="err">←</span><span class="w"> </span><span class="n">Per</span><span class="w"> </span><span class="n">opgraving</span><span class="w"> </span><span class="n">een</span><span class="w"> </span><span class="n">map</span><span class="w"> </span><span class="n">met</span><span class="w"> </span><span class="n">de</span><span class="w"> </span><span class="n">projectdatabase</span><span class="w"> </span><span class="p">(.</span><span class="n">mdb</span><span class="o">/</span><span class="p">.</span><span class="n">accdb</span><span class="p">)</span><span class="w"> </span><span class="n">en</span><span class="w"> </span><span class="n">foto</span><span class="p">'</span><span class="n">s</span>
+<span class="err">├──</span><span class="w"> </span><span class="n">projectenlijst</span><span class="o">/</span><span class="w">      </span><span class="err">←</span><span class="w"> </span><span class="n">Projectoverzicht</span><span class="w"> </span><span class="p">(</span><span class="n">tabel</span><span class="w"> </span><span class="n">OPGRAVINGEN</span><span class="p">)</span>
+<span class="err">├──</span><span class="w"> </span><span class="n">magazijnlijst</span><span class="o">/</span><span class="w">       </span><span class="err">←</span><span class="w"> </span><span class="n">Depotregistratie</span>
+<span class="err">├──</span><span class="w"> </span><span class="n">fotolijst</span><span class="o">/</span><span class="w">           </span><span class="err">←</span><span class="w"> </span><span class="n">Fotocatalogus</span>
+<span class="err">├──</span><span class="w"> </span><span class="n">monsterdatabase</span><span class="o">/</span><span class="w">     </span><span class="err">←</span><span class="w"> </span><span class="n">Monsters</span><span class="w"> </span><span class="n">en</span><span class="w"> </span><span class="n">determinaties</span>
+<span class="err">├──</span><span class="w"> </span><span class="n">rapporten</span><span class="o">/</span><span class="w">           </span><span class="err">←</span><span class="w"> </span><span class="n">Rapporten</span><span class="w"> </span><span class="p">(.</span><span class="n">pdf</span><span class="p">)</span><span class="w"> </span><span class="n">en</span><span class="w"> </span><span class="n">rapportendatabases</span>
+<span class="err">└──</span><span class="w"> </span><span class="n">referentietabellen</span><span class="o">/</span><span class="w">  </span><span class="err">←</span><span class="w"> </span><span class="n">ABR</span><span class="o">-</span><span class="n">thesaurus</span><span class="w"> </span><span class="p">(</span><span class="n">abr_versie_</span><span class="o">*</span><span class="p">.</span><span class="n">xlsx</span><span class="p">)</span><span class="w"> </span><span class="n">en</span><span class="w"> </span><span class="n">bestandslijsten</span>
+</code></pre></div>
+
+<p>De containers lezen deze mappen alleen; de pipeline wijzigt je bronbestanden nooit. Je kunt ze dus ook rechtstreeks vanaf een netwerkschijf koppelen door <code>WASSTRAAT_INPUT</code> daarnaar te laten wijzen.</p>
+<p>De pipelineconfiguratie staat in <code>wasstraat_config/</code>:</p>
+<ul>
+<li><code>Wasstraat_Config_HarmonizeV3.xlsx</code> vertaalt de tabel- en kolomnamen van jouw databases naar het datamodel van de Wasstraat. De meegeleverde versie is die van Delft; pas haar aan volgens <a href="../../aan-de-slag/#5-wasstraat_config_harmonizev3-configureren">Aan de slag, stap 5</a>.</li>
+<li><code>correcties.yml</code> bevat optionele datacorrecties, zoals verkeerde projectcodes, en de bestanden en mappen die de extractie moet overslaan (<code>paden_overslaan</code>, bijvoorbeeld kopieën van databases in een werkmap). Het meegeleverde sjabloon doet niets; zie <a href="../../aan-de-slag/#5b-correcties-configureren-optioneel">stap 5b</a> en <a href="../../componenten/configuratie/#3-correctiesyml">Configuratie: correcties.yml</a>.</li>
+</ul>
+<div class="admonition tip">
+<p class="admonition-title">Eerst proberen met voorbeelddata</p>
+<p>Wil je de installatie eerst zien werken? Download uit de repository de map <code>data/synthetic/data/</code> (twee fictieve opgravingen) en zet de inhoud in <code>data/input/</code>. De meegeleverde harmonisatie-Excel is daar al op afgestemd.</p>
+</div>
+<h2 id="5-starten">5. Starten<a class="headerlink" href="#5-starten" title="Permanent link">&para;</a></h2>
+<div class="codehilite"><pre><span></span><code>make<span class="w"> </span>up
+</code></pre></div>
+
+<p>De eerste keer haalt Docker ongeveer 15 GB aan images op; dat duurt enkele minuten tot een half uur. Daarna starten de containers. Controleer de status:</p>
+<div class="codehilite"><pre><span></span><code>make<span class="w"> </span>ps
+make<span class="w"> </span>logs<span class="w"> </span><span class="nv">S</span><span class="o">=</span>airflow<span class="w">     </span><span class="c1"># logs van één service; zonder S= van alle services</span>
+</code></pre></div>
+
+<p>Alle zeven services moeten <code>Up</code> zijn (Elasticsearch <code>healthy</code>). Airflow en Flask wachten bij het starten zelf tot PostgreSQL klaar is; Flask maakt bij de eerste start de tabellen in PostgreSQL aan en de beheerder van de webapplicatie.</p>
+<div class="admonition warning">
+<p class="admonition-title">Linux: rechten op de mappen</p>
+<p>De containers draaien als verschillende gebruikers (Airflow bijvoorbeeld als uid 50000). <code>make init</code> maakt de uitvoer- en backupmappen daarom schrijfbaar voor iedereen. Gebruik je eigen mappen via <code>.env</code>, geef die dan dezelfde rechten: <code>chmod -R a+rwX &lt;map&gt;</code>. Op macOS en Windows regelt Docker Desktop dit zelf.</p>
+</div>
+<h2 id="6-inloggen">6. Inloggen<a class="headerlink" href="#6-inloggen" title="Permanent link">&para;</a></h2>
+<div class="codehilite"><pre><span></span><code>make<span class="w"> </span>inloggegevens
+</code></pre></div>
+
+<table>
+<thead>
+<tr>
+<th>Applicatie</th>
+<th>Adres</th>
+<th>Inloggegevens</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Airflow</td>
+<td>http://localhost:8080</td>
+<td><code>admin</code>, wachtwoord in <code>config/airflow.env</code> (<code>SECURITY__ADMIN_PASSWORD</code>)</td>
+</tr>
+<tr>
+<td>Flask App</td>
+<td>http://localhost:5052</td>
+<td><code>admin</code>, wachtwoord in <code>config/flask.env</code> (<code>FLASK_ADMIN_PASSWORD</code>)</td>
+</tr>
+<tr>
+<td>Media</td>
+<td>http://localhost:5052/archeomedia/...</td>
+<td>Geen inlog: Apache serveert <code>data/output/archeomedia/</code> rechtstreeks</td>
+</tr>
+</tbody>
+</table>
+<p>Apache is de voordeur van de webapplicatie: het serveert de media onder <code>/archeomedia</code> zelf en stuurt alle overige verzoeken door naar Flask, dat geen eigen hostpoort heeft. Vervang <code>localhost</code> door de naam van de server als je op afstand werkt. Het Flask-wachtwoord uit <code>config/flask.env</code> geldt alleen bij het aanmaken van de beheerder; wijzig je het later via het gebruikersmenu, dan blijft het nieuwe wachtwoord staan. Het Airflow-wachtwoord werkt op dezelfde manier.</p>
+<div class="admonition warning">
+<p class="admonition-title">Beveiliging</p>
+<p>De webapplicaties luisteren standaard op alle netwerkkaarten en Apache serveert de media zonder inlog. Zet een installatie niet rechtstreeks aan het internet: gebruik een firewall of een reverse proxy met TLS vóór Apache en zet <code>WASSTRAAT_BIND=127.0.0.1</code> in <code>.env</code> als die proxy op dezelfde server draait. Laat die proxy de <code>Host</code>-header en <code>X-Forwarded-Proto: https</code> doorgeven; Apache en Flask nemen ze over, zodat redirects naar het juiste adres wijzen. De databases zijn standaard alleen vanaf de server zelf bereikbaar (<code>WASSTRAAT_BIND_DB=127.0.0.1</code>), bijvoorbeeld voor QGIS of pgAdmin.</p>
+</div>
+<h2 id="7-de-eerste-volledige-verwerking">7. De eerste volledige verwerking<a class="headerlink" href="#7-de-eerste-volledige-verwerking" title="Permanent link">&para;</a></h2>
+<p>De eerste keer verwerk je alle brondata met de DAG <code>Extract_Transform_Load_Full_Cycle</code>. Dat kan via de Airflow-webinterface (DAG aanzetten en op de play-knop klikken, zie <a href="../../aan-de-slag/#6-voor-de-eerste-keer-draaien">Aan de slag, stap 6</a>) of vanaf de commandoregel:</p>
+<div class="codehilite"><pre><span></span><code>make<span class="w"> </span>volledige-cyclus
+</code></pre></div>
+
+<p>Volg de voortgang in Airflow onder <strong>Graph</strong>. Voor een paar projecten duurt de verwerking enkele minuten, voor een volledige gemeentelijke collectie uren. Aan het eind staat een verwerkingsrapport in <code>data/output/rapporten/</code> (Markdown en JSON): de uitkomst, de bestanden die niet of maar deels verwerkt zijn met de reden, de aantallen per tabel en de doorlooptijd per stap (zie <a href="../../componenten/verwerkingsrapport/">Foutbeleid en verwerkingsrapport</a>). Daarna zie je de projecten op de kaart in de Flask App (de startpagina wordt vijf minuten gecachet, dus eventueel even wachten) en zijn de foto's verwerkt in <code>data/output/archeomedia/</code>.</p>
+<p>Komen er later opgravingen bij, of vervang of verwijder je bestanden, draai dan de incrementele cyclus. Die verwerkt alleen de wijzigingen en laat de rest van de database staan:</p>
+<div class="codehilite"><pre><span></span><code>make<span class="w"> </span>incrementeel
+</code></pre></div>
+
+<p>Draai de volledige cyclus opnieuw na wijzigingen in de harmonisatie-Excel, in <code>correcties.yml</code> of na het bijwerken naar een versie met een gewijzigde pipeline (zie het volgende hoofdstuk). De volledige cyclus leegt de tussenopslag en bouwt de definitieve tabellen opnieuw op, met dezelfde sleutels (<code>primary_key</code>) als ervoor; bruiklenen, partijen en conserveringsgegevens die in de webapplicatie zijn ingevoerd blijven staan en blijven gekoppeld. Verdwijnt een artefact of project uit de brondata, dan blijft de bruikleen bestaan met een markering. Zie <a href="../../componenten/incrementeel-laden/">Incrementeel laden</a> voor de details.</p>
+<h2 id="8-bijwerken-naar-een-nieuwe-versie">8. Bijwerken naar een nieuwe versie<a class="headerlink" href="#8-bijwerken-naar-een-nieuwe-versie" title="Permanent link">&para;</a></h2>
+<p>Nieuwe versies verschijnen op <a href="https://github.com/brienen/wasstraat_archeologische_data/releases">https://github.com/brienen/wasstraat_archeologische_data/releases</a>. Bijwerken gaat in drie stappen:</p>
+<div class="codehilite"><pre><span></span><code>make<span class="w"> </span>backup<span class="w">                                </span><span class="c1"># 1. backup van PostgreSQL en MongoDB</span>
+sed<span class="w"> </span>-i<span class="w"> </span><span class="s1">'s/^WASSTRAAT_VERSION=.*/WASSTRAAT_VERSION=1.1.0/'</span><span class="w"> </span>.env<span class="w">   </span><span class="c1"># 2. nieuwe versie in .env (of met een editor)</span>
+make<span class="w"> </span>update<span class="w">                                </span><span class="c1"># 3. images ophalen en containers vervangen</span>
+</code></pre></div>
+
+<p>Wat er gebeurt bij <code>make update</code>:</p>
+<ul>
+<li>Docker haalt de images van de nieuwe versie op en vervangt alleen de containers waarvan de image is veranderd. De volumes met de databases, de Airflow-logs en alle mappen op de host blijven staan.</li>
+<li>Airflow werkt bij het starten zijn eigen metadata-database bij (<code>airflow db upgrade</code>). De Flask App maakt nieuwe tabellen en kolommen aan die in de nieuwe versie zijn toegevoegd; bestaande data blijft staan.</li>
+<li>Lees de release-opmerkingen. Als de pipeline is gewijzigd, draai dan <code>make volledige-cyclus</code>, zodat de verwerkte data overeenkomt met de nieuwe code. Zijn de harmonisatie-Excel of <code>correcties.yml</code> gewijzigd, vergelijk ze dan met jouw versie in <code>wasstraat_config/</code>.</li>
+<li>Oude images blijven op de schijf staan; ruim ze op met <code>docker image prune</code>.</li>
+</ul>
+<p>Teruggaan naar een oudere versie kan door de oude versie in <code>.env</code> te zetten en <code>make update</code> te draaien, maar een nieuwere versie kan het databaseschema hebben gewijzigd. Zet in dat geval ook de backup van vóór het bijwerken terug.</p>
+<div class="admonition warning">
+<p class="admonition-title">Grote PostgreSQL-versiesprong</p>
+<p>De PostgreSQL-image is gebaseerd op PostgreSQL 18. Een toekomstige versie met een hogere hoofdversie van PostgreSQL kan het bestaande datavolume niet zomaar lezen. De release-opmerkingen vermelden dat dan, met de stappen (backup, volume leegmaken, restore).</p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Overstappen van een installatie uit de repository</p>
+<p>Draaide je de Wasstraat al vanuit een clone van de repository (<code>make app</code> of <code>make delft</code>)? Maak daar een backup (<code>make backup</code>), kopieer de bestanden uit <code>data/&lt;omgeving&gt;/backup/postgres/</code> en <code>.../mongo/</code> naar <code>data/backup/postgres/</code> en <code>data/backup/mongo/</code> van de nieuwe installatie, start die (<code>make up</code>) en zet de backup terug met <code>make restore TS=&lt;tijdstempel&gt;</code>. Kopieer ook <code>data/&lt;omgeving&gt;/output/archeomedia/</code> naar <code>data/output/archeomedia/</code>, en neem de wachtwoorden over uit de oude <code>config/*.env</code> als je dezelfde inloggegevens wilt houden. Een migratie van het oude PostgreSQL-volume (<code>make migrate-postgres-data</code>) is hier niet nodig.</p>
+</div>
+<h2 id="9-backup-en-restore">9. Backup en restore<a class="headerlink" href="#9-backup-en-restore" title="Permanent link">&para;</a></h2>
+<div class="codehilite"><pre><span></span><code>make<span class="w"> </span>backup<span class="w">                              </span><span class="c1"># dump van PostgreSQL en MongoDB</span>
+make<span class="w"> </span>restore<span class="w"> </span><span class="nv">TS</span><span class="o">=</span><span class="m">2026</span>-01-15_10-30-00<span class="w">      </span><span class="c1"># terugzetten van één tijdstempel</span>
+</code></pre></div>
+
+<p><code>make backup</code> stopt Flask en Airflow kort, schrijft <code>data/backup/postgres/postgres_&lt;tijdstempel&gt;.tar</code> (<code>pg_dump</code>) en <code>data/backup/mongo/mongo_&lt;tijdstempel&gt;/</code> (<code>mongodump</code> van de drie databases van de pipeline) en start de containers weer. Plan dit bijvoorbeeld 's nachts in met <code>cron</code>, en kopieer de backupmap naar een andere locatie.</p>
+<p>Niet in de backup zitten:</p>
+<ul>
+<li><strong>De verwerkte media</strong> in <code>data/output/</code>. Neem die map op in je gewone bestandsbackup; de pipeline kan ze ook opnieuw aanmaken met de volledige cyclus.</li>
+<li><strong>De configuratie</strong> <code>.env</code> en <code>config/*.env</code>. Bewaar daar een kopie van op een veilige plek: zonder de wachtwoorden kom je niet meer in de databases.</li>
+<li><strong>De zoekindex</strong> van Elasticsearch. Die bouwt de volledige cyclus opnieuw op; de DAG <code>DAG_Load_Only</code> doet dat ook zonder de brondata opnieuw in te lezen.</li>
+</ul>
+<p><code>make restore</code> zet de PostgreSQL-dump terug met <code>pg_restore</code> (bestaande tabellen worden eerst verwijderd) en de MongoDB-databases met <code>mongorestore --drop</code>. De tijdstempel is het deel van de bestandsnaam na <code>postgres_</code> of <code>mongo_</code>.</p>
+<h2 id="10-wat-je-niet-moet-doen">10. Wat je niet moet doen<a class="headerlink" href="#10-wat-je-niet-moet-doen" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Geen <code>docker compose down -v</code></strong> en geen <code>docker volume rm</code>: dat verwijdert de databases. <code>make down</code> verwijdert alleen de containers.</li>
+<li><strong>Niet twee installaties op één Docker-host</strong>: de containers hebben vaste namen (<code>wasstraat_postgres</code> enzovoort). Een tweede installatie, ook een uit de repository, botst daarmee.</li>
+<li><strong><code>init-config.sh --force</code> niet op een bestaande installatie</strong>: dan krijgen de <code>config/*.env</code> nieuwe wachtwoorden, terwijl de databases de oude kennen. Wil je een wachtwoord wijzigen, doe dat dan in de database én in het bestand.</li>
+<li><strong><code>latest</code> niet als versie in <code>.env</code></strong>: dan bepaalt het moment van <code>docker compose pull</code> welke versie je draait.</li>
+<li><strong>Geen wijzigingen in de containers</strong>: alles wat je in een container aanpast verdwijnt bij het bijwerken. Configuratie hoort in <code>.env</code>, <code>config/</code> en <code>wasstraat_config/</code>.</li>
+<li><strong>De <code>.env</code>-bestanden niet delen of in versiebeheer zetten</strong>: ze bevatten de wachtwoorden.</li>
+<li><strong>De brondata niet aanpassen tijdens een verwerking</strong>: de pipeline registreert per bestand een vingerafdruk; wijzigingen tijdens een run leveren een inconsistente registratie op.</li>
+</ul>
+<h2 id="veelvoorkomende-problemen">Veelvoorkomende problemen<a class="headerlink" href="#veelvoorkomende-problemen" title="Permanent link">&para;</a></h2>
+<p><strong><code>denied</code> of <code>unauthorized</code> bij het ophalen van de images.</strong> De images zijn publiek; controleer de versie in <code>.env</code> (bestaat de tag?) en de netwerktoegang tot <code>ghcr.io</code>. Een <code>docker login ghcr.io</code> is niet nodig.</p>
+<p><strong>Een container start steeds opnieuw.</strong> Bekijk <code>make logs S=&lt;service&gt;</code>. Bij Elasticsearch is de oorzaak meestal te weinig geheugen voor Docker; bij Airflow of Flask een PostgreSQL die nog niet klaar is (ze proberen het vanzelf opnieuw).</p>
+<p><strong><code>permission denied</code> in de logs van Airflow of Flask (Linux).</strong> De mappen uit <code>.env</code> zijn niet schrijfbaar voor de containers: <code>chmod -R a+rwX</code> op de uitvoer- en backupmap.</p>
+<p><strong>Load mislukt met <code>relation Def_... does not exist</code>.</strong> De Flask App maakt de tabellen aan; controleer met <code>make ps</code> of <code>wasstraat_flask</code> draait en start de Load-stap opnieuw.</p>
+<p><strong>Poort al in gebruik.</strong> Pas de poort aan in <code>.env</code> en draai <code>make up</code> opnieuw.</p>
+<p>Meer oplossingen staan in <a href="../../aan-de-slag/#veelvoorkomende-problemen">Aan de slag</a>; de commando's daar met <code>docker exec wasstraat_&lt;service&gt;</code> werken ook in deze installatie.</p>
+<h2 id="voor-beheerders-van-de-wasstraat-zelf">Voor beheerders van de Wasstraat zelf<a class="headerlink" href="#voor-beheerders-van-de-wasstraat-zelf" title="Permanent link">&para;</a></h2>
+<p>Het publiceren van nieuwe images (<code>make publish</code>, <code>make release</code>) en de inrichting van de registry staan beschreven in <a href="../omgevingen/#publicatie-van-images">Omgevingen &amp; Docker Compose</a>.</p>
+              
+            </div>
+          </div>
+<footer role="contentinfo" class="wasstraat-footer"
+        itemscope itemtype="https://schema.org/WPFooter">
+  <hr>
+  <p class="wasstraat-credits">
+    Gebouwd door
+    <span itemprop="publisher" itemscope itemtype="https://schema.org/Organization">
+      <strong itemprop="name">E-Space</strong>
+    </span>
+    —
+    <span itemprop="author" itemscope itemtype="https://schema.org/Person">
+      <strong itemprop="name">Arjen Brienen</strong><meta itemprop="affiliation" content="E-Space">
+      <link itemprop="sameAs" href="https://www.linkedin.com/in/arjenbrienen/">
+      <link itemprop="sameAs" href="https://github.com/brienen">
+    </span>
+  </p>
+  <p class="wasstraat-license">
+    Uitgegeven onder de
+    <a href="https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12"
+       rel="license">EUPL v1.2</a>.
+    Broncode:
+    <a href="https://github.com/brienen/wasstraat_archeologische_data"
+       rel="external">github.com/brienen/wasstraat_archeologische_data</a>.
+  </p>
+  
+    <p class="wasstraat-copyright"><small>© E-Space — Arjen Brienen. Uitgegeven onder de EUPL v1.2 licentie.</small></p>
+  
+</footer>
+<footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footernavigatie">
+        <a href="../../aan-de-slag/" class="btn btn-neutral float-left" title="Handleiding (ontwikkelomgeving)"><span class="icon icon-circle-arrow-left"></span> Vorige</a>
+        <a href="../../componenten/configuratie/" class="btn btn-neutral float-right" title="Configuratie">Volgende <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+      <p>© E-Space — Arjen Brienen. Uitgegeven onder de EUPL v1.2 licentie.</p>
+  </div>
+
+  Gemaakt met <a href="https://www.mkdocs.org/">MkDocs</a> met behulp van een <a href="https://github.com/readthedocs/sphinx_rtd_theme">Thema</a> geleverd door <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versies">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../../aan-de-slag/" style="color: #fcfcfc">&laquo; Vorige</a></span>
+    
+    
+      <span><a href="../../componenten/configuratie/" style="color: #fcfcfc">Volgende &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../..";</script>
+    <script src="../../js/theme_extra.js"></script>
+    <script src="../../js/theme.js"></script>
+      <script src="../../assets/lightbox.js"></script>
+      <script src="../../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

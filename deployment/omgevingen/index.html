@@ -3,9 +3,9 @@
 <head>
     <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="author" content="E-Space / Arjen Brienen" /><link rel="canonical" href="https://wasstraat.e-space.nl/deployment/omgevingen/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="author" content="E-Space / Arjen Brienen" /><link rel="canonical" href="https://brienen.github.io/wasstraat_archeologische_data/deployment/omgevingen/" />
       <link rel="shortcut icon" href="../../img/favicon.ico" />
-    <title>Omgevingen & Docker Compose - Wasstraat Archeologische Data</title>
+    <title>Omgevingen en Docker Compose - Wasstraat Archeologische Data</title>
     <link rel="stylesheet" href="../../css/theme.css" />
     <link rel="stylesheet" href="../../css/theme_extra.css" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
@@ -13,9 +13,9 @@
     
       <script>
         // Current page data
-        var mkdocs_page_name = "Omgevingen \u0026 Docker Compose";
+        var mkdocs_page_name = "Omgevingen en Docker Compose";
         var mkdocs_page_input_path = "deployment/omgevingen.md";
-        var mkdocs_page_url = "/deployment/omgevingen/";
+        var mkdocs_page_url = "/wasstraat_archeologische_data/deployment/omgevingen/";
       </script>
     
     <!--[if lt IE 9]>
@@ -33,7 +33,7 @@
   <meta http-equiv="Content-Language" content="nl">
 
   
-  <meta name="DC.title" content="Omgevingen & Docker Compose">
+  <meta name="DC.title" content="Omgevingen en Docker Compose">
   <meta name="DC.creator" content="Arjen Brienen">
   <meta name="DC.publisher" content="E-Space">
   <meta name="DC.language" content="nl">
@@ -44,18 +44,18 @@
   
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Wasstraat Archeologische Data">
-  <meta property="og:title" content="Omgevingen & Docker Compose">
+  <meta property="og:title" content="Omgevingen en Docker Compose">
   <meta property="og:description" content="Technische documentatie voor de Wasstraat Archeologische Data - een open source verwerkingsplatform voor archeologische datasets">
   <meta property="og:locale" content="nl_NL">
-  <meta property="og:url" content="https://wasstraat.e-space.nl/deployment/omgevingen/">
+  <meta property="og:url" content="https://brienen.github.io/wasstraat_archeologische_data/deployment/omgevingen/">
 
   
   <meta name="twitter:card" content="summary">
-  <meta name="twitter:title" content="Omgevingen & Docker Compose">
+  <meta name="twitter:title" content="Omgevingen en Docker Compose">
   <meta name="twitter:description" content="Technische documentatie voor de Wasstraat Archeologische Data - een open source verwerkingsplatform voor archeologische datasets">
 
   
-  <link rel="canonical" href="https://wasstraat.e-space.nl/deployment/omgevingen/">
+  <link rel="canonical" href="https://brienen.github.io/wasstraat_archeologische_data/deployment/omgevingen/">
 
   
   <script type="application/ld+json">
@@ -64,17 +64,17 @@
     "@graph": [
       {
         "@type": "Organization",
-        "@id": "https://wasstraat.e-space.nl/#org-espace",
+        "@id": "https://brienen.github.io/wasstraat_archeologische_data/#org-espace",
         "name": "E-Space",
         "description": "Ontwikkelaar van de Wasstraat Archeologische Data.",
         "inLanguage": "nl"
       },
       {
         "@type": "Person",
-        "@id": "https://wasstraat.e-space.nl/#person-arjen",
+        "@id": "https://brienen.github.io/wasstraat_archeologische_data/#person-arjen",
         "name": "Arjen Brienen",
         "jobTitle": "Architect en ontwikkelaar",
-        "affiliation": { "@id": "https://wasstraat.e-space.nl/#org-espace" },
+        "affiliation": { "@id": "https://brienen.github.io/wasstraat_archeologische_data/#org-espace" },
         "sameAs": [
           "https://www.linkedin.com/in/arjenbrienen/",
           "https://github.com/brienen"
@@ -82,20 +82,20 @@
       },
       {
         "@type": "WebSite",
-        "@id": "https://wasstraat.e-space.nl/#website",
-        "url": "https://wasstraat.e-space.nl/",
+        "@id": "https://brienen.github.io/wasstraat_archeologische_data/#website",
+        "url": "https://brienen.github.io/wasstraat_archeologische_data/",
         "name": "Wasstraat Archeologische Data",
         "description": "Technische documentatie voor de Wasstraat Archeologische Data - een open source verwerkingsplatform voor archeologische datasets",
         "inLanguage": "nl",
-        "publisher": { "@id": "https://wasstraat.e-space.nl/#org-espace" },
-        "author": { "@id": "https://wasstraat.e-space.nl/#person-arjen" },
-        "creator": { "@id": "https://wasstraat.e-space.nl/#person-arjen" },
-        "copyrightHolder": { "@id": "https://wasstraat.e-space.nl/#org-espace" },
+        "publisher": { "@id": "https://brienen.github.io/wasstraat_archeologische_data/#org-espace" },
+        "author": { "@id": "https://brienen.github.io/wasstraat_archeologische_data/#person-arjen" },
+        "creator": { "@id": "https://brienen.github.io/wasstraat_archeologische_data/#person-arjen" },
+        "copyrightHolder": { "@id": "https://brienen.github.io/wasstraat_archeologische_data/#org-espace" },
         "license": "https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12"
       },
       {
         "@type": "SoftwareSourceCode",
-        "@id": "https://wasstraat.e-space.nl/#software",
+        "@id": "https://brienen.github.io/wasstraat_archeologische_data/#software",
         "name": "Wasstraat Archeologische Data",
         "alternateName": "Wasstraat",
         "description": "Open-source ETL-platform dat archeologische gegevens verzamelt, verwerkt en toegankelijk maakt. Ontwikkeld voor de gemeente Delft en uitgebreid tot een generiek platform voor Nederlandse gemeenten.",
@@ -103,11 +103,11 @@
         "runtimePlatform": "Docker Compose",
         "codeRepository": "https://github.com/brienen/wasstraat_archeologische_data",
         "license": "https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12",
-        "author": { "@id": "https://wasstraat.e-space.nl/#person-arjen" },
-        "creator": { "@id": "https://wasstraat.e-space.nl/#person-arjen" },
-        "publisher": { "@id": "https://wasstraat.e-space.nl/#org-espace" },
-        "maintainer": { "@id": "https://wasstraat.e-space.nl/#person-arjen" },
-        "copyrightHolder": { "@id": "https://wasstraat.e-space.nl/#org-espace" },
+        "author": { "@id": "https://brienen.github.io/wasstraat_archeologische_data/#person-arjen" },
+        "creator": { "@id": "https://brienen.github.io/wasstraat_archeologische_data/#person-arjen" },
+        "publisher": { "@id": "https://brienen.github.io/wasstraat_archeologische_data/#org-espace" },
+        "maintainer": { "@id": "https://brienen.github.io/wasstraat_archeologische_data/#person-arjen" },
+        "copyrightHolder": { "@id": "https://brienen.github.io/wasstraat_archeologische_data/#org-espace" },
         "inLanguage": "nl",
         "keywords": "archeologie, ETL, Airflow, PostgreSQL, MongoDB, Elasticsearch, ABR, CIDOC CRM, GGM, erfgoed, open data",
         "about": [
@@ -121,15 +121,15 @@
       
       ,{
         "@type": "TechArticle",
-        "@id": "https://wasstraat.e-space.nl/deployment/omgevingen/#article",
-        "url": "https://wasstraat.e-space.nl/deployment/omgevingen/",
-        "name": "Omgevingen & Docker Compose",
-        "headline": "Omgevingen & Docker Compose",
+        "@id": "https://brienen.github.io/wasstraat_archeologische_data/deployment/omgevingen/#article",
+        "url": "https://brienen.github.io/wasstraat_archeologische_data/deployment/omgevingen/",
+        "name": "Omgevingen en Docker Compose",
+        "headline": "Omgevingen en Docker Compose",
         "description": "Technische documentatie voor de Wasstraat Archeologische Data - een open source verwerkingsplatform voor archeologische datasets",
         "inLanguage": "nl",
-        "isPartOf": { "@id": "https://wasstraat.e-space.nl/#website" },
-        "author": { "@id": "https://wasstraat.e-space.nl/#person-arjen" },
-        "publisher": { "@id": "https://wasstraat.e-space.nl/#org-espace" },
+        "isPartOf": { "@id": "https://brienen.github.io/wasstraat_archeologische_data/#website" },
+        "author": { "@id": "https://brienen.github.io/wasstraat_archeologische_data/#person-arjen" },
+        "publisher": { "@id": "https://brienen.github.io/wasstraat_archeologische_data/#org-espace" },
         "license": "https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12"
       }
       
@@ -158,6 +158,17 @@
                 <li class="toctree-l1"><a class="reference internal" href="../..">Home</a>
                 </li>
               </ul>
+              <p class="caption"><span class="caption-text">Aan de slag</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../aan-de-slag/">Handleiding (ontwikkelomgeving)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../installatie-met-images/">Installatie met images</a>
+                  </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../componenten/configuratie/">Configuratie</a>
+                </li>
+              </ul>
               <p class="caption"><span class="caption-text">Projectoverzicht</span></p>
               <ul>
                   <li class="toctree-l1"><a class="reference internal" href="../../overzicht/inleiding/">Inleiding</a>
@@ -167,60 +178,53 @@
                   <li class="toctree-l1"><a class="reference internal" href="../../overzicht/doelstellingen/">Doelstellingen</a>
                   </li>
               </ul>
-              <p class="caption"><span class="caption-text">Aan de slag</span></p>
-              <ul>
-                  <li class="toctree-l1"><a class="reference internal" href="../../aan-de-slag/">Handleiding</a>
-                  </li>
-              </ul>
               <p class="caption"><span class="caption-text">Architectuur</span></p>
               <ul>
                   <li class="toctree-l1"><a class="reference internal" href="../../architectuur/systeem/">Systeemarchitectuur</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../../architectuur/dataflow/">Dataflow Pipeline</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../../architectuur/dataflow/">Verwerkingspipeline</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../architectuur/componenten/">Componentenmodel</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../../architectuur/gegevensmodel/">Gegevensmodel & Semantiek</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../../architectuur/gegevensmodel/">Gegevensmodel</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../../architectuur/stack/">Technische Stack</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../../architectuur/stack/">Technische stack</a>
                   </li>
               </ul>
               <p class="caption"><span class="caption-text">Componenten</span></p>
               <ul>
-                  <li class="toctree-l1"><a class="reference internal" href="../../componenten/extractie/">Extractielaag</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../../componenten/extractie/">Extractie</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../../componenten/singlestore/">SingleStore & Clusterlaag</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../../componenten/singlestore/">MongoDB en Single_Store</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../../componenten/transformatie/">Transformatielaag</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../../componenten/transformatie/">Transformatie</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../componenten/incrementeel-laden/">Incrementeel laden</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../componenten/verwerkingsrapport/">Foutbeleid en verwerkingsrapport</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../componenten/validatie/">Validatie en kwaliteitscontroles</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../componenten/gemeenteprofielen/">Gemeenteprofielen</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../../componenten/crossviews/">Crossviews</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../../componenten/validatie/">Validatielaag</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../../componenten/configuratie/">Configuratiemodule</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../../componenten/zoeken/">Zoek- en Indexeringslaag</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../../componenten/zoeken/">Zoeken en indexering</a>
                   </li>
               </ul>
               <p class="caption"><span class="caption-text">Deployment</span></p>
               <ul class="current">
-                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Omgevingen & Docker Compose</a>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Omgevingen en Docker Compose</a>
     <ul class="current">
     <li class="toctree-l2"><a class="reference internal" href="#services-overzicht">Services Overzicht</a>
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#docker-compose-bestanden">Docker Compose Bestanden</a>
         <ul>
-    <li class="toctree-l3"><a class="reference internal" href="#docker-composeyml-basisbestand">docker-compose.yml — Basisbestand</a>
+    <li class="toctree-l3"><a class="reference internal" href="#docker-composeyml-basisbestand-make-app">docker-compose.yml — Basisbestand (make app)</a>
     </li>
-    <li class="toctree-l3"><a class="reference internal" href="#docker-composedevelopyml-ontwikkelomgeving">docker-compose.develop.yml — Ontwikkelomgeving</a>
+    <li class="toctree-l3"><a class="reference internal" href="#docker-composedelftyml-eigen-data-make-delft">docker-compose.delft.yml — Eigen data (make delft)</a>
     </li>
-    <li class="toctree-l3"><a class="reference internal" href="#docker-composeaccyml-acceptatieomgeving">docker-compose.acc.yml — Acceptatieomgeving</a>
+    <li class="toctree-l3"><a class="reference internal" href="#docker-composedevelopyml-ontwikkelomgeving-make-dev">docker-compose.develop.yml — Ontwikkelomgeving (make dev)</a>
     </li>
-    <li class="toctree-l3"><a class="reference internal" href="#docker-composeprodyml-productieomgeving">docker-compose.prod.yml — Productieomgeving</a>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#docker-composeexampleyml-voorbeeldconfiguratie">docker-compose.example.yml — Voorbeeldconfiguratie</a>
+    <li class="toctree-l3"><a class="reference internal" href="#docker-composetestyml-en-docker-composedelft-testyml-testomgevingen">docker-compose.test.yml en docker-compose.delft-test.yml — Testomgevingen</a>
     </li>
         </ul>
     </li>
@@ -234,7 +238,11 @@
     </li>
     <li class="toctree-l3"><a class="reference internal" href="#persistente-volumes">Persistente volumes</a>
     </li>
+    <li class="toctree-l3"><a class="reference internal" href="#bestaande-installatie-postgresql-data-naar-het-volume">Bestaande installatie: PostgreSQL-data naar het volume</a>
+    </li>
     <li class="toctree-l3"><a class="reference internal" href="#gedeelde-code">Gedeelde code</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#broncode-in-de-images">Broncode in de images</a>
     </li>
         </ul>
     </li>
@@ -242,24 +250,33 @@
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#csv-export">CSV-export</a>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#release-en-publicatie">Release en Publicatie</a>
+    <li class="toctree-l2"><a class="reference internal" href="#publicatie-van-images">Publicatie van images</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#inloggen-op-de-registry">Inloggen op de registry</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#een-versie-uitbrengen">Een versie uitbrengen</a>
+    </li>
+        </ul>
     </li>
     </ul>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../airflow-vs-app/">Airflow Transformatie vs. Web Applicatie</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../airflow-vs-app/">Airflow en webapplicatie</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../voorbeelddata/">Voorbeelddata</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../proefdata/">Proefdata Inlezen</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../proefdata/">Proefdata inlezen</a>
                   </li>
               </ul>
-              <p class="caption"><span class="caption-text">Testen</span></p>
               <ul>
-                  <li class="toctree-l1"><a class="reference internal" href="../../testen/">Unit & Integratietests</a>
-                  </li>
+                <li class="toctree-l1"><a class="reference internal" href="../../testen/">Testen</a>
+                </li>
               </ul>
               <ul>
                 <li class="toctree-l1"><a class="reference internal" href="../../diagrammen/">Diagrammen</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../toekomstvisie/">Toekomstvisie</a>
                 </li>
               </ul>
       </div>
@@ -277,7 +294,7 @@
   <ul class="wy-breadcrumbs">
     <li><a href="../.." class="icon icon-home" aria-label="Documentatie"></a></li>
           <li class="breadcrumb-item">Deployment</li>
-      <li class="breadcrumb-item active">Omgevingen & Docker Compose</li>
+      <li class="breadcrumb-item active">Omgevingen en Docker Compose</li>
     <li class="wy-breadcrumbs-aside">
     </li>
   </ul>
@@ -287,7 +304,11 @@
             <div class="section" itemprop="articleBody">
               
                 <h1 id="omgevingen-docker-compose">Omgevingen &amp; Docker Compose<a class="headerlink" href="#omgevingen-docker-compose" title="Permanent link">&para;</a></h1>
-<p>De Wasstraat draait als een set Docker-containers die via <code>docker-compose</code> worden georkestreerd. Er zijn meerdere compose-bestanden die samen de verschillende omgevingen definiëren.</p>
+<p>De Wasstraat draait als een set Docker-containers die via <code>docker compose</code> worden georkestreerd. Er zijn meerdere compose-bestanden die samen de verschillende omgevingen definiëren.</p>
+<div class="admonition info">
+<p class="admonition-title">Ontwikkelomgeving en live installatie</p>
+<p>De compose-bestanden in de repository bouwen de images uit de broncode en mounten die broncode in de containers: dit is de <strong>ontwikkelomgeving</strong>. Een installatie voor gebruik draait uit de <strong>gepubliceerde images</strong> op <code>ghcr.io/brienen</code>, met het compose-bestand in de map <code>deploy/</code>, zonder broncode. Zie <a href="../installatie-met-images/">Installatie met images</a>. Deze pagina beschrijft de ontwikkelomgeving en, onderaan, het publiceren van de images.</p>
+</div>
 <h2 id="services-overzicht">Services Overzicht<a class="headerlink" href="#services-overzicht" title="Permanent link">&para;</a></h2>
 <p>Het platform bestaat uit de volgende services:</p>
 <table>
@@ -321,7 +342,7 @@
 <tr>
 <td><strong>Flask</strong></td>
 <td><code>wasstraat_flask</code></td>
-<td>5051</td>
+<td>— (via Apache)</td>
 <td>Web-applicatie voor data-inzicht en -beheer</td>
 </tr>
 <tr>
@@ -340,7 +361,7 @@
 <td><strong>Apache</strong></td>
 <td><code>wasstraat_apache</code></td>
 <td>5052</td>
-<td>Statische bestandsserver (foto's, rapporten)</td>
+<td>Voordeur: reverse proxy naar Flask en bestandsserver voor <code>/archeomedia</code> (foto's, rapporten)</td>
 </tr>
 <tr>
 <td><strong>Jupyter</strong></td>
@@ -350,60 +371,45 @@
 </tr>
 </tbody>
 </table>
+<div class="admonition info">
+<p class="admonition-title">Apache is de voordeur van de webapplicatie</p>
+<p>De browser praat alleen met Apache (poort 5052). Apache serveert de verwerkte media onder <code>/archeomedia</code> rechtstreeks uit de uitvoermap (<code>data/&lt;omgeving&gt;/output</code>, alleen-lezen gemount) en stuurt alle overige verzoeken door naar <code>http://flask:5051/</code> binnen het compose-netwerk (<code>services/apache/httpd.conf</code>: <code>ProxyPass</code>, <code>ProxyPreserveHost On</code>, <code>X-Forwarded-Proto</code>). Flask heeft daardoor geen hostpoort. De webapplicatie verwijst naar foto's met relatieve paden <code>/archeomedia/...</code>; rechtstreeks op Flask blijven die leeg. In Flask neemt <code>ProxyFix</code> (<code>app/app/app.py</code>) de host en het protocol van de buitenkant over uit de <code>X-Forwarded</code>-headers, zodat redirects kloppen, ook achter een TLS-proxy vóór Apache.</p>
+</div>
 <h2 id="docker-compose-bestanden">Docker Compose Bestanden<a class="headerlink" href="#docker-compose-bestanden" title="Permanent link">&para;</a></h2>
-<h3 id="docker-composeyml-basisbestand"><code>docker-compose.yml</code> — Basisbestand<a class="headerlink" href="#docker-composeyml-basisbestand" title="Permanent link">&para;</a></h3>
-<p>Het hoofdbestand definieert alle services met hun basisinstellingen:</p>
+<h3 id="docker-composeyml-basisbestand-make-app"><code>docker-compose.yml</code> — Basisbestand (<code>make app</code>)<a class="headerlink" href="#docker-composeyml-basisbestand-make-app" title="Permanent link">&para;</a></h3>
+<p>Het hoofdbestand definieert alle services en gebruikt de synthetische voorbeelddata uit <code>data/synthetic/</code>:</p>
 <div class="codehilite"><pre><span></span><code><span class="nt">services</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">postgres</span><span class="p">:</span><span class="w">      </span><span class="c1"># PostgreSQL met custom Dockerfile</span>
-<span class="w">  </span><span class="nt">airflow</span><span class="p">:</span><span class="w">       </span><span class="c1"># Airflow met volume-mounts naar dags, scripts, config</span>
-<span class="w">  </span><span class="nt">redis</span><span class="p">:</span><span class="w">         </span><span class="c1"># Bitnami Redis image</span>
-<span class="w">  </span><span class="nt">flask</span><span class="p">:</span><span class="w">         </span><span class="c1"># Flask web-applicatie</span>
-<span class="w">  </span><span class="nt">mongo</span><span class="p">:</span><span class="w">         </span><span class="c1"># MongoDB 4.2.21</span>
-<span class="w">  </span><span class="nt">jupyter</span><span class="p">:</span><span class="w">       </span><span class="c1"># Jupyter Lab met notebook-volumes</span>
-<span class="w">  </span><span class="nt">apache</span><span class="p">:</span><span class="w">        </span><span class="c1"># Apache voor statische bestanden</span>
-<span class="w">  </span><span class="nt">elasticsearch</span><span class="p">:</span><span class="w"> </span><span class="c1"># Elasticsearch 8.6.1</span>
+<span class="w">  </span><span class="nt">postgres</span><span class="p">:</span><span class="w">      </span><span class="c1"># PostgreSQL 18 met PostGIS 3.6 (kartoza/postgis), eigen Dockerfile</span>
+<span class="w">  </span><span class="nt">airflow</span><span class="p">:</span><span class="w">       </span><span class="c1"># Apache Airflow 2.10.5 met Python 3.11, eigen Dockerfile</span>
+<span class="w">  </span><span class="nt">redis</span><span class="p">:</span><span class="w">         </span><span class="c1"># redis:7.2-alpine</span>
+<span class="w">  </span><span class="nt">flask</span><span class="p">:</span><span class="w">         </span><span class="c1"># Flask-webapplicatie op python:3.11-slim, eigen Dockerfile</span>
+<span class="w">  </span><span class="nt">mongo</span><span class="p">:</span><span class="w">         </span><span class="c1"># mongo:7.0</span>
+<span class="w">  </span><span class="nt">jupyter</span><span class="p">:</span><span class="w">       </span><span class="c1"># Jupyter Lab (jupyter/datascience-notebook, Python 3.11)</span>
+<span class="w">  </span><span class="nt">apache</span><span class="p">:</span><span class="w">        </span><span class="c1"># httpd:2.4: voordeur, reverse proxy naar Flask en bestandsserver voor /archeomedia</span>
+<span class="w">  </span><span class="nt">elasticsearch</span><span class="p">:</span><span class="w"> </span><span class="c1"># Elasticsearch 8.17.0</span>
 </code></pre></div>
 
-<p>Elk service leest haar configuratie uit <code>.env</code>-bestanden in de <code>config/</code> directory.</p>
-<h3 id="docker-composedevelopyml-ontwikkelomgeving"><code>docker-compose.develop.yml</code> — Ontwikkelomgeving<a class="headerlink" href="#docker-composedevelopyml-ontwikkelomgeving" title="Permanent link">&para;</a></h3>
+<p>Elke service leest haar configuratie uit <code>.env</code>-bestanden in de <code>config/</code> directory.</p>
+<h3 id="docker-composedelftyml-eigen-data-make-delft"><code>docker-compose.delft.yml</code> — Eigen data (<code>make delft</code>)<a class="headerlink" href="#docker-composedelftyml-eigen-data-make-delft" title="Permanent link">&para;</a></h3>
+<p>Zelfde services als het basisbestand, maar met de brondata uit <code>data/delft/data/</code>, de configuratie uit <code>data/delft/wasstraat_config/</code> en de uitvoer en backups in <code>data/delft/</code>. De naam is historisch: dit is het bestand voor elke installatie met eigen brondata. Wil je een eigen omgevingsnaam, kopieer het dan en pas de paden aan.</p>
+<h3 id="docker-composedevelopyml-ontwikkelomgeving-make-dev"><code>docker-compose.develop.yml</code> — Ontwikkelomgeving (<code>make dev</code>)<a class="headerlink" href="#docker-composedevelopyml-ontwikkelomgeving-make-dev" title="Permanent link">&para;</a></h3>
 <p>Overschrijft instellingen voor lokale ontwikkeling:</p>
 <ul>
 <li><strong>Airflow</strong>: Eén parser-proces (<code>DAG_FILE_PROCESSOR_PROCESSES=1</code>), geen parallelle taken (<code>PARALLELISM=1</code>, <code>DAG_CONCURRENCY=1</code>), debugpy-poort open op <code>:5678</code></li>
-<li><strong>Flask</strong>: Container blijft draaien via infinite loop (voor handmatig starten via IDE), broncode wordt als volume gemount, <code>FLASK_DEBUG=1</code></li>
+<li><strong>Flask</strong>: Container blijft draaien via infinite loop (voor handmatig starten via IDE), broncode wordt als volume gemount, <code>FLASK_DEBUG=1</code>, en hostpoort 5051 om Flask rechtstreeks te benaderen (normaal loopt alles via Apache op 5052)</li>
 </ul>
-<h3 id="docker-composeaccyml-acceptatieomgeving"><code>docker-compose.acc.yml</code> — Acceptatieomgeving<a class="headerlink" href="#docker-composeaccyml-acceptatieomgeving" title="Permanent link">&para;</a></h3>
-<p>Tussenomgeving met debug-mogelijkheden maar productie-achtige configuratie:</p>
-<ul>
-<li>Flask met <code>FLASK_DEBUG=1</code> maar productie-entrypoint</li>
-<li>Broncode als volume (voor snelle iteratie)</li>
-<li>Geschikt voor testen door eindgebruikers</li>
-</ul>
-<h3 id="docker-composeprodyml-productieomgeving"><code>docker-compose.prod.yml</code> — Productieomgeving<a class="headerlink" href="#docker-composeprodyml-productieomgeving" title="Permanent link">&para;</a></h3>
-<p>Gebruikt gepubliceerde Docker-images van Docker Hub:</p>
-<ul>
-<li><code>brienen/wasstraat_flask:1.0.0</code> — Vaste versie van Flask-app</li>
-<li><code>brienen/wasstraat_apache:0.8.0</code> — Vaste versie van Apache</li>
-<li><code>FLASK_DEBUG=0</code> — Geen debug-modus</li>
-<li>Geen broncode-volumes (alles zit in de image)</li>
-</ul>
-<h3 id="docker-composeexampleyml-voorbeeldconfiguratie"><code>docker-compose.example.yml</code> — Voorbeeldconfiguratie<a class="headerlink" href="#docker-composeexampleyml-voorbeeldconfiguratie" title="Permanent link">&para;</a></h3>
-<p>Template voor een minimale configuratie, bruikbaar als startpunt voor nieuwe omgevingen.</p>
+<h3 id="docker-composetestyml-en-docker-composedelft-testyml-testomgevingen"><code>docker-compose.test.yml</code> en <code>docker-compose.delft-test.yml</code> — Testomgevingen<a class="headerlink" href="#docker-composetestyml-en-docker-composedelft-testyml-testomgevingen" title="Permanent link">&para;</a></h3>
+<p>Zelfstandige testomgevingen voor <code>make integration</code> en <code>make integration-delft</code>, met eigen containernamen, een eigen projectnaam (<code>wasstraat-test</code>, <code>wasstraat-delft-test</code>), eigen hostpoorten (Airflow 8081 en 8082, Apache 5061 en 5062, MongoDB 27117 en 27118) en MongoDB en PostgreSQL in het geheugen. Ze kunnen naast een installatie en naast elkaar draaien; <code>tests/unit/test_testomgevingen_poorten.py</code> bewaakt dat de hostpoorten niet overlappen. Zie <a href="../../testen/">Testen</a>.</p>
 <h2 id="starten-en-stoppen">Starten en Stoppen<a class="headerlink" href="#starten-en-stoppen" title="Permanent link">&para;</a></h2>
 <p>De <code>Makefile</code> bevat targets voor elke omgeving. Bij het starten wordt automatisch <code>init-config.sh</code> aangeroepen om eventueel ontbrekende <code>.env</code>-bestanden te genereren.</p>
-<div class="codehilite"><pre><span></span><code><span class="c1"># Ontwikkelomgeving (met debugpy en hot-reload)</span>
-make<span class="w"> </span>dev
-
-<span class="c1"># Lokale modus (alle services)</span>
+<div class="codehilite"><pre><span></span><code><span class="c1"># Alle services met synthetische voorbeelddata</span>
 make<span class="w"> </span>app
 
-<span class="c1"># Voorbeeldconfiguratie</span>
-make<span class="w"> </span>example
+<span class="c1"># Alle services met eigen data uit data/delft/</span>
+make<span class="w"> </span>delft
 
-<span class="c1"># Acceptatieomgeving</span>
-make<span class="w"> </span>acc
-
-<span class="c1"># Productieomgeving (met gepubliceerde images)</span>
-make<span class="w"> </span>prod
+<span class="c1"># Ontwikkelomgeving (met debugpy en hot-reload)</span>
+make<span class="w"> </span>dev
 
 <span class="c1"># Stoppen van alle containers</span>
 make<span class="w"> </span>stop
@@ -411,7 +417,7 @@ make<span class="w"> </span>stop
 <span class="c1"># Starten van gestopte containers</span>
 make<span class="w"> </span>start
 
-<span class="c1"># Stop en verwijder alle containers</span>
+<span class="c1"># Stop en verwijder alle containers (de volumes blijven bestaan)</span>
 make<span class="w"> </span>down
 
 <span class="c1"># Toon live logs</span>
@@ -427,8 +433,12 @@ make<span class="w"> </span>ps
 <code>docker compose -f docker-compose.yml -f docker-compose.develop.yml up -d</code>
 Typ <code>make help</code> voor een overzicht van alle beschikbare commando's.</p>
 </div>
+<div class="admonition note">
+<p class="admonition-title">Eén installatie per Docker-host</p>
+<p>De containers hebben vaste namen, zoals <code>wasstraat_postgres</code>. Er kan daarom maar één Wasstraat-installatie tegelijk op een Docker-host bestaan. <code>make app</code> en <code>make delft</code> gebruiken dezelfde containers.</p>
+</div>
 <h2 id="configuratie-via-environment-bestanden">Configuratie via Environment-bestanden<a class="headerlink" href="#configuratie-via-environment-bestanden" title="Permanent link">&para;</a></h2>
-<p>Alle services lezen configuratie uit bestanden in <code>config/</code>:</p>
+<p>Alle services lezen configuratie uit bestanden in <code>config/</code>. Hieronder in het kort; elke variabele met zijn standaardwaarde staat in <a href="../../componenten/configuratie/#2-omgevingsvariabelen">Configuratie</a>.</p>
 <table>
 <thead>
 <tr>
@@ -439,7 +449,7 @@ Typ <code>make help</code> voor een overzicht van alle beschikbare commando's.</
 <tbody>
 <tr>
 <td><code>postgres.env</code></td>
-<td>PostgreSQL-credentials en database-naam</td>
+<td>PostgreSQL-credentials en database-namen</td>
 </tr>
 <tr>
 <td><code>mongo.env</code></td>
@@ -447,7 +457,7 @@ Typ <code>make help</code> voor een overzicht van alle beschikbare commando's.</
 </tr>
 <tr>
 <td><code>airflow.env</code></td>
-<td>Airflow scheduler-instellingen, executor-type</td>
+<td>Airflow scheduler-instellingen, executor-type, beheerder</td>
 </tr>
 <tr>
 <td><code>airflow_db.env</code></td>
@@ -455,19 +465,19 @@ Typ <code>make help</code> voor een overzicht van alle beschikbare commando's.</
 </tr>
 <tr>
 <td><code>redis.env</code></td>
-<td>Redis wachtwoord</td>
+<td>Redis-wachtwoord en cache-instellingen</td>
 </tr>
 <tr>
 <td><code>flask.env</code></td>
-<td>Flask geheime sleutel, debug-modus, poort</td>
+<td>Flask geheime sleutel, wachtwoord van de beheerder (<code>FLASK_ADMIN_PASSWORD</code>) en mailinstellingen</td>
 </tr>
 <tr>
-<td><code>elasticsearch.env</code></td>
-<td>Elasticsearch-host</td>
+<td><code>jupyter.env</code></td>
+<td>Token voor Jupyter Lab (<code>JUPYTER_PASSWORD</code>)</td>
 </tr>
 <tr>
 <td><code>version.env</code></td>
-<td>Huidige versie van de applicatie</td>
+<td>Versienummer voor <code>make publish</code> en <code>make release</code> (zie <a href="#publicatie-van-images">Publicatie van images</a>); <code>make app</code>, <code>make delft</code> en <code>make dev</code> geven het als <code>WASSTRAAT_VERSION</code> mee aan Airflow, voor het verwerkingsrapport</td>
 </tr>
 </tbody>
 </table>
@@ -486,35 +496,99 @@ Typ <code>make help</code> voor een overzicht van alle beschikbare commando's.</
 </tr>
 <tr>
 <td><code>correcties.yml</code></td>
-<td>Gemeente-specifieke datacorrecties (projectcodes, rapportprefixen)</td>
+<td>Gemeente-specifieke datacorrecties en uitzonderingen: brondata- en projectcodecorrecties, <code>artefact_niet_mergen</code>, <code>rapportcode_prefixen</code>, <code>paden_overslaan</code> en <code>harmonisatie_voorrang</code> (zie <a href="../../componenten/configuratie/#3-correctiesyml">Configuratie</a>)</td>
 </tr>
 </tbody>
 </table>
 <div class="admonition warning">
 <p class="admonition-title">Gevoelige gegevens</p>
 <p>De <code>.env</code>-bestanden bevatten wachtwoorden en credentials. Neem deze <strong>nooit</strong> op in versiebeheer. Gebruik het <code>config/</code>-directory als template en vul per omgeving de juiste waarden in.</p>
+<p>De logs van Airflow en Flask tonen de databaseverbinding zonder wachtwoord (<code>postgresql://gebruiker:***@postgres/database</code>). Log je in nieuwe code een verbindings-URI zoals <code>SQLALCHEMY_DATABASE_URI</code> of <code>MONGO_URI</code>, gebruik dan <code>maskeerWachtwoord()</code> uit <code>shared/logutils.py</code>.</p>
 </div>
 <h2 id="volume-mounts">Volume-Mounts<a class="headerlink" href="#volume-mounts" title="Permanent link">&para;</a></h2>
 <h3 id="data-volumes">Data-volumes<a class="headerlink" href="#data-volumes" title="Permanent link">&para;</a></h3>
-<p>De Airflow-container koppelt de invoerdata via volumes:</p>
-<div class="codehilite"><pre><span></span><code>./data/delft/data/projecten        → /input/projecten
-./data/delft/data/projectenlijst   → /input/projectenlijst
-./data/delft/data/magazijnlijst    → /input/magazijnlijst
-./data/delft/data/fotolijst        → /input/fotolijst
-./data/delft/data/monsterdatabase  → /input/monsterdatabase
-./data/delft/data/rapporten        → /input/rapporten
-./data/delft/data/referentietabellen → /input/referentietabellen
+<p>De Airflow-container koppelt de invoerdata via volumes. Bij <code>make app</code> komen die uit <code>data/synthetic/data/</code>, bij <code>make delft</code> uit <code>data/delft/data/</code>:</p>
+<div class="codehilite"><pre><span></span><code><span class="nt">Airflow</span>
+<span class="o">./</span><span class="nt">data</span><span class="o">/&lt;</span><span class="nt">omgeving</span><span class="o">&gt;/</span><span class="nt">data</span><span class="o">/</span><span class="nt">projecten</span><span class="w">          </span><span class="err">→</span><span class="w"> </span><span class="o">/</span><span class="nt">input</span><span class="o">/</span><span class="nt">projecten</span>
+<span class="o">./</span><span class="nt">data</span><span class="o">/&lt;</span><span class="nt">omgeving</span><span class="o">&gt;/</span><span class="nt">data</span><span class="o">/</span><span class="nt">projecten</span><span class="w">          </span><span class="err">→</span><span class="w"> </span><span class="o">/</span><span class="nt">input</span><span class="o">/</span><span class="nt">images</span><span class="w">             </span><span class="o">(</span><span class="nt">dezelfde</span><span class="w"> </span><span class="nt">map</span><span class="o">:</span><span class="w"> </span><span class="nt">foto</span><span class="s1">'s staan in de projectmappen)</span>
+<span class="s1">./data/&lt;omgeving&gt;/data/projectenlijst     → /input/projectenlijst</span>
+<span class="s1">./data/&lt;omgeving&gt;/data/magazijnlijst      → /input/magazijnlijst</span>
+<span class="s1">./data/&lt;omgeving&gt;/data/fotolijst          → /input/fotolijst</span>
+<span class="s1">./data/&lt;omgeving&gt;/data/monsterdatabase    → /input/monsterdatabase</span>
+<span class="s1">./data/&lt;omgeving&gt;/data/rapporten          → /input/rapporten          (in de synthetische data leeg)</span>
+<span class="s1">./data/&lt;omgeving&gt;/data/referentietabellen → /input/referentietabellen</span>
+<span class="s1">./data/&lt;omgeving&gt;/output/archeomedia      → /output/archeomedia       (verwerkte media)</span>
+<span class="s1">./data/&lt;omgeving&gt;/output/rapporten        → /output/rapporten         (verwerkingsrapporten)</span>
+<span class="s1">./data/&lt;omgeving&gt;/wasstraat_config        → /opt/airflow/config       (harmonisatie-Excel, correcties.yml)</span>
+
+<span class="s1">Flask</span>
+<span class="s1">./data/&lt;omgeving&gt;/output/archeomedia      → /output/archeomedia       (schrijfbaar, voor het kantelen van foto'</span><span class="nt">s</span><span class="o">)</span>
+
+<span class="nt">Apache</span>
+<span class="o">./</span><span class="nt">data</span><span class="o">/&lt;</span><span class="nt">omgeving</span><span class="o">&gt;/</span><span class="nt">output</span><span class="w">                  </span><span class="err">→</span><span class="w"> </span><span class="o">/</span><span class="nt">usr</span><span class="o">/</span><span class="nt">local</span><span class="o">/</span><span class="nt">apache2</span><span class="o">/</span><span class="nt">htdocs</span><span class="w"> </span><span class="o">(</span><span class="nt">alleen-lezen</span><span class="o">;</span><span class="w"> </span><span class="nt">gepubliceerd</span><span class="w"> </span><span class="nt">onder</span><span class="w"> </span><span class="o">/</span><span class="nt">archeomedia</span><span class="o">)</span>
+
+<span class="nt">PostgreSQL</span><span class="w"> </span><span class="nt">en</span><span class="w"> </span><span class="nt">MongoDB</span>
+<span class="o">./</span><span class="nt">data</span><span class="o">/&lt;</span><span class="nt">omgeving</span><span class="o">&gt;/</span><span class="nt">backup</span><span class="o">/</span><span class="nt">postgres</span><span class="w">         </span><span class="err">→</span><span class="w"> </span><span class="o">/</span><span class="nt">backup</span>
+<span class="o">./</span><span class="nt">data</span><span class="o">/&lt;</span><span class="nt">omgeving</span><span class="o">&gt;/</span><span class="nt">backup</span><span class="o">/</span><span class="nt">mongo</span><span class="w">            </span><span class="err">→</span><span class="w"> </span><span class="o">/</span><span class="nt">backup</span>
 </code></pre></div>
 
+<p>De paden in de container kun je met omgevingsvariabelen wijzigen (<code>AIRFLOW_INPUT_*</code>, <code>AIRFLOW_OUTPUT_*</code>); zie <a href="../../componenten/configuratie/#27-paden-en-mounts">Configuratie: paden en mounts</a>.</p>
 <h3 id="persistente-volumes">Persistente volumes<a class="headerlink" href="#persistente-volumes" title="Permanent link">&para;</a></h3>
-<p>Docker beheert drie named volumes:</p>
-<ul>
-<li><code>wasstraat_postgres_volume</code> — PostgreSQL-data</li>
-<li><code>wasstraat_mongo_volume</code> — MongoDB-data</li>
-<li><code>elasticsearch-data</code> — Elasticsearch-indices</li>
-</ul>
+<p>Docker beheert vier named volumes:</p>
+<table>
+<thead>
+<tr>
+<th>Volume</th>
+<th>Pad in de container</th>
+<th>Inhoud</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>wasstraat_postgres_volume</code></td>
+<td><code>/data/postgres</code></td>
+<td>PostgreSQL-data (Flask-database en Airflow-metadata)</td>
+</tr>
+<tr>
+<td><code>wasstraat_mongo_volume</code></td>
+<td><code>/data/db</code></td>
+<td>MongoDB-data</td>
+</tr>
+<tr>
+<td><code>wasstraat_mongo_config_volume</code></td>
+<td><code>/data/configdb</code></td>
+<td>MongoDB-configuratie</td>
+</tr>
+<tr>
+<td><code>elasticsearch-data</code></td>
+<td><code>/usr/share/elasticsearch/data</code></td>
+<td>Elasticsearch-indices</td>
+</tr>
+</tbody>
+</table>
+<p>Docker Compose zet de projectnaam voor de volumenaam, standaard de naam van de map, bijvoorbeeld <code>wasstraat_archeologische_data_wasstraat_postgres_volume</code>.</p>
+<div class="admonition warning">
+<p class="admonition-title">PGDATA en het volume horen bij elkaar</p>
+<p>PostgreSQL schrijft naar de map uit <code>PGDATA</code>. Die staat in de compose-bestanden op <code>/data/postgres</code>, precies waar het volume hangt. Wijzig je de een, wijzig dan ook de ander. Staan ze uit elkaar, dan komt de database in de container zelf terecht en verdwijnt die zodra Docker Compose de container opnieuw aanmaakt.</p>
+</div>
+<h3 id="bestaande-installatie-postgresql-data-naar-het-volume">Bestaande installatie: PostgreSQL-data naar het volume<a class="headerlink" href="#bestaande-installatie-postgresql-data-naar-het-volume" title="Permanent link">&para;</a></h3>
+<p>Tot oktober 2026 hing het PostgreSQL-volume op <code>/var/lib/postgresql/data</code>, terwijl <code>PGDATA</code> op <code>/data/postgres</code> stond. Bij installaties uit die tijd staat de database daardoor in de container zelf, en is het volume leeg. Zodra je zo'n installatie start met de nieuwe compose-bestanden, maakt Docker Compose de PostgreSQL-container opnieuw aan en is die database weg. Migreer de data daarom eerst:</p>
+<div class="codehilite"><pre><span></span><code>make<span class="w"> </span>start<span class="w">                   </span><span class="c1"># start de bestaande containers zonder ze opnieuw aan te maken</span>
+make<span class="w"> </span>backup<span class="w">                  </span><span class="c1"># extra zekerheid: dump van PostgreSQL en MongoDB</span>
+make<span class="w"> </span>stop
+make<span class="w"> </span>migrate-postgres-data<span class="w">   </span><span class="c1"># kopieert de data uit de oude container naar het volume</span>
+make<span class="w"> </span>app<span class="w">                     </span><span class="c1"># of: make delft</span>
+</code></pre></div>
+
+<p><code>make migrate-postgres-data</code> wijzigt de oude container niet. Het script stopt zonder iets te doen als de container nog draait, als het volume al data bevat of als de migratie al is gedaan. Na het kopiëren telt het de bestanden in bron en volume en meldt het een fout als die niet gelijk zijn. Gebruik je een andere containernaam, geef die dan mee: <code>make migrate-postgres-data PG_CONTAINER=&lt;naam&gt;</code>.</p>
+<div class="admonition danger">
+<p class="admonition-title">Niet eerst make app of make down</p>
+<p>Draai bij een bestaande installatie geen <code>make app</code>, <code>make delft</code>, <code>make down</code> of <code>docker compose up</code> voordat de migratie klaar is. Elk van die commando's kan de oude PostgreSQL-container verwijderen, en daarmee de database.</p>
+</div>
 <h3 id="gedeelde-code">Gedeelde code<a class="headerlink" href="#gedeelde-code" title="Permanent link">&para;</a></h3>
-<p>De <code>shared/</code> directory wordt in zowel Airflow als Flask gemount en bevat de gezamenlijke configuratie (<code>config.py</code>), database-utilities en constanten.</p>
+<p>De <code>shared/</code> directory wordt in zowel Airflow als Flask gebruikt en bevat de gezamenlijke configuratie (<code>config.py</code>), database-utilities en constanten.</p>
+<h3 id="broncode-in-de-images">Broncode in de images<a class="headerlink" href="#broncode-in-de-images" title="Permanent link">&para;</a></h3>
+<p>De Dockerfiles kopiëren de code in de images: de Flask-image bevat <code>app/</code> en <code>shared/</code>, de Airflow-image <code>airflow_app/dags</code>, <code>airflow_app/scripts</code> en <code>shared/</code> (als <code>/opt/airflow/dags/shared</code>). De gepubliceerde images draaien daardoor zonder volumes naar broncode. In de ontwikkelomgeving mounten <code>docker-compose.yml</code> en <code>docker-compose.delft.yml</code> de mappen <code>airflow_app/dags</code>, <code>airflow_app/scripts</code> en <code>shared/</code> over die kopieën heen, zodat wijzigingen direct zichtbaar zijn zonder opnieuw te bouwen. Jupyter is een <strong>ontwikkelvoorziening</strong>: de Jupyter-container krijgt de notebooks en de code via volumes, hoort alleen bij de ontwikkelomgeving en wordt niet gepubliceerd. <code>.dockerignore</code> houdt <code>data/</code>, <code>notebooks/</code>, <code>docs/</code> en <code>deploy/</code> buiten de buildcontext.</p>
 <h2 id="backup-en-restore">Backup en Restore<a class="headerlink" href="#backup-en-restore" title="Permanent link">&para;</a></h2>
 <p>De Makefile bevat targets voor backup en restore:</p>
 <div class="codehilite"><pre><span></span><code><span class="c1"># Backup van PostgreSQL en MongoDB (met timestamp)</span>
@@ -529,27 +603,86 @@ make<span class="w"> </span>restore<span class="w"> </span><span class="nv">TS</
 <li>PostgreSQL: <code>pg_dump</code> als tar-archief</li>
 <li>MongoDB: <code>mongodump</code> van staging-, bestands- en analyse-databases</li>
 </ul>
-<p>De backups worden opgeslagen in de <code>backup/</code> directory.</p>
+<p>De backups komen in <code>data/&lt;omgeving&gt;/backup/postgres/</code> en <code>data/&lt;omgeving&gt;/backup/mongo/</code>, dus in <code>data/synthetic/backup/</code> bij <code>make app</code> en in <code>data/delft/backup/</code> bij <code>make delft</code>.</p>
 <h2 id="csv-export">CSV-export<a class="headerlink" href="#csv-export" title="Permanent link">&para;</a></h2>
 <p>Alle definitieve tabellen kunnen als CSV worden geëxporteerd:</p>
 <div class="codehilite"><pre><span></span><code>make<span class="w"> </span><span class="nb">export</span>
 </code></pre></div>
 
-<p>Dit exporteert alle <code>Def_*</code> tabellen (Project, Put, Spoor, Vondst, Artefact, Monster, etc.) naar CSV-bestanden in <code>backup/postgres_&lt;timestamp&gt;/</code>.</p>
-<h2 id="release-en-publicatie">Release en Publicatie<a class="headerlink" href="#release-en-publicatie" title="Permanent link">&para;</a></h2>
-<p>Voor het publiceren van een nieuwe versie:</p>
-<div class="codehilite"><pre><span></span><code>make<span class="w"> </span>release<span class="w"> </span><span class="nv">VERSION</span><span class="o">=</span>&lt;versie&gt;<span class="w"> </span><span class="nv">MSG</span><span class="o">=</span><span class="s2">&quot;&lt;beschrijving&gt;&quot;</span>
-<span class="c1"># Voorbeeld: make release VERSION=1.1.0 MSG=&quot;Nieuwe zoekfunctionaliteit&quot;</span>
+<p>Dit exporteert alle <code>Def_*</code> tabellen (Project, Put, Spoor, Vondst, Artefact, Monster, etc.) naar CSV-bestanden in <code>data/&lt;omgeving&gt;/backup/postgres/postgres_&lt;timestamp&gt;/</code>.</p>
+<h2 id="publicatie-van-images">Publicatie van images<a class="headerlink" href="#publicatie-van-images" title="Permanent link">&para;</a></h2>
+<p>De images voor de live installatie staan op de GitHub Container Registry, onder <code>ghcr.io/brienen/wasstraat-&lt;service&gt;</code> voor de vier eigen services: <code>airflow</code>, <code>flask</code>, <code>postgres</code> en <code>apache</code>. MongoDB, Elasticsearch en Redis komen rechtstreeks van Docker Hub en Elastic. Jupyter is een ontwikkelvoorziening en wordt niet gepubliceerd. Elke image krijgt twee tags: het versienummer en <code>latest</code>.</p>
+<div class="codehilite"><pre><span></span><code>make<span class="w"> </span>publish<span class="w">                      </span><span class="c1"># alle vier images, linux/amd64 + linux/arm64, push naar ghcr.io</span>
+make<span class="w"> </span>publish<span class="w"> </span><span class="nv">SERVICE</span><span class="o">=</span>flask<span class="w">        </span><span class="c1"># één image</span>
+make<span class="w"> </span>publish<span class="w"> </span><span class="nv">PUSH</span><span class="o">=</span><span class="m">0</span><span class="w">               </span><span class="c1"># alleen lokaal bouwen voor dit platform, niet pushen</span>
+make<span class="w"> </span>publish<span class="w"> </span><span class="nv">NO_CACHE</span><span class="o">=</span><span class="m">1</span><span class="w">           </span><span class="c1"># schone build met verse basisimages</span>
+make<span class="w"> </span>publish<span class="w"> </span><span class="nv">VERSION</span><span class="o">=</span><span class="m">1</span>.2.0<span class="w">        </span><span class="c1"># andere versie dan die in config/version.env</span>
 </code></pre></div>
 
-<p>Dit voert de volgende stappen uit:</p>
-<ol>
-<li>Schrijft versienummer naar <code>config/version.env</code></li>
-<li>Maakt een git-tag aan</li>
-<li>Commit en pusht alle wijzigingen</li>
-<li>Bouwt multi-platform Docker-images (linux/amd64 + linux/arm64) via <code>docker buildx</code></li>
-<li>Pusht images naar Docker Hub onder <code>brienen/wasstraat_flask:&lt;versie&gt;</code></li>
-</ol>
+<p><code>make publish</code> bouwt met <code>docker buildx</code> in één keer voor beide platformen en pusht het resultaat als multi-arch image. Daarvoor maakt het eenmalig een builder <code>wasstraat</code> aan met de <code>docker-container</code>-driver (een gewone <code>docker build</code> kan niet voor twee platformen tegelijk bouwen). Met <code>PUSH=0</code> gebruikt het de standaardbuilder, bouwt het alleen voor het eigen platform en laadt het de images in de lokale Docker (<code>--load</code>); daarmee test je <code>deploy/</code> voordat je publiceert. Elke image krijgt de OCI-labels <code>org.opencontainers.image.source</code> (de repository, waardoor GitHub het package aan de repository koppelt), <code>version</code> en <code>licenses</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Variabele</th>
+<th>Standaard</th>
+<th>Betekenis</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>VERSION</code></td>
+<td><code>VERSION=</code> uit <code>config/version.env</code>, anders uit <code>config/version.env.example</code></td>
+<td>Versietag</td>
+</tr>
+<tr>
+<td><code>SERVICE</code></td>
+<td><code>airflow flask postgres apache</code></td>
+<td>Te bouwen services</td>
+</tr>
+<tr>
+<td><code>PUSH</code></td>
+<td><code>1</code></td>
+<td><code>0</code>: alleen lokaal bouwen</td>
+</tr>
+<tr>
+<td><code>PLATFORMS</code></td>
+<td><code>linux/amd64,linux/arm64</code></td>
+<td>Doelplatformen bij <code>PUSH=1</code></td>
+</tr>
+<tr>
+<td><code>NO_CACHE</code></td>
+<td><code>0</code></td>
+<td><code>1</code>: <code>--no-cache --pull</code></td>
+</tr>
+<tr>
+<td><code>REGISTRY</code></td>
+<td><code>ghcr.io/brienen</code></td>
+<td>Registry en naamruimte</td>
+</tr>
+<tr>
+<td><code>BUILDER</code></td>
+<td><code>wasstraat</code></td>
+<td>Naam van de buildx-builder</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="admonition-title">Bouwtijd</p>
+<p>De Airflow-image installeert GDAL en veel Python-pakketten; het bouwen voor het andere platform gebeurt onder emulatie en kan op een laptop een half uur tot een uur duren. Met <code>SERVICE=</code> publiceer je alleen wat gewijzigd is.</p>
+</div>
+<h3 id="inloggen-op-de-registry">Inloggen op de registry<a class="headerlink" href="#inloggen-op-de-registry" title="Permanent link">&para;</a></h3>
+<p>Inloggen gebeurt buiten <code>make publish</code> om, eenmalig per machine:</p>
+<div class="codehilite"><pre><span></span><code><span class="nb">echo</span><span class="w"> </span><span class="s2">"</span><span class="nv">$GHCR_TOKEN</span><span class="s2">"</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>docker<span class="w"> </span>login<span class="w"> </span>ghcr.io<span class="w"> </span>-u<span class="w"> </span>brienen<span class="w"> </span>--password-stdin
+</code></pre></div>
+
+<p>Het token is een GitHub <em>personal access token (classic)</em> met de scope <strong><code>write:packages</code></strong> (die omvat <code>read:packages</code>); <code>delete:packages</code> is alleen nodig om oude versies te verwijderen. Fine-grained tokens werken niet voor de Container Registry. Maak het aan onder GitHub → Settings → Developer settings → Personal access tokens.</p>
+<p>Na de eerste publicatie zijn de vier packages <strong>privé</strong>. Zet ze op publiek, zodat gemeenten ze zonder inloggen kunnen ophalen: open het package op <a href="https://github.com/brienen?tab=packages">https://github.com/brienen?tab=packages</a>, kies <em>Package settings</em> en wijzig onder <em>Danger Zone</em> de zichtbaarheid naar <em>Public</em>. Controleer daar ook of het package aan de repository is gekoppeld (dat gebeurt automatisch via het label <code>org.opencontainers.image.source</code>).</p>
+<h3 id="een-versie-uitbrengen">Een versie uitbrengen<a class="headerlink" href="#een-versie-uitbrengen" title="Permanent link">&para;</a></h3>
+<div class="codehilite"><pre><span></span><code>make<span class="w"> </span>release<span class="w"> </span><span class="nv">VERSION</span><span class="o">=</span><span class="m">1</span>.1.0<span class="w"> </span><span class="nv">MSG</span><span class="o">=</span><span class="s2">"Incrementeel laden en installatie met images"</span>
+</code></pre></div>
+
+<p>Dit schrijft het versienummer naar <code>config/version.env.example</code> (in de repository), <code>config/version.env</code> (lokaal, genegeerd door git) en <code>deploy/.env.example</code> (de standaardversie voor nieuwe installaties), staget alleen <code>config/version.env.example</code> en <code>deploy/.env.example</code>, commit die met het bericht uit <code>MSG</code>, maakt de geannoteerde git-tag <code>1.1.0</code> op die commit, pusht alleen de huidige branch (<code>git push origin HEAD</code>) en de nieuwe tag, en roept <code>make publish</code> aan. Andere wijzigingen in de werkmap gaan dus niet mee in de releasecommit; commit die vooraf. De map <code>deploy/</code> van de tag is daarmee precies wat gebruikers ophalen; <code>tests/unit/test_deploy.py</code> bewaakt dat <code>deploy/.env.example</code> en <code>config/version.env.example</code> dezelfde versie noemen.</p>
+<p>Controleer vóór een release dat <code>make test-all</code> slaagt en test de images met <code>make publish PUSH=0</code> in een installatie uit <code>deploy/</code>. Een <code>latest</code>-tag wijst altijd naar de laatst gepubliceerde versie; installaties horen een versienummer te gebruiken.</p>
               
             </div>
           </div>
@@ -582,8 +715,8 @@ make<span class="w"> </span>restore<span class="w"> </span><span class="nv">TS</
 </footer>
 <footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="Footernavigatie">
-        <a href="../../componenten/zoeken/" class="btn btn-neutral float-left" title="Zoek- en Indexeringslaag"><span class="icon icon-circle-arrow-left"></span> Vorige</a>
-        <a href="../airflow-vs-app/" class="btn btn-neutral float-right" title="Airflow Transformatie vs. Web Applicatie">Volgende <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="../../componenten/zoeken/" class="btn btn-neutral float-left" title="Zoeken en indexering"><span class="icon icon-circle-arrow-left"></span> Vorige</a>
+        <a href="../airflow-vs-app/" class="btn btn-neutral float-right" title="Airflow en webapplicatie">Volgende <span class="icon icon-circle-arrow-right"></span></a>
     </div>
 
   <hr/>

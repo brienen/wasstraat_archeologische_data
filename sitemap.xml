@@ -1,99 +1,111 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
-         <loc>https://wasstraat.e-space.nl/</loc>
-         <lastmod>2026-04-10</lastmod>
+         <loc>https://brienen.github.io/wasstraat_archeologische_data/</loc>
+         <lastmod>2026-11-16</lastmod>
     </url>
     <url>
-         <loc>https://wasstraat.e-space.nl/aan-de-slag/</loc>
-         <lastmod>2026-04-10</lastmod>
+         <loc>https://brienen.github.io/wasstraat_archeologische_data/aan-de-slag/</loc>
+         <lastmod>2026-11-16</lastmod>
     </url>
     <url>
-         <loc>https://wasstraat.e-space.nl/diagrammen/</loc>
-         <lastmod>2026-04-10</lastmod>
+         <loc>https://brienen.github.io/wasstraat_archeologische_data/diagrammen/</loc>
+         <lastmod>2026-11-16</lastmod>
     </url>
     <url>
-         <loc>https://wasstraat.e-space.nl/testen/</loc>
-         <lastmod>2026-04-10</lastmod>
+         <loc>https://brienen.github.io/wasstraat_archeologische_data/testen/</loc>
+         <lastmod>2026-11-16</lastmod>
     </url>
     <url>
-         <loc>https://wasstraat.e-space.nl/architectuur/componenten/</loc>
-         <lastmod>2026-04-10</lastmod>
+         <loc>https://brienen.github.io/wasstraat_archeologische_data/toekomstvisie/</loc>
+         <lastmod>2026-11-16</lastmod>
     </url>
     <url>
-         <loc>https://wasstraat.e-space.nl/architectuur/dataflow/</loc>
-         <lastmod>2026-04-10</lastmod>
+         <loc>https://brienen.github.io/wasstraat_archeologische_data/architectuur/componenten/</loc>
+         <lastmod>2026-11-16</lastmod>
     </url>
     <url>
-         <loc>https://wasstraat.e-space.nl/architectuur/gegevensmodel/</loc>
-         <lastmod>2026-04-10</lastmod>
+         <loc>https://brienen.github.io/wasstraat_archeologische_data/architectuur/dataflow/</loc>
+         <lastmod>2026-11-16</lastmod>
     </url>
     <url>
-         <loc>https://wasstraat.e-space.nl/architectuur/stack/</loc>
-         <lastmod>2026-04-10</lastmod>
+         <loc>https://brienen.github.io/wasstraat_archeologische_data/architectuur/gegevensmodel/</loc>
+         <lastmod>2026-11-16</lastmod>
     </url>
     <url>
-         <loc>https://wasstraat.e-space.nl/architectuur/systeem/</loc>
-         <lastmod>2026-04-10</lastmod>
+         <loc>https://brienen.github.io/wasstraat_archeologische_data/architectuur/stack/</loc>
+         <lastmod>2026-11-16</lastmod>
     </url>
     <url>
-         <loc>https://wasstraat.e-space.nl/componenten/configuratie/</loc>
-         <lastmod>2026-04-10</lastmod>
+         <loc>https://brienen.github.io/wasstraat_archeologische_data/architectuur/systeem/</loc>
+         <lastmod>2026-11-16</lastmod>
     </url>
     <url>
-         <loc>https://wasstraat.e-space.nl/componenten/crossviews/</loc>
-         <lastmod>2026-04-10</lastmod>
+         <loc>https://brienen.github.io/wasstraat_archeologische_data/componenten/configuratie/</loc>
+         <lastmod>2026-11-16</lastmod>
     </url>
     <url>
-         <loc>https://wasstraat.e-space.nl/componenten/extractie/</loc>
-         <lastmod>2026-04-10</lastmod>
+         <loc>https://brienen.github.io/wasstraat_archeologische_data/componenten/extractie/</loc>
+         <lastmod>2026-11-16</lastmod>
     </url>
     <url>
-         <loc>https://wasstraat.e-space.nl/componenten/gemeenteprofielen/</loc>
-         <lastmod>2026-04-10</lastmod>
+         <loc>https://brienen.github.io/wasstraat_archeologische_data/componenten/gemeenteprofielen/</loc>
+         <lastmod>2026-11-16</lastmod>
     </url>
     <url>
-         <loc>https://wasstraat.e-space.nl/componenten/singlestore/</loc>
-         <lastmod>2026-04-10</lastmod>
+         <loc>https://brienen.github.io/wasstraat_archeologische_data/componenten/incrementeel-laden/</loc>
+         <lastmod>2026-11-16</lastmod>
     </url>
     <url>
-         <loc>https://wasstraat.e-space.nl/componenten/transformatie/</loc>
-         <lastmod>2026-04-10</lastmod>
+         <loc>https://brienen.github.io/wasstraat_archeologische_data/componenten/singlestore/</loc>
+         <lastmod>2026-11-16</lastmod>
     </url>
     <url>
-         <loc>https://wasstraat.e-space.nl/componenten/validatie/</loc>
-         <lastmod>2026-04-10</lastmod>
+         <loc>https://brienen.github.io/wasstraat_archeologische_data/componenten/transformatie/</loc>
+         <lastmod>2026-11-16</lastmod>
     </url>
     <url>
-         <loc>https://wasstraat.e-space.nl/componenten/zoeken/</loc>
-         <lastmod>2026-04-10</lastmod>
+         <loc>https://brienen.github.io/wasstraat_archeologische_data/componenten/validatie/</loc>
+         <lastmod>2026-11-16</lastmod>
     </url>
     <url>
-         <loc>https://wasstraat.e-space.nl/deployment/airflow-vs-app/</loc>
-         <lastmod>2026-04-10</lastmod>
+         <loc>https://brienen.github.io/wasstraat_archeologische_data/componenten/verwerkingsrapport/</loc>
+         <lastmod>2026-11-16</lastmod>
     </url>
     <url>
-         <loc>https://wasstraat.e-space.nl/deployment/omgevingen/</loc>
-         <lastmod>2026-04-10</lastmod>
+         <loc>https://brienen.github.io/wasstraat_archeologische_data/componenten/zoeken/</loc>
+         <lastmod>2026-11-16</lastmod>
     </url>
     <url>
-         <loc>https://wasstraat.e-space.nl/deployment/proefdata/</loc>
-         <lastmod>2026-04-10</lastmod>
+         <loc>https://brienen.github.io/wasstraat_archeologische_data/deployment/airflow-vs-app/</loc>
+         <lastmod>2026-11-16</lastmod>
     </url>
     <url>
-         <loc>https://wasstraat.e-space.nl/deployment/voorbeelddata/</loc>
-         <lastmod>2026-04-10</lastmod>
+         <loc>https://brienen.github.io/wasstraat_archeologische_data/deployment/installatie-met-images/</loc>
+         <lastmod>2026-11-16</lastmod>
     </url>
     <url>
-         <loc>https://wasstraat.e-space.nl/overzicht/doelstellingen/</loc>
-         <lastmod>2026-04-10</lastmod>
+         <loc>https://brienen.github.io/wasstraat_archeologische_data/deployment/omgevingen/</loc>
+         <lastmod>2026-11-16</lastmod>
     </url>
     <url>
-         <loc>https://wasstraat.e-space.nl/overzicht/inleiding/</loc>
-         <lastmod>2026-04-10</lastmod>
+         <loc>https://brienen.github.io/wasstraat_archeologische_data/deployment/proefdata/</loc>
+         <lastmod>2026-11-16</lastmod>
     </url>
     <url>
-         <loc>https://wasstraat.e-space.nl/overzicht/probleemstelling/</loc>
-         <lastmod>2026-04-10</lastmod>
+         <loc>https://brienen.github.io/wasstraat_archeologische_data/deployment/voorbeelddata/</loc>
+         <lastmod>2026-11-16</lastmod>
+    </url>
+    <url>
+         <loc>https://brienen.github.io/wasstraat_archeologische_data/overzicht/doelstellingen/</loc>
+         <lastmod>2026-11-16</lastmod>
+    </url>
+    <url>
+         <loc>https://brienen.github.io/wasstraat_archeologische_data/overzicht/inleiding/</loc>
+         <lastmod>2026-11-16</lastmod>
+    </url>
+    <url>
+         <loc>https://brienen.github.io/wasstraat_archeologische_data/overzicht/probleemstelling/</loc>
+         <lastmod>2026-11-16</lastmod>
     </url>
 </urlset>
